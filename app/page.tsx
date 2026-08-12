@@ -1,19 +1,25 @@
 'use client'
 
 import { useState } from 'react'
+import { createClient } from '@/lib/supabase/client' // หรือดึงจากตำแหน่งที่ตั้งของ supabase client ในโปรเจกต์
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const supabase = createClient()
 
   const handleSteamLogin = () => {
     // TODO: implement Steam OpenID login
     console.log('Steam login')
   }
 
-  const handleGoogleLogin = () => {
-    // TODO: implement Google OAuth via Supabase
-    console.log('Google login')
+  const handleGoogleLogin = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
   }
 
   const handleEmailLogin = (e: React.FormEvent) => {
@@ -128,7 +134,7 @@ export default function LoginPage() {
         {/* Google button */}
         <button
           onClick={handleGoogleLogin}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-md mb-5 transition-all"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-md mb-5 transition-all cursor-pointer"
           style={{
             background: 'rgba(255,255,255,0.03)',
             border: '0.5px solid rgba(255,255,255,0.1)',

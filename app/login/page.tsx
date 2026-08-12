@@ -61,7 +61,7 @@ export default function LoginPage() {
               className="text-3xl font-black tracking-tight text-white"
               style={{ fontFamily: "'Inter', sans-serif", letterSpacing: '-0.04em' }}
             >
-              AVEL<span className="text-indigo-400">Ai</span>
+              AVEL<span style={{ color: '#C9A84C' }}>A</span>i
             </span>
           </div>
           <p className="text-sm text-zinc-500 tracking-widest uppercase">
