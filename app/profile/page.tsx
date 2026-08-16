@@ -55,7 +55,7 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      const { data } = await supabase.from('users').select('*').eq('id', user.id).single();
       setProfile(data);
       setLoading(false);
     };
@@ -95,7 +95,7 @@ export default function ProfilePage() {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-xl font-extrabold text-white">{profile?.username ?? 'Unknown'}</h1>
+                <h1 className="text-xl font-extrabold text-white">{profile?.display_name ?? 'Unknown'}</h1>
                 <span className="text-xs font-mono text-zinc-500">{battleTag}</span>
                 <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-bold ${st.color}`}>
                   {st.icon} {st.label}
