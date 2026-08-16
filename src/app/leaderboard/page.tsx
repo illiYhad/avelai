@@ -123,7 +123,7 @@ export default function LeaderboardPage() {
                     <div className="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 border-yellow-500" />
                     <p className="text-xs uppercase tracking-[0.25em] text-yellow-500/70 font-semibold mb-2">DAILY PRIZE POOL</p>
                     <div className="flex items-center justify-center gap-2">
-                        <span className="text-3xl font-black text-yellow-400">&#3647;</span>
+                        <span className="text-3xl font-black text-yellow-400">฿</span>
                         <h2 className="text-3xl md:text-4xl font-black text-yellow-400 tracking-wider">
                             {prizePool.toLocaleString()}
                         </h2>
