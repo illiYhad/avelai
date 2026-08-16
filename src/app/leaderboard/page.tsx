@@ -48,7 +48,7 @@ export default function LeaderboardPage() {
             setLoading(true)
             try {
                 let query = supabase
-                    .from('profiles')
+                    .from('users')
                     .select('id, display_name, avatar_url, current_elo, karma_score, win_rate, recent_form, preferred_position')
                     .order('current_elo', { ascending: false })
                     .limit(100)
