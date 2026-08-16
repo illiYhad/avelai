@@ -15,6 +15,9 @@ type Profile = {
     karma_score: number;
     win_rate?: number;
     badge_slots?: BadgeSlot[];
+    subscription_tier?: string;
+    arena_tickets?: number;
+    reward_points?: number;
 };
 
 type BadgeSlot = {
@@ -52,7 +55,7 @@ export default function ProfilePage() {
         const fetchProfile = async () => {
             const { data, error } = await supabase
                 .from('users')
-                .select('id, display_name, avatar_url, current_elo, karma_score, win_rate, badge_slots')
+                .select('id, display_name, avatar_url, current_elo, karma_score, win_rate, badge_slots, subscription_tier, arena_tickets, reward_points')
                 .eq('id', userId)
                 .single();
             if (!error && data) {
@@ -229,6 +232,18 @@ export default function ProfilePage() {
                             </div>
                         </div>
 
+                    </div>
+                </div>
+                {/* Tier + Tickets + Points */}
+                <div className="h-px bg-[#C9A84C]/15" />
+                <div className="flex flex-col gap-0.5">
+                    <span className="font-mono text-[9px] text-zinc-500 tracking-[0.2em]">ARENA PASS</span>
+                    <div className="flex items-center gap-2">
+                        <span className={`text-xs font-mono px-2 py-0.5 rounded font-bold ${profile.subscription_tier === 'pro' ? 'bg-[#C9A84C]/20 text-[#C9A84C] border border-[#C9A84C]/50' : 'bg-zinc-800 text-zinc-400 border border-zinc-700'}`}>
+                            {profile.subscription_tier === 'pro' ? 'PRO' : 'FREE'}
+                        </span>
+                        <span className="font-mono text-[9px] text-zinc-500">{profile.arena_tickets ?? 0} TICKETS</span>
+                        <span className="font-mono text-[9px] text-zinc-500">{profile.reward_points ?? 0} PTS</span>
                     </div>
                 </div>
 
