@@ -24,11 +24,10 @@ export default function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                pathname === link.href
-                  ? 'bg-zinc-800 text-white'
-                  : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${pathname === link.href
+                ? 'bg-zinc-800 text-white'
+                : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'
+                }`}
             >
               {link.icon} {link.label}
             </Link>
