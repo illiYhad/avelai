@@ -7,7 +7,10 @@ export default function SubscribePage() {
   const [user, setUser] = useState<any>(null)
   const [currentTier, setCurrentTier] = useState<string>('free')
   const [loading, setLoading] = useState(false)
-  const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+  const suconst supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key'
+  );
   const router = useRouter()
   useEffect(() => {
     const getUser = async () => {
