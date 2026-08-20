@@ -17,7 +17,7 @@ interface PlayerStat {
 
 interface MatchRecord {
     match_id: string;
-    duration: number; // minutes
+    duration: number;
     radiant_win: boolean;
     evaluated_at: string;
     user_won: boolean;
@@ -110,7 +110,7 @@ const MOCK_MATCHES: MatchRecord[] = [
 export default function MatchHistoryPage() {
     const [activeTab, setActiveTab] = useState<'A' | 'B' | 'C'>('A');
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterResult, setFilterResult] = useState<'all' | 'win' | 'loss'>('all');
+    const [filterResult, setFilterResult] = useState<string>('all');
     const [filterRole, setFilterRole] = useState<string>('all');
     const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null);
     const [selectedMatch, setSelectedMatch] = useState<MatchRecord>(MOCK_MATCHES[0]);
@@ -130,29 +130,24 @@ export default function MatchHistoryPage() {
     }, [searchTerm, filterResult, filterRole]);
 
     return (
-        <div className="min-h-screen bg-[#0A0A0F] text-white p-4 md:p-8 relative overflow-hidden font-sans">
-            <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@600;800&display=swap');
-        .font-jetbrains { font-family: 'JetBrains Mono', monospace !important; }
-        .font-orbitron { font-family: 'Orbitron', sans-serif !important; }
-      `}</style>
-
+        <div className="min-h-screen bg-[#0A0A0F] text-white px-4 md:px-8 pb-12 pt-24 md:pt-28 relative overflow-hidden font-mono">
             {/* Cyber Scanline */}
             <div
                 className="absolute inset-0 pointer-events-none z-0"
                 style={{
-                    backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 212, 255, 0.03) 2px, rgba(0, 212, 255, 0.03) 4px)`,
+                    backgroundImage:
+                        'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 212, 255, 0.03) 2px, rgba(0, 212, 255, 0.03) 4px)',
                 }}
             />
 
             <div className="max-w-7xl mx-auto z-10 relative">
                 {/* Header & Prototype Selector */}
-                <div className="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-[#00D4FF]/20 pb-4 gap-4">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-[#00D4FF]/20 pb-6 gap-4">
                     <div>
-                        <h1 className="font-orbitron text-2xl md:text-3xl text-[#00D4FF] tracking-wider">
+                        <h1 className="text-2xl md:text-3xl text-[#00D4FF] tracking-wider font-bold">
                             [ 2.4 MATCH ARCHIVE ]
                         </h1>
-                        <p className="text-xs text-gray-400 font-jetbrains mt-1">
+                        <p className="text-xs text-gray-400 mt-1">
                             Select Prototype Option to review UI/UX layout
                         </p>
                     </div>
@@ -162,7 +157,7 @@ export default function MatchHistoryPage() {
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`px-4 py-2 rounded font-orbitron text-xs transition-all ${activeTab === tab
+                                className={`px-4 py-2 rounded text-xs transition-all ${activeTab === tab
                                         ? 'bg-[#00D4FF] text-black font-bold shadow-[0_0_10px_#00D4FF]'
                                         : 'text-gray-400 hover:text-white'
                                     }`}
@@ -174,7 +169,7 @@ export default function MatchHistoryPage() {
                 </div>
 
                 {/* Global Controls */}
-                <div className="flex flex-wrap gap-4 mb-6 font-jetbrains text-sm">
+                <div className="flex flex-wrap gap-4 mb-6 text-sm">
                     <input
                         type="text"
                         placeholder="Search Match ID / Player..."
@@ -184,7 +179,7 @@ export default function MatchHistoryPage() {
                     />
                     <select
                         value={filterResult}
-                        onChange={(e) => setFilterResult(e.target.value as any)}
+                        onChange={(e) => setFilterResult(e.target.value)}
                         className="bg-black/60 border border-gray-800 focus:border-[#00D4FF] px-3 py-2 rounded text-gray-300 outline-none"
                     >
                         <option value="all">All Results</option>
@@ -208,7 +203,7 @@ export default function MatchHistoryPage() {
                 {/* --- OPTION A: Cyber Terminal Table --- */}
                 {activeTab === 'A' && (
                     <div className="border border-gray-800 bg-gray-950/70 rounded-lg overflow-x-auto">
-                        <table className="w-full text-left font-jetbrains text-xs">
+                        <table className="w-full text-left text-xs">
                             <thead className="bg-gray-900/80 border-b border-gray-800 text-[#00D4FF]">
                                 <tr>
                                     <th className="p-4">MATCH ID</th>
@@ -227,8 +222,10 @@ export default function MatchHistoryPage() {
                                         <td className="p-4 text-gray-300 font-bold">#{m.match_id}</td>
                                         <td className="p-4 text-gray-500">{m.evaluated_at}</td>
                                         <td className="p-4">
-                                            <span className={`px-2 py-1 rounded text-[10px] font-bold ${m.user_won ? 'bg-[#00D4FF]/20 text-[#00D4FF]' : 'bg-[#EF4444]/20 text-[#EF4444]'
-                                                }`}>
+                                            <span
+                                                className={`px-2 py-1 rounded text-[10px] font-bold ${m.user_won ? 'bg-[#00D4FF]/20 text-[#00D4FF]' : 'bg-[#EF4444]/20 text-[#EF4444]'
+                                                    }`}
+                                            >
                                                 {m.user_won ? 'VICTORY' : 'DEFEAT'}
                                             </span>
                                         </td>
@@ -238,7 +235,8 @@ export default function MatchHistoryPage() {
                                             </span>
                                         </td>
                                         <td className="p-4 text-gray-300">
-                                            {m.user_stats.kills} / <span className="text-red-400">{m.user_stats.deaths}</span> / {m.user_stats.assists}
+                                            {m.user_stats.kills} / <span className="text-red-400">{m.user_stats.deaths}</span> /{' '}
+                                            {m.user_stats.assists}
                                         </td>
                                         <td className="p-4 text-[#C9A84C] font-bold">{m.user_stats.total_score}</td>
                                         <td className="p-4 text-gray-400">{m.user_stats.base_kp}</td>
@@ -252,7 +250,7 @@ export default function MatchHistoryPage() {
 
                 {/* --- OPTION B: Match Card Feed --- */}
                 {activeTab === 'B' && (
-                    <div className="flex flex-col gap-4 font-jetbrains">
+                    <div className="flex flex-col gap-4">
                         {filteredMatches.map((m) => (
                             <div
                                 key={m.match_id}
@@ -264,8 +262,10 @@ export default function MatchHistoryPage() {
                                         <div className={`w-3 h-12 rounded ${m.user_won ? 'bg-[#00D4FF]' : 'bg-[#EF4444]'}`} />
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <span className={`font-orbitron font-bold text-sm ${m.user_won ? 'text-[#00D4FF]' : 'text-[#EF4444]'
-                                                    }`}>
+                                                <span
+                                                    className={`font-bold text-sm ${m.user_won ? 'text-[#00D4FF]' : 'text-[#EF4444]'
+                                                        }`}
+                                                >
                                                     {m.user_won ? 'VICTORY' : 'DEFEAT'}
                                                 </span>
                                                 <span className="text-gray-500 text-xs">#{m.match_id}</span>
@@ -285,7 +285,9 @@ export default function MatchHistoryPage() {
                                         </div>
                                         <div>
                                             <div className="text-[10px] text-gray-500 uppercase">K / D / A</div>
-                                            <span>{m.user_stats.kills}/{m.user_stats.deaths}/{m.user_stats.assists}</span>
+                                            <span>
+                                                {m.user_stats.kills}/{m.user_stats.deaths}/{m.user_stats.assists}
+                                            </span>
                                         </div>
                                         <div>
                                             <div className="text-[10px] text-gray-500 uppercase">Score / KP</div>
@@ -293,7 +295,9 @@ export default function MatchHistoryPage() {
                                             <span className="text-xs text-gray-500"> ({m.user_stats.base_kp} KP)</span>
                                         </div>
                                         <button
-                                            onClick={() => setExpandedMatchId(expandedMatchId === m.match_id ? null : m.match_id)}
+                                            onClick={() =>
+                                                setExpandedMatchId(expandedMatchId === m.match_id ? null : m.match_id)
+                                            }
                                             className="px-3 py-1.5 border border-gray-800 hover:border-gray-600 rounded text-xs text-gray-400"
                                         >
                                             {expandedMatchId === m.match_id ? 'Hide Roster' : 'View Roster'}
@@ -304,10 +308,15 @@ export default function MatchHistoryPage() {
                                 {expandedMatchId === m.match_id && (
                                     <div className="mt-4 pt-4 border-t border-gray-900 grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
                                         {m.players.map((p) => (
-                                            <div key={p.user_id} className="flex justify-between bg-black/40 p-2 rounded border border-gray-900">
+                                            <div
+                                                key={p.user_id}
+                                                className="flex justify-between bg-black/40 p-2 rounded border border-gray-900"
+                                            >
                                                 <span className="text-gray-300">{p.display_name}</span>
                                                 <span style={{ color: ROLE_COLORS[p.role] }}>{p.role}</span>
-                                                <span className="text-gray-400">{p.kills}/{p.deaths}/{p.assists}</span>
+                                                <span className="text-gray-400">
+                                                    {p.kills}/{p.deaths}/{p.assists}
+                                                </span>
                                                 <span className="text-[#C9A84C]">{p.total_score}</span>
                                             </div>
                                         ))}
@@ -320,7 +329,7 @@ export default function MatchHistoryPage() {
 
                 {/* --- OPTION C: Split Panel NOC Dashboard --- */}
                 {activeTab === 'C' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 font-jetbrains">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                         {/* Left List */}
                         <div className="lg:col-span-5 flex flex-col gap-3 max-h-[600px] overflow-y-auto pr-2">
                             {filteredMatches.map((m) => (
@@ -340,7 +349,9 @@ export default function MatchHistoryPage() {
                                     </div>
                                     <div className="flex justify-between items-center mt-2 text-xs text-gray-400">
                                         <span style={{ color: ROLE_COLORS[m.user_stats.role] }}>{m.user_stats.role}</span>
-                                        <span>{m.user_stats.kills}/{m.user_stats.deaths}/{m.user_stats.assists}</span>
+                                        <span>
+                                            {m.user_stats.kills}/{m.user_stats.deaths}/{m.user_stats.assists}
+                                        </span>
                                         <span className="text-[#C9A84C] font-bold">{m.user_stats.total_score} pts</span>
                                     </div>
                                 </div>
@@ -352,11 +363,13 @@ export default function MatchHistoryPage() {
                             <div>
                                 <div className="flex justify-between items-start border-b border-gray-800 pb-4">
                                     <div>
-                                        <h2 className="font-orbitron text-lg text-white">MATCH #{selectedMatch.match_id}</h2>
+                                        <h2 className="text-lg text-white font-bold">MATCH #{selectedMatch.match_id}</h2>
                                         <p className="text-xs text-gray-500 mt-1">Evaluated at {selectedMatch.evaluated_at}</p>
                                     </div>
-                                    <div className={`px-3 py-1 rounded text-xs font-bold ${selectedMatch.user_won ? 'bg-[#00D4FF]/20 text-[#00D4FF]' : 'bg-[#EF4444]/20 text-[#EF4444]'
-                                        }`}>
+                                    <div
+                                        className={`px-3 py-1 rounded text-xs font-bold ${selectedMatch.user_won ? 'bg-[#00D4FF]/20 text-[#00D4FF]' : 'bg-[#EF4444]/20 text-[#EF4444]'
+                                            }`}
+                                    >
                                         {selectedMatch.user_won ? 'VICTORY' : 'DEFEAT'}
                                     </div>
                                 </div>
@@ -376,13 +389,20 @@ export default function MatchHistoryPage() {
                                     </div>
                                 </div>
 
-                                <h3 className="text-xs font-orbitron text-[#00D4FF] mb-3 uppercase tracking-wider">Player Breakdown</h3>
+                                <h3 className="text-xs text-[#00D4FF] mb-3 uppercase tracking-wider font-bold">
+                                    Player Breakdown
+                                </h3>
                                 <div className="flex flex-col gap-2">
                                     {selectedMatch.players.map((p) => (
-                                        <div key={p.user_id} className="flex justify-between items-center bg-black/40 p-2.5 rounded border border-gray-900 text-xs">
+                                        <div
+                                            key={p.user_id}
+                                            className="flex justify-between items-center bg-black/40 p-2.5 rounded border border-gray-900 text-xs"
+                                        >
                                             <span className="text-gray-200 font-bold">{p.display_name}</span>
                                             <span style={{ color: ROLE_COLORS[p.role] }}>{p.role}</span>
-                                            <span className="text-gray-400">{p.kills} / {p.deaths} / {p.assists}</span>
+                                            <span className="text-gray-400">
+                                                {p.kills} / {p.deaths} / {p.assists}
+                                            </span>
                                             <span className="text-[#C9A84C] font-bold">{p.total_score}</span>
                                         </div>
                                     ))}
