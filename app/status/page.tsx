@@ -33,7 +33,7 @@ const Sparkline = ({ data, status }: { data: PingHistory[]; status: string }) =>
         return <div className="w-24 h-8 bg-gray-950/80 rounded border border-gray-800" />;
     }
 
-    const maxLatency = Math.max(...data.map((d) => d.latency), 2000);
+    const maxLatency = Math.max(...data.map((d) => d.latency), 3000);
     const strokeColor = status === 'down' ? '#EF4444' : '#00D4FF';
 
     const points = data
@@ -95,18 +95,18 @@ export default function StatusPage() {
         },
     ]);
 
-    // ปรับ Threshold ตามที่อลิสต้องการ: <300 เขียว, 300-2000 เหลือง, >2000 แดง
+    // ปรับ Threshold ใหม่: <1500ms เขียว (OPERATIONAL), 1500-3000ms เหลือง (DEGRADED), >3000ms แดง (OUTAGE)
     const getStatusColor = (latency: number, status: string) => {
         if (status === 'pending') return 'bg-gray-500 shadow-[0_0_8px_#6b7280]';
-        if (latency < 300) return 'bg-green-500 shadow-[0_0_10px_#22c55e]';
-        if (latency <= 2000) return 'bg-yellow-500 shadow-[0_0_10px_#eab308]';
+        if (latency < 1500) return 'bg-green-500 shadow-[0_0_10px_#22c55e]';
+        if (latency <= 3000) return 'bg-yellow-500 shadow-[0_0_10px_#eab308]';
         return 'bg-red-500 shadow-[0_0_10px_#ef4444]';
     };
 
     const getStatusText = (latency: number, status: string) => {
         if (status === 'pending') return 'PENDING';
-        if (latency < 300) return 'OPERATIONAL';
-        if (latency <= 2000) return 'DEGRADED';
+        if (latency < 1500) return 'OPERATIONAL';
+        if (latency <= 3000) return 'DEGRADED';
         return 'OUTAGE';
     };
 
@@ -143,8 +143,8 @@ export default function StatusPage() {
                 }
 
                 let calculatedStatus: ServiceStatus['status'] = 'operational';
-                if (currentLatency > 300 && currentLatency <= 2000) calculatedStatus = 'degraded';
-                if (currentLatency > 2000) calculatedStatus = 'down';
+                if (currentLatency >= 1500 && currentLatency <= 3000) calculatedStatus = 'degraded';
+                if (currentLatency > 3000) calculatedStatus = 'down';
 
                 return {
                     ...service,
@@ -166,7 +166,6 @@ export default function StatusPage() {
 
     return (
         <div className="min-h-screen bg-[#0A0A0F] text-white p-4 md:p-8 relative overflow-hidden font-sans">
-            {/* Import JetBrains Mono จาก Google Fonts เพื่อการันตีการแสดงผล 100% */}
             <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&family=Orbitron:wght@600;800&display=swap');
         .font-jetbrains {
@@ -219,7 +218,6 @@ export default function StatusPage() {
                                     </span>
                                 </div>
 
-                                {/* ตัวเลข Latency & Uptime บังคับใช้ JetBrains Mono ด้วยคลาส font-jetbrains */}
                                 <div className="flex items-center gap-6 font-jetbrains text-sm w-full md:w-auto justify-between md:justify-end">
                                     <div className="text-gray-500">
                                         Latency:{' '}
