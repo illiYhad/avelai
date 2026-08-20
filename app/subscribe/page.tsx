@@ -7,7 +7,7 @@ export default function SubscribePage() {
   const [user, setUser] = useState<any>(null)
   const [currentTier, setCurrentTier] = useState<string>('free')
   const [loading, setLoading] = useState(false)
-  const suconst supabase = createBrowserClient(
+  const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key'
   );
