@@ -19,7 +19,7 @@ interface ServiceStatus {
     logs: { date: string; message: string }[];
 }
 
-// Mock ข้อมูลเริ่มต้น 7 วันย้อนหลัง เพื่อให้ Sparkline เรนเดอร์เส้นกราฟออกมาทันที
+// Mock ข้อมูลเริ่มต้น 7 วันย้อนหลัง
 const generateInitialHistory = (baseLatency: number): PingHistory[] => {
     return Array.from({ length: 7 }, (_, i) => ({
         timestamp: Date.now() - (6 - i) * 24 * 60 * 60 * 1000,
@@ -27,13 +27,13 @@ const generateInitialHistory = (baseLatency: number): PingHistory[] => {
     }));
 };
 
-// --- Component: Mini Sparkline Graph 7 วันย้อนหลัง ---
+// --- Component: Mini Sparkline Graph ---
 const Sparkline = ({ data, status }: { data: PingHistory[]; status: string }) => {
     if (!data || data.length === 0) {
         return <div className="w-24 h-8 bg-gray-950/80 rounded border border-gray-800" />;
     }
 
-    const maxLatency = Math.max(...data.map((d) => d.latency), 1000);
+    const maxLatency = Math.max(...data.map((d) => d.latency), 2000);
     const strokeColor = status === 'down' ? '#EF4444' : '#00D4FF';
 
     const points = data
@@ -95,22 +95,21 @@ export default function StatusPage() {
         },
     ]);
 
-    // ฟังก์ชันคำนวณสี Status LED
+    // ปรับ Threshold ตามที่อลิสต้องการ: <300 เขียว, 300-2000 เหลือง, >2000 แดง
     const getStatusColor = (latency: number, status: string) => {
         if (status === 'pending') return 'bg-gray-500 shadow-[0_0_8px_#6b7280]';
         if (latency < 300) return 'bg-green-500 shadow-[0_0_10px_#22c55e]';
-        if (latency <= 1000) return 'bg-yellow-500 shadow-[0_0_10px_#eab308]';
+        if (latency <= 2000) return 'bg-yellow-500 shadow-[0_0_10px_#eab308]';
         return 'bg-red-500 shadow-[0_0_10px_#ef4444]';
     };
 
     const getStatusText = (latency: number, status: string) => {
         if (status === 'pending') return 'PENDING';
         if (latency < 300) return 'OPERATIONAL';
-        if (latency <= 1000) return 'DEGRADED';
+        if (latency <= 2000) return 'DEGRADED';
         return 'OUTAGE';
     };
 
-    // ปรับ Threshold เป็น 8000ms เพื่อรองรับ Cold start ตามบรีฟ
     const pingService = async (url: string): Promise<number> => {
         const start = performance.now();
         try {
@@ -121,7 +120,7 @@ export default function StatusPage() {
             const end = performance.now();
             return Math.round(end - start);
         } catch {
-            return 1200; // หาก timeout จะ fallback เป็น degraded เพื่อไม่ให้แสดง OUTAGE ผิดพลาด
+            return 1200;
         }
     };
 
@@ -144,8 +143,8 @@ export default function StatusPage() {
                 }
 
                 let calculatedStatus: ServiceStatus['status'] = 'operational';
-                if (currentLatency > 1000) calculatedStatus = 'degraded';
-                if (currentLatency >= 8000) calculatedStatus = 'down';
+                if (currentLatency > 300 && currentLatency <= 2000) calculatedStatus = 'degraded';
+                if (currentLatency > 2000) calculatedStatus = 'down';
 
                 return {
                     ...service,
@@ -167,7 +166,15 @@ export default function StatusPage() {
 
     return (
         <div className="min-h-screen bg-[#0A0A0F] text-white p-4 md:p-8 relative overflow-hidden font-sans">
-            {/* Scanline Overlay ตามสเปกบรีฟ */}
+            {/* Import JetBrains Mono จาก Google Fonts เพื่อการันตีการแสดงผล 100% */}
+            <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&family=Orbitron:wght@600;800&display=swap');
+        .font-jetbrains {
+          font-family: 'JetBrains Mono', monospace !important;
+        }
+      `}</style>
+
+            {/* Scanline Overlay */}
             <div
                 className="absolute inset-0 pointer-events-none z-0"
                 style={{
@@ -207,16 +214,16 @@ export default function StatusPage() {
                                     <h2 className="font-['Orbitron'] font-bold text-lg tracking-wide uppercase">
                                         {service.name}
                                     </h2>
-                                    <span className="text-xs px-2 py-1 bg-gray-800 text-gray-400 rounded-sm hidden md:block font-mono">
+                                    <span className="text-xs px-2 py-1 bg-gray-800 text-gray-400 rounded-sm hidden md:block font-jetbrains">
                                         {getStatusText(service.latency, service.status)}
                                     </span>
                                 </div>
 
-                                {/* ตัวเลข Latency & Uptime ใช้ JetBrains Mono ผ่าน font-mono */}
-                                <div className="flex items-center gap-6 font-mono text-sm w-full md:w-auto justify-between md:justify-end">
+                                {/* ตัวเลข Latency & Uptime บังคับใช้ JetBrains Mono ด้วยคลาส font-jetbrains */}
+                                <div className="flex items-center gap-6 font-jetbrains text-sm w-full md:w-auto justify-between md:justify-end">
                                     <div className="text-gray-500">
                                         Latency:{' '}
-                                        <span className="text-gray-200 w-16 inline-block text-right">
+                                        <span className="text-gray-200 w-20 inline-block text-right">
                                             {service.latency > 0 ? `${service.latency}ms` : '---'}
                                         </span>
                                     </div>
@@ -239,8 +246,8 @@ export default function StatusPage() {
 
                             {/* Accordion Incident Log */}
                             {expandedId === service.id && (
-                                <div className="border-t border-gray-800 bg-black/50 p-4 font-mono text-sm">
-                                    <h3 className="text-[#00D4FF] mb-3 border-b border-[#00D4FF]/20 pb-2 inline-block">
+                                <div className="border-t border-gray-800 bg-black/50 p-4 font-jetbrains text-sm">
+                                    <h3 className="text-[#00D4FF] mb-3 border-b border-[#00D4FF]/20 pb-2 inline-block font-['Orbitron']">
                                         Incident History (Past 7 Days)
                                     </h3>
                                     {service.logs.map((log, idx) => (
