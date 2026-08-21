@@ -224,9 +224,10 @@ export default function MatchDetailView({
                 {/* TAB 4: PERFORMANCE */}
                 {activeTab === 'performance' && (
                     <PerformanceRadar
-                        players={matchData.performancePlayers || matchData.overviewPlayers || []}
+                        players={matchData.performancePlayers || matchData.players}
                         radiantScore={matchData.radiantScore}
                         direScore={matchData.direScore}
+                        heroIdToImg={heroIdToImg}
                     />
                 )}
             </div>
