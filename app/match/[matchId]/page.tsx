@@ -2,6 +2,10 @@ import React from 'react';
 import MatchHeader from './components/MatchHeader';
 import MatchDetailView from './components/MatchDetailView';
 
+// นำเข้าฟังก์ชันดึงข้อมูลที่เราเพิ่งสร้าง
+import { getHeroIdToImg } from '@/lib/dota/getHeroes';
+import { getItemIdToName } from '@/lib/dota/getItems';
+
 const ROLE_MAP: Record<number, string> = {
     0: 'Pos 1',
     1: 'Pos 2',
@@ -48,6 +52,7 @@ const FALLBACK_MATCH = {
             matchOutcome: 25,
             finalScore: 52.3,
         },
+        // ... (ข้อมูล FALLBACK อื่นๆ เหมือนเดิม)
         {
             playerSlot: 1,
             heroId: 2,
@@ -103,8 +108,8 @@ const FALLBACK_MATCH = {
             heroDamage: 44900,
             heroHealing: 0,
             towerDamage: 15200,
-            items: ['power_treads', 'diffusal_blade', 'black_king_bar', 'skadi', 'abyssal_blade', 'butterfly'],
-            neutralItem: 'apex',
+            items: [63, 174, 116, 160, 208, 139], // ส่งเป็น ID ตรงๆ
+            neutralItem: 331,
             hasScepter: true,
             hasShard: true,
         },
@@ -125,8 +130,8 @@ const FALLBACK_MATCH = {
             heroDamage: 33900,
             heroHealing: 9200,
             towerDamage: 538,
-            items: ['travel_boots', 'hand_of_midas', 'aghanims_scepter', 'refresher', 'black_king_bar', 'octarine_core'],
-            neutralItem: 'philosophers_stone',
+            items: [48, 65, 108, 110, 116, 232], // ส่งเป็น ID ตรงๆ
+            neutralItem: 289,
             hasScepter: true,
             hasShard: false,
         },
@@ -168,11 +173,24 @@ export default async function MatchDetailPage({
 }) {
     const { matchId } = await params;
 
+    // เตรียมตัวแปรรับค่า Dict
+    let heroIdToImg: Record<number, string> = {};
+    let itemIdToName: Record<number, string> = {};
     let matchData = FALLBACK_MATCH;
+
     try {
-        const res = await fetch(`https://api.opendota.com/api/matches/${matchId}`, {
-            next: { revalidate: 3600 },
-        });
+        // Fetch ข้อมูลแมตช์, ฮีโร่, ไอเทม ไปพร้อมๆ กันเลย
+        const [res, heroesDict, itemsDict] = await Promise.all([
+            fetch(`https://api.opendota.com/api/matches/${matchId}`, {
+                next: { revalidate: 3600 },
+            }),
+            getHeroIdToImg(),
+            getItemIdToName(),
+        ]);
+
+        heroIdToImg = heroesDict;
+        itemIdToName = itemsDict;
+
         if (res.ok) {
             const raw = await res.json();
             if (raw && raw.players) {
@@ -191,7 +209,7 @@ export default async function MatchDetailPage({
                     return {
                         playerSlot: p.player_slot,
                         heroId: p.hero_id,
-                        heroName: `Hero_${p.hero_id}`,
+                        heroName: `Hero_${p.hero_id}`, // ใช้ heroName เผื่อเคสที่ดึงรูปไม่ขึ้น
                         role: ROLE_MAP[p.player_slot] || `Pos ${(idx % 5) + 1}`,
                         playerName: p.personaname || (p.account_id ? `Player_${p.account_id}` : 'CLASSIFIED'),
                         isRegisteredUser: idx === 0,
@@ -213,8 +231,9 @@ export default async function MatchDetailPage({
                         heroDamage: p.hero_damage || 0,
                         heroHealing: p.hero_healing || 0,
                         towerDamage: p.tower_damage || 0,
-                        items: [p.item_0, p.item_1, p.item_2, p.item_3, p.item_4, p.item_5].map((id) => (id ? `item_${id}` : '')),
-                        neutralItem: p.item_neutral ? `item_${p.item_neutral}` : undefined,
+                        // ปรับให้ดึงค่าเป็น ID ตัวเลขโดยตรง ไม่ต้องมีคำว่า 'item_'
+                        items: [p.item_0, p.item_1, p.item_2, p.item_3, p.item_4, p.item_5],
+                        neutralItem: p.item_neutral,
                         hasScepter: p.aghanims_scepter === 1,
                         hasShard: p.aghanims_shard === 1,
                     };
@@ -257,7 +276,12 @@ export default async function MatchDetailPage({
                     direScore={matchData.direScore}
                 />
 
-                <MatchDetailView matchData={matchData} />
+                {/* ส่ง props ข้อมูลฮีโร่และไอเทมลงไปให้ MatchDetailView เพื่อนำไปใช้กับ OverviewTable ต่อ */}
+                <MatchDetailView
+                    matchData={matchData}
+                    heroIdToImg={heroIdToImg}
+                    itemIdToName={itemIdToName}
+                />
             </div>
         </main>
     );

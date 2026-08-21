@@ -9,33 +9,32 @@ interface TowerMapGridProps {
     barracksDire?: number;
 }
 
-// พิกัดป้อมตามค่าที่อลิสระบุ (Bit 0 - 10)
 const TOWER_COORDS = [
-    // Radiant Towers (Bit 0 to 10)
-    { id: 'rad_t1_top', team: 'radiant', label: 'T1 Top', x: 18, y: 28, bit: 0 },
-    { id: 'rad_t2_top', team: 'radiant', label: 'T2 Top', x: 18, y: 18, bit: 1 },
-    { id: 'rad_t3_top', team: 'radiant', label: 'T3 Top', x: 12, y: 12, bit: 2 },
-    { id: 'rad_t1_mid', team: 'radiant', label: 'T1 Mid', x: 45, y: 55, bit: 3 },
-    { id: 'rad_t2_mid', team: 'radiant', label: 'T2 Mid', x: 58, y: 42, bit: 4 },
-    { id: 'rad_t3_mid', team: 'radiant', label: 'T3 Mid', x: 70, y: 30, bit: 5 },
-    { id: 'rad_t1_bot', team: 'radiant', label: 'T1 Bot', x: 75, y: 82, bit: 6 },
-    { id: 'rad_t2_bot', team: 'radiant', label: 'T2 Bot', x: 82, y: 70, bit: 7 },
-    { id: 'rad_t3_bot', team: 'radiant', label: 'T3 Bot', x: 88, y: 58, bit: 8 },
-    { id: 'rad_t4_top', team: 'radiant', label: 'T4 Top', x: 78, y: 22, bit: 9 },
-    { id: 'rad_t4_bot', team: 'radiant', label: 'T4 Bot', x: 80, y: 26, bit: 10 },
+    // RADIANT — bottom-left base
+    { id: 'rad_t1_top', team: 'radiant', label: 'T1 Top', x: 15, y: 30, bit: 0 },
+    { id: 'rad_t1_mid', team: 'radiant', label: 'T1 Mid', x: 42, y: 58, bit: 1 },
+    { id: 'rad_t1_bot', team: 'radiant', label: 'T1 Bot', x: 74, y: 85, bit: 2 },
+    { id: 'rad_t2_top', team: 'radiant', label: 'T2 Top', x: 12, y: 18, bit: 3 },
+    { id: 'rad_t2_mid', team: 'radiant', label: 'T2 Mid', x: 32, y: 45, bit: 4 },
+    { id: 'rad_t2_bot', team: 'radiant', label: 'T2 Bot', x: 78, y: 78, bit: 5 },
+    { id: 'rad_t3_top', team: 'radiant', label: 'T3 Top', x: 10, y: 12, bit: 6 },
+    { id: 'rad_t3_mid', team: 'radiant', label: 'T3 Mid', x: 22, y: 30, bit: 7 },
+    { id: 'rad_t3_bot', team: 'radiant', label: 'T3 Bot', x: 82, y: 68, bit: 8 },
+    { id: 'rad_t4_top', team: 'radiant', label: 'Ancient Top', x: 18, y: 20, bit: 9 },
+    { id: 'rad_t4_bot', team: 'radiant', label: 'Ancient Bot', x: 22, y: 24, bit: 10 },
 
-    // Dire Towers (Bit 0 to 10)
-    { id: 'dire_t1_top', team: 'dire', label: 'T1 Top', x: 22, y: 72, bit: 0 },
-    { id: 'dire_t2_top', team: 'dire', label: 'T2 Top', x: 18, y: 80, bit: 1 },
-    { id: 'dire_t3_top', team: 'dire', label: 'T3 Top', x: 12, y: 88, bit: 2 },
-    { id: 'dire_t1_mid', team: 'dire', label: 'T1 Mid', x: 55, y: 45, bit: 3 },
-    { id: 'dire_t2_mid', team: 'dire', label: 'T2 Mid', x: 42, y: 58, bit: 4 },
-    { id: 'dire_t3_mid', team: 'dire', label: 'T3 Mid', x: 30, y: 70, bit: 5 },
-    { id: 'dire_t1_bot', team: 'dire', label: 'T1 Bot', x: 82, y: 18, bit: 6 },
-    { id: 'dire_t2_bot', team: 'dire', label: 'T2 Bot', x: 88, y: 28, bit: 7 },
-    { id: 'dire_t3_bot', team: 'dire', label: 'T3 Bot', x: 88, y: 40, bit: 8 },
-    { id: 'dire_t4_top', team: 'dire', label: 'T4 Top', x: 22, y: 78, bit: 9 },
-    { id: 'dire_t4_bot', team: 'dire', label: 'T4 Bot', x: 20, y: 74, bit: 10 },
+    // DIRE — top-right base
+    { id: 'dire_t1_top', team: 'dire', label: 'T1 Top', x: 26, y: 15, bit: 0 },
+    { id: 'dire_t1_mid', team: 'dire', label: 'T1 Mid', x: 58, y: 42, bit: 1 },
+    { id: 'dire_t1_bot', team: 'dire', label: 'T1 Bot', x: 85, y: 72, bit: 2 },
+    { id: 'dire_t2_top', team: 'dire', label: 'T2 Top', x: 18, y: 10, bit: 3 },
+    { id: 'dire_t2_mid', team: 'dire', label: 'T2 Mid', x: 68, y: 32, bit: 4 },
+    { id: 'dire_t2_bot', team: 'dire', label: 'T2 Bot', x: 88, y: 78, bit: 5 },
+    { id: 'dire_t3_top', team: 'dire', label: 'T3 Top', x: 12, y: 8, bit: 6 },
+    { id: 'dire_t3_mid', team: 'dire', label: 'T3 Mid', x: 78, y: 22, bit: 7 },
+    { id: 'dire_t3_bot', team: 'dire', label: 'T3 Bot', x: 88, y: 85, bit: 8 },
+    { id: 'dire_t4_top', team: 'dire', label: 'Ancient Top', x: 78, y: 12, bit: 9 },
+    { id: 'dire_t4_bot', team: 'dire', label: 'Ancient Bot', x: 82, y: 16, bit: 10 },
 ];
 
 export default function TowerMapGrid({

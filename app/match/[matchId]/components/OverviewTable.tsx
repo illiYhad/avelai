@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { getHeroImageUrl, getItemImageUrl } from '@/lib/dotaAssets';
 
 export interface OverviewPlayer {
     playerSlot: number;
@@ -27,13 +26,22 @@ export interface OverviewPlayer {
 
 interface OverviewTableProps {
     players?: OverviewPlayer[];
+    heroIdToImg?: Record<number, string>;
+    itemIdToName?: Record<number, string>;
 }
 
-export default function OverviewTable({ players = [] }: OverviewTableProps) {
+export default function OverviewTable({ players = [], heroIdToImg, itemIdToName }: OverviewTableProps) {
     const formatNum = (num?: number) => {
         if (!num && num !== 0) return '—';
         if (num >= 1000) return `${(num / 1000).toFixed(1)}k`;
         return num.toString();
+    };
+
+    const getItemUrl = (itemId?: number | string) => {
+        if (!itemId || itemId === 0 || itemId === '0') return '';
+        const name = itemIdToName?.[Number(itemId)] ?? '';
+        if (!name) return '';
+        return `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/${name}.png`;
     };
 
     return (
@@ -56,7 +64,7 @@ export default function OverviewTable({ players = [] }: OverviewTableProps) {
                 <tbody className="divide-y divide-neutral-800/60 font-mono text-[11px]">
                     {players.map((p, idx) => {
                         const isRadiant = (p.playerSlot || 0) < 128;
-                        const heroImg = getHeroImageUrl(p.heroName, p.heroId);
+                        const heroImg = heroIdToImg?.[p.heroId] ?? '';
 
                         return (
                             <tr key={idx} className="transition-colors hover:bg-neutral-800/30">
@@ -113,8 +121,7 @@ export default function OverviewTable({ players = [] }: OverviewTableProps) {
                                         {/* Main 6 Items Grid */}
                                         <div className="grid grid-cols-6 gap-1 bg-black/60 p-1 border border-neutral-800 rounded-sm">
                                             {Array.from({ length: 6 }).map((_, itemIdx) => {
-                                                const itm = p.items?.[itemIdx];
-                                                const itemUrl = getItemImageUrl(itm);
+                                                const itemUrl = getItemUrl(p.items?.[itemIdx]);
                                                 return (
                                                     <div
                                                         key={itemIdx}
@@ -139,9 +146,9 @@ export default function OverviewTable({ players = [] }: OverviewTableProps) {
 
                                         {/* Neutral Item */}
                                         <div className="h-5 w-5 rounded-full border border-neutral-700 bg-[#0A0A0F] overflow-hidden flex items-center justify-center">
-                                            {p.neutralItem && getItemImageUrl(p.neutralItem) ? (
+                                            {p.neutralItem && getItemUrl(p.neutralItem) ? (
                                                 <img
-                                                    src={getItemImageUrl(p.neutralItem)}
+                                                    src={getItemUrl(p.neutralItem)}
                                                     alt="neutral"
                                                     className="h-full w-full object-cover"
                                                     onError={(e) => {

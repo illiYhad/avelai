@@ -1,27 +1,18 @@
-export interface DotaHeroConstant {
-    id: number;
-    name: string;
-    localized_name: string;
-    primary_attr: string;
-    attack_type: string;
-    roles: string[];
-    img: string;
-    icon: string;
+export async function getHeroes(): Promise<Record<string, { img: string; localized_name: string }>> {
+    const res = await fetch(
+        'https://api.opendota.com/api/constants/heroes',
+        { next: { revalidate: 86400 } }
+    );
+    return res.json();
 }
 
-export async function getHeroes(): Promise<Record<number, DotaHeroConstant>> {
-    try {
-        const res = await fetch('https://api.opendota.com/api/constants/heroes', {
-            next: { revalidate: 86400 }, // แคชอัตโนมัติ 24 ชม.
-        });
-
-        if (!res.ok) {
-            throw new Error(`Failed to fetch heroes: ${res.statusText}`);
-        }
-
-        return await res.json();
-    } catch (error) {
-        console.error('Error fetching Dota heroes constants:', error);
-        return {};
+// map hero ID number → img URL
+export async function getHeroIdToImg(): Promise<Record<number, string>> {
+    const heroes = await getHeroes();
+    const map: Record<number, string> = {};
+    for (const [, data] of Object.entries(heroes)) {
+        const d = data as { id: number; img: string };
+        map[d.id] = `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes${d.img}`;
     }
+    return map;
 }
