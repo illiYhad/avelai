@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
 import OverviewTable from './OverviewTable';
+import React, { useState } from 'react';
 import TowerMapGrid from './TowerMapGrid';
 import PerformanceRadar from './PerformanceRadar';
+import DeepAnalyticsBoard from './DeepAnalyticsBoard';
 
 interface MatchData {
     overviewPlayers: any[];
@@ -70,8 +71,8 @@ export default function MatchDetailView({
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         className={`flex items-center gap-1.5 px-5 py-3 transition-all ${activeTab === tab.id
-                                ? 'border-b-2 border-[#00D4FF] text-[#00D4FF] bg-[#00D4FF]/5'
-                                : 'text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800/20'
+                            ? 'border-b-2 border-[#00D4FF] text-[#00D4FF] bg-[#00D4FF]/5'
+                            : 'text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800/20'
                             }`}
                     >
                         <span>{tab.icon}</span>
@@ -205,59 +206,19 @@ export default function MatchDetailView({
                         players={matchData.overviewPlayers}
                         heroIdToImg={heroIdToImg}
                         itemIdToName={itemIdToName}
+                        draftTimeline={matchData.draftTimings}
+                        radiantWin={matchData.radiantWin}
                     />
                 )}
 
-                {/* TAB 3: ADVANTAGE */}
+                {/* TAB 3: ADVANTAGE / DEEP ANALYTICS */}
                 {activeTab === 'advantage' && (
-                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                        <div className="border border-[rgba(0,212,255,0.2)] bg-[#111118] p-5">
-                            <h3 className="mb-4 font-orbitron text-xs font-bold uppercase tracking-wider text-[#00D4FF]">
-                                📈 TEAM ADVANTAGE
-                            </h3>
-                            {matchData.radiantGoldAdv?.length > 0 ? (
-                                <div className="flex h-48 items-end gap-px">
-                                    {matchData.radiantGoldAdv.map((val: number, i: number) => {
-                                        const max = Math.max(...matchData.radiantGoldAdv.map(Math.abs), 1);
-                                        const pct = Math.abs(val) / max;
-                                        const isPos = val >= 0;
-                                        return (
-                                            <div key={i} className="flex flex-1 flex-col items-center justify-center gap-px">
-                                                {isPos && (
-                                                    <div
-                                                        className="w-full bg-[#00D4FF]/70 rounded-t-sm"
-                                                        style={{ height: `${pct * 90}px` }}
-                                                    />
-                                                )}
-                                                <div className="h-px w-full bg-neutral-700" />
-                                                {!isPos && (
-                                                    <div
-                                                        className="w-full bg-[#C9A84C]/70 rounded-b-sm"
-                                                        style={{ height: `${pct * 90}px` }}
-                                                    />
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            ) : (
-                                <div className="flex h-48 items-center justify-center font-mono text-xs text-neutral-600">
-                  // TACTICAL DATA UNAVAILABLE FOR THIS MATCH
-                                </div>
-                            )}
-                            <div className="mt-2 flex justify-between font-mono text-[9px] text-neutral-600">
-                                <span className="text-[#00D4FF]">▲ RADIANT</span>
-                                <span className="text-[#C9A84C]">DIRE ▼</span>
-                            </div>
-                        </div>
-
-                        <TowerMapGrid
-                            towerRadiant={matchData.towerStatusRadiant}
-                            towerDire={matchData.towerStatusDire}
-                            barracksRadiant={matchData.barracksStatusRadiant}
-                            barracksDire={matchData.barracksStatusDire}
-                        />
-                    </div>
+                    <DeepAnalyticsBoard
+                        matchData={matchData}
+                        players={matchData.overviewPlayers || matchData.players}
+                        heroIdToImg={heroIdToImg}
+                        itemIdToName={itemIdToName}
+                    />
                 )}
 
                 {/* TAB 4: PERFORMANCE */}
