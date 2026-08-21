@@ -31,12 +31,19 @@ interface PerformanceRadarProps {
     direScore?: number;
 }
 
+const POS_COLORS: Record<string, string> = {
+    'Pos 1': '#E8384F',
+    'Pos 2': '#2E9BFF',
+    'Pos 3': '#39FF6A',
+    'Pos 4': '#D63CE8',
+    'Pos 5': '#C8CDD4',
+};
+
 export default function PerformanceRadar({
     players = [],
     radiantScore = 0,
     direScore = 0,
 }: PerformanceRadarProps) {
-    // Default เลือก 2 คนแรก (Radiant Pos 1 กับ Dire Pos 1) ให้กราฟขึ้นทันที
     const [selectedSlots, setSelectedSlots] = useState<number[]>(() => {
         const radiantPlayer = players.find((p) => (p.playerSlot || 0) < 128);
         const direPlayer = players.find((p) => (p.playerSlot || 0) >= 128);
@@ -85,7 +92,7 @@ export default function PerformanceRadar({
 
     return (
         <div className="space-y-6 font-mono">
-            {/* ⚙️ Radar Chart Panel */}
+            {/* Radar Panel */}
             <div className="space-y-6 border border-[#00D4FF]/30 bg-[#111118] p-6 shadow-[0_0_25px_rgba(0,212,255,0.05)]">
                 <div className="flex flex-wrap items-center justify-between gap-4 border-b border-neutral-800 pb-4">
                     <h3 className="font-orbitron text-xs font-bold uppercase tracking-wider text-[#00D4FF]">
@@ -96,11 +103,13 @@ export default function PerformanceRadar({
                     </span>
                 </div>
 
-                {/* Player Toggle Chips */}
+                {/* Player Chips */}
                 <div className="flex flex-wrap gap-2">
                     {players.map((p) => {
                         const isRadiant = (p.playerSlot || 0) < 128;
                         const isSelected = selectedSlots.includes(p.playerSlot);
+                        const posColor = POS_COLORS[p.role] ?? '#C8CDD4';
+
                         return (
                             <button
                                 key={p.playerSlot}
@@ -112,13 +121,19 @@ export default function PerformanceRadar({
                                         : 'border-neutral-800 bg-neutral-900/50 text-neutral-500 hover:border-neutral-700'
                                     }`}
                             >
-                                {p.playerName} <span className="text-[10px] opacity-70">({p.role})</span>
+                                {p.playerName}{' '}
+                                <span
+                                    className="rounded-xs px-1 py-0.2 text-[9px]"
+                                    style={{ color: posColor, border: `1px solid ${posColor}60`, background: `${posColor}15` }}
+                                >
+                                    {p.role}
+                                </span>
                             </button>
                         );
                     })}
                 </div>
 
-                {/* Radar Graphic */}
+                {/* Radar Chart */}
                 <div className="h-80 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <RadarChart cx="50%" cy="50%" outerRadius="75%" data={chartData}>
@@ -152,7 +167,7 @@ export default function PerformanceRadar({
                 </div>
             </div>
 
-            {/* 📊 Bottom Performance Metrics Breakdown Table */}
+            {/* Metrics Table */}
             <div className="overflow-x-auto border border-neutral-800 bg-[#111118] shadow-[0_0_25px_rgba(0,212,255,0.05)]">
                 <table className="w-full text-left text-xs">
                     <thead className="border-b border-neutral-800 bg-[#0A0A0F] font-orbitron text-[11px] text-[#00D4FF]">
@@ -172,6 +187,7 @@ export default function PerformanceRadar({
                             const teamKills = isRadiant ? (radiantScore || 1) : (direScore || 1);
                             const fightPart = Math.min(100, (((p.kills + p.assists) / teamKills) * 100) || 0).toFixed(1);
                             const kpPerDeath = (p.totalKp / Math.max(1, p.deaths)).toFixed(1);
+                            const posColor = POS_COLORS[p.role] ?? '#C8CDD4';
 
                             return (
                                 <tr key={idx} className="transition-colors hover:bg-neutral-800/30">
@@ -180,7 +196,10 @@ export default function PerformanceRadar({
                                             <span className={`font-semibold ${isRadiant ? 'text-[#00D4FF]' : 'text-[#C9A84C]'}`}>
                                                 {p.playerName}
                                             </span>
-                                            <span className="border border-neutral-800 bg-neutral-900 px-1.5 py-0.5 text-[9px] text-neutral-400">
+                                            <span
+                                                className="rounded-xs px-1.5 py-0.5 text-[9px] font-bold"
+                                                style={{ color: posColor, border: `1px solid ${posColor}40`, background: `${posColor}15` }}
+                                            >
                                                 {p.role}
                                             </span>
                                         </div>
