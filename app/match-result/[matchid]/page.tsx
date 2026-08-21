@@ -1,155 +1,266 @@
-'use client';
+import React from 'react';
+import MatchHeader from './components/MatchHeader';
+import MatchDetailView from './components/MatchDetailView';
 
-import React, { use } from 'react';
-import Link from 'next/link';
+// Helper: Role Mapping
+const ROLE_MAP: Record<number, string> = {
+  0: 'Pos 1',
+  1: 'Pos 2',
+  2: 'Pos 3',
+  3: 'Pos 4',
+  4: 'Pos 5',
+  128: 'Pos 1',
+  129: 'Pos 2',
+  130: 'Pos 3',
+  131: 'Pos 4',
+  132: 'Pos 5',
+};
 
-interface PageProps {
-  params: Promise<{
-    matchId: string;
-  }>;
-}
+// 🎯 Mock Data แมตช์ #8956631986
+const FALLBACK_MATCH = {
+  matchId: '8956631986',
+  radiantWin: true,
+  duration: 2533, // 42:13
+  radiantScore: 47,
+  direScore: 43,
+  radiantTowersKilled: 9,
+  direTowersKilled: 4,
+  towerStatusRadiant: 1844,
+  towerStatusDire: 0,
+  barracksStatusRadiant: 63,
+  barracksStatusDire: 0,
+  radiantGoldAdv: [0, 200, -500, -1200, 400, 1500, 3200, 4800, 5200, 7800],
+  radiantXpAdv: [0, 100, -200, -800, 600, 2100, 4500, 6000, 6800, 9500],
+  kpPlayers: [
+    {
+      playerSlot: 0,
+      heroId: 1,
+      heroName: 'Slark',
+      role: 'Pos 1',
+      playerName: 'AVELAi_God',
+      isRegisteredUser: true,
+      kills: 18,
+      deaths: 3,
+      assists: 21,
+      towerKills: 4,
+      baseKp: 24.8,
+      resultMultiplier: 1.0,
+      roleBonus: 2.5,
+      totalKp: 27.3,
+      matchOutcome: 25,
+      finalScore: 52.3,
+    },
+    {
+      playerSlot: 1,
+      heroId: 2,
+      heroName: 'Ogre Magi',
+      role: 'Pos 5',
+      playerName: 'Anonymous',
+      isRegisteredUser: false,
+      kills: 9,
+      deaths: 9,
+      assists: 31,
+      towerKills: 1,
+      baseKp: 15.8,
+      resultMultiplier: 1.0,
+      roleBonus: 1.2,
+      totalKp: 17.0,
+      matchOutcome: 25,
+      finalScore: 42.0,
+    },
+    {
+      playerSlot: 128,
+      heroId: 3,
+      heroName: 'Invoker',
+      role: 'Pos 2',
+      playerName: 'Dire_Carry',
+      isRegisteredUser: false,
+      kills: 16,
+      deaths: 8,
+      assists: 12,
+      towerKills: 2,
+      baseKp: 19.6,
+      resultMultiplier: 0.5,
+      roleBonus: 1.5,
+      totalKp: 11.3,
+      matchOutcome: -10,
+      finalScore: 1.3,
+    },
+  ],
+  overviewPlayers: [
+    {
+      playerSlot: 0,
+      heroId: 1,
+      heroName: 'Slark',
+      playerName: 'AVELAi_God',
+      isRegisteredUser: true,
+      kills: 18,
+      deaths: 3,
+      assists: 21,
+      netWorth: 26700,
+      lastHits: 235,
+      denies: 28,
+      gpm: 682,
+      xpm: 858,
+      heroDamage: 44900,
+      heroHealing: 0,
+      towerDamage: 15200,
+      items: ['power_treads', 'diffusal_blade', 'black_king_bar', 'skadi', 'abyssal_blade', 'butterfly'],
+      neutralItem: 'apex',
+      hasScepter: true,
+      hasShard: true,
+    },
+    {
+      playerSlot: 128,
+      heroId: 3,
+      heroName: 'Invoker',
+      playerName: 'Dire_Carry',
+      isRegisteredUser: false,
+      kills: 16,
+      deaths: 8,
+      assists: 12,
+      netWorth: 19100,
+      lastHits: 228,
+      denies: 5,
+      gpm: 498,
+      xpm: 690,
+      heroDamage: 33900,
+      heroHealing: 9200,
+      towerDamage: 538,
+      items: ['travel_boots', 'hand_of_midas', 'aghanims_scepter', 'refresher', 'black_king_bar', 'octarine_core'],
+      neutralItem: 'philosophers_stone',
+      hasScepter: true,
+      hasShard: false,
+    },
+  ],
+  performancePlayers: [
+    {
+      playerSlot: 0,
+      playerName: 'AVELAi_God',
+      heroName: 'Slark',
+      role: 'Pos 1',
+      kills: 18,
+      deaths: 3,
+      assists: 21,
+      totalKp: 27.3,
+      towerKills: 4,
+      heroDamage: 44900,
+      heroHealing: 0,
+    },
+    {
+      playerSlot: 128,
+      playerName: 'Dire_Carry',
+      heroName: 'Invoker',
+      role: 'Pos 2',
+      kills: 16,
+      deaths: 8,
+      assists: 12,
+      totalKp: 11.3,
+      towerKills: 2,
+      heroDamage: 33900,
+      heroHealing: 9200,
+    },
+  ],
+};
 
-export default function MatchResultPage({ params }: PageProps) {
-  const resolvedParams = use(params);
-  const matchId = resolvedParams.matchId;
+export default async function MatchDetailPage({
+  params,
+}: {
+  params: Promise<{ matchid: string }>;
+}) {
+  const { matchid } = await params;
 
-  // ข้อมูลจำลองสถิติผู้เล่นหลังจบแมตช์
-  const radiantPlayers = [
-    { name: '23savage_AFI', hero: 'Morphling', kda: '18 / 2 / 9', eloChange: '+25', isMvp: true, damage: '42.8k' },
-    { name: 'Mikoto_God', hero: 'Storm Spirit', kda: '12 / 4 / 15', eloChange: '+25', isMvp: false, damage: '31.2k' },
-    { name: 'Jabz_322', hero: 'Centaur Warrunner', kda: '6 / 5 / 22', eloChange: '+25', isMvp: false, damage: '22.4k' },
-    { name: 'Q_Support', hero: 'Mirana', kda: '4 / 6 / 28', eloChange: '+25', isMvp: false, damage: '16.5k' },
-    { name: 'Whitemon_V2', hero: 'Disruptor', kda: '2 / 7 / 24', eloChange: '+25', isMvp: false, damage: '11.0k' },
-  ];
+  let matchData = FALLBACK_MATCH;
+  try {
+    const res = await fetch(`https://api.opendota.com/api/matches/${matchid}`, {
+      next: { revalidate: 3600 },
+    });
+    if (res.ok) {
+      const raw = await res.json();
+      if (raw && raw.players) {
+        const radiantPlayers = raw.players.filter((p: any) => p.player_slot < 128);
+        const direPlayers = raw.players.filter((p: any) => p.player_slot >= 128);
 
-  const direPlayers = [
-    { name: 'Devil-llou', hero: 'Faceless Void', kda: '8 / 8 / 6', eloChange: '-25', damage: '24.1k' },
-    { name: 'Cyber_Phantom', hero: 'Invoker', kda: '7 / 9 / 8', eloChange: '-25', damage: '26.8k' },
-    { name: 'Neon_Viper', hero: 'Slardar', kda: '4 / 8 / 10', eloChange: '-25', damage: '14.2k' },
-    { name: 'Glitch_Echo', hero: 'Rubick', kda: '3 / 9 / 12', eloChange: '-25', damage: '12.6k' },
-    { name: 'Zero_Latency', hero: 'Crystal Maiden', kda: '2 / 10 / 11', eloChange: '-25', damage: '8.4k' },
-  ];
+        const processed = raw.players.map((p: any, idx: number) => {
+          const isRadiant = p.player_slot < 128;
+          const isWin = isRadiant ? raw.radiant_win : !raw.radiant_win;
+          const baseKp = Math.max(-10, (p.kills * 1.0) - (p.deaths * 0.5) + (p.assists * 0.3) + ((p.tower_kills || 0) * 2.0));
+          const resultMultiplier = isWin ? 1.0 : 0.5;
+          const roleBonus = 1.5;
+          const totalKp = baseKp * resultMultiplier + roleBonus;
+          const matchOutcome = isWin ? 25 : -10;
+
+          return {
+            playerSlot: p.player_slot,
+            heroId: p.hero_id,
+            heroName: `Hero_${p.hero_id}`,
+            role: ROLE_MAP[p.player_slot] || `Pos ${(idx % 5) + 1}`,
+            playerName: p.personaname || (p.account_id ? `Player_${p.account_id}` : 'CLASSIFIED'),
+            isRegisteredUser: idx === 0,
+            kills: p.kills || 0,
+            deaths: p.deaths || 0,
+            assists: p.assists || 0,
+            towerKills: p.tower_kills || 0,
+            baseKp,
+            resultMultiplier,
+            roleBonus,
+            totalKp,
+            matchOutcome,
+            finalScore: totalKp + matchOutcome,
+            netWorth: p.net_worth || 0,
+            lastHits: p.last_hits || 0,
+            denies: p.denies || 0,
+            gpm: p.gold_per_min || 0,
+            xpm: p.xp_per_min || 0,
+            heroDamage: p.hero_damage || 0,
+            heroHealing: p.hero_healing || 0,
+            towerDamage: p.tower_damage || 0,
+            items: [p.item_0, p.item_1, p.item_2, p.item_3, p.item_4, p.item_5].map((id) => (id ? `item_${id}` : '')),
+            neutralItem: p.item_neutral ? `item_${p.item_neutral}` : undefined,
+            hasScepter: p.aghanims_scepter === 1,
+            hasShard: p.aghanims_shard === 1,
+          };
+        });
+
+        matchData = {
+          matchId: raw.match_id?.toString() || matchId,
+          radiantWin: !!raw.radiant_win,
+          duration: raw.duration || 0,
+          radiantScore: raw.radiant_score ?? radiantPlayers.reduce((s: number, p: any) => s + (p.kills || 0), 0),
+          direScore: raw.dire_score ?? direPlayers.reduce((s: number, p: any) => s + (p.kills || 0), 0),
+          radiantTowersKilled: direPlayers.reduce((s: number, p: any) => s + (p.tower_kills || 0), 0),
+          direTowersKilled: radiantPlayers.reduce((s: number, p: any) => s + (p.tower_kills || 0), 0),
+          towerStatusRadiant: raw.tower_status_radiant || 0,
+          towerStatusDire: raw.tower_status_dire || 0,
+          barracksStatusRadiant: raw.barracks_status_radiant || 0,
+          barracksStatusDire: raw.barracks_status_dire || 0,
+          radiantGoldAdv: raw.radiant_gold_adv || [],
+          radiantXpAdv: raw.radiant_xp_adv || [],
+          kpPlayers: processed,
+          overviewPlayers: processed,
+          performancePlayers: processed,
+        };
+      }
+    }
+  } catch (e) {
+    console.error('Fetch OpenDota error:', e);
+  }
 
   return (
-    <div className="min-h-screen bg-[#07090E] text-white p-4 md:p-8 flex flex-col items-center relative overflow-hidden font-mono selection:bg-[#00D4FF] selection:text-black">
-      {/* Grid Pattern Background */}
-      <div className="absolute inset-0 bg-[radial-gradient(#00D4FF_1px,transparent_1px)] [background-size:28px_28px] opacity-10 pointer-events-none" />
+    <main className="relative min-h-screen bg-[#0A0A0F] text-[#E0E0E0] pb-24 font-inter">
+      <div className="pointer-events-none fixed inset-0 z-50 bg-[radial-gradient(rgba(0,212,255,0.03)_1px,transparent_0)] bg-[size:24px_24px] opacity-40"></div>
 
-      {/* Top Header */}
-      <header className="w-full max-w-6xl flex flex-col sm:flex-row items-center justify-between border-b border-[#00D4FF]/20 pb-4 mb-6 z-10 gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-[#00D4FF] text-xs tracking-widest uppercase font-bold">TERMINAL DECRYPTION PROTOCOL</span>
-          </div>
-          <h1 className="text-2xl md:text-3xl font-black tracking-wider text-white mt-1">
-            POST-MATCH INTEL
-          </h1>
-        </div>
+      <div className="mx-auto max-w-7xl px-4 pt-6">
+        <MatchHeader
+          matchId={matchData.matchid}
+          radiantWin={matchData.radiantWin}
+          duration={matchData.duration}
+          radiantScore={matchData.radiantScore}
+          direScore={matchData.direScore}
+        />
 
-        <div className="flex items-center gap-3 bg-[#0B0F17] border border-[#C9A84C]/40 px-4 py-2 rounded-lg">
-          <span className="text-[10px] text-gray-400">MATCH ID:</span>
-          <span className="text-[#C9A84C] font-black tracking-wider">{matchId}</span>
-        </div>
-      </header>
-
-      {/* Victory Banner */}
-      <div className="w-full max-w-6xl mb-8 p-6 bg-gradient-to-r from-[#00D4FF]/10 via-[#0B0F17] to-[#00D4FF]/10 border border-[#00D4FF]/40 rounded-xl text-center relative z-10 shadow-[0_0_30px_rgba(0,212,255,0.15)]">
-        <div className="text-xs text-[#00D4FF] tracking-widest uppercase mb-1">ARENA RESOLUTION</div>
-        <h2 className="text-3xl sm:text-4xl font-black tracking-widest text-[#00D4FF] drop-shadow-[0_0_15px_rgba(0,212,255,0.8)]">
-          VICTORY: TEAM RADIANT
-        </h2>
-        <div className="mt-2 text-xs text-gray-400 flex items-center justify-center gap-4 font-mono">
-          <span>DURATION: <b className="text-white">38:42</b></span>
-          <span>•</span>
-          <span>SCORE: <b className="text-[#00D4FF]">42</b> - <b className="text-[#C9A84C]">24</b></span>
-        </div>
+        <MatchDetailView matchData={matchData} />
       </div>
-
-      {/* Stats Tables */}
-      <main className="w-full max-w-6xl space-y-6 z-10">
-        {/* Radiant Side */}
-        <div className="bg-[#0B0F17]/90 border border-[#00D4FF]/30 rounded-xl p-4 overflow-x-auto">
-          <div className="flex items-center justify-between pb-3 border-b border-[#00D4FF]/20 mb-3">
-            <span className="text-[#00D4FF] font-bold text-sm tracking-wider">TEAM RADIANT (WINNERS)</span>
-            <span className="text-xs text-green-400">+25 ELO POOL ALLOCATED</span>
-          </div>
-          <table className="w-full text-left text-xs font-mono">
-            <thead>
-              <tr className="text-gray-400 border-b border-gray-800">
-                <th className="pb-2">OPERATOR</th>
-                <th className="pb-2">HERO</th>
-                <th className="pb-2 text-center">K / D / A</th>
-                <th className="pb-2 text-right">HERO DMG</th>
-                <th className="pb-2 text-right">RATING</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-800/60">
-              {radiantPlayers.map((p, idx) => (
-                <tr key={idx} className="hover:bg-white/[0.02]">
-                  <td className="py-2.5 flex items-center gap-2">
-                    <span className="font-bold text-white">{p.name}</span>
-                    {p.isMvp && (
-                      <span className="px-1.5 py-0.5 text-[10px] bg-[#C9A84C]/20 border border-[#C9A84C] text-[#C9A84C] font-black rounded">
-                        MVP
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-2.5 text-gray-300">{p.hero}</td>
-                  <td className="py-2.5 text-center text-gray-300">{p.kda}</td>
-                  <td className="py-2.5 text-right text-gray-400">{p.damage}</td>
-                  <td className="py-2.5 text-right font-bold text-green-400">{p.eloChange}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Dire Side */}
-        <div className="bg-[#0B0F17]/90 border border-[#C9A84C]/30 rounded-xl p-4 overflow-x-auto">
-          <div className="flex items-center justify-between pb-3 border-b border-[#C9A84C]/20 mb-3">
-            <span className="text-[#C9A84C] font-bold text-sm tracking-wider">TEAM DIRE (DEFEATED)</span>
-            <span className="text-xs text-red-400">-25 ELO DEDUCTED</span>
-          </div>
-          <table className="w-full text-left text-xs font-mono">
-            <thead>
-              <tr className="text-gray-400 border-b border-gray-800">
-                <th className="pb-2">OPERATOR</th>
-                <th className="pb-2">HERO</th>
-                <th className="pb-2 text-center">K / D / A</th>
-                <th className="pb-2 text-right">HERO DMG</th>
-                <th className="pb-2 text-right">RATING</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-800/60">
-              {direPlayers.map((p, idx) => (
-                <tr key={idx} className="hover:bg-white/[0.02]">
-                  <td className="py-2.5 font-bold text-white">{p.name}</td>
-                  <td className="py-2.5 text-gray-300">{p.hero}</td>
-                  <td className="py-2.5 text-center text-gray-300">{p.kda}</td>
-                  <td className="py-2.5 text-right text-gray-400">{p.damage}</td>
-                  <td className="py-2.5 text-right font-bold text-red-400">{p.eloChange}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </main>
-
-      {/* Navigation Footer */}
-      <footer className="w-full max-w-6xl flex justify-between items-center mt-8 pt-6 border-t border-gray-800 z-10">
-        <Link
-          href="/dashboard"
-          className="px-6 py-2.5 border border-gray-700 hover:border-gray-500 text-gray-400 hover:text-white rounded-lg transition-all text-xs tracking-widest uppercase font-bold"
-        >
-          ← RETURN TO DASHBOARD
-        </Link>
-        <Link
-          href="/leaderboard"
-          className="px-6 py-2.5 bg-[#C9A84C] hover:bg-[#C9A84C]/80 text-black rounded-lg transition-all text-xs tracking-widest uppercase font-black shadow-[0_0_15px_rgba(201,168,76,0.3)]"
-        >
-          VIEW LEADERBOARD →
-        </Link>
-      </footer>
-    </div>
+    </main>
   );
 }
