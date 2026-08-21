@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import OverviewTable from './OverviewTable';
 import TowerMapGrid from './TowerMapGrid';
+import PerformanceRadar from './PerformanceRadar';
 
 interface MatchData {
     overviewPlayers: any[];
@@ -14,6 +15,8 @@ interface MatchData {
     barracksStatusDire: number;
     radiantGoldAdv: number[];
     radiantXpAdv: number[];
+    radiantScore?: number;
+    direScore?: number;
     [key: string]: any;
 }
 
@@ -39,29 +42,16 @@ export default function MatchDetailView({
 }: MatchDetailViewProps) {
     const [activeTab, setActiveTab] = useState<TabId>('kp');
 
-    // ---- helpers ----
-    const fmtNum = (n?: number) => {
-        if (n === undefined || n === null) return '—';
-        if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-        return n.toString();
-    };
-
-    const teamKills = (players: any[], slot: 'radiant' | 'dire') =>
-        players
-            .filter(p => slot === 'radiant' ? p.playerSlot < 128 : p.playerSlot >= 128)
-            .reduce((s, p) => s + (p.kills || 0) + (p.assists || 0), 0) || 1;
-
-    // ── ดึงรูป Hero จาก Constants ที่อลิสเตรียมไว้ ──
     const getHeroImg = (heroId: number): string => {
-        return heroIdToImg[heroId] ?? '';
+        const path = heroIdToImg[heroId];
+        if (!path) return '';
+        return path.startsWith('http') ? path : `https://cdn.cloudflare.steamstatic.com${path}`;
     };
 
-    // ---- KP TABLE ----
     const kpPlayers = [...(matchData.kpPlayers || matchData.overviewPlayers || [])]
         .sort((a, b) => (b.finalScore ?? 0) - (a.finalScore ?? 0));
 
-    const maxFinalScore = Math.max(...kpPlayers.map(p => p.finalScore ?? 0), 1);
-
+    const maxFinalScore = Math.max(...kpPlayers.map((p) => p.finalScore ?? 0), 1);
     const topPerformer = kpPlayers[0];
 
     const POS_COLORS: Record<string, string> = {
@@ -74,10 +64,8 @@ export default function MatchDetailView({
 
     return (
         <div className="mt-6 flex flex-col gap-0">
-
-            {/* ── TAB NAV ── */}
             <div className="flex border-b border-[rgba(0,212,255,0.2)] font-orbitron text-xs tracking-widest">
-                {TABS.map(tab => (
+                {TABS.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
@@ -92,13 +80,10 @@ export default function MatchDetailView({
                 ))}
             </div>
 
-            {/* ── TAB CONTENT ── */}
             <div className="pt-6">
-
-                {/* ══ TAB 1: KP INTEL ══ */}
+                {/* TAB 1: KP INTEL */}
                 {activeTab === 'kp' && (
                     <div className="flex flex-col gap-4">
-                        {/* Top performer callout */}
                         {topPerformer && (
                             <div className="border border-[#00D4FF]/30 bg-[#00D4FF]/5 px-4 py-2 font-mono text-xs text-[#00D4FF]">
                                 {'// TOP PERFORMER: '}
@@ -110,12 +95,11 @@ export default function MatchDetailView({
                             </div>
                         )}
 
-                        {/* KP Breakdown Table */}
                         <div className="overflow-x-auto border border-[rgba(0,212,255,0.2)] bg-[#111118]">
                             <table className="w-full text-left text-[11px] font-mono">
                                 <thead className="border-b border-neutral-800 bg-[#0A0A0F] font-orbitron text-[10px] text-[#00D4FF]">
                                     <tr>
-                                        <th className="px-3 py-3 w-14">HERO</th> {/* เพิ่มคอลัมน์ HERO */}
+                                        <th className="px-3 py-3 w-14">HERO</th>
                                         <th className="px-3 py-3">ROLE</th>
                                         <th className="px-3 py-3">PLAYER</th>
                                         <th className="px-3 py-3 text-center">K/D/A</th>
@@ -135,7 +119,7 @@ export default function MatchDetailView({
                                         const isWin = p.matchOutcome > 0;
                                         const posColor = POS_COLORS[p.role] ?? '#C8CDD4';
                                         const barWidth = Math.max(4, ((p.finalScore ?? 0) / maxFinalScore) * 100);
-                                        const heroImg = getHeroImg(p.heroId); // ดึงรูปภาพ Hero
+                                        const heroImg = getHeroImg(p.heroId);
 
                                         return (
                                             <tr
@@ -143,7 +127,6 @@ export default function MatchDetailView({
                                                 className={`transition-colors hover:bg-[rgba(0,212,255,0.04)] ${p.isRegisteredUser ? 'shadow-[inset_2px_0_0_#00D4FF]' : ''
                                                     } ${isRadiant ? 'bg-[rgba(0,212,255,0.01)]' : 'bg-[rgba(201,168,76,0.01)]'}`}
                                             >
-                                                {/* แสดงรูป Hero */}
                                                 <td className="px-3 py-2.5">
                                                     <div className="h-7 w-12 overflow-hidden border border-neutral-700 bg-neutral-900">
                                                         {heroImg ? (
@@ -216,7 +199,7 @@ export default function MatchDetailView({
                     </div>
                 )}
 
-                {/* ══ TAB 2: OVERVIEW ══ */}
+                {/* TAB 2: OVERVIEW */}
                 {activeTab === 'overview' && (
                     <OverviewTable
                         players={matchData.overviewPlayers}
@@ -225,10 +208,9 @@ export default function MatchDetailView({
                     />
                 )}
 
-                {/* ══ TAB 3: ADVANTAGE ══ */}
+                {/* TAB 3: ADVANTAGE */}
                 {activeTab === 'advantage' && (
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                        {/* Gold/XP Graph */}
                         <div className="border border-[rgba(0,212,255,0.2)] bg-[#111118] p-5">
                             <h3 className="mb-4 font-orbitron text-xs font-bold uppercase tracking-wider text-[#00D4FF]">
                                 📈 TEAM ADVANTAGE
@@ -269,7 +251,6 @@ export default function MatchDetailView({
                             </div>
                         </div>
 
-                        {/* Tower Map */}
                         <TowerMapGrid
                             towerRadiant={matchData.towerStatusRadiant}
                             towerDire={matchData.towerStatusDire}
@@ -279,71 +260,14 @@ export default function MatchDetailView({
                     </div>
                 )}
 
-                {/* ══ TAB 4: PERFORMANCE ══ */}
+                {/* TAB 4: PERFORMANCE */}
                 {activeTab === 'performance' && (
-                    <div className="overflow-x-auto border border-[rgba(0,212,255,0.2)] bg-[#111118]">
-                        <table className="w-full text-left text-[11px] font-mono">
-                            <thead className="border-b border-neutral-800 bg-[#0A0A0F] font-orbitron text-[10px] text-[#00D4FF]">
-                                <tr>
-                                    <th className="px-3 py-3">PLAYER</th>
-                                    <th className="px-3 py-3 text-right">FIGHT PART%</th>
-                                    <th className="px-3 py-3 text-right">KP/DEATH</th>
-                                    <th className="px-3 py-3 text-right">TWR CONTRIB%</th>
-                                    <th className="px-3 py-3 text-right">DMG EFF</th>
-                                    <th className="px-3 py-3 text-right">HEAL CONTRIB%</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-neutral-800/50">
-                                {(matchData.performancePlayers || matchData.overviewPlayers || []).map((p: any, idx: number) => {
-                                    const isRadiant = (p.playerSlot ?? 0) < 128;
-                                    const side = isRadiant ? 'radiant' : 'dire';
-                                    const allPlayers = matchData.performancePlayers || matchData.overviewPlayers || [];
-
-                                    const teamTotalKills = allPlayers
-                                        .filter((x: any) => (x.playerSlot < 128) === isRadiant)
-                                        .reduce((s: number, x: any) => s + (x.kills || 0), 0) || 1;
-
-                                    const teamTowerKills = allPlayers
-                                        .filter((x: any) => (x.playerSlot < 128) === isRadiant)
-                                        .reduce((s: number, x: any) => s + (x.towerKills || 0), 0) || 0;
-
-                                    const teamHealing = allPlayers
-                                        .filter((x: any) => (x.playerSlot < 128) === isRadiant)
-                                        .reduce((s: number, x: any) => s + (x.heroHealing || 0), 0) || 0;
-
-                                    const fightPct = ((((p.kills || 0) + (p.assists || 0)) / teamTotalKills) * 100).toFixed(0);
-                                    const kpPerDeath = p.deaths === 0 ? 'DEATHLESS' : ((p.totalKp || 0) / p.deaths).toFixed(1);
-                                    const towerPct = teamTowerKills === 0 ? '—' : (((p.towerKills || 0) / teamTowerKills) * 100).toFixed(0) + '%';
-                                    const dmgEff = p.deaths === 0 ? fmtNum(p.heroDamage) : fmtNum(Math.round((p.heroDamage || 0) / p.deaths));
-                                    const healPct = teamHealing === 0 ? '—' : (((p.heroHealing || 0) / teamHealing) * 100).toFixed(0) + '%';
-
-                                    return (
-                                        <tr
-                                            key={idx}
-                                            className={`transition-colors hover:bg-[rgba(0,212,255,0.04)] ${isRadiant ? 'bg-[rgba(0,212,255,0.01)]' : 'bg-[rgba(201,168,76,0.01)]'
-                                                }`}
-                                        >
-                                            <td className="px-3 py-2.5 font-semibold">
-                                                <span className={isRadiant ? 'text-[#00D4FF]' : 'text-[#C9A84C]'}>
-                                                    {p.playerName}
-                                                </span>
-                                            </td>
-                                            <td className="px-3 py-2.5 text-right text-neutral-300">{fightPct}%</td>
-                                            <td className={`px-3 py-2.5 text-right font-bold ${kpPerDeath === 'DEATHLESS' ? 'text-emerald-400' : 'text-neutral-300'
-                                                }`}>
-                                                {kpPerDeath}
-                                            </td>
-                                            <td className="px-3 py-2.5 text-right text-neutral-300">{towerPct}</td>
-                                            <td className="px-3 py-2.5 text-right text-neutral-300">{dmgEff}</td>
-                                            <td className="px-3 py-2.5 text-right text-emerald-400">{healPct}</td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
+                    <PerformanceRadar
+                        players={matchData.performancePlayers || matchData.overviewPlayers || []}
+                        radiantScore={matchData.radiantScore}
+                        direScore={matchData.direScore}
+                    />
                 )}
-
             </div>
         </div>
     );

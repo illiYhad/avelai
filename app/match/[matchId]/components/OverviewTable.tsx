@@ -40,9 +40,11 @@ export default function OverviewTable({ players = [], heroIdToImg = {}, itemIdTo
         return num.toString();
     };
 
-    // ── Hero image: ใช้ heroIdToImg จาก OpenDota Constants เป็นหลัก ──
+    // ── Hero image: ใช้ heroIdToImg จาก OpenDota Constants พร้อมเติม Domain ──
     const getHeroImg = (heroId: number): string => {
-        return heroIdToImg[heroId] ?? '';
+        const path = heroIdToImg[heroId];
+        if (!path) return '';
+        return path.startsWith('http') ? path : `https://cdn.cloudflare.steamstatic.com${path}`;
     };
 
     // ── Item image: แปลง ID → name → URL ผ่าน itemIdToName จาก OpenDota Constants ──
