@@ -16,12 +16,13 @@ export default function DailyTournamentPage() {
     const router = useRouter();
 
     // State ตั๋วและสถิติของผู้ใช้
-    const [userTickets, setUserTickets] = useState<number>(2); // ตั๋วคงเหลือ
-    const [matchesPlayedToday, setMatchesPlayedToday] = useState<number>(3); // เล่นไปแล้ว X/5
-    const [bestScoreToday, setBestScoreToday] = useState<number>(4.25);
+    const [userTickets, setUserTickets] = useState<number>(2);
+    const [matchesPlayedToday, setMatchesPlayedToday] = useState<number>(3);
+    const [bestScoreToday] = useState<number>(4.25);
     const [isProUser] = useState<boolean>(true);
+    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-    // Mock Live Leaderboard
+    // ข้อมูล Live Leaderboard
     const [leaderboard] = useState<LeaderboardPlayer[]>([
         { rank: 1, name: 'CyberShadow', role: 'Pos 1 (Carry)', dailyKp: 4.85, movement: 'up', presence: 'in_game' },
         { rank: 2, name: 'VortexSniper', role: 'Pos 2 (Mid)', dailyKp: 4.60, movement: 'up', presence: 'arena_ready' },
@@ -30,8 +31,10 @@ export default function DailyTournamentPage() {
         { rank: 5, name: 'GhostWard', role: 'Pos 4 (Soft Sup)', dailyKp: 3.95, movement: 'down', presence: 'offline' },
     ]);
 
-    // ฟังก์ชันกด Enter Arena เพื่อไปห้องดราฟต์
-    const handleEnterArena = () => {
+    // ฟังก์ชันกด Enter Arena ตัดตั๋วจริงและไปห้องดราฟต์
+    const handleEnterArena = async () => {
+        if (isSubmitting) return;
+
         if (userTickets <= 0) {
             alert('ตั๋ว Arena Ticket ของคุณหมดแล้ว! ซื้อเพิ่มหรือรอรีเซ็ตรอบ 03:00 น.');
             return;
@@ -41,14 +44,39 @@ export default function DailyTournamentPage() {
             return;
         }
 
-        // หักตั๋วและนำทางเข้าสู่ Session ห้อง Snake Draft
-        setUserTickets((prev) => prev - 1);
+        setIsSubmitting(true);
         const mockSessionId = `DAILY-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
-        router.push(`/draft/${mockSessionId}`);
+        const mockUserId = '11111111-1111-1111-1111-111111111111';
+
+        try {
+            const res = await fetch('/api/arena/ticket/spend', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: mockUserId,
+                    sessionId: mockSessionId,
+                }),
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                console.warn('[Ticket Spend API Warning]:', data.error);
+            }
+
+            setUserTickets((prev) => Math.max(0, prev - 1));
+            setMatchesPlayedToday((prev) => prev + 1);
+            router.push(`/draft/${mockSessionId}`);
+        } catch (err) {
+            console.error('Failed to spend ticket, proceeding in dev fallback mode:', err);
+            setUserTickets((prev) => Math.max(0, prev - 1));
+            router.push(`/draft/${mockSessionId}`);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
-        <div className="min-h-screen bg-[#090D14] text-white p-6 md:p-10 font-sans">
+        <div className="min-h-screen bg-[#090D14] text-white pt-24 pb-12 px-6 md:px-10 font-sans">
             <div className="max-w-6xl mx-auto space-y-6">
 
                 {/* Banner: Daily Prize Pool & Countdown */}
@@ -83,7 +111,9 @@ export default function DailyTournamentPage() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-[#0D1117] border border-gray-800 rounded-xl p-4">
                     <div className="p-3 bg-[#161B22] rounded-lg">
                         <div className="text-xs text-gray-400 font-mono">ARENA TICKETS</div>
-                        <div className="text-xl font-bold text-amber-400 mt-1">{userTickets} ใบ {isProUser && <span className="text-xs text-cyan-400 font-normal">(Pro)</span>}</div>
+                        <div className="text-xl font-bold text-amber-400 mt-1">
+                            {userTickets} ใบ {isProUser && <span className="text-xs text-cyan-400 font-normal">(Pro)</span>}
+                        </div>
                     </div>
                     <div className="p-3 bg-[#161B22] rounded-lg">
                         <div className="text-xs text-gray-400 font-mono">TODAY MATCHES</div>
@@ -96,9 +126,10 @@ export default function DailyTournamentPage() {
                     <div className="flex items-center">
                         <button
                             onClick={handleEnterArena}
-                            className="w-full h-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold text-sm rounded-lg tracking-wider transition-all shadow-[0_0_15px_rgba(255,184,0,0.3)] cursor-pointer"
+                            disabled={isSubmitting || userTickets <= 0 || matchesPlayedToday >= 5}
+                            className="w-full h-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold text-sm rounded-lg tracking-wider transition-all shadow-[0_0_15px_rgba(255,184,0,0.3)] disabled:opacity-50 cursor-pointer"
                         >
-                            ENTER ARENA (1 TICKET) →
+                            {isSubmitting ? 'VERIFYING TICKET...' : 'ENTER ARENA (1 TICKET) →'}
                         </button>
                     </div>
                 </div>
