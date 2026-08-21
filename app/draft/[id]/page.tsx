@@ -1,190 +1,797 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import { generateSnakeDraftOrder } from '@/lib/draft/snakeDraftEngine';
+import React, { useState, useEffect, useRef } from 'react';
+import { Shield, Flame, Swords, Crown, ChevronRight, Zap, UserPlus, CheckCircle2, Sparkles, Timer, AlertCircle } from 'lucide-react';
 
-interface Player {
+export interface PlayerData {
     id: string;
     name: string;
-    role: string;
-    performanceScore: number;
+    pos: 1 | 2 | 3 | 4 | 5;
+    roleName: string;
+    currentElo: number;
+    peakElo: number;
+    winRate: number;
+    isCaptain?: boolean;
+    pickOrder?: number;
+    avatarPlaceholder?: string;
+    authProviders: ('steam' | 'google')[];
 }
 
-export default function DraftBoardPage() {
-    // ดึง sessionId ผ่าน useParams hook (รองรับ Next.js เวอร์ชันใหม่)
-    const params = useParams();
-    const sessionId = Array.isArray(params.id) ? params.id[0] : params.id || 'SESSION-DEFAULT';
+const ROLE_THEMES = {
+    1: { name: 'Hard Carry', hex: '#E8384F' },
+    2: { name: 'Mid Laner', hex: '#2E9BFF' },
+    3: { name: 'Offlaner', hex: '#39FF6A' },
+    4: { name: 'Soft Support', hex: '#D63CE8' },
+    5: { name: 'Hard Support', hex: '#C8CDD4' },
+};
 
-    // กัปตัน 4 คน (Captain 1 -> 4)
-    const [captains] = useState<Player[]>([
-        { id: 'c1', name: 'Captain 1 (Top Seed)', role: 'Core', performanceScore: 5.0 },
-        { id: 'c2', name: 'Captain 2', role: 'Mid', performanceScore: 4.2 },
-        { id: 'c3', name: 'Captain 3', role: 'Offlane', performanceScore: 3.8 },
-        { id: 'c4', name: 'Captain 4 (Last Seed)', role: 'Support', performanceScore: 3.2 },
-    ]);
-
-    // พูลผู้เล่นที่รอการดราฟต์
-    const [availablePlayers, setAvailablePlayers] = useState<Player[]>([
-        { id: 'p1', name: 'Player Alpha', role: 'Pos 1', performanceScore: 4.0 },
-        { id: 'p2', name: 'Player Beta', role: 'Pos 2', performanceScore: 3.9 },
-        { id: 'p3', name: 'Player Gamma', role: 'Pos 3', performanceScore: 3.5 },
-        { id: 'p4', name: 'Player Delta', role: 'Pos 4', performanceScore: 3.1 },
-    ]);
-
-    const [draftOrder] = useState<string[]>(() =>
-        generateSnakeDraftOrder(captains.map((c) => c.id), 1)
-    );
-    const [currentTurnIdx, setCurrentTurnIdx] = useState<number>(0);
-    const [teamAssignments, setTeamAssignments] = useState<{ [captainId: string]: Player[] }>({
-        c1: [],
-        c2: [],
-        c3: [],
-        c4: [],
-    });
-
-    const currentCaptainId = draftOrder[currentTurnIdx];
-    const isDraftFinished = currentTurnIdx >= draftOrder.length || availablePlayers.length === 0;
-
-    // ฟังก์ชันเลือกผู้เล่นเข้าทีม
-    const handleSelectPlayer = (player: Player) => {
-        if (isDraftFinished) return;
-
-        setTeamAssignments((prev) => ({
-            ...prev,
-            [currentCaptainId]: [...prev[currentCaptainId], player],
-        }));
-
-        setAvailablePlayers((prev) => prev.filter((p) => p.id !== player.id));
-        setCurrentTurnIdx((prev) => prev + 1);
-    };
-
-    // Trigger ส่งต่อ Webhook ไปหา Steam Bot ทันทีเมื่อดราฟต์เสร็จ
-    useEffect(() => {
-        if (isDraftFinished && draftOrder.length > 0) {
-            console.log('Draft Finalized! Triggering Webhook to Steam Bot...');
-
-            const payload = {
-                draftRoomId: sessionId,
-                radiantCaptainId: captains[0].id,
-                direCaptainId: captains[1].id,
-                radiantPlayers: [
-                    { id: captains[0].id, steamId64: '76561198000000001', name: captains[0].name },
-                    ...teamAssignments[captains[0].id].map((p) => ({
-                        id: p.id,
-                        steamId64: '76561198000000002',
-                        name: p.name,
-                    })),
-                ],
-                direPlayers: [
-                    { id: captains[1].id, steamId64: '76561198000000003', name: captains[1].name },
-                    ...teamAssignments[captains[1].id].map((p) => ({
-                        id: p.id,
-                        steamId64: '76561198000000004',
-                        name: p.name,
-                    })),
-                ],
-            };
-
-            fetch('/api/draft/finalize', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            })
-                .then((res) => res.json())
-                .then((data) => {
-                    console.log('[Steam Bot API Response]:', data);
-                })
-                .catch((err) => console.error('Failed to trigger Steam Bot:', err));
-        }
-    }, [isDraftFinished, sessionId]);
+/* ----------------------------------------------------
+   1. CAPTAIN HEADER CARD (Cyan vs Gold)
+---------------------------------------------------- */
+function CaptainHeaderCard({
+    player,
+    teamSide,
+}: {
+    player: PlayerData;
+    teamSide: 'RADIANT' | 'DIRE';
+}) {
+    const role = ROLE_THEMES[player.pos];
+    const isRadiant = teamSide === 'RADIANT';
 
     return (
-        <div className="min-h-screen bg-[#090D14] text-white pt-24 pb-12 px-6 md:px-10 font-sans">
-            <div className="max-w-6xl mx-auto space-y-8">
-                {/* Header Bar */}
-                <div className="flex justify-between items-center border-b border-gray-800 pb-4">
-                    <div>
-                        <h1 className="text-2xl font-black tracking-wider text-amber-400">
-                            MODULE 02.1: SNAKE DRAFT BOARD
-                        </h1>
-                        <p className="text-xs text-gray-400 font-mono mt-1">SESSION ID: {sessionId}</p>
+        <div
+            className={`relative w-full bg-[#080B11] border-2 rounded-xl p-2.5 font-mono shadow-lg transition-all ${isRadiant
+                    ? 'border-cyan-500/70 shadow-[0_0_15px_rgba(0,212,255,0.25)]'
+                    : 'border-amber-400/80 shadow-[0_0_15px_rgba(245,158,11,0.3)]'
+                }`}
+        >
+            <div className={`absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 ${isRadiant ? 'border-cyan-400' : 'border-amber-300'}`} />
+            <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 ${isRadiant ? 'border-cyan-400' : 'border-amber-300'}`} />
+
+            <div className="flex items-center gap-2.5">
+                <div className="relative shrink-0">
+                    <div className="w-12 h-14 bg-zinc-950 border border-amber-400 rounded-lg overflow-hidden flex items-center justify-center relative shadow-inner">
+                        <div className="w-full h-full bg-gradient-to-t from-black via-zinc-900 to-zinc-800 flex items-center justify-center text-xs font-black text-amber-300">
+                            {player.name.substring(0, 2).toUpperCase()}
+                        </div>
+                        <div className="absolute top-0.5 right-0.5 bg-amber-500 text-black p-0.5 rounded shadow">
+                            <Crown className="w-2.5 h-2.5 fill-black" />
+                        </div>
                     </div>
-                    <div className="px-4 py-2 bg-[#161B22] border border-gray-700 rounded-lg text-sm font-mono">
-                        {isDraftFinished ? (
-                            <span className="text-emerald-400 font-bold">READY FOR STEAM BOT</span>
-                        ) : (
-                            <span>
-                                CURRENT TURN:{' '}
-                                <strong className="text-cyan-400 font-bold">
-                                    {captains.find((c) => c.id === currentCaptainId)?.name}
-                                </strong>
+                    <div
+                        className="absolute -bottom-1 -left-1 px-1 text-[7px] font-black rounded border"
+                        style={{ borderColor: role.hex, color: role.hex, backgroundColor: '#090D14' }}
+                    >
+                        P{player.pos}
+                    </div>
+                </div>
+
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                        <div className="font-black text-xs text-white truncate flex items-center gap-1">
+                            {player.name}
+                            <span className={`text-[7px] px-1 rounded border ${isRadiant ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40' : 'bg-amber-500/20 text-amber-400 border-amber-500/40'}`}>
+                                CAPTAIN
                             </span>
+                        </div>
+                        <span className="text-[8px] font-black" style={{ color: role.hex }}>
+                            {role.name}
+                        </span>
+                    </div>
+
+                    <div className="mt-1 flex items-center justify-between text-[8px] bg-black/60 px-2 py-0.5 rounded border border-white/5">
+                        <span className="text-amber-400 font-bold">{player.currentElo} ELO</span>
+                        <span className="text-zinc-500">|</span>
+                        <span className="text-emerald-400 font-bold">{player.winRate}% WR</span>
+                        <span className="text-zinc-500">|</span>
+                        <span className={isRadiant ? 'text-cyan-300 font-black' : 'text-amber-300 font-black'}>ORIGIN</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/* ----------------------------------------------------
+   2. VERTICAL 2x2 DRAFTED CARD
+---------------------------------------------------- */
+function VerticalDraftedCard({
+    player,
+    teamSide,
+    isJustDrafted,
+}: {
+    player: PlayerData;
+    teamSide: 'RADIANT' | 'DIRE';
+    isJustDrafted?: boolean;
+}) {
+    const role = ROLE_THEMES[player.pos];
+    const isRadiant = teamSide === 'RADIANT';
+
+    return (
+        <div
+            className={`relative w-full h-[180px] bg-[#070A10] border-2 rounded-xl p-2 font-mono flex flex-col justify-between transition-all duration-700 ${isRadiant
+                    ? 'border-cyan-500/60 shadow-[0_0_15px_rgba(0,212,255,0.25)]'
+                    : 'border-amber-400/70 shadow-[0_0_15px_rgba(245,158,11,0.3)]'
+                } ${isJustDrafted ? 'animate-team-slam' : ''}`}
+            style={{ transformStyle: 'preserve-3d' }}
+        >
+            <div className={`absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 ${isRadiant ? 'border-cyan-400' : 'border-amber-300'}`} />
+            <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 ${isRadiant ? 'border-cyan-400' : 'border-amber-300'}`} />
+
+            {player.pickOrder && (
+                <div className="absolute top-1.5 right-1.5 z-20 px-1.5 py-0.5 rounded bg-gradient-to-r from-amber-400 to-amber-500 text-black text-[8px] font-black shadow-[0_0_10px_rgba(245,158,11,0.8)]">
+                    #{player.pickOrder} PICK
+                </div>
+            )}
+
+            <div className="relative w-full h-[88px] bg-zinc-950 border border-amber-400/50 rounded-lg overflow-hidden flex items-center justify-center shadow-inner">
+                <div className="w-full h-full bg-gradient-to-tr from-black via-zinc-900 to-[#1e1a12] flex flex-col items-center justify-center relative">
+                    <span className="text-[8px] text-[#D4AF37] font-bold tracking-wider">GACHA CARD</span>
+                    <span className="text-sm font-black text-white">{player.avatarPlaceholder || player.name.substring(0, 2).toUpperCase()}</span>
+                    {isJustDrafted && (
+                        <div className="absolute inset-0 bg-gradient-to-t from-cyan-400/30 to-amber-400/30 animate-pulse pointer-events-none" />
+                    )}
+                </div>
+                <div
+                    className="absolute bottom-1 left-1 px-1 text-[7px] font-black rounded border shadow"
+                    style={{ borderColor: role.hex, color: role.hex, backgroundColor: '#090D14' }}
+                >
+                    POS {player.pos}
+                </div>
+            </div>
+
+            <div className="space-y-1 mt-1">
+                <div className="flex items-center justify-between">
+                    <div className="font-black text-[11px] text-white truncate">{player.name}</div>
+                    <span className="text-[7px] font-bold" style={{ color: role.hex }}>{role.name}</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-1 text-[8px] bg-black/60 p-1 rounded border border-white/5 text-center">
+                    <div>
+                        <div className="text-[6px] text-zinc-500 uppercase">ELO</div>
+                        <div className="font-black text-amber-400">{player.currentElo}</div>
+                    </div>
+                    <div>
+                        <div className="text-[6px] text-zinc-500 uppercase">WIN RATE</div>
+                        <div className="font-black text-emerald-400">{player.winRate}%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                className={`w-full py-0.5 rounded border flex items-center justify-center gap-1 text-[7px] font-black tracking-wider ${isRadiant
+                        ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300 shadow-[0_0_8px_rgba(0,212,255,0.2)]'
+                        : 'bg-amber-500/15 border-amber-500/40 text-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.2)]'
+                    }`}
+            >
+                <CheckCircle2 className={`w-2.5 h-2.5 ${isRadiant ? 'text-cyan-400' : 'text-amber-400'}`} /> LOCKED IN
+            </div>
+        </div>
+    );
+}
+
+/* ----------------------------------------------------
+   3. EMPTY 2x2 SLOT
+   🔧 FIX #3: รับ teamSide เพื่อ pulse สีถูกต้อง Cyan/Gold
+---------------------------------------------------- */
+function VerticalEmptySlot({
+    slotIndex,
+    isTeamActive,
+    teamSide,
+}: {
+    slotIndex: number;
+    isTeamActive?: boolean;
+    teamSide?: 'RADIANT' | 'DIRE';
+}) {
+    const isRadiant = teamSide === 'RADIANT';
+    return (
+        <div
+            className={`w-full h-[180px] border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-1.5 font-mono text-center p-2 transition-all ${isTeamActive
+                    ? isRadiant
+                        ? 'bg-[#0E1524]/60 border-cyan-400/40 text-cyan-400 animate-pulse'
+                        : 'bg-[#1C1708]/60 border-amber-400/40 text-amber-400 animate-pulse'
+                    : 'bg-[#080B11]/40 border-zinc-800 text-zinc-600'
+                }`}
+        >
+            <UserPlus className={`w-5 h-5 ${isTeamActive ? isRadiant ? 'text-cyan-400' : 'text-amber-400' : 'text-zinc-700'}`} />
+            <span className="text-[9px] font-bold uppercase tracking-wider">MEMBER SLOT #{slotIndex}</span>
+            <span className="text-[8px]">{isTeamActive ? 'READY TO RECEIVE PICK' : 'AWAITING DRAFT'}</span>
+        </div>
+    );
+}
+
+/* ----------------------------------------------------
+   4. 3D 10-SLOT MATRIX S-PATTERN
+---------------------------------------------------- */
+interface MatrixSlot {
+    slotId: number;
+    label: string;
+    assignedTeam: 'RADIANT' | 'DIRE';
+    player?: PlayerData;
+}
+
+function SnakeMatrix10Slots3D({
+    slots,
+    currentTurn,
+    justDraftedId,
+    timeLeft,
+    isDraftComplete,
+}: {
+    slots: MatrixSlot[];
+    currentTurn: number;
+    justDraftedId: string | null;
+    timeLeft: number;
+    isDraftComplete: boolean;
+}) {
+    const activeTeam = slots[currentTurn]?.assignedTeam;
+
+    return (
+        <div className="w-full h-full flex flex-col justify-between items-center font-mono">
+            <div className="w-full flex justify-between items-center bg-[#080B11] border border-gray-800 p-3.5 rounded-xl">
+                <div>
+                    <div className="text-[9px] text-zinc-500 uppercase flex items-center gap-1.5">
+                        <Sparkles className="w-3 h-3 text-amber-400" /> ACTIVE PROTOCOL TURN
+                    </div>
+                    <div className="text-sm font-black mt-0.5 flex items-center gap-2">
+                        {!isDraftComplete && activeTeam ? (
+                            <>
+                                <span className={activeTeam === 'RADIANT' ? 'text-cyan-400' : 'text-amber-400'}>
+                                    {activeTeam}
+                                </span>
+                                <span className="text-zinc-400 text-xs">(Slot #{currentTurn + 1})</span>
+                            </>
+                        ) : (
+                            <span className="text-emerald-400">DRAFT COMPLETED</span>
                         )}
                     </div>
                 </div>
 
-                {/* กัปตันและทีมที่เลือก */}
-                <div className="grid grid-cols-4 gap-4">
-                    {captains.map((cap) => {
-                        const isTurn = cap.id === currentCaptainId && !isDraftFinished;
+                <div className="flex items-center gap-2">
+                    {!isDraftComplete && (
+                        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-black text-xs transition-all ${timeLeft <= 5
+                                ? 'bg-red-500/20 border-red-500 text-red-400 animate-ping'
+                                : timeLeft <= 10
+                                    ? 'bg-red-500/10 border-red-500/50 text-red-400 animate-pulse'
+                                    : 'bg-[#121824] border-amber-500/40 text-amber-400'
+                            }`}>
+                            <Timer className="w-3.5 h-3.5" />
+                            <span>{timeLeft}s</span>
+                        </div>
+                    )}
+
+                    <button
+                        disabled={true}
+                        className="px-4 py-1.5 bg-zinc-800 text-zinc-500 text-xs font-black rounded-lg border border-zinc-700 cursor-not-allowed opacity-50 flex items-center gap-1"
+                    >
+                        NEXT ➔
+                    </button>
+                </div>
+            </div>
+
+            <div className="w-full py-6 flex items-center justify-center [perspective:1400px]">
+                <div
+                    className="grid grid-cols-5 gap-3 md:gap-3.5 scale-95 md:scale-100 transition-transform duration-700"
+                    style={{
+                        transform: 'rotateX(46deg) rotateZ(-18deg)',
+                        transformStyle: 'preserve-3d',
+                    }}
+                >
+                    {slots.map((node, i) => {
+                        const isActive = i === currentTurn && !isDraftComplete;
+                        const isAssigned = !!node.player;
+                        const isRadiant = node.assignedTeam === 'RADIANT';
+                        const isLanding = node.player && node.player.id === justDraftedId;
+                        const role = node.player ? ROLE_THEMES[node.player.pos] : null;
+
                         return (
                             <div
-                                key={cap.id}
-                                className={`p-4 rounded-xl border transition-all ${isTurn
-                                    ? 'border-amber-400 bg-amber-950/20 shadow-[0_0_15px_rgba(255,184,0,0.2)]'
-                                    : 'border-gray-800 bg-[#0D1117]'
+                                key={node.slotId}
+                                className={`w-[88px] h-[105px] rounded-xl flex flex-col justify-between p-1.5 transition-all duration-500 border-2 relative overflow-hidden ${isLanding
+                                        ? 'animate-matrix-vortex-slam'
+                                        : isActive
+                                            // 🔧 FIX #1: active slot glow สีถูกต้องตาม team
+                                            ? isRadiant
+                                                ? 'bg-cyan-500/20 border-[#00D4FF] shadow-[0_0_30px_rgba(0,212,255,1)] scale-105'
+                                                : 'bg-amber-500/20 border-amber-400 shadow-[0_0_30px_rgba(245,158,11,1)] scale-105'
+                                            : isAssigned
+                                                ? isRadiant
+                                                    ? 'bg-[#0A1424] border-cyan-400 shadow-[0_0_18px_rgba(0,212,255,0.45)]'
+                                                    : 'bg-[#1C1708] border-amber-400 shadow-[0_0_18px_rgba(245,158,11,0.45)]'
+                                                : 'bg-[#0B0E17]/80 border-gray-800 text-gray-600'
                                     }`}
+                                style={{
+                                    // 🔧 FIX #1: boxShadow bottom ถูกต้องตาม team
+                                    boxShadow: isActive
+                                        ? isRadiant
+                                            ? '0 8px 0 #0E7490, 0 0 25px rgba(0,212,255,0.9)'
+                                            : '0 8px 0 #B45309, 0 0 25px rgba(245,158,11,0.9)'
+                                        : '0 5px 0 #05070B',
+                                    transform: isLanding
+                                        ? 'translateZ(45px)'
+                                        : isActive
+                                            ? 'translateZ(25px)'
+                                            : 'translateZ(0px)',
+                                    transformStyle: 'preserve-3d',
+                                }}
                             >
-                                <div className="text-xs font-mono text-gray-400">{cap.role}</div>
-                                <div className="font-bold text-gray-200 mt-1">{cap.name}</div>
-                                <div className="text-xs text-cyan-400 font-mono mt-0.5">
-                                    Form: {cap.performanceScore.toFixed(2)}
-                                </div>
+                                {node.player ? (
+                                    <div className="w-full h-full flex flex-col justify-between text-center relative z-10">
+                                        <div className="flex justify-between items-center text-[7px] font-black">
+                                            <span className={isRadiant ? 'text-cyan-400' : 'text-amber-400'}>
+                                                {node.assignedTeam}
+                                            </span>
+                                            <span className="text-[6px] text-zinc-400">#{i + 1}</span>
+                                        </div>
 
-                                <div className="mt-4 pt-3 border-t border-gray-800/80">
-                                    <div className="text-[11px] font-mono text-gray-500 uppercase">Drafted Players:</div>
-                                    <div className="mt-2 space-y-1">
-                                        {teamAssignments[cap.id].map((p) => (
-                                            <div
-                                                key={p.id}
-                                                className="text-xs bg-[#161B22] px-2 py-1 rounded border border-gray-700 font-mono text-gray-300"
-                                            >
-                                                {p.name} ({p.role})
+                                        <div className="w-8 h-8 mx-auto rounded bg-zinc-950 border border-amber-400/60 flex items-center justify-center text-[9px] font-black text-amber-300 shadow">
+                                            {node.player.name.substring(0, 2).toUpperCase()}
+                                        </div>
+
+                                        <div>
+                                            <div className="text-[8px] font-black text-white truncate px-0.5">
+                                                {node.player.name}
                                             </div>
-                                        ))}
+                                            <div
+                                                className="text-[6px] font-black px-1 py-0.2 rounded mt-0.5"
+                                                style={{ color: role?.hex, backgroundColor: '#06080D' }}
+                                            >
+                                                POS {node.player.pos} ({role?.name})
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                ) : (
+                                    <div className="w-full h-full flex flex-col items-center justify-center text-center">
+                                        <span className="text-[8px] text-zinc-500 font-bold">SLOT #{i + 1}</span>
+                                        <span className={`text-[9px] font-black mt-1 ${isRadiant ? 'text-cyan-400' : 'text-amber-400'}`}>
+                                            {node.assignedTeam}
+                                        </span>
+                                        <span className="text-[6px] text-zinc-600 mt-1">AWAITING</span>
+                                    </div>
+                                )}
                             </div>
                         );
                     })}
                 </div>
+            </div>
 
-                {/* พูลผู้เล่นที่รอเลือก */}
-                <div className="bg-[#0D1117] border border-gray-800 rounded-xl p-6">
-                    <h2 className="text-sm font-mono uppercase tracking-wider text-gray-400 mb-4">
-                        Available Players Pool ({availablePlayers.length})
-                    </h2>
-                    <div className="grid grid-cols-4 gap-4">
-                        {availablePlayers.map((player) => (
-                            <button
-                                key={player.id}
-                                disabled={isDraftFinished}
-                                onClick={() => handleSelectPlayer(player)}
-                                className="text-left p-4 bg-[#161B22] hover:border-cyan-500 border border-gray-800 rounded-lg transition-all disabled:opacity-50 cursor-pointer"
-                            >
-                                <div className="font-bold text-sm text-gray-200">{player.name}</div>
-                                <div className="text-xs text-gray-400 font-mono mt-1">Role: {player.role}</div>
-                                <div className="text-xs text-amber-400 font-mono mt-0.5">
-                                    Score: {player.performanceScore.toFixed(2)}
-                                </div>
-                                <div className="mt-3 text-[11px] font-mono text-cyan-400 underline">
-                                    Pick Player →
-                                </div>
-                            </button>
-                        ))}
+            <div className="w-full bg-[#05070A] p-2.5 rounded-xl border border-[#D4AF37]/30 text-[10px] text-zinc-400 text-center flex items-center justify-center gap-2">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+                <span>ระบบจำกัดเวลา 30 วิ/รอบ: หากกัปตันไม่ทำการเลือก ระบบจะดำเนินการ Random Pick ให้ทันที</span>
+            </div>
+        </div>
+    );
+}
+
+/* ----------------------------------------------------
+   5. MASTER GOLD PLAYER CARD (Available Pool ด้านล่าง)
+---------------------------------------------------- */
+function MasterGoldPlayerCard({
+    player,
+    isDrafting,
+    disabled,
+    onPick,
+}: {
+    player: PlayerData;
+    isDrafting?: boolean;
+    disabled?: boolean;
+    onPick: () => void;
+}) {
+    const role = ROLE_THEMES[player.pos];
+
+    return (
+        <div
+            className={`relative group w-full bg-[#080B11] border-2 border-[#D4AF37]/60 hover:border-[#F59E0B] rounded-xl p-3 font-mono shadow-[0_0_20px_rgba(0,0,0,0.9)] transition-all duration-300 ${isDrafting ? 'animate-card-pick-warp pointer-events-none' : ''
+                }`}
+            style={{ transformStyle: 'preserve-3d' }}
+        >
+            <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[#F59E0B]" />
+            <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[#F59E0B]" />
+            <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-[#F59E0B]" />
+            <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[#F59E0B]" />
+
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(212,175,55,0.04)_1px,transparent_1px)] bg-[size:100%_4px] pointer-events-none rounded-xl" />
+
+            <div className="flex items-center gap-3 relative z-10">
+                <div className="relative shrink-0">
+                    <div className="w-14 h-18 bg-zinc-950 border-2 border-[#D4AF37]/80 rounded-lg overflow-hidden flex items-center justify-center relative shadow-inner group-hover:scale-105 transition-transform">
+                        <div className="w-full h-full bg-gradient-to-tr from-black via-zinc-900 to-[#1e2538] flex flex-col items-center justify-center">
+                            <span className="text-[8px] text-[#D4AF37] font-bold">GACHA</span>
+                            <span className="text-xs font-black text-white">{player.avatarPlaceholder || player.name.substring(0, 2).toUpperCase()}</span>
+                        </div>
+                    </div>
+                    <div
+                        className="absolute -bottom-2 -left-1 px-1.5 py-0.2 text-[8px] font-black rounded border tracking-wider shadow-md"
+                        style={{ borderColor: role.hex, color: role.hex, backgroundColor: '#090D14' }}
+                    >
+                        POS {player.pos}
                     </div>
                 </div>
+
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1 border-b border-[#D4AF37]/20 pb-1">
+                        <div className="font-black text-xs text-zinc-100 truncate">{player.name}</div>
+                        <span className="text-[8px] font-black tracking-wider" style={{ color: role.hex }}>
+                            {role.name.toUpperCase()}
+                        </span>
+                    </div>
+
+                    <div className="mt-1.5 bg-[#05070A] border border-[#D4AF37]/40 rounded p-1.5 grid grid-cols-3 gap-1 text-[8px]">
+                        <div>
+                            <div className="text-zinc-500 text-[6px] uppercase font-bold">Current Elo</div>
+                            <div className="font-black text-amber-400 mt-0.5">{player.currentElo}</div>
+                        </div>
+                        <div>
+                            <div className="text-zinc-500 text-[6px] uppercase font-bold">Peak Elo</div>
+                            <div className="font-black text-zinc-300 mt-0.5">{player.peakElo}</div>
+                        </div>
+                        <div>
+                            <div className="text-zinc-500 text-[6px] uppercase font-bold">Win Rate</div>
+                            <div className="font-black text-emerald-400 mt-0.5">{player.winRate}%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="shrink-0 flex flex-col items-center justify-between h-18 py-0.5">
+                    <div className="relative w-7 h-7 flex items-center justify-center">
+                        <div className="absolute inset-0 rounded-full border-2 border-dashed border-cyan-400 animate-spin" style={{ animationDuration: '8s' }} />
+                        <div className="w-4 h-4 rounded-full border border-[#D4AF37] flex items-center justify-center text-[5px] font-black text-[#D4AF37]">
+                            HUD
+                        </div>
+                    </div>
+
+                    <div className="flex gap-1 items-center">
+                        {player.authProviders.includes('steam') && (
+                            <span className="w-3.5 h-3.5 rounded bg-[#171a21] border border-cyan-400/60 flex items-center justify-center text-[7px] text-cyan-300 font-black">
+                                S
+                            </span>
+                        )}
+                        {player.authProviders.includes('google') && (
+                            <span className="w-3.5 h-3.5 rounded bg-zinc-900 border border-amber-400/60 flex items-center justify-center text-[7px] text-amber-400 font-black">
+                                G
+                            </span>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <button
+                disabled={disabled}
+                onClick={onPick}
+                className={`mt-2.5 w-full py-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow ${disabled
+                        ? 'bg-zinc-800 text-zinc-600 border border-zinc-700 cursor-not-allowed opacity-50'
+                        : 'bg-gradient-to-r from-[#D4AF37]/20 via-[#D4AF37]/40 to-[#D4AF37]/20 hover:from-[#D4AF37] hover:to-[#F59E0B] text-[#D4AF37] hover:text-black border border-[#D4AF37]/60 hover:shadow-[0_0_20px_rgba(212,175,55,0.8)] cursor-pointer'
+                    }`}
+            >
+                <Zap className="w-3.5 h-3.5 fill-current" /> DRAFT INTO PROTOCOL <ChevronRight className="w-4 h-4" />
+            </button>
+        </div>
+    );
+}
+
+/* ----------------------------------------------------
+   6. MAIN DRAFT PAGE
+---------------------------------------------------- */
+export default function SnakeDraftPage() {
+    const [currentTurn, setCurrentTurn] = useState<number>(2);
+    const [justDraftedId, setJustDraftedId] = useState<string | null>(null);
+    const [launchingId, setLaunchingId] = useState<string | null>(null);
+    const [timeLeft, setTimeLeft] = useState<number>(30);
+
+    const captainRadiant: PlayerData = {
+        id: 'c1',
+        name: '23savage_AFI',
+        pos: 1,
+        roleName: 'Hard Carry',
+        currentElo: 2350,
+        peakElo: 2420,
+        winRate: 68,
+        isCaptain: true,
+        authProviders: ['steam', 'google'],
+    };
+
+    const captainDire: PlayerData = {
+        id: 'c4',
+        name: 'Devil-llou',
+        pos: 1,
+        roleName: 'Hard Carry',
+        currentElo: 2310,
+        peakElo: 2390,
+        winRate: 66,
+        isCaptain: true,
+        authProviders: ['steam', 'google'],
+    };
+
+    const [teamRadiant, setTeamRadiant] = useState<PlayerData[]>([captainRadiant]);
+    const [teamDire, setTeamDire] = useState<PlayerData[]>([captainDire]);
+
+    const [matrixSlots, setMatrixSlots] = useState<MatrixSlot[]>([
+        { slotId: 1, label: 'C1', assignedTeam: 'RADIANT', player: captainRadiant },
+        { slotId: 2, label: 'C2', assignedTeam: 'DIRE', player: captainDire },
+        { slotId: 3, label: 'Pick #1', assignedTeam: 'DIRE' },
+        { slotId: 4, label: 'Pick #2', assignedTeam: 'RADIANT' },
+        { slotId: 5, label: 'Pick #3', assignedTeam: 'RADIANT' },
+        { slotId: 6, label: 'Pick #4', assignedTeam: 'DIRE' },
+        { slotId: 7, label: 'Pick #5', assignedTeam: 'DIRE' },
+        { slotId: 8, label: 'Pick #6', assignedTeam: 'RADIANT' },
+        { slotId: 9, label: 'Pick #7', assignedTeam: 'RADIANT' },
+        { slotId: 10, label: 'Pick #8', assignedTeam: 'DIRE' },
+    ]);
+
+    const [availablePool, setAvailablePool] = useState<PlayerData[]>([
+        { id: 'p-1', name: 'Mikoto_God', pos: 2, roleName: 'Mid Laner', currentElo: 2280, peakElo: 2310, winRate: 64, authProviders: ['steam'] },
+        { id: 'p-2', name: 'Cyber_Phantom', pos: 2, roleName: 'Mid Laner', currentElo: 2240, peakElo: 2280, winRate: 63, authProviders: ['steam'] },
+        { id: 'p-3', name: 'Jabz_322', pos: 3, roleName: 'Offlaner', currentElo: 2190, peakElo: 2250, winRate: 61, authProviders: ['steam', 'google'] },
+        { id: 'p-4', name: 'Neon_Viper', pos: 3, roleName: 'Offlaner', currentElo: 2170, peakElo: 2200, winRate: 60, authProviders: ['steam', 'google'] },
+        { id: 'p-5', name: 'Q_Support', pos: 4, roleName: 'Soft Support', currentElo: 2110, peakElo: 2150, winRate: 59, authProviders: ['steam'] },
+        { id: 'p-6', name: 'TIMS_Soft', pos: 4, roleName: 'Soft Support', currentElo: 2160, peakElo: 2210, winRate: 62, authProviders: ['steam', 'google'] },
+        { id: 'p-7', name: 'Whitemon_V2', pos: 5, roleName: 'Hard Support', currentElo: 2090, peakElo: 2120, winRate: 58, authProviders: ['steam', 'google'] },
+        { id: 'p-8', name: 'Jaunuel_Ward', pos: 5, roleName: 'Hard Support', currentElo: 2070, peakElo: 2100, winRate: 56, authProviders: ['steam'] },
+    ]);
+
+    const isDraftComplete = currentTurn >= 10 || availablePool.length === 0;
+    const currentActiveTeam = !isDraftComplete ? matrixSlots[currentTurn]?.assignedTeam : null;
+
+    const stateRef = useRef({ currentTurn, matrixSlots, teamRadiant, teamDire, availablePool, isDraftComplete });
+    useEffect(() => {
+        stateRef.current = { currentTurn, matrixSlots, teamRadiant, teamDire, availablePool, isDraftComplete };
+    }, [currentTurn, matrixSlots, teamRadiant, teamDire, availablePool, isDraftComplete]);
+
+    const executePick = (player: PlayerData) => {
+        if (stateRef.current.isDraftComplete || launchingId) return;
+
+        setLaunchingId(player.id);
+        setTimeLeft(30);
+
+        setTimeout(() => {
+            const { currentTurn: turn, matrixSlots: slots, teamRadiant: radiant, teamDire: dire } = stateRef.current;
+            const targetSlot = slots[turn];
+            if (!targetSlot) {
+                setLaunchingId(null);
+                return;
+            }
+
+            setJustDraftedId(player.id);
+            const isRadiant = targetSlot.assignedTeam === 'RADIANT';
+
+            if (isRadiant) {
+                const pickNum = radiant.filter((p) => !p.isCaptain).length + 1;
+                setTeamRadiant((prev) => [...prev, { ...player, pickOrder: pickNum }]);
+            } else {
+                const pickNum = dire.filter((p) => !p.isCaptain).length + 1;
+                setTeamDire((prev) => [...prev, { ...player, pickOrder: pickNum }]);
+            }
+
+            setMatrixSlots((prev) => prev.map((s, idx) => (idx === turn ? { ...s, player } : s)));
+            setAvailablePool((prev) => prev.filter((p) => p.id !== player.id));
+            setCurrentTurn((prev) => prev + 1);
+
+            setLaunchingId(null);
+            setTimeout(() => {
+                setJustDraftedId(null);
+            }, 700);
+        }, 400);
+    };
+
+    // 🔧 FIX #2: Timer reset ทุกครั้งที่ currentTurn เปลี่ยน
+    useEffect(() => {
+        if (isDraftComplete || launchingId) return;
+        setTimeLeft(30);
+        const timer = setInterval(() => {
+            setTimeLeft((prev) => prev - 1);
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [isDraftComplete, launchingId, currentTurn]);
+
+    useEffect(() => {
+        if (timeLeft <= 0 && !isDraftComplete && !launchingId) {
+            const { availablePool: pool } = stateRef.current;
+            if (pool.length > 0) {
+                const randomIndex = Math.floor(Math.random() * pool.length);
+                executePick(pool[randomIndex]);
+            }
+        }
+    }, [timeLeft, isDraftComplete, launchingId]);
+
+    const renderTeamSection = (team: PlayerData[], side: 'RADIANT' | 'DIRE') => {
+        const captain = team.find((p) => p.isCaptain);
+        const members = team.filter((p) => !p.isCaptain);
+        const emptySlotCount = 4 - members.length;
+        const isTeamActive = currentActiveTeam === side && !isDraftComplete;
+
+        return (
+            <div className="flex flex-col justify-between h-full space-y-3">
+                {captain && <CaptainHeaderCard player={captain} teamSide={side} />}
+
+                <div className="grid grid-cols-2 gap-2.5 flex-1 items-stretch">
+                    {members.map((m) => (
+                        <VerticalDraftedCard
+                            key={m.id}
+                            player={m}
+                            teamSide={side}
+                            isJustDrafted={m.id === justDraftedId}
+                        />
+                    ))}
+                    {/* 🔧 FIX #3: ส่ง teamSide ลงไปด้วย */}
+                    {Array.from({ length: emptySlotCount }).map((_, idx) => (
+                        <VerticalEmptySlot
+                            key={idx}
+                            slotIndex={members.length + idx + 1}
+                            isTeamActive={isTeamActive && idx === 0}
+                            teamSide={side}
+                        />
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div className="min-h-screen bg-[#06080D] text-white pt-20 pb-16 px-4 md:px-6 font-mono relative overflow-hidden">
+
+            <style jsx global>{`
+        @keyframes cardPickWarp {
+          0% {
+            transform: perspective(800px) rotateX(0deg) rotateY(0deg) scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: perspective(800px) rotateX(-20deg) rotateY(360deg) translateY(-40px) scale(1.1);
+            opacity: 0.9;
+            filter: drop-shadow(0 0 30px #00D4FF) drop-shadow(0 0 50px #F59E0B);
+          }
+          100% {
+            transform: perspective(800px) rotateX(-40deg) rotateY(720deg) translateY(-100px) scale(0.2);
+            opacity: 0;
+            filter: drop-shadow(0 0 60px #F59E0B);
+          }
+        }
+        .animate-card-pick-warp {
+          animation: cardPickWarp 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes matrixVortexSlam {
+          0% {
+            transform: translateZ(120px) rotateZ(180deg) scale(1.4);
+            opacity: 0;
+            filter: brightness(2.5) drop-shadow(0 0 35px #F59E0B);
+          }
+          60% {
+            transform: translateZ(35px) rotateZ(-10deg) scale(1.05);
+            opacity: 1;
+            filter: brightness(1.5) drop-shadow(0 0 25px #00D4FF);
+          }
+          100% {
+            transform: translateZ(0px) rotateZ(0deg) scale(1);
+            opacity: 1;
+            filter: brightness(1) drop-shadow(0 0 15px rgba(245,158,11,0.5));
+          }
+        }
+        .animate-matrix-vortex-slam {
+          animation: matrixVortexSlam 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes teamSlam {
+          0% {
+            transform: perspective(700px) rotateY(-90deg) scale(0.7);
+            opacity: 0;
+            filter: drop-shadow(0 0 25px #00D4FF);
+          }
+          70% {
+            transform: perspective(700px) rotateY(15deg) scale(1.05);
+            opacity: 1;
+            filter: drop-shadow(0 0 15px #F59E0B);
+          }
+          100% {
+            transform: perspective(700px) rotateY(0deg) scale(1);
+            opacity: 1;
+            filter: drop-shadow(0 0 0 transparent);
+          }
+        }
+        .animate-team-slam {
+          animation: teamSlam 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+      `}</style>
+
+            <div className="max-w-[1720px] mx-auto space-y-6">
+                <div className="flex justify-between items-center border-b border-gray-800 pb-3">
+                    <div>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold flex items-center gap-1.5 w-fit">
+                            <Zap className="w-3 h-3 text-amber-400" /> CAPTAIN DRAFT SYSTEM
+                        </span>
+                        <h1 className="text-xl font-black text-white mt-1">SNAKE DRAFT ARENA</h1>
+                    </div>
+                    <div className="text-xs text-zinc-500">LOBBY ID: DRAFT-001</div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+
+                    <div
+                        className={`lg:col-span-4 bg-[#080B11]/90 rounded-2xl p-4 flex flex-col justify-between h-full min-h-[580px] transition-all duration-500 ${currentActiveTeam === 'RADIANT'
+                                ? 'border-2 border-cyan-400 shadow-[0_0_30px_rgba(0,212,255,0.4)] scale-[1.01]'
+                                : 'border border-cyan-500/30 opacity-80'
+                            }`}
+                    >
+                        <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2 mb-1">
+                            <div className="flex items-center gap-1.5">
+                                <Shield className="w-4 h-4 text-cyan-400" />
+                                <span className="font-black text-xs text-cyan-400">1: RADIANT (C1)</span>
+                                {currentActiveTeam === 'RADIANT' && (
+                                    <span className="text-[8px] px-1.5 py-0.2 rounded bg-cyan-400 text-black font-black animate-pulse">
+                                        ACTIVE PICK
+                                    </span>
+                                )}
+                            </div>
+                            <span className="text-[10px] text-zinc-500">{teamRadiant.length}/5 PLAYERS</span>
+                        </div>
+                        {renderTeamSection(teamRadiant, 'RADIANT')}
+                    </div>
+
+                    <div className="lg:col-span-4 bg-[#080B11] border border-gray-800 rounded-2xl p-5 min-h-[580px] h-full flex flex-col justify-between shadow-2xl">
+                        <SnakeMatrix10Slots3D
+                            slots={matrixSlots}
+                            currentTurn={currentTurn}
+                            justDraftedId={justDraftedId}
+                            timeLeft={timeLeft}
+                            isDraftComplete={isDraftComplete}
+                        />
+                    </div>
+
+                    <div
+                        className={`lg:col-span-4 bg-[#080B11]/90 rounded-2xl p-4 flex flex-col justify-between h-full min-h-[580px] transition-all duration-500 ${currentActiveTeam === 'DIRE'
+                                ? 'border-2 border-amber-400 shadow-[0_0_30px_rgba(245,158,11,0.5)] scale-[1.01]'
+                                : 'border border-amber-400/40 opacity-80'
+                            }`}
+                    >
+                        <div className="flex items-center justify-between border-b border-amber-400/20 pb-2 mb-1">
+                            <div className="flex items-center gap-1.5">
+                                <Flame className="w-4 h-4 text-amber-400" />
+                                <span className="font-black text-xs text-amber-400">2: DIRE (C4)</span>
+                                {currentActiveTeam === 'DIRE' && (
+                                    <span className="text-[8px] px-1.5 py-0.2 rounded bg-amber-400 text-black font-black animate-pulse">
+                                        ACTIVE PICK
+                                    </span>
+                                )}
+                            </div>
+                            <span className="text-[10px] text-zinc-500">{teamDire.length}/5 PLAYERS</span>
+                        </div>
+                        {renderTeamSection(teamDire, 'DIRE')}
+                    </div>
+                </div>
+
+                <div className="bg-[#080B11] border border-gray-800 rounded-2xl p-5 space-y-4">
+                    <div className="flex items-center justify-between border-b border-gray-800 pb-2">
+                        <div className="flex items-center gap-2">
+                            <Swords className="w-4 h-4 text-amber-400" />
+                            <span className="font-black text-xs text-zinc-200">3: AVAILABLE PLAYERS POOL</span>
+                            <span className="text-[10px] text-zinc-500">
+                                {isDraftComplete ? '(0 Draft Completed)' : `(${availablePool.length} Waiting to be drafted)`}
+                            </span>
+                        </div>
+                    </div>
+
+                    {isDraftComplete ? (
+                        <div className="w-full py-10 flex flex-col items-center justify-center text-zinc-500 font-mono animate-in fade-in zoom-in duration-700">
+                            <CheckCircle2 className="w-12 h-12 text-emerald-400 mb-3" />
+                            <span className="text-emerald-400 font-black text-xl tracking-widest drop-shadow-[0_0_15px_rgba(52,211,153,0.6)]">
+                                DRAFT PROTOCOL COMPLETED
+                            </span>
+                            <span className="text-xs mt-2 text-zinc-400">All players have been successfully assigned to their origin teams.</span>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                            {availablePool.map((player) => (
+                                <MasterGoldPlayerCard
+                                    key={player.id}
+                                    player={player}
+                                    isDrafting={player.id === launchingId}
+                                    disabled={isDraftComplete || launchingId !== null}
+                                    onPick={() => executePick(player)}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+
             </div>
         </div>
     );
