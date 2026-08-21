@@ -65,23 +65,34 @@ export default function TowerMapGrid({
                 </div>
             </div>
 
-            {/* Dota 2 Minimap Surface */}
-            <div className="relative mx-auto aspect-square w-full max-w-[380px] overflow-hidden border border-[#00D4FF]/20 bg-[#06060A]">
-                {/* Real Dota 2 Minimap Background with Cyber filter */}
-                <div
-                    className="absolute inset-0 bg-cover bg-center opacity-40 brightness-75 contrast-125 grayscale-[40%]"
-                    style={{
-                        backgroundImage: `url('https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/hud/map.png')`,
-                    }}
-                />
+            {/* Cyberpunk Vector Radar Map */}
+            <div className="relative mx-auto aspect-square w-full max-w-[380px] overflow-hidden border border-[#00D4FF]/30 bg-[#07070C]">
+                {/* SVG Dota 2 Map Lanes & River */}
+                <svg className="absolute inset-0 h-full w-full opacity-60" viewBox="0 0 100 100">
+                    {/* Radiant Base Area */}
+                    <polygon points="5,95 35,95 5,65" fill="#00D4FF08" stroke="#00D4FF20" strokeWidth="0.5" />
+                    {/* Dire Base Area */}
+                    <polygon points="95,5 65,5 95,35" fill="#C9A84C08" stroke="#C9A84C20" strokeWidth="0.5" />
+
+                    {/* Top Lane */}
+                    <path d="M 18,80 L 18,20 L 75,20" fill="none" stroke="#252538" strokeWidth="3" strokeLinecap="round" />
+                    {/* Mid Lane */}
+                    <path d="M 22,78 L 78,22" fill="none" stroke="#252538" strokeWidth="3" strokeLinecap="round" />
+                    {/* Bot Lane */}
+                    <path d="M 25,82 L 82,82 L 82,25" fill="none" stroke="#252538" strokeWidth="3" strokeLinecap="round" />
+
+                    {/* River Stream */}
+                    <path d="M 10,25 Q 45,50 85,90" fill="none" stroke="#00D4FF30" strokeWidth="1.5" strokeDasharray="2 1" />
+
+                    {/* Jungle / Roshan Pits Markers */}
+                    <circle cx="28" cy="40" r="3" fill="#00D4FF15" stroke="#00D4FF30" strokeWidth="0.5" />
+                    <circle cx="72" cy="60" r="3" fill="#C9A84C15" stroke="#C9A84C30" strokeWidth="0.5" />
+                </svg>
 
                 {/* Cyberpunk Grid Overlay */}
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,#00d4ff10_1px,transparent_1px),linear-gradient(to_bottom,#00d4ff10_1px,transparent_1px)] bg-[size:10%_10%]"></div>
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#00d4ff08_1px,transparent_1px),linear-gradient(to_bottom,#00d4ff08_1px,transparent_1px)] bg-[size:10%_10%]"></div>
 
-                {/* River Divider Neon Line */}
-                <div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_49%,#00D4FF30_50%,transparent_51%)] pointer-events-none"></div>
-
-                {/* Towers Radar Nodes */}
+                {/* Towers Nodes */}
                 {TOWER_COORDS.map((tower) => {
                     const alive = isTowerAlive(tower.team as 'radiant' | 'dire', tower.bit);
                     const isRadiant = tower.team === 'radiant';
@@ -94,7 +105,7 @@ export default function TowerMapGrid({
                             className="absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-300"
                         >
                             <div
-                                className={`h-3 w-3 rounded-xs border transition-transform hover:scale-125 ${alive
+                                className={`h-3.5 w-3.5 rounded-xs border transition-transform hover:scale-150 ${alive
                                         ? isRadiant
                                             ? 'border-[#00D4FF] bg-[#00D4FF] shadow-[0_0_12px_#00D4FF]'
                                             : 'border-[#C9A84C] bg-[#C9A84C] shadow-[0_0_12px_#C9A84C]'
