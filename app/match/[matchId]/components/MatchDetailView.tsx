@@ -34,8 +34,8 @@ const TABS: { id: TabId; label: string; icon: string }[] = [
 
 export default function MatchDetailView({
     matchData,
-    heroIdToImg,
-    itemIdToName,
+    heroIdToImg = {},
+    itemIdToName = {},
 }: MatchDetailViewProps) {
     const [activeTab, setActiveTab] = useState<TabId>('kp');
 
@@ -50,6 +50,11 @@ export default function MatchDetailView({
         players
             .filter(p => slot === 'radiant' ? p.playerSlot < 128 : p.playerSlot >= 128)
             .reduce((s, p) => s + (p.kills || 0) + (p.assists || 0), 0) || 1;
+
+    // ── ดึงรูป Hero จาก Constants ที่อลิสเตรียมไว้ ──
+    const getHeroImg = (heroId: number): string => {
+        return heroIdToImg[heroId] ?? '';
+    };
 
     // ---- KP TABLE ----
     const kpPlayers = [...(matchData.kpPlayers || matchData.overviewPlayers || [])]
@@ -110,6 +115,7 @@ export default function MatchDetailView({
                             <table className="w-full text-left text-[11px] font-mono">
                                 <thead className="border-b border-neutral-800 bg-[#0A0A0F] font-orbitron text-[10px] text-[#00D4FF]">
                                     <tr>
+                                        <th className="px-3 py-3 w-14">HERO</th> {/* เพิ่มคอลัมน์ HERO */}
                                         <th className="px-3 py-3">ROLE</th>
                                         <th className="px-3 py-3">PLAYER</th>
                                         <th className="px-3 py-3 text-center">K/D/A</th>
@@ -129,6 +135,7 @@ export default function MatchDetailView({
                                         const isWin = p.matchOutcome > 0;
                                         const posColor = POS_COLORS[p.role] ?? '#C8CDD4';
                                         const barWidth = Math.max(4, ((p.finalScore ?? 0) / maxFinalScore) * 100);
+                                        const heroImg = getHeroImg(p.heroId); // ดึงรูปภาพ Hero
 
                                         return (
                                             <tr
@@ -136,6 +143,23 @@ export default function MatchDetailView({
                                                 className={`transition-colors hover:bg-[rgba(0,212,255,0.04)] ${p.isRegisteredUser ? 'shadow-[inset_2px_0_0_#00D4FF]' : ''
                                                     } ${isRadiant ? 'bg-[rgba(0,212,255,0.01)]' : 'bg-[rgba(201,168,76,0.01)]'}`}
                                             >
+                                                {/* แสดงรูป Hero */}
+                                                <td className="px-3 py-2.5">
+                                                    <div className="h-7 w-12 overflow-hidden border border-neutral-700 bg-neutral-900">
+                                                        {heroImg ? (
+                                                            <img
+                                                                src={heroImg}
+                                                                alt={p.heroName || 'hero'}
+                                                                className="h-full w-full object-cover"
+                                                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                            />
+                                                        ) : (
+                                                            <span className="flex h-full w-full items-center justify-center text-[9px] text-neutral-500">
+                                                                {p.heroName?.substring(0, 3).toUpperCase() || '???'}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
                                                 <td className="px-3 py-2.5">
                                                     <span
                                                         className="rounded-sm px-1.5 py-0.5 text-[9px] font-bold"
