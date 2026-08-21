@@ -1,12 +1,13 @@
-import React from 'react';
-import Image from 'next/image';
+'use client';
 
-export interface PlayerOverviewData {
+import React from 'react';
+import { getHeroImageUrl, getItemImageUrl } from '@/lib/dotaAssets';
+
+export interface OverviewPlayer {
     playerSlot: number;
     heroId: number;
     heroName: string;
     playerName: string;
-    isRegisteredUser: boolean;
     kills: number;
     deaths: number;
     assists: number;
@@ -18,173 +19,158 @@ export interface PlayerOverviewData {
     heroDamage: number;
     heroHealing: number;
     towerDamage: number;
-    items: string[]; // array ของ item names เช่น ['blink', 'bkb', ...]
-    neutralItem?: string;
-    hasScepter: boolean;
-    hasShard: boolean;
+    items: (number | string)[];
+    neutralItem?: number | string;
+    hasAghsScepter?: boolean;
+    hasAghsShard?: boolean;
 }
 
 interface OverviewTableProps {
-    players: PlayerOverviewData[];
+    players?: OverviewPlayer[];
 }
 
-export default function OverviewTable({ players }: OverviewTableProps) {
-    const formatNumber = (num: number) => {
-        return num >= 1000 ? `${(num / 1000).toFixed(1)}k` : num.toString();
+export default function OverviewTable({ players = [] }: OverviewTableProps) {
+    const formatNum = (num?: number) => {
+        if (!num && num !== 0) return '—';
+        if (num >= 1000) return `${(num / 1000).toFixed(1)}k`;
+        return num.toString();
     };
 
     return (
-        <div className="space-y-4 font-mono text-xs">
-            <div className="overflow-x-auto border border-[#00D4FF]/30 bg-[#111118]">
-                <table className="w-full text-left border-collapse min-w-[1000px]">
-                    <thead>
-                        <tr className="border-b border-[#00D4FF]/30 bg-[#0A0A0F] font-orbitron text-[11px] text-[#00D4FF]">
-                            <th className="p-3">HERO</th>
-                            <th className="p-3">PLAYER</th>
-                            <th className="p-3 text-center">K / D / A</th>
-                            <th className="p-3 text-right">NET</th>
-                            <th className="p-3 text-center">LH / DN</th>
-                            <th className="p-3 text-center">GPM / XPM</th>
-                            <th className="p-3 text-right">DMG</th>
-                            <th className="p-3 text-right">HEAL</th>
-                            <th className="p-3 text-right">BLD</th>
-                            <th className="p-3">ITEMS & BUFFS</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-neutral-800">
-                        {players.map((player) => {
-                            const isRadiant = player.playerSlot < 128;
+        <div className="overflow-x-auto border border-neutral-800 bg-[#111118] font-mono shadow-[0_0_25px_rgba(0,212,255,0.05)]">
+            <table className="w-full text-left text-xs">
+                <thead className="border-b border-neutral-800 bg-[#0A0A0F] font-orbitron text-[11px] text-[#00D4FF]">
+                    <tr>
+                        <th className="px-4 py-3">HERO</th>
+                        <th className="px-4 py-3">PLAYER</th>
+                        <th className="px-4 py-3 text-center">K / D / A</th>
+                        <th className="px-4 py-3 text-right">NET</th>
+                        <th className="px-4 py-3 text-center">LH / DN</th>
+                        <th className="px-4 py-3 text-center">GPM / XPM</th>
+                        <th className="px-4 py-3 text-right">DMG</th>
+                        <th className="px-4 py-3 text-right">HEAL</th>
+                        <th className="px-4 py-3 text-right">BLD</th>
+                        <th className="px-4 py-3">ITEMS & BUFFS</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-800/60 font-mono text-[11px]">
+                    {players.map((p, idx) => {
+                        const isRadiant = (p.playerSlot || 0) < 128;
+                        const heroImg = getHeroImageUrl(p.heroName, p.heroId);
 
-                            return (
-                                <tr
-                                    key={player.playerSlot}
-                                    className={`transition-colors hover:bg-cyan-900/20 hover:border-l-2 hover:border-l-[#00D4FF] ${isRadiant ? 'bg-[#00D4FF]/[0.02]' : 'bg-[#C9A84C]/[0.02]'
-                                        } ${player.isRegisteredUser
-                                            ? 'shadow-[inset_0_0_12px_rgba(0,212,255,0.15)] border-l-2 border-l-[#00D4FF]'
-                                            : ''
-                                        }`}
-                                >
-                                    {/* Hero */}
-                                    <td className="p-3 flex items-center gap-2">
-                                        <div className="w-8 h-8 bg-neutral-800 border border-neutral-700 flex items-center justify-center text-[10px] text-neutral-400 font-bold">
-                                            {player.heroName.substring(0, 3).toUpperCase()}
-                                        </div>
-                                    </td>
-
-                                    {/* Player Name */}
-                                    <td className="p-3">
-                                        <span
-                                            className={`font-medium ${player.isRegisteredUser ? 'text-[#00D4FF] font-bold' : 'text-neutral-300'
-                                                }`}
-                                        >
-                                            {player.playerName}
-                                        </span>
-                                    </td>
-
-                                    {/* K / D / A */}
-                                    <td className="p-3 text-center text-neutral-300">
-                                        {player.kills} / <span className="text-red-400">{player.deaths}</span> / {player.assists}
-                                    </td>
-
-                                    {/* Net Worth */}
-                                    <td className="p-3 text-right font-bold text-[#C9A84C]">
-                                        {formatNumber(player.netWorth)}
-                                    </td>
-
-                                    {/* LH / DN */}
-                                    <td className="p-3 text-center text-neutral-400">
-                                        {player.lastHits} / {player.denies}
-                                    </td>
-
-                                    {/* GPM / XPM */}
-                                    <td className="p-3 text-center text-neutral-400">
-                                        {player.gpm} / {player.xpm}
-                                    </td>
-
-                                    {/* Hero Damage */}
-                                    <td className="p-3 text-right text-neutral-300">
-                                        {formatNumber(player.heroDamage)}
-                                    </td>
-
-                                    {/* Hero Healing */}
-                                    <td className="p-3 text-right text-emerald-400">
-                                        {player.heroHealing > 0 ? formatNumber(player.heroHealing) : '—'}
-                                    </td>
-
-                                    {/* Building Damage */}
-                                    <td className="p-3 text-right text-neutral-300">
-                                        {player.towerDamage > 0 ? formatNumber(player.towerDamage) : '—'}
-                                    </td>
-
-                                    {/* Items + Neutral + Scepter / Shard */}
-                                    <td className="p-3">
-                                        <div className="flex items-center gap-1.5">
-                                            {/* Main 6 Items */}
-                                            <div className="grid grid-cols-6 gap-1 bg-black/40 p-1 border border-neutral-800">
-                                                {Array.from({ length: 6 }).map((_, i) => {
-                                                    const itemName = player.items[i];
-                                                    return (
-                                                        <div
-                                                            key={i}
-                                                            className="w-6 h-4 bg-neutral-900 border border-neutral-800 flex items-center justify-center"
-                                                        >
-                                                            {itemName ? (
-                                                                <img
-                                                                    src={`https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/${itemName}.png`}
-                                                                    alt={itemName}
-                                                                    className="w-full h-full object-cover"
-                                                                    onError={(e) => {
-                                                                        (e.target as HTMLElement).style.display = 'none';
-                                                                    }}
-                                                                />
-                                                            ) : null}
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-
-                                            {/* Neutral Item */}
-                                            <div className="w-5 h-5 rounded-full border border-[#C9A84C]/50 bg-neutral-900 flex items-center justify-center overflow-hidden">
-                                                {player.neutralItem ? (
-                                                    <img
-                                                        src={`https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/${player.neutralItem}.png`}
-                                                        alt="neutral"
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <span className="text-[8px] text-neutral-600">N</span>
-                                                )}
-                                            </div>
-
-                                            {/* Aghanim's Scepter & Shard Glow Icons */}
-                                            <div className="flex flex-col gap-0.5">
-                                                <span
-                                                    title="Aghanim's Scepter"
-                                                    className={`text-[9px] px-1 font-bold border transition-all ${player.hasScepter
-                                                        ? 'border-[#00D4FF] bg-[#00D4FF]/20 text-[#00D4FF] shadow-[0_0_8px_rgba(0,212,255,0.6)]'
-                                                        : 'border-neutral-800 bg-neutral-950 text-neutral-700'
-                                                        }`}
-                                                >
-                                                    S
+                        return (
+                            <tr key={idx} className="transition-colors hover:bg-neutral-800/30">
+                                <td className="px-4 py-2.5">
+                                    <div className="flex items-center gap-2">
+                                        <div className="relative h-7 w-12 overflow-hidden border border-neutral-700 bg-neutral-900">
+                                            {heroImg ? (
+                                                <img
+                                                    src={heroImg}
+                                                    alt={p.heroName || 'hero'}
+                                                    className="h-full w-full object-cover"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLElement).style.display = 'none';
+                                                    }}
+                                                />
+                                            ) : (
+                                                <span className="flex h-full w-full items-center justify-center text-[9px] text-neutral-400">
+                                                    {p.heroName?.substring(0, 3).toUpperCase() || 'HER'}
                                                 </span>
-                                                <span
-                                                    title="Aghanim's Shard"
-                                                    className={`text-[9px] px-1 font-bold border transition-all ${player.hasShard
-                                                        ? 'border-[#C9A84C] bg-[#C9A84C]/20 text-[#C9A84C] shadow-[0_0_8px_rgba(201,168,76,0.6)]'
-                                                        : 'border-neutral-800 bg-neutral-950 text-neutral-700'
-                                                        }`}
-                                                >
-                                                    D
-                                                </span>
-                                            </div>
+                                            )}
                                         </div>
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
+                                    </div>
+                                </td>
+                                <td className="px-4 py-2.5 font-semibold">
+                                    <span className={isRadiant ? 'text-[#00D4FF]' : 'text-[#C9A84C]'}>
+                                        {p.playerName}
+                                    </span>
+                                </td>
+                                <td className="px-4 py-2.5 text-center">
+                                    <span className="text-white">{p.kills}</span> /{' '}
+                                    <span className="text-rose-500 font-bold">{p.deaths}</span> /{' '}
+                                    <span className="text-neutral-400">{p.assists}</span>
+                                </td>
+                                <td className="px-4 py-2.5 text-right font-bold text-[#C9A84C]">
+                                    {formatNum(p.netWorth)}
+                                </td>
+                                <td className="px-4 py-2.5 text-center text-neutral-400">
+                                    {p.lastHits || 0} / {p.denies || 0}
+                                </td>
+                                <td className="px-4 py-2.5 text-center text-neutral-400">
+                                    {p.gpm || 0} / {p.xpm || 0}
+                                </td>
+                                <td className="px-4 py-2.5 text-right text-neutral-300">
+                                    {formatNum(p.heroDamage)}
+                                </td>
+                                <td className="px-4 py-2.5 text-right text-emerald-400">
+                                    {p.heroHealing && p.heroHealing > 0 ? formatNum(p.heroHealing) : '—'}
+                                </td>
+                                <td className="px-4 py-2.5 text-right text-neutral-400">
+                                    {formatNum(p.towerDamage)}
+                                </td>
+                                <td className="px-4 py-2.5">
+                                    <div className="flex items-center gap-1.5">
+                                        {/* Main 6 Items Grid */}
+                                        <div className="grid grid-cols-6 gap-1 bg-black/40 p-1 border border-neutral-800/80 rounded-sm">
+                                            {Array.from({ length: 6 }).map((_, itemIdx) => {
+                                                const itm = p.items?.[itemIdx];
+                                                const itemUrl = getItemImageUrl(itm);
+                                                return (
+                                                    <div
+                                                        key={itemIdx}
+                                                        className="h-5 w-7 border border-neutral-800 bg-[#0A0A0F] overflow-hidden flex items-center justify-center"
+                                                    >
+                                                        {itemUrl ? (
+                                                            <img src={itemUrl} alt="item" className="h-full w-full object-cover" />
+                                                        ) : (
+                                                            <span className="h-1 w-1 rounded-full bg-neutral-800"></span>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {/* Neutral Item */}
+                                        <div className="h-5 w-5 rounded-full border border-neutral-700 bg-[#0A0A0F] overflow-hidden flex items-center justify-center">
+                                            {p.neutralItem ? (
+                                                <img
+                                                    src={getItemImageUrl(p.neutralItem)}
+                                                    alt="neutral"
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            ) : (
+                                                <span className="h-1.5 w-1.5 rounded-full bg-neutral-800"></span>
+                                            )}
+                                        </div>
+
+                                        {/* Buffs: Aghanim's Scepter & Shard Glow Indicators */}
+                                        <div className="flex flex-col gap-0.5 ml-1">
+                                            <span
+                                                title="Aghanim's Scepter"
+                                                className={`text-[8px] font-bold px-1 rounded-xs border ${p.hasAghsScepter
+                                                        ? 'border-[#00D4FF] bg-[#00D4FF]/20 text-[#00D4FF] shadow-[0_0_6px_#00D4FF]'
+                                                        : 'border-neutral-800 text-neutral-600 bg-neutral-900/40'
+                                                    }`}
+                                            >
+                                                S
+                                            </span>
+                                            <span
+                                                title="Aghanim's Shard"
+                                                className={`text-[8px] font-bold px-1 rounded-xs border ${p.hasAghsShard
+                                                        ? 'border-[#C9A84C] bg-[#C9A84C]/20 text-[#C9A84C] shadow-[0_0_6px_#C9A84C]'
+                                                        : 'border-neutral-800 text-neutral-600 bg-neutral-900/40'
+                                                    }`}
+                                            >
+                                                D
+                                            </span>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
         </div>
     );
 }
