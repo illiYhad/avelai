@@ -17,53 +17,46 @@ export default function MatchDetailView({ matchData }: MatchDetailViewProps) {
     const [activeTab, setActiveTab] = useState<TabType>('kp');
 
     return (
-        <div>
-            {/* 🔹 แถบสลับ Tab ทั้ง 4 */}
+        <div className="mt-6 space-y-6">
+            {/* 🧭 Tab Switcher */}
             <TabNav activeTab={activeTab} onTabChange={setActiveTab} />
 
-            {/* 🔹 Tab 1: KP INTEL (Killer Feature) */}
+            {/* 👑 TAB 1: KP INTEL */}
             {activeTab === 'kp' && (
-                <div className="space-y-6">
-                    <KPBreakdownTable
-                        players={matchData.kpPlayers}
-                        radiantWin={matchData.radiantWin}
-                    />
-                    <KPDistributionChart players={matchData.kpPlayers} />
+                <div className="space-y-6 animate-fadeIn">
+                    <KPBreakdownTable players={matchData.kpPlayers || []} />
+                    <KPDistributionChart players={matchData.kpPlayers || []} />
                 </div>
             )}
 
-            {/* 🔹 Tab 2: OVERVIEW & INVENTORY */}
+            {/* 📊 TAB 2: OVERVIEW */}
             {activeTab === 'overview' && (
-                <div>
-                    <OverviewTable players={matchData.overviewPlayers} />
+                <div className="animate-fadeIn">
+                    <OverviewTable players={matchData.overviewPlayers || []} />
                 </div>
             )}
 
-            {/* 🔹 Tab 3: TACTICAL ADVANTAGE */}
+            {/* 📈 TAB 3: ADVANTAGE & MAP */}
             {activeTab === 'advantage' && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 animate-fadeIn">
                     <AdvantageGraph
-                        goldAdv={matchData.radiantGoldAdv}
-                        xpAdv={matchData.radiantXpAdv}
+                        goldAdv={matchData.radiantGoldAdv || []}
+                        xpAdv={matchData.radiantXpAdv || []}
                     />
                     <TowerMapGrid
-                        radiantTowers={matchData.towerStatusRadiant}
-                        direTowers={matchData.towerStatusDire}
-                        radiantBarracks={matchData.barracksStatusRadiant}
-                        direBarracks={matchData.barracksStatusDire}
+                        towerRadiant={matchData.towerStatusRadiant || 0}
+                        towerDire={matchData.towerStatusDire || 0}
+                        barracksRadiant={matchData.barracksStatusRadiant || 0}
+                        barracksDire={matchData.barracksStatusDire || 0}
                     />
                 </div>
             )}
 
-            {/* 🔹 Tab 4: PERFORMANCE & EFFICIENCY */}
+            {/* ⚙️ TAB 4: PERFORMANCE */}
             {activeTab === 'performance' && (
-                <div>
+                <div className="animate-fadeIn">
                     <PerformanceRadar
-                        players={matchData.performancePlayers}
-                        teamRadiantKills={matchData.radiantScore}
-                        teamDireKills={matchData.direScore}
-                        teamRadiantTowers={matchData.radiantTowersKilled}
-                        teamDireTowers={matchData.direTowersKilled}
+                        players={matchData.performancePlayers || []}
                     />
                 </div>
             )}
