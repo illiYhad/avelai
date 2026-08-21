@@ -100,7 +100,7 @@ export default function DraftBoardPage() {
     }, [isDraftFinished, sessionId]);
 
     return (
-        <div className="min-h-screen bg-[#090D14] text-white p-8 font-sans">
+        <div className="min-h-screen bg-[#090D14] text-white pt-24 pb-12 px-6 md:px-10 font-sans">
             <div className="max-w-6xl mx-auto space-y-8">
                 {/* Header Bar */}
                 <div className="flex justify-between items-center border-b border-gray-800 pb-4">
@@ -132,8 +132,8 @@ export default function DraftBoardPage() {
                             <div
                                 key={cap.id}
                                 className={`p-4 rounded-xl border transition-all ${isTurn
-                                        ? 'border-amber-400 bg-amber-950/20 shadow-[0_0_15px_rgba(255,184,0,0.2)]'
-                                        : 'border-gray-800 bg-[#0D1117]'
+                                    ? 'border-amber-400 bg-amber-950/20 shadow-[0_0_15px_rgba(255,184,0,0.2)]'
+                                    : 'border-gray-800 bg-[#0D1117]'
                                     }`}
                             >
                                 <div className="text-xs font-mono text-gray-400">{cap.role}</div>
