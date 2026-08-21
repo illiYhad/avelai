@@ -9,33 +9,33 @@ interface TowerMapGridProps {
     barracksDire?: number;
 }
 
-// พิกัดป้อมตามเลนจริง Dota 2 (0-100%)
+// พิกัดป้อมตามค่าที่อลิสระบุ (Bit 0 - 10)
 const TOWER_COORDS = [
-    // Radiant Towers
-    { id: 'rad_t1_top', team: 'radiant', label: 'T1 Top', x: 16, y: 56, bit: 0 },
-    { id: 'rad_t2_top', team: 'radiant', label: 'T2 Top', x: 16, y: 68, bit: 1 },
-    { id: 'rad_t3_top', team: 'radiant', label: 'T3 Top', x: 16, y: 78, bit: 2 },
-    { id: 'rad_t1_mid', team: 'radiant', label: 'T1 Mid', x: 42, y: 60, bit: 3 },
-    { id: 'rad_t2_mid', team: 'radiant', label: 'T2 Mid', x: 32, y: 68, bit: 4 },
-    { id: 'rad_t3_mid', team: 'radiant', label: 'T3 Mid', x: 24, y: 74, bit: 5 },
-    { id: 'rad_t1_bot', team: 'radiant', label: 'T1 Bot', x: 82, y: 84, bit: 6 },
-    { id: 'rad_t2_bot', team: 'radiant', label: 'T2 Bot', x: 54, y: 84, bit: 7 },
-    { id: 'rad_t3_bot', team: 'radiant', label: 'T3 Bot', x: 30, y: 84, bit: 8 },
-    { id: 'rad_t4_top', team: 'radiant', label: 'T4 Top', x: 18, y: 81, bit: 9 },
-    { id: 'rad_t4_bot', team: 'radiant', label: 'T4 Bot', x: 21, y: 84, bit: 10 },
+    // Radiant Towers (Bit 0 to 10)
+    { id: 'rad_t1_top', team: 'radiant', label: 'T1 Top', x: 18, y: 28, bit: 0 },
+    { id: 'rad_t2_top', team: 'radiant', label: 'T2 Top', x: 18, y: 18, bit: 1 },
+    { id: 'rad_t3_top', team: 'radiant', label: 'T3 Top', x: 12, y: 12, bit: 2 },
+    { id: 'rad_t1_mid', team: 'radiant', label: 'T1 Mid', x: 45, y: 55, bit: 3 },
+    { id: 'rad_t2_mid', team: 'radiant', label: 'T2 Mid', x: 58, y: 42, bit: 4 },
+    { id: 'rad_t3_mid', team: 'radiant', label: 'T3 Mid', x: 70, y: 30, bit: 5 },
+    { id: 'rad_t1_bot', team: 'radiant', label: 'T1 Bot', x: 75, y: 82, bit: 6 },
+    { id: 'rad_t2_bot', team: 'radiant', label: 'T2 Bot', x: 82, y: 70, bit: 7 },
+    { id: 'rad_t3_bot', team: 'radiant', label: 'T3 Bot', x: 88, y: 58, bit: 8 },
+    { id: 'rad_t4_top', team: 'radiant', label: 'T4 Top', x: 78, y: 22, bit: 9 },
+    { id: 'rad_t4_bot', team: 'radiant', label: 'T4 Bot', x: 80, y: 26, bit: 10 },
 
-    // Dire Towers
-    { id: 'dire_t1_top', team: 'dire', label: 'T1 Top', x: 20, y: 16, bit: 0 },
-    { id: 'dire_t2_top', team: 'dire', label: 'T2 Top', x: 48, y: 16, bit: 1 },
-    { id: 'dire_t3_top', team: 'dire', label: 'T3 Top', x: 70, y: 16, bit: 2 },
-    { id: 'dire_t1_mid', team: 'dire', label: 'T1 Mid', x: 56, y: 44, bit: 3 },
-    { id: 'dire_t2_mid', team: 'dire', label: 'T2 Mid', x: 66, y: 36, bit: 4 },
-    { id: 'dire_t3_mid', team: 'dire', label: 'T3 Mid', x: 74, y: 28, bit: 5 },
-    { id: 'dire_t1_bot', team: 'dire', label: 'T1 Bot', x: 84, y: 44, bit: 6 },
-    { id: 'dire_t2_bot', team: 'dire', label: 'T2 Bot', x: 84, y: 32, bit: 7 },
-    { id: 'dire_t3_bot', team: 'dire', label: 'T3 Bot', x: 84, y: 22, bit: 8 },
-    { id: 'dire_t4_top', team: 'dire', label: 'T4 Top', x: 78, y: 18, bit: 9 },
-    { id: 'dire_t4_bot', team: 'dire', label: 'T4 Bot', x: 81, y: 21, bit: 10 },
+    // Dire Towers (Bit 0 to 10)
+    { id: 'dire_t1_top', team: 'dire', label: 'T1 Top', x: 22, y: 72, bit: 0 },
+    { id: 'dire_t2_top', team: 'dire', label: 'T2 Top', x: 18, y: 80, bit: 1 },
+    { id: 'dire_t3_top', team: 'dire', label: 'T3 Top', x: 12, y: 88, bit: 2 },
+    { id: 'dire_t1_mid', team: 'dire', label: 'T1 Mid', x: 55, y: 45, bit: 3 },
+    { id: 'dire_t2_mid', team: 'dire', label: 'T2 Mid', x: 42, y: 58, bit: 4 },
+    { id: 'dire_t3_mid', team: 'dire', label: 'T3 Mid', x: 30, y: 70, bit: 5 },
+    { id: 'dire_t1_bot', team: 'dire', label: 'T1 Bot', x: 82, y: 18, bit: 6 },
+    { id: 'dire_t2_bot', team: 'dire', label: 'T2 Bot', x: 88, y: 28, bit: 7 },
+    { id: 'dire_t3_bot', team: 'dire', label: 'T3 Bot', x: 88, y: 40, bit: 8 },
+    { id: 'dire_t4_top', team: 'dire', label: 'T4 Top', x: 22, y: 78, bit: 9 },
+    { id: 'dire_t4_bot', team: 'dire', label: 'T4 Bot', x: 20, y: 74, bit: 10 },
 ];
 
 export default function TowerMapGrid({
@@ -65,34 +65,18 @@ export default function TowerMapGrid({
                 </div>
             </div>
 
-            {/* Cyberpunk Vector Radar Map */}
             <div className="relative mx-auto aspect-square w-full max-w-[380px] overflow-hidden border border-[#00D4FF]/30 bg-[#07070C]">
-                {/* SVG Dota 2 Map Lanes & River */}
                 <svg className="absolute inset-0 h-full w-full opacity-60" viewBox="0 0 100 100">
-                    {/* Radiant Base Area */}
                     <polygon points="5,95 35,95 5,65" fill="#00D4FF08" stroke="#00D4FF20" strokeWidth="0.5" />
-                    {/* Dire Base Area */}
                     <polygon points="95,5 65,5 95,35" fill="#C9A84C08" stroke="#C9A84C20" strokeWidth="0.5" />
-
-                    {/* Top Lane */}
-                    <path d="M 18,80 L 18,20 L 75,20" fill="none" stroke="#252538" strokeWidth="3" strokeLinecap="round" />
-                    {/* Mid Lane */}
-                    <path d="M 22,78 L 78,22" fill="none" stroke="#252538" strokeWidth="3" strokeLinecap="round" />
-                    {/* Bot Lane */}
-                    <path d="M 25,82 L 82,82 L 82,25" fill="none" stroke="#252538" strokeWidth="3" strokeLinecap="round" />
-
-                    {/* River Stream */}
+                    <path d="M 18,80 L 18,20 L 75,20" fill="none" stroke="#252538" strokeWidth="2" strokeLinecap="round" />
+                    <path d="M 22,78 L 78,22" fill="none" stroke="#252538" strokeWidth="2" strokeLinecap="round" />
+                    <path d="M 25,82 L 82,82 L 82,25" fill="none" stroke="#252538" strokeWidth="2" strokeLinecap="round" />
                     <path d="M 10,25 Q 45,50 85,90" fill="none" stroke="#00D4FF30" strokeWidth="1.5" strokeDasharray="2 1" />
-
-                    {/* Jungle / Roshan Pits Markers */}
-                    <circle cx="28" cy="40" r="3" fill="#00D4FF15" stroke="#00D4FF30" strokeWidth="0.5" />
-                    <circle cx="72" cy="60" r="3" fill="#C9A84C15" stroke="#C9A84C30" strokeWidth="0.5" />
                 </svg>
 
-                {/* Cyberpunk Grid Overlay */}
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#00d4ff08_1px,transparent_1px),linear-gradient(to_bottom,#00d4ff08_1px,transparent_1px)] bg-[size:10%_10%]"></div>
 
-                {/* Towers Nodes */}
                 {TOWER_COORDS.map((tower) => {
                     const alive = isTowerAlive(tower.team as 'radiant' | 'dire', tower.bit);
                     const isRadiant = tower.team === 'radiant';

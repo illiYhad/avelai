@@ -111,17 +111,24 @@ export default function OverviewTable({ players = [] }: OverviewTableProps) {
                                 <td className="px-4 py-2.5">
                                     <div className="flex items-center gap-1.5">
                                         {/* Main 6 Items Grid */}
-                                        <div className="grid grid-cols-6 gap-1 bg-black/40 p-1 border border-neutral-800/80 rounded-sm">
+                                        <div className="grid grid-cols-6 gap-1 bg-black/60 p-1 border border-neutral-800 rounded-sm">
                                             {Array.from({ length: 6 }).map((_, itemIdx) => {
                                                 const itm = p.items?.[itemIdx];
                                                 const itemUrl = getItemImageUrl(itm);
                                                 return (
                                                     <div
                                                         key={itemIdx}
-                                                        className="h-5 w-7 border border-neutral-800 bg-[#0A0A0F] overflow-hidden flex items-center justify-center"
+                                                        className="h-5 w-7 border border-neutral-800/80 bg-[#0A0A0F] overflow-hidden flex items-center justify-center relative"
                                                     >
                                                         {itemUrl ? (
-                                                            <img src={itemUrl} alt="item" className="h-full w-full object-cover" />
+                                                            <img
+                                                                src={itemUrl}
+                                                                alt="item"
+                                                                className="h-full w-full object-cover"
+                                                                onError={(e) => {
+                                                                    (e.target as HTMLElement).style.display = 'none';
+                                                                }}
+                                                            />
                                                         ) : (
                                                             <span className="h-1 w-1 rounded-full bg-neutral-800"></span>
                                                         )}
@@ -132,18 +139,21 @@ export default function OverviewTable({ players = [] }: OverviewTableProps) {
 
                                         {/* Neutral Item */}
                                         <div className="h-5 w-5 rounded-full border border-neutral-700 bg-[#0A0A0F] overflow-hidden flex items-center justify-center">
-                                            {p.neutralItem ? (
+                                            {p.neutralItem && getItemImageUrl(p.neutralItem) ? (
                                                 <img
                                                     src={getItemImageUrl(p.neutralItem)}
                                                     alt="neutral"
                                                     className="h-full w-full object-cover"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLElement).style.display = 'none';
+                                                    }}
                                                 />
                                             ) : (
                                                 <span className="h-1.5 w-1.5 rounded-full bg-neutral-800"></span>
                                             )}
                                         </div>
 
-                                        {/* Buffs: Aghanim's Scepter & Shard Glow Indicators */}
+                                        {/* Buffs Indicators */}
                                         <div className="flex flex-col gap-0.5 ml-1">
                                             <span
                                                 title="Aghanim's Scepter"
