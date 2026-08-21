@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Flame, Shield, Trophy, Target, Bot, Zap, Wifi, WifiOff, Swords } from 'lucide-react';
-
+import { CareerTimeline } from '@/components/profile/CareerTimeline';
 const supabase = createClient();
 const RadarGraph = ({ stats }: { stats: number[] }) => {
   const labels = ['KDA', 'Objective', 'Teamwork', 'Survival', 'Aggression'];
@@ -79,7 +79,7 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 p-4 md:p-6">
+    <div className="min-h-screen bg-[#09090b] text-zinc-100 pt-16 pb-12 px-4 md:px-6">
       <div className="max-w-5xl mx-auto space-y-4">
 
         {/* ZONE 1: IDENTITY */}
@@ -206,6 +206,10 @@ export default function ProfilePage() {
               ))}
             </div>
           </div>
+        </div>
+        {/* Career Tournament Timeline */}
+        <div className="mt-8">
+          <CareerTimeline />
         </div>
 
       </div>
