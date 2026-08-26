@@ -121,7 +121,7 @@ export default function LeaderboardPage() {
             <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-yellow-500/3 rounded-full blur-[150px] pointer-events-none" />
 
             {/* Prize Pool */}
-            <div className="flex flex-col items-center justify-center mb-10 mt-20">
+            <div className="flex flex-col items-center justify-center mb-10 mt-16">
                 <div className="relative border border-yellow-500/40 bg-black/70 px-8 py-5 rounded-sm text-center min-w-[320px] md:min-w-[400px] shadow-[0_0_25px_rgba(234,179,8,0.15)] ring-1 ring-yellow-500/20">
                     <div className="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 border-yellow-500" />
                     <div className="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 border-yellow-500" />
