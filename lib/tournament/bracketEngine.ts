@@ -176,6 +176,11 @@ export function advanceWinner(
     return bracket;
   }
 
+  // 🛑 [GUARD 1] Idempotency Protection: ป้องกันการประมวลผลแมตช์ซ้ำ
+  if (currentMatch.status === 'COMPLETED' || currentMatch.status === 'WALKOVER') {
+    throw new Error(`[Idempotency Guard] Match ${matchId} has already been completed.`);
+  }
+
   const winner = currentMatch.team1.id === winnerId ? currentMatch.team1 : currentMatch.team2;
   currentMatch.winner = winner;
   currentMatch.status = 'COMPLETED';
@@ -497,6 +502,11 @@ export const advanceDoubleEliminationWinner = (
   const currentMatch = allMatches.find((m) => m.id === matchId);
   if (!currentMatch || !currentMatch.team1 || !currentMatch.team2) {
     return bracket;
+  }
+
+  // 🛑 [GUARD 2] Idempotency Protection: ป้องกันการประมวลผล Double Elimination แมตช์ซ้ำ
+  if (currentMatch.status === 'COMPLETED' || currentMatch.status === 'WALKOVER') {
+    throw new Error(`[Idempotency Guard] DEMatch ${matchId} has already been completed.`);
   }
 
   const isTeam1Winner = currentMatch.team1.id === winnerId;

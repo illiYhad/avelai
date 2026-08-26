@@ -7,12 +7,22 @@ import {
   type DEMatch,
   type Bracket,
   type Match,
+  type BracketSide,
 } from '@/lib/tournament/bracketEngine';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+function parseBracketSide(rawSide: string | null | undefined, slotId: string): BracketSide {
+  if (rawSide === 'WINNER' || rawSide === 'LOSER' || rawSide === 'GRAND_FINAL') {
+    return rawSide;
+  }
+  if (slotId.startsWith('WB_')) return 'WINNER';
+  if (slotId.startsWith('LB_')) return 'LOSER';
+  return 'GRAND_FINAL';
+}
 
 export async function POST(req: Request) {
   try {
@@ -51,7 +61,7 @@ export async function POST(req: Request) {
       // --- จัดการเคส Double Elimination (Monthly) ---
       const matches: DEMatch[] = dbSlots.map((s) => ({
         id: s.slot_id,
-        side: (s.side || (s.slot_id.startsWith('WB_') ? 'WINNER' : s.slot_id.startsWith('LB_') ? 'LOSER' : 'GRAND_FINAL')) as any,
+        side: parseBracketSide(s.side, s.slot_id),
         round: s.round_number,
         matchNumber: s.match_index,
         team1: s.player1_id ? { id: s.player1_id, name: s.player1_name ?? s.player1_id, seed: s.player1_seed ?? 0 } : null,
