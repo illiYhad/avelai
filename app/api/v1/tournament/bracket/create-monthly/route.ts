@@ -15,7 +15,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing tournamentId' }, { status: 400 });
     }
 
-    // 1. ดึง Top 16 ผู้ถือ Monthly Pass เรียงตาม Seed (หรือดึงจาก circuit_points/rank)
+    // 1. ดึง Top 16 ผู้ถือ Monthly Pass เรียงตาม Seed
     const { data: top16, error: fetchError } = await supabase
       .from('tournament_participants')
       .select('player_id, seed, users(display_name)')
@@ -40,30 +40,13 @@ export async function POST(req: Request) {
       display_name: (p.users as any)?.display_name ?? `Seed #${index + 1}`,
     }));
 
-    // 3. สร้าง Full Double Elimination Bracket (4 WB rounds + 7 LB rounds + Grand Final)
+    // 3. สร้าง Full Double Elimination Bracket (ได้ DbBracketNode[] ที่เป็น Snake_case ตรงกับ Database ทันที)
     const nodes = createMonthlyDoubleElimination(tournamentId, top16Slots);
 
-    // 4. Map โครงสร้าง Nodes ให้ตรงกับคอลัมน์ในตาราง bracket_slots
-    const dbPayload = nodes.map((node) => ({
-      slot_id: node.slotId,
-      tournament_id: node.tournamentId,
-      round_number: node.roundNumber,
-      side: node.side, // 'WINNER' | 'LOSER' | 'GRAND_FINAL'
-      match_index: node.matchIndex,
-      player1_id: node.player1 ? node.player1.id : null,
-      player2_id: node.player2 ? node.player2.id : null,
-      winner_id: node.winnerId,
-      loser_id: node.loserId,
-      status: node.status,
-      next_upper_slot_id: node.nextUpperSlotId,
-      next_lower_slot_id: node.nextLowerSlotId,
-      is_grand_final_reset: node.isGrandFinalReset ?? false,
-    }));
-
-    // 5. บันทึก Upsert ลง Supabase
+    // 4. บันทึก Upsert ลง Supabase ตรงๆ ได้เลย
     const { error: upsertError } = await supabase
       .from('bracket_slots')
-      .upsert(dbPayload, { onConflict: 'slot_id,tournament_id' });
+      .upsert(nodes, { onConflict: 'slot_id,tournament_id' });
 
     if (upsertError) throw upsertError;
 
@@ -71,7 +54,7 @@ export async function POST(req: Request) {
       {
         success: true,
         message: 'Monthly Double Elimination Bracket created successfully.',
-        nodesCreated: dbPayload.length,
+        nodesCreated: nodes.length,
       },
       { status: 200 }
     );

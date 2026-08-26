@@ -1,25 +1,33 @@
 // ============================================================================
 // lib/tournament/bracketEngine.ts
-// FEATURE-4201 & FEATURE-4201B: FULL TOURNAMENT BRACKET ENGINE
+// FEATURE-4201 (Weekly Single Elimination) & FEATURE-4201B (Monthly Double Elimination)
 // ============================================================================
 
-export type BracketType = 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION';
+// ----------------------------------------------------------------------------
+// 1. BASE / WEEKLY TYPES (LOCKED SYSTEM - VERIFIED)
+// ----------------------------------------------------------------------------
 export type MatchStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'WALKOVER';
-export type BracketSide = 'WINNER' | 'LOSER' | 'UPPER' | 'LOWER' | 'GRAND_FINAL' | 'GRAND_FINAL_RESET';
-
-export interface SeededPlayer {
-  userId: string;
-  seed: number;
-  totalScore: number;
-  formIndex: number;
-  [key: string]: any;
-}
 
 export interface Team {
   id: string;
   name: string;
-  seed?: number;
-  [key: string]: any;
+  seed: number;
+}
+
+export interface Match {
+  id: string;
+  round: number;
+  matchNumber: number;
+  team1: Team | null;
+  team2: Team | null;
+  winner: Team | null;
+  status: MatchStatus;
+}
+
+export interface Bracket {
+  id: string;
+  tournamentId: string;
+  rounds: Match[][];
 }
 
 export interface DbBracketSlotRow {
@@ -31,50 +39,29 @@ export interface DbBracketSlotRow {
 }
 
 export interface DbBracketNode {
-  slotId: string;
-  tournamentId: string;
-  roundNumber: number;
-  side: BracketSide;
-  matchIndex: number;
-  player1: any;
-  player2: any;
-  winnerId: string | null;
-  loserId: string | null;
+  slot_id: string;
+  tournament_id: string;
+  round_number: number;
+  match_index: number;
+  player1_id: string | null;
+  player2_id: string | null;
+  winner_id: string | null;
+  loser_id: string | null;
   status: MatchStatus;
-  nextUpperSlotId?: string | null;
-  nextLowerSlotId?: string | null;
-  isGrandFinalReset?: boolean;
+  next_upper_slot_id: string | null;
+  next_lower_slot_id: string | null;
+  is_grand_final_reset: boolean;
 }
 
-export interface BracketNode {
-  slotId: string;
-  tournamentId: string;
-  roundNumber: number;
-  side: BracketSide;
-  matchIndex: number;
-  player1: SeededPlayer | null;
-  player2: SeededPlayer | null;
-  winnerId: string | null;
-  loserId: string | null;
-  status: MatchStatus;
-  nextUpperSlotId?: string;
-  nextLowerSlotId?: string;
-  isGrandFinalReset?: boolean;
-}
-
-export interface TournamentBracketState {
-  tournamentId: string;
-  bracketType: BracketType;
-  totalRounds: number;
-  nodes: Record<string, BracketNode>;
-  grandFinalSlotId: string;
-  grandFinalResetSlotId?: string;
-}
+// ----------------------------------------------------------------------------
+// 2. FEATURE-4201B TYPE EXTENSIONS (MONTHLY DOUBLE ELIMINATION)
+// ----------------------------------------------------------------------------
+export type BracketSide = 'WINNER' | 'LOSER' | 'GRAND_FINAL';
 
 export interface DEMatch {
   id: string;
-  side: 'WINNER' | 'LOSER' | 'GRAND_FINAL';
-  round: number;
+  side: BracketSide;
+  round: number; // นับแยกอิสระต่อ side (Winner round 1..4 / Loser round 1..6 / GF 1..2)
   matchNumber: number;
   team1: Team | null;
   team2: Team | null;
@@ -94,162 +81,194 @@ export interface DoubleEliminationBracket {
   grandFinal: DEMatch[];
 }
 
-// ============================================================================
-// 1. SEEDING LOGIC (FORMULA A + B)
-// ============================================================================
-export function generateSeeding(players: SeededPlayer[]): SeededPlayer[] {
-  return [...players]
-    .sort((a, b) => {
-      if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
-      return b.formIndex - a.formIndex;
-    })
-    .map((p, index) => ({
-      ...p,
-      seed: index + 1,
-    }));
+// ----------------------------------------------------------------------------
+// 3. SEEDING ALGORITHM (STANDARD RECURSIVE)
+// ----------------------------------------------------------------------------
+export function generateStandardSeedOrder(numTeams: number): number[] {
+  let rounds = Math.log2(numTeams) - 1;
+  let pls = [1, 2];
+  for (let i = 0; i < rounds; i++) {
+    const nextPls: number[] = [];
+    const length = pls.length * 2 + 1;
+    for (const d of pls) {
+      nextPls.push(d);
+      nextPls.push(length - d);
+    }
+    pls = nextPls;
+  }
+  return pls;
 }
 
-// ============================================================================
-// 2. WEEKLY TOURNAMENT: SINGLE ELIMINATION (TOP 8) - คงเดิมห้ามแก้
-// ============================================================================
-export function createTop8SingleElimination(
+// ----------------------------------------------------------------------------
+// 4. WEEKLY SINGLE ELIMINATION (LOCKED CORE - ORIGINAL RESTORED)
+// ----------------------------------------------------------------------------
+export function generateSingleEliminationBracket(
   tournamentId: string,
-  players: SeededPlayer[]
-): TournamentBracketState {
-  const seeds = generateSeeding(players).slice(0, 8);
-  const nodes: Record<string, BracketNode> = {};
+  teams: Team[]
+): Bracket {
+  const seedOrder = generateStandardSeedOrder(8);
+  const teamMap = new Map<number, Team>();
+  teams.forEach((t) => teamMap.set(t.seed, t));
 
-  const qfPairings = [
-    [0, 7], // Seed 1 vs Seed 8
-    [3, 4], // Seed 4 vs Seed 5
-    [1, 6], // Seed 2 vs Seed 7
-    [2, 5], // Seed 3 vs Seed 6
-  ];
+  const rounds: Match[][] = [];
 
+  // Round 1 (QF: 4 Matches)
+  const r1Matches: Match[] = [];
   for (let i = 0; i < 4; i++) {
-    const slotId = `SE_R1_M${i + 1}`;
-    nodes[slotId] = {
-      slotId,
-      tournamentId,
-      roundNumber: 1,
-      side: 'UPPER',
-      matchIndex: i + 1,
-      player1: seeds[qfPairings[i][0]] || null,
-      player2: seeds[qfPairings[i][1]] || null,
-      winnerId: null,
-      loserId: null,
+    const s1 = seedOrder[i * 2];
+    const s2 = seedOrder[i * 2 + 1];
+    r1Matches.push({
+      id: `SE_R1_M${i + 1}`,
+      round: 1,
+      matchNumber: i + 1,
+      team1: teamMap.get(s1) ?? null,
+      team2: teamMap.get(s2) ?? null,
+      winner: null,
       status: 'PENDING',
-      nextUpperSlotId: i < 2 ? 'SE_R2_M1' : 'SE_R2_M2',
-    };
+    });
   }
+  rounds.push(r1Matches);
 
-  nodes['SE_R2_M1'] = {
-    slotId: 'SE_R2_M1',
-    tournamentId,
-    roundNumber: 2,
-    side: 'UPPER',
-    matchIndex: 1,
-    player1: null,
-    player2: null,
-    winnerId: null,
-    loserId: null,
-    status: 'PENDING',
-    nextUpperSlotId: 'SE_R3_FINAL',
-  };
+  // Round 2 (SF: 2 Matches)
+  const r2Matches: Match[] = [];
+  for (let i = 0; i < 2; i++) {
+    r2Matches.push({
+      id: `SE_R2_M${i + 1}`,
+      round: 2,
+      matchNumber: i + 1,
+      team1: null,
+      team2: null,
+      winner: null,
+      status: 'PENDING',
+    });
+  }
+  rounds.push(r2Matches);
 
-  nodes['SE_R2_M2'] = {
-    slotId: 'SE_R2_M2',
-    tournamentId,
-    roundNumber: 2,
-    side: 'UPPER',
-    matchIndex: 2,
-    player1: null,
-    player2: null,
-    winnerId: null,
-    loserId: null,
-    status: 'PENDING',
-    nextUpperSlotId: 'SE_R3_FINAL',
-  };
-
-  nodes['SE_R3_FINAL'] = {
-    slotId: 'SE_R3_FINAL',
-    tournamentId,
-    roundNumber: 3,
-    side: 'GRAND_FINAL',
-    matchIndex: 1,
-    player1: null,
-    player2: null,
-    winnerId: null,
-    loserId: null,
-    status: 'PENDING',
-  };
+  // Round 3 (Final: 1 Match)
+  rounds.push([
+    {
+      id: `SE_R3_FINAL`,
+      round: 3,
+      matchNumber: 1,
+      team1: null,
+      team2: null,
+      winner: null,
+      status: 'PENDING',
+    },
+  ]);
 
   return {
+    id: `SE_BRACKET_${tournamentId}`,
     tournamentId,
-    bracketType: 'SINGLE_ELIMINATION',
-    totalRounds: 3,
-    nodes,
-    grandFinalSlotId: 'SE_R3_FINAL',
+    rounds,
   };
 }
 
-export function advanceMatchWinner(
-  state: TournamentBracketState,
-  currentSlotId: string,
-  winnerId: string,
-  isWalkover: boolean = false
-): TournamentBracketState {
-  const current = state.nodes[currentSlotId];
-  if (!current || !current.player1 || !current.player2) return state;
+export function advanceWinner(
+  bracket: Bracket,
+  matchId: string,
+  winnerId: string
+): Bracket {
+  const allMatches = bracket.rounds.flat();
+  const currentMatch = allMatches.find((m) => m.id === matchId);
 
-  const winner = current.player1.userId === winnerId ? current.player1 : current.player2;
-  const loser = current.player1.userId === winnerId ? current.player2 : current.player1;
+  if (!currentMatch || !currentMatch.team1 || !currentMatch.team2) {
+    return bracket;
+  }
 
-  current.winnerId = winner.userId;
-  current.loserId = loser.userId;
-  current.status = isWalkover ? 'WALKOVER' : 'COMPLETED';
+  const winner = currentMatch.team1.id === winnerId ? currentMatch.team1 : currentMatch.team2;
+  currentMatch.winner = winner;
+  currentMatch.status = 'COMPLETED';
 
-  if (current.nextUpperSlotId && state.nodes[current.nextUpperSlotId]) {
-    const nextSlot = state.nodes[current.nextUpperSlotId];
-    if (!nextSlot.player1) {
-      nextSlot.player1 = winner;
-    } else if (!nextSlot.player2) {
-      nextSlot.player2 = winner;
+  // Advance to next round in Single Elimination
+  if (currentMatch.round === 1) {
+    const nextMatchId = currentMatch.matchNumber <= 2 ? 'SE_R2_M1' : 'SE_R2_M2';
+    const nextMatch = allMatches.find((m) => m.id === nextMatchId);
+    if (nextMatch) {
+      if (currentMatch.matchNumber % 2 !== 0) {
+        nextMatch.team1 = winner;
+      } else {
+        nextMatch.team2 = winner;
+      }
+    }
+  } else if (currentMatch.round === 2) {
+    const finalMatch = allMatches.find((m) => m.id === 'SE_R3_FINAL');
+    if (finalMatch) {
+      if (currentMatch.matchNumber === 1) {
+        finalMatch.team1 = winner;
+      } else {
+        finalMatch.team2 = winner;
+      }
     }
   }
 
-  return { ...state };
+  return { ...bracket };
 }
 
-// Alias ให้ตรงกับชื่อที่ route เก่าเรียกใช้
-export const advanceWinner = advanceMatchWinner as any;
-export const generateSingleEliminationBracket = createTop8SingleElimination as any;
+export function createTop8SingleElimination(
+  tournamentId: string,
+  top8Slots: DbBracketSlotRow[]
+): DbBracketNode[] {
+  const teams: Team[] = top8Slots.map((slot) => ({
+    id: slot.user_id,
+    name: slot.display_name ?? `Seed #${slot.seed}`,
+    seed: slot.seed,
+  }));
 
-// ============================================================================
-// 3. MONTHLY TOURNAMENT: FULL DOUBLE ELIMINATION (16 TEAMS) - FEATURE-4201B
-// ============================================================================
+  const bracket = generateSingleEliminationBracket(tournamentId, teams);
+  const allMatches = bracket.rounds.flat();
+
+  return allMatches.map((m) => {
+    let nextUpperSlotId: string | null = null;
+    if (m.round === 1) {
+      nextUpperSlotId = m.matchNumber <= 2 ? 'SE_R2_M1' : 'SE_R2_M2';
+    } else if (m.round === 2) {
+      nextUpperSlotId = 'SE_R3_FINAL';
+    }
+
+    return {
+      slot_id: m.id,
+      tournament_id: tournamentId,
+      round_number: m.round,
+      match_index: m.matchNumber,
+      player1_id: m.team1 ? m.team1.id : null,
+      player2_id: m.team2 ? m.team2.id : null,
+      winner_id: m.winner ? m.winner.id : null,
+      loser_id: null,
+      status: m.status,
+      next_upper_slot_id: nextUpperSlotId,
+      next_lower_slot_id: null,
+      is_grand_final_reset: false,
+    };
+  });
+}
+
+// ----------------------------------------------------------------------------
+// 5. MONTHLY DOUBLE ELIMINATION (16 TEAMS - FEATURE-4201B)
+// ----------------------------------------------------------------------------
 export const generateDoubleEliminationBracket = (
   tournamentId: string,
   teams: Team[]
 ): DoubleEliminationBracket => {
-  const wbSeedPairings = [
-    [0, 15], [7, 8], [3, 12], [4, 11],
-    [1, 14], [6, 9], [2, 13], [5, 10]
-  ];
+  const seedOrder16 = generateStandardSeedOrder(16);
+  const teamMap = new Map<number, Team>();
+  teams.forEach((t) => teamMap.set(t.seed, t));
 
-  const sortedTeams = [...teams].sort((a, b) => (a.seed ?? 99) - (b.seed ?? 99));
+  // --- WINNER BRACKET (4 Rounds: 8 -> 4 -> 2 -> 1) ---
   const wb: DEMatch[][] = [];
 
   // WB R1 (8 Matches)
   const wbR1: DEMatch[] = [];
   for (let i = 0; i < 8; i++) {
+    const s1 = seedOrder16[i * 2];
+    const s2 = seedOrder16[i * 2 + 1];
     wbR1.push({
       id: `WB_R1_M${i + 1}`,
       side: 'WINNER',
       round: 1,
       matchNumber: i + 1,
-      team1: sortedTeams[wbSeedPairings[i][0]] ?? null,
-      team2: sortedTeams[wbSeedPairings[i][1]] ?? null,
+      team1: teamMap.get(s1) ?? null,
+      team2: teamMap.get(s2) ?? null,
       winner: null,
       loser: null,
       nextMatchIdOnWin: `WB_R2_M${Math.floor(i / 2) + 1}`,
@@ -260,7 +279,7 @@ export const generateDoubleEliminationBracket = (
   }
   wb.push(wbR1);
 
-  // WB R2 (4 Matches)
+  // WB R2 (4 Matches - Quarter Finals)
   const wbR2: DEMatch[] = [];
   for (let i = 0; i < 4; i++) {
     wbR2.push({
@@ -280,7 +299,7 @@ export const generateDoubleEliminationBracket = (
   }
   wb.push(wbR2);
 
-  // WB R3 (2 Matches)
+  // WB R3 (2 Matches - Semi Finals)
   const wbR3: DEMatch[] = [];
   for (let i = 0; i < 2; i++) {
     wbR3.push({
@@ -300,23 +319,25 @@ export const generateDoubleEliminationBracket = (
   }
   wb.push(wbR3);
 
-  // WB R4 (WB Final)
-  wb.push([{
-    id: `WB_R4_M1`,
-    side: 'WINNER',
-    round: 4,
-    matchNumber: 1,
-    team1: null,
-    team2: null,
-    winner: null,
-    loser: null,
-    nextMatchIdOnWin: `GF_M1`,
-    nextMatchIdOnLose: `LB_R6_M1`,
-    isGrandFinalReset: false,
-    status: 'PENDING',
-  }]);
+  // WB R4 (1 Match - WB Final)
+  wb.push([
+    {
+      id: `WB_R4_M1`,
+      side: 'WINNER',
+      round: 4,
+      matchNumber: 1,
+      team1: null,
+      team2: null,
+      winner: null,
+      loser: null,
+      nextMatchIdOnWin: `GF_M1`,
+      nextMatchIdOnLose: `LB_R6_M1`,
+      isGrandFinalReset: false,
+      status: 'PENDING',
+    },
+  ]);
 
-  // Loser Bracket (7 Rounds)
+  // --- LOSER BRACKET (6 Rounds: 2*(4)-2 = 6 Rounds) ---
   const lb: DEMatch[][] = [];
 
   // LB R1 (4 Matches)
@@ -399,55 +420,43 @@ export const generateDoubleEliminationBracket = (
   }
   lb.push(lbR4);
 
-  // LB R5 (1 Match)
-  lb.push([{
-    id: `LB_R5_M1`,
-    side: 'LOSER',
-    round: 5,
-    matchNumber: 1,
-    team1: null,
-    team2: null,
-    winner: null,
-    loser: null,
-    nextMatchIdOnWin: `LB_R6_M1`,
-    nextMatchIdOnLose: null,
-    isGrandFinalReset: false,
-    status: 'PENDING',
-  }]);
+  // LB R5 (1 Match - LB Semi Final)
+  lb.push([
+    {
+      id: `LB_R5_M1`,
+      side: 'LOSER',
+      round: 5,
+      matchNumber: 1,
+      team1: null,
+      team2: null,
+      winner: null,
+      loser: null,
+      nextMatchIdOnWin: `LB_R6_M1`,
+      nextMatchIdOnLose: null,
+      isGrandFinalReset: false,
+      status: 'PENDING',
+    },
+  ]);
 
   // LB R6 (1 Match - LB Final)
-  lb.push([{
-    id: `LB_R6_M1`,
-    side: 'LOSER',
-    round: 6,
-    matchNumber: 1,
-    team1: null,
-    team2: null,
-    winner: null,
-    loser: null,
-    nextMatchIdOnWin: `GF_M1`,
-    nextMatchIdOnLose: null,
-    isGrandFinalReset: false,
-    status: 'PENDING',
-  }]);
+  lb.push([
+    {
+      id: `LB_R6_M1`,
+      side: 'LOSER',
+      round: 6,
+      matchNumber: 1,
+      team1: null,
+      team2: null,
+      winner: null,
+      loser: null,
+      nextMatchIdOnWin: `GF_M1`,
+      nextMatchIdOnLose: null,
+      isGrandFinalReset: false,
+      status: 'PENDING',
+    },
+  ]);
 
-  // LB R7 (1 Match - Final Decider)
-  lb.push([{
-    id: `LB_R7_M1`,
-    side: 'LOSER',
-    round: 7,
-    matchNumber: 1,
-    team1: null,
-    team2: null,
-    winner: null,
-    loser: null,
-    nextMatchIdOnWin: `GF_M1`,
-    nextMatchIdOnLose: null,
-    isGrandFinalReset: false,
-    status: 'PENDING',
-  }]);
-
-  // Grand Final
+  // --- GRAND FINAL (GF_M1) ---
   const grandFinal: DEMatch[] = [
     {
       id: `GF_M1`,
@@ -462,7 +471,7 @@ export const generateDoubleEliminationBracket = (
       nextMatchIdOnLose: null,
       isGrandFinalReset: false,
       status: 'PENDING',
-    }
+    },
   ];
 
   return {
@@ -498,6 +507,7 @@ export const advanceDoubleEliminationWinner = (
   currentMatch.loser = loser;
   currentMatch.status = 'COMPLETED';
 
+  // 1. Advance Winner
   if (currentMatch.nextMatchIdOnWin) {
     const nextWinMatch = allMatches.find((m) => m.id === currentMatch.nextMatchIdOnWin);
     if (nextWinMatch) {
@@ -509,6 +519,7 @@ export const advanceDoubleEliminationWinner = (
     }
   }
 
+  // 2. Drop Loser to LB
   if (currentMatch.nextMatchIdOnLose) {
     const nextLoseMatch = allMatches.find((m) => m.id === currentMatch.nextMatchIdOnLose);
     if (nextLoseMatch) {
@@ -520,6 +531,7 @@ export const advanceDoubleEliminationWinner = (
     }
   }
 
+  // 3. Grand Final Reset Case
   if (currentMatch.id === 'GF_M1') {
     const isLbChampionWinner = currentMatch.team2?.id === winnerId;
     if (isLbChampionWinner) {
@@ -564,18 +576,18 @@ export const createMonthlyDoubleElimination = (
   ];
 
   return allMatches.map((m) => ({
-    slotId: m.id,
-    tournamentId,
-    roundNumber: m.round,
+    slot_id: m.id,
+    tournament_id: tournamentId,
+    round_number: m.round,
     side: m.side,
-    matchIndex: m.matchNumber,
-    player1: m.team1,
-    player2: m.team2,
-    winnerId: m.winner ? m.winner.id : null,
-    loserId: m.loser ? m.loser.id : null,
+    match_index: m.matchNumber,
+    player1_id: m.team1 ? m.team1.id : null,
+    player2_id: m.team2 ? m.team2.id : null,
+    winner_id: m.winner ? m.winner.id : null,
+    loser_id: m.loser ? m.loser.id : null,
     status: m.status,
-    nextUpperSlotId: m.nextMatchIdOnWin,
-    nextLowerSlotId: m.nextMatchIdOnLose,
-    isGrandFinalReset: m.isGrandFinalReset,
+    next_upper_slot_id: m.nextMatchIdOnWin,
+    next_lower_slot_id: m.nextMatchIdOnLose,
+    is_grand_final_reset: m.isGrandFinalReset,
   }));
 };

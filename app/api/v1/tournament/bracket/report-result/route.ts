@@ -5,7 +5,8 @@ import {
   advanceDoubleEliminationWinner,
   type DoubleEliminationBracket,
   type DEMatch,
-  type Team,
+  type Bracket,
+  type Match,
 } from '@/lib/tournament/bracketEngine';
 
 const supabase = createClient(
@@ -19,7 +20,6 @@ export async function POST(req: Request) {
     const tournamentId = String(body.tournamentId);
     const slotId = String(body.slotId);
     const winnerId = String(body.winnerId);
-    const isWalkover = Boolean(body.isWalkover);
 
     if (!tournamentId || !slotId || !winnerId) {
       return NextResponse.json(
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Bracket slots not found for this tournament' }, { status: 404 });
     }
 
-    // 2. ตรวจสอบว่าเป็น Single หรือ Double Elimination (เช็กจาก prefix หรือ field side)
+    // 2. ตรวจสอบว่าเป็น Single หรือ Double Elimination
     const isDoubleElimination = dbSlots.some(
       (s) => s.side === 'WINNER' || s.side === 'LOSER' || s.slot_id.startsWith('WB_') || s.slot_id.startsWith('LB_')
     );
@@ -49,23 +49,21 @@ export async function POST(req: Request) {
 
     if (isDoubleElimination) {
       // --- จัดการเคส Double Elimination (Monthly) ---
-      // 2.1 แปลง DB rows กลับเป็น DoubleEliminationBracket Object
       const matches: DEMatch[] = dbSlots.map((s) => ({
         id: s.slot_id,
-        side: s.side || (s.slot_id.startsWith('WB_') ? 'WINNER' : s.slot_id.startsWith('LB_') ? 'LOSER' : 'GRAND_FINAL'),
+        side: (s.side || (s.slot_id.startsWith('WB_') ? 'WINNER' : s.slot_id.startsWith('LB_') ? 'LOSER' : 'GRAND_FINAL')) as any,
         round: s.round_number,
         matchNumber: s.match_index,
-        team1: s.player1_id ? { id: s.player1_id, name: s.player1_name ?? s.player1_id } : null,
-        team2: s.player2_id ? { id: s.player2_id, name: s.player2_name ?? s.player2_id } : null,
-        winner: s.winner_id ? { id: s.winner_id, name: s.winner_id } : null,
-        loser: s.loser_id ? { id: s.loser_id, name: s.loser_id } : null,
+        team1: s.player1_id ? { id: s.player1_id, name: s.player1_name ?? s.player1_id, seed: s.player1_seed ?? 0 } : null,
+        team2: s.player2_id ? { id: s.player2_id, name: s.player2_name ?? s.player2_id, seed: s.player2_seed ?? 0 } : null,
+        winner: s.winner_id ? { id: s.winner_id, name: s.winner_id, seed: 0 } : null,
+        loser: s.loser_id ? { id: s.loser_id, name: s.loser_id, seed: 0 } : null,
         nextMatchIdOnWin: s.next_upper_slot_id ?? null,
         nextMatchIdOnLose: s.next_lower_slot_id ?? null,
         isGrandFinalReset: s.is_grand_final_reset ?? false,
         status: s.status,
       }));
 
-      // จัดกลุ่มตาม side
       const winnerBracketMap: Record<number, DEMatch[]> = {};
       const loserBracketMap: Record<number, DEMatch[]> = {};
       const grandFinal: DEMatch[] = [];
@@ -90,7 +88,6 @@ export async function POST(req: Request) {
         grandFinal,
       };
 
-      // 2.2 ประมวลผล Advance ผลการแข่งขัน
       const updatedBracket = advanceDoubleEliminationWinner(bracketObj, slotId, winnerId);
 
       const allUpdatedMatches: DEMatch[] = [
@@ -115,7 +112,6 @@ export async function POST(req: Request) {
         is_grand_final_reset: m.isGrandFinalReset,
       }));
 
-      // เช็กเงื่อนไข Reset นัดที่ 2 (GF_M2_RESET)
       const resetSlot = allUpdatedMatches.find((m) => m.id === 'GF_M2_RESET');
       if (resetSlot && slotId === 'GF_M1') {
         gfResetTriggered = true;
@@ -129,19 +125,62 @@ export async function POST(req: Request) {
       }
     } else {
       // --- จัดการเคส Single Elimination (Weekly) ---
-      const updatedState = advanceWinner(dbSlots as any, slotId, winnerId);
-      const allMatches = (updatedState as any)?.rounds?.flat() ?? [];
-      updatedDbSlots = allMatches.length > 0 ? allMatches : (updatedState as any);
+      const roundsMap: Record<number, Match[]> = {};
+      dbSlots.forEach((s) => {
+        if (!roundsMap[s.round_number]) roundsMap[s.round_number] = [];
+        roundsMap[s.round_number].push({
+          id: s.slot_id,
+          round: s.round_number,
+          matchNumber: s.match_index,
+          team1: s.player1_id ? { id: s.player1_id, name: s.player1_name ?? s.player1_id, seed: s.player1_seed ?? 0 } : null,
+          team2: s.player2_id ? { id: s.player2_id, name: s.player2_name ?? s.player2_id, seed: s.player2_seed ?? 0 } : null,
+          winner: s.winner_id ? { id: s.winner_id, name: s.winner_id, seed: 0 } : null,
+          status: s.status,
+        });
+      });
+
+      const singleBracket: Bracket = {
+        id: `SE_BRACKET_${tournamentId}`,
+        tournamentId,
+        rounds: Object.keys(roundsMap).sort((a, b) => Number(a) - Number(b)).map((k) => roundsMap[Number(k)]),
+      };
+
+      const updatedSingleBracket = advanceWinner(singleBracket, slotId, winnerId);
+      const allSingleMatches = updatedSingleBracket.rounds.flat();
+
+      updatedDbSlots = allSingleMatches.map((m) => {
+        let nextUpperSlotId: string | null = null;
+        if (m.round === 1) {
+          nextUpperSlotId = m.matchNumber <= 2 ? 'SE_R2_M1' : 'SE_R2_M2';
+        } else if (m.round === 2) {
+          nextUpperSlotId = 'SE_R3_FINAL';
+        }
+
+        return {
+          slot_id: m.id,
+          tournament_id: tournamentId,
+          round_number: m.round,
+          match_index: m.matchNumber,
+          player1_id: m.team1?.id ?? null,
+          player2_id: m.team2?.id ?? null,
+          winner_id: m.winner?.id ?? null,
+          loser_id: null,
+          status: m.status,
+          next_upper_slot_id: nextUpperSlotId,
+          next_lower_slot_id: null,
+          is_grand_final_reset: false,
+        };
+      });
     }
 
-    // 3. Upsert สถานะสายการแข่งที่อัปเดตแล้วลง Supabase
+    // 3. Upsert สถานะที่อัปเดตแล้วลง Supabase
     const { error: upsertErr } = await supabase
       .from('bracket_slots')
       .upsert(updatedDbSlots, { onConflict: 'slot_id,tournament_id' });
 
     if (upsertErr) throw upsertErr;
 
-    // 4. ถ้าเกิด Grand Final Reset ให้สร้าง record แมตช์ตัดสินลงตาราง matches
+    // 4. ถ้าเกิด Grand Final Reset บันทึกแมตช์ลง matches
     if (gfResetTriggered && gfResetMatchPayload) {
       await supabase.from('matches').insert(gfResetMatchPayload);
     }
