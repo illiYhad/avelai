@@ -88,26 +88,32 @@ export default function LeaderboardPage() {
         return () => { supabase.removeChannel(channel) }
     }, [activeTab, supabase])
 
-    const renderHexForm = (form: ('W' | 'L')[] = ['W', 'W', 'L', 'W', 'W']) => (
-        <div className="flex items-center gap-1.5 justify-center">
-            {form.map((result, i) => (
-                <div
-                    key={i}
-                    className="w-5 h-6 flex items-center justify-center text-[10px] font-bold transition-all duration-300 hover:scale-110"
-                    style={{
-                        clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-                        background: result === 'W' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                        border: `1px solid ${result === 'W' ? 'rgba(52, 211, 153, 0.6)' : 'rgba(248, 113, 113, 0.6)'}`,
-                        color: result === 'W' ? '#34d399' : '#f87171',
-                        boxShadow: result === 'W' ? '0 0 8px rgba(52, 211, 153, 0.2)' : '0 0 8px rgba(248, 113, 113, 0.2)'
-                    }}
-                >
-                    {result}
-                </div>
-            ))}
-        </div>
-    )
+ const renderHexForm = (form: any = ['W', 'W', 'L', 'W', 'W']) => {
+    let formArray: ('W' | 'L')[] = ['W', 'W', 'L', 'W', 'W'];
+    if (Array.isArray(form)) {
+      formArray = form;
+    } else if (typeof form === 'string') {
+      try {
+        const parsed = JSON.parse(form);
+        if (Array.isArray(parsed)) formArray = parsed;
+      } catch (e) {
+        formArray = ['W', 'W', 'L', 'W', 'W'];
+      }
+    }
 
+    return (
+      <div className="flex items-center gap-1.5 justify-center">
+        {formArray.map((result, i) => (
+          <div
+            key={i}
+            className="w-5 h-6 flex items-center justify-center text-[10px] font-bold transition-all"
+          >
+            {result}
+          </div>
+        ))}
+      </div>
+    );
+  };
     return (
         <main className="min-h-screen bg-[#030308] text-white p-4 md:p-8 font-mono relative overflow-hidden">
             {/* Cyberpunk ambient glow */}
