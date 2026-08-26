@@ -230,3 +230,31 @@ export const createTop8SingleElimination = (
 
   return nodes;
 };
+export const createMonthlyDoubleElimination = (
+  tournamentId: string,
+  top16Slots: DbBracketSlotRow[]
+): DbBracketNode[] => {
+  const teams: Team[] = top16Slots.map((slot) => ({
+    id: slot.player_id,
+    name: slot.player_id,
+    seed: slot.seed_rank,
+  }));
+
+  const bracket = generateSingleEliminationBracket(tournamentId, teams);
+  const nodes: DbBracketNode[] = [];
+
+  bracket.rounds.forEach((roundMatches) => {
+    roundMatches.forEach((match) => {
+      nodes.push({
+        id: match.id,
+        tournament_id: tournamentId,
+        round: match.round,
+        slot_type: 'MATCH',
+        player1_id: match.team1?.id ?? null,
+        player2_id: match.team2?.id ?? null,
+      });
+    });
+  });
+
+  return nodes;
+};
