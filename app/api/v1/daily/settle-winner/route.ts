@@ -1,3 +1,6 @@
+import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+
 // ================================================================================
 // SYSTEM ARCHITECTURE: MATCHMAKING & TIER EVALUATION ENGINE
 // ================================================================================
@@ -79,23 +82,17 @@ export const SCRIM_TIER_CONFIGS: FormTierConfig[] = [
 // 4. BUSINESS LOGIC & INTEGRATION PIPELINE
 // --------------------------------------------------------------------------------
 
-/**
- * ฟังก์ชันหลัก: คำนวณสถานะผู้เล่นตั้งแต่ผล Match จนถึง Matchmaking Tier Profile
- */
 export function evaluatePlayerTierProfile(winCount: number, loseCount: number) {
-  // 1. ดึงคะแนนดิบจาก Match Result
   const matchResult = MATCH_RESULT_MATRIX.find(
     (m) => m.winCount === winCount && m.loseCount === loseCount
   );
 
   const rawScore = matchResult ? matchResult.score : 0.00;
 
-  // 2. จัดกลุ่มเข้า Scrim Tier ตามคะแนน Form Index
   const tierProfile = SCRIM_TIER_CONFIGS.find(
     (t) => rawScore >= t.minScore && rawScore <= t.maxScore
   ) || SCRIM_TIER_CONFIGS[SCRIM_TIER_CONFIGS.length - 1];
 
-  // 3. สรุปผลสำหรับส่งต่อไปยัง Matchmaking Queue
   return {
     inputStats: { winCount, loseCount },
     evaluatedScore: rawScore,
@@ -161,7 +158,6 @@ export function processDailyArenaQueue(
 
   const usedUserIds = new Set<string>();
 
-  // Step 1: เติม Primary Position
   for (const pos of positions) {
     const primaryCandidates = queuePool.filter(
       p => !usedUserIds.has(p.userId) && p.primaryPosition === pos
@@ -180,7 +176,6 @@ export function processDailyArenaQueue(
     }
   }
 
-  // Step 2: เติม Secondary Position เมื่อขาดคน
   for (const pos of positions) {
     if (assignedPlayersPerPos[pos].length < 2) {
       const secondaryCandidates = queuePool.filter(
@@ -201,11 +196,9 @@ export function processDailyArenaQueue(
     }
   }
 
-  // Step 3: ตรวจสอบความสมบูรณ์ (ต้องครบ 10 คน)
   const isComplete = positions.every(pos => assignedPlayersPerPos[pos].length === 2);
   if (!isComplete) return null;
 
-  // Step 4: Snake Draft Balancing (Balance Form Level)
   const teamA: FormedTeamMember[] = [];
   const teamB: FormedTeamMember[] = [];
 
@@ -241,4 +234,53 @@ export function processDailyArenaQueue(
 
 export function calculateDailyFillBonus(isSecondaryFill: boolean): number {
   return isSecondaryFill ? SECONDARY_FILL_BONUS_POINTS : 0;
+}
+
+// ============================================================================
+// 5. NEXT.JS APP ROUTER HTTP HANDLER
+// ============================================================================
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { matchId, winningTeam, players } = body;
+
+    if (!matchId || !winningTeam || !Array.isArray(players)) {
+      return NextResponse.json(
+        { error: 'Invalid payload. matchId, winningTeam, and players are required.' },
+        { status: 400 }
+      );
+    }
+
+    const settlements: DailyRewardSettlementPayload[] = players.map((player: any) => {
+      const isSecondaryFill = Boolean(player.isSecondaryFill);
+      const bonusPoints = calculateDailyFillBonus(isSecondaryFill);
+
+      return {
+        userId: String(player.userId),
+        isSecondaryFill,
+        bonusRewardPoints: bonusPoints,
+      };
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        matchId,
+        winningTeam,
+        settlements,
+      },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: 'Internal Server Error', details: error.message },
+      { status: 500 }
+    );
+  }
 }
