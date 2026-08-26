@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { advanceMatchWinner } from '@/lib/tournament/bracketEngine';
+import { advanceWinner } from '@/lib/tournament/bracketEngine';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,36 +9,44 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { tournamentId, slotId, winnerId, isWalkover = false } = await req.json();
+    const body = await req.json();
+    const tournamentId = String(body.tournamentId);
+    const slotId = String(body.slotId);
+    const winnerId = String(body.winnerId);
 
-    const { data: bracketState } = await supabase
+    const { data: bracketState, error: fetchErr } = await supabase
       .from('bracket_slots')
       .select('*')
       .eq('tournament_id', tournamentId);
 
-    if (!bracketState) throw new Error('Bracket not found');
+    if (fetchErr || !bracketState) {
+      return NextResponse.json({ error: 'Bracket not found' }, { status: 404 });
+    }
 
-    const updatedState = advanceMatchWinner(bracketState, slotId, winnerId, isWalkover);
+    const updatedState = advanceWinner(bracketState as any, slotId, winnerId);
 
-    const { error: upsertErr } = await supabase.from('bracket_slots').upsert(updatedState);
+    const allMatches = (updatedState as any)?.rounds?.flat() ?? [];
+
+    const { error: upsertErr } = await supabase
+      .from('bracket_slots')
+      .upsert(allMatches.length > 0 ? allMatches : (updatedState as any));
+
     if (upsertErr) throw upsertErr;
 
-    const currentSlot = bracketState.find((s: any) => s.id === slotId);
+    const currentSlot = (bracketState as any[]).find((s: any) => s.id === slotId);
     if (currentSlot?.type === 'GF_MAIN') {
-      const gfResetSlot = updatedState.find((s: any) => s.type === 'GF_RESET' && s.player1_id && s.player2_id);
+      const gfResetSlot = allMatches.find((s: any) => s.type === 'GF_RESET' && Boolean(s.player1_id));
       if (gfResetSlot) {
         await supabase.from('matches').insert({
           tournament_id: tournamentId,
           bracket_slot_id: gfResetSlot.id,
           player1_id: gfResetSlot.player1_id,
-          player2_id: gfResetSlot.player2_id,
-          status: 'PENDING'
         });
       }
     }
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return NextResponse.json({ success: true, bracket: updatedState }, { status: 200 });
   } catch (error: any) {
-    return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }

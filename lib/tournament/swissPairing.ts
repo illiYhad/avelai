@@ -162,3 +162,4 @@ export function getTop8Cutoff(players: PlayerHistory[]): TiebreakerResult[] {
   const fullLeaderboard = calculateSwissLeaderboard(players);
   return fullLeaderboard.slice(0, 8); // ตัดเลือก 8 อันดับแรก[cite: 3]
 }
+export const getTop8Qualifiers = getTop8Cutoff;
