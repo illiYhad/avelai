@@ -111,7 +111,11 @@ export function computeAndFinalizeMatchScore(
 ): PerformanceScoreResult {
   const baseKp = calculateBaseKP(stats);
   const resultMultiplier = getResultMultiplier(result);
-  const adjustedKp = Number((baseKp * resultMultiplier).toFixed(2));
+  
+  // ปรับปรุงเงื่อนไข: คูณ Multiplier เฉพาะกรณี Base KP เป็นบวก (> 0)
+  const rawAdjustedKp = baseKp > 0 ? baseKp * resultMultiplier : baseKp;
+  const adjustedKp = Number(rawAdjustedKp.toFixed(2));
+  
   const matchScore = convertToMatchScore(adjustedKp);
 
   return {
