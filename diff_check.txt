@@ -1,0 +1,18 @@
+﻿[DIFF CHECK TIMESTAMP: 2026-08-27 17:54:25]
+diff --git a/lib/performanceCalculator.ts b/lib/performanceCalculator.ts
+index b1f5f10..971f3ef 100644
+--- a/lib/performanceCalculator.ts
++++ b/lib/performanceCalculator.ts
+@@ -111,7 +111,11 @@ export function computeAndFinalizeMatchScore(
+ ): PerformanceScoreResult {
+   const baseKp = calculateBaseKP(stats);
+   const resultMultiplier = getResultMultiplier(result);
+-  const adjustedKp = Number((baseKp * resultMultiplier).toFixed(2));
++  
++  // ปรับปรุงเงื่อนไข: คูณ Multiplier เฉพาะกรณี Base KP เป็นบวก (> 0)
++  const rawAdjustedKp = baseKp > 0 ? baseKp * resultMultiplier : baseKp;
++  const adjustedKp = Number(rawAdjustedKp.toFixed(2));
++  
+   const matchScore = convertToMatchScore(adjustedKp);
+ 
+   return {
