@@ -1,0 +1,129 @@
+
+# 2026-08-28 01:46:22.064514
++N
+
+# 2026-08-28 01:52:04.597824
++n
+
+# 2026-08-28 05:18:58.190893
++หาไฟล์ทั้งหมด ที่เป็น page.ts 
+
+# 2026-08-28 05:27:40.180811
++$env:GITHUB_TOKEN=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
++python -m aider --model github/gpt-4o-mini --no-git
+
+# 2026-08-28 05:30:18.020106
++n
+
+# 2026-08-28 05:31:12.959585
++หาไฟล์ที่ชื่อ page.tsx หรือ page.ts
+
+# 2026-08-28 05:32:29.758341
++$env:GITHUB_API_KEY="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"
++python -m aider --model github/gpt-4o-mini --no-git --no-show-model-warnings
+
+# 2026-08-28 05:33:09.464579
++หาไฟล์ที่ชื่อ page.tsx หรือ page.ts
+
+# 2026-08-28 05:34:30.988294
++python -m aider --model github/gpt-4o-mini --api-key github=ghpmFIOBYtdLc3DNkkMN1ujWGdyb3FYhVkmBSRGKWp4BMzHYOvGTJFx --no-git --no-show-model-warnings
+
+# 2026-08-28 05:34:36.581548
++python -m aider --model github/gpt-4o-mini --api-key github=ghpmFIOBYtdLc3DNkkMN1ujWGdyb3FYhVkmBSRGKWp4BMzHYOvGTJFx --no-git --no-show-model-warnings
+
+# 2026-08-28 05:37:36.660738
++python -m aider --model groq/llama-3.3-70b-versatile --api-key groq=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 --no-git --no-show-model-warnings
+
+# 2026-08-28 05:38:02.440648
++python -m aider --model groq/llama-3.3-70b-versatile --api-key groq=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 --no-git --no-show-model-warnings
+
+# 2026-08-28 05:38:43.322209
++หาไฟล์ page.tsx
+
+# 2026-08-28 05:39:46.873468
++python -m aider --model groq/llama-3.1-70b-versatile --api-key groq=gsk_NpytwzPPaOrIs... --no-git --no-show-model-warnings
+
+# 2026-08-28 05:40:48.046434
++python -m aider --model groq/llama-3.1-70b-versatile --api-key groq=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 --no-git --no-show-model-warnings
+
+# 2026-08-28 05:41:32.218099
++python -m aider --model groq/llama-3.1-8b-instant --api-key groq=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 --no-git --no-show-model-warnings
+
+# 2026-08-28 05:42:42.511575
++python -m aider --model groq/llama-3.1-70b-versatile --api-key groq=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 --no-git --no-show-model-warnings
+
+# 2026-08-28 05:43:07.514924
++python -m aider --model groq/llama3-70b-8192 --api-key groq=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 --no-git --no-show-model-warnings
+
+# 2026-08-28 05:43:37.224829
++python -m aider --model groq/llama-3.1-8b-instant --api-key groq=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 --no-git --no-show-model-warnings
+
+# 2026-08-28 05:49:31.658247
++Get-ChildItem -Recurse -Filter "page.ts*" -File | Where-Object { $_.FullName -notmatch 'node_modules' } | Select-Object FullName
+
+# 2026-08-28 05:50:32.983569
++python -m aider --model openrouter/qwen/qwen-2.5-coder-32b-instruct:free --api-key openrouter=sk-or-v1-v1-840e147d17d73e431281a259b83e5aa2afe64340864fe7317f0815da095c1d0a --no-git --no-show-model-warnings
+
+# 2026-08-28 05:51:21.329793
++Get-ChildItem -Recurse -Filter "page.ts*" -File | Where-Object { $_.FullName -notmatch 'node_modules' } | Select-Object FullName
+
+# 2026-08-28 05:55:07.149219
++python -m aider --model openrouter/deepseek/deepseek-r1:free --no-git --no-show-model-warnings
+
+# 2026-08-28 05:55:19.576615
++python -m aider --model openrouter/mistralai/mistral-small-24b-instruct-2501:free --no-git --no-show-model-warnings
+
+# 2026-08-28 05:55:31.926251
++python -m aider --model openrouter/google/gemini-2.0-flash-exp:free --no-git --no-show-model-warnings
+
+# 2026-08-28 05:59:57.102613
++y
+
+# 2026-08-28 06:00:33.393948
++Get-ChildItem -Recurse -Filter "page.ts*" -File | Where-Object { $_.FullName -notmatch 'node_modules' } | Select-Object FullName
+
+# 2026-08-28 06:05:01.528929
++/add **/page.ts*
+
+# 2026-08-28 06:05:52.181192
++/tokens
+
+# 2026-08-28 06:08:39.493640
++/add **/*page*
+
+# 2026-08-28 06:10:34.891243
++/add components/**/*.tsx/add components/**/*.tsx
+
+# 2026-08-28 06:12:47.453219
++/add components/**/*.tsx
+
+# 2026-08-28 06:13:46.080132
++/drop
+
+# 2026-08-28 06:13:58.806157
++/add **/page.tsx
+
+# 2026-08-28 07:25:02.504503
++Get-ChildItem -Path "app" -Recurse -Filter "page.tsx" | ForEach-Object {
++    $relPath = $_.FullName -replace [regex]::Escape((Get-Location).Path + "\"), ""
++    $url = $_.DirectoryName -replace [regex]::Escape((Get-Location).Path + "\app"), "" -replace "\\", "/"
++    if ($url -eq "") { $url = "/" }
++    
++    # อ่านบรรทัด import ในแต่ละ page เพื่อดูว่าดึง component ไหนมาใช้บ้าง
++    $imports = Get-Content $_.FullName | Where-Object { $_ -match "import .* from '@?/components" } | ForEach-Object { $_.Trim() }
++    
++    [PSCustomObject]@{
++        URL = "http://localhost:3000$url"
++        FilePath = $relPath
++        UsedComponents = ($imports -join " | ")
++    }
++} | Format-List
+
+# 2026-08-28 07:25:23.735581
++Y
+
+# 2026-08-28 07:26:17.030682
++N
+
+# 2026-08-28 07:26:44.082124
++/exit
