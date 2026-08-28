@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import TacticalObjectivesBoard from './TacticalObjectivesBoard';
 import TowerMapGrid from './TowerMapGrid';
 import {
     AreaChart,
@@ -309,6 +310,70 @@ export default function DeepAnalyticsBoard({
             </div>
         );
     };
+    // Helper แปลงข้อมูลผู้เล่น Radiant & Dire ให้ตรงตาม Interface
+    // Helper แปลงข้อมูลผู้เล่น Radiant & Dire ให้ตรงตาม Interface
+    const mapPlayerObjectives = (playerList: any[]) => {
+        return playerList.map((p) => {
+            const isRadiant = (p.playerSlot ?? p.player_slot ?? 0) < 128;
+            
+            // แปลงค่าให้เป็น Number ชัวร์ๆ ป้องกัน Data แกว่ง
+            const laneRole = Number(p.lane_role ?? p.laneRole ?? 0);
+            let laneDisplay = 'Roaming / Jungle';
+            
+            if (laneRole === 1) {
+                laneDisplay = isRadiant ? 'Bottom (Safe)' : 'Top (Safe)';
+            } else if (laneRole === 2) {
+                laneDisplay = 'Middle';
+            } else if (laneRole === 3) {
+                laneDisplay = isRadiant ? 'Top (Off)' : 'Bottom (Off)';
+            }
+
+            // OpenDota มักส่ง Runes มาเป็น Object { "rune_id": count }
+            const runesCount = p.runes && typeof p.runes === 'object' 
+                ? Object.values(p.runes).reduce((a: any, b: any) => Number(a) + Number(b), 0) 
+                : 0;
+
+            const heroIdToUse = p.heroId ?? p.hero_id ?? 0;
+
+            return {
+                playerSlot: p.playerSlot ?? p.player_slot ?? 0,
+                heroId: heroIdToUse,
+                heroName: p.heroName || `hero_${heroIdToUse}`,
+                heroImage: getHeroImg(heroIdToUse),
+                playerName: p.playerName ?? p.personaname ?? p.name ?? 'Unknown Player',
+                lane: p.lane ?? laneRole,
+                laneRole,
+                laneDisplay,
+                isRadiant,
+                towersKilled: p.tower_kills ?? p.towersKilled ?? 0,
+                towersDenied: p.tower_denies ?? 0,
+                barracksKilled: p.barracks_kills ?? p.barracksKilled ?? 0,
+                barracksDenied: p.barracks_denies ?? 0,
+                roshanKilled: p.roshan_kills ?? p.roshanKilled ?? 0,
+                towerDamage: p.tower_damage ?? p.towerDamage ?? 0,
+                structureDamageTotal: (p.tower_damage ?? p.towerDamage ?? 0) + (p.barracks_damage ?? 0),
+                aegis: {
+                    pickup: p.aegis_pickups ?? (p.item_usage?.aegis ? 1 : 0),
+                    activated: p.aegis_uses ?? p.item_uses?.aegis ?? 0
+                },
+                cheese: {
+                    pickup: p.cheese_pickups ?? (p.item_usage?.cheese ? 1 : 0),
+                    activated: p.cheese_uses ?? p.item_uses?.cheese ?? 0
+                },
+                runes: {
+                    activated: p.runes_activated ?? runesCount,
+                    bottled: p.runes_bottled ?? 0
+                }
+            };
+        });
+    };
+
+    const radiantObjectiveData = mapPlayerObjectives(
+        (sortedPlayers || []).filter((p: any) => (p.playerSlot ?? p.player_slot ?? 0) < 128)
+    );
+    const direObjectiveData = mapPlayerObjectives(
+        (sortedPlayers || []).filter((p: any) => (p.playerSlot ?? p.player_slot ?? 0) >= 128)
+    );
     return (
         <div className="space-y-8 pb-12 font-mono">
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -533,14 +598,24 @@ export default function DeepAnalyticsBoard({
                         </div>
                     </div>
                 </div>
+             {/* ── แผนที่ TACTICAL MAP TIMELINE (วางคู่กับ Advantage Graph ด้านบน) ── */}
+            <TowerMapGrid
+                towerRadiant={matchData.towerStatusRadiant ?? matchData.tower_status_radiant}
+                towerDire={matchData.towerStatusDire ?? matchData.tower_status_dire}
+                barracksRadiant={matchData.barracksStatusRadiant ?? matchData.barracks_status_radiant}
+                barracksDire={matchData.barracksStatusDire ?? matchData.barracks_status_dire}
+                duration={matchData.duration}
+            />
+        </div>
 
-                <TowerMapGrid
-                    towerRadiant={matchData.towerStatusRadiant}
-                    towerDire={matchData.towerStatusDire}
-                    barracksRadiant={matchData.barracksStatusRadiant}
-                    barracksDire={matchData.barracksStatusDire}
-                    duration={matchData.duration}
-                />
+        {/* ── ตาราง RADIANT / DIRE OBJECTIVES & LOG FEED (ลากยาวเต็มจอ Full Width ด้านล่าง) ── */}
+        <div className="w-full pt-4">
+            <TacticalObjectivesBoard
+                radiantPlayers={radiantObjectiveData}
+                direPlayers={direObjectiveData}
+                events={matchData.objectives || matchData.events || []}
+                duration={matchData.duration || 2700}
+            />
             </div>
         </div>
     );
