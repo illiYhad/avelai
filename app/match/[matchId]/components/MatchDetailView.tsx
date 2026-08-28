@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import TowerMapGrid from './TowerMapGrid';
 import PerformanceRadar from './PerformanceRadar';
 import DeepAnalyticsBoard from './DeepAnalyticsBoard';
+import SkillBuildBlock from './SkillBuildBlock';
 
 interface MatchData {
     overviewPlayers: any[];
@@ -202,14 +203,22 @@ export default function MatchDetailView({
 
                 {/* TAB 2: OVERVIEW */}
                 {activeTab === 'overview' && (
-                    <OverviewTable
-                        players={matchData.overviewPlayers}
-                        heroIdToImg={heroIdToImg}
-                        itemIdToName={itemIdToName}
-                        draftTimeline={matchData.draftTimings}
-                        radiantWin={matchData.radiantWin}
-                    />
-                )}
+    <div className="flex flex-col gap-4">
+        <OverviewTable
+            players={matchData.overviewPlayers}
+            heroIdToImg={heroIdToImg}
+            itemIdToName={itemIdToName}
+            draftTimeline={matchData.draftTimings}
+            radiantWin={matchData.radiantWin}
+        />
+        
+        <SkillBuildBlock 
+            players={matchData.overviewPlayers || matchData.players} 
+            heroIdToImg={heroIdToImg} 
+            itemIdToName={itemIdToName} 
+        />
+    </div>
+)}
 
                 {/* TAB 3: ADVANTAGE / DEEP ANALYTICS */}
                 {activeTab === 'advantage' && (

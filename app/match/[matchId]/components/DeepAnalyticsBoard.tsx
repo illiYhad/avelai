@@ -560,35 +560,6 @@ export default function DeepAnalyticsBoard({
                 />
             </div>
 
-            {/* SECTION 2: SKILL BUILDS */}
-            <div className="border border-[#00D4FF]/30 bg-[#111118] p-5 shadow-[0_0_25px_rgba(0,212,255,0.05)]">
-                <div className="border-b border-neutral-800 pb-3 mb-6 flex items-center justify-between">
-                    <h3 className="font-orbitron text-xs font-bold uppercase tracking-wider text-[#00D4FF]">
-                        🧬 ABILITY & SKILL BUILDS (LEVEL 1–25)
-                    </h3>
-                    <span className="text-[10px] text-neutral-500 font-mono">// TIMELINE UPGRADE SEQUENCE</span>
-                </div>
-
-                <div className="space-y-6">
-                    <div className="space-y-4">
-                        <div className="text-xs font-orbitron font-bold text-[#00D4FF] border-l-2 border-[#00D4FF] pl-2">
-                            RADIANT BUILDS
-                        </div>
-                        <div className="space-y-3">
-                            {radiantPlayers.map((p) => renderHeroBuildMatrix(p))}
-                        </div>
-                    </div>
-
-                    <div className="space-y-4 pt-4 border-t border-neutral-800">
-                        <div className="text-xs font-orbitron font-bold text-[#C9A84C] border-l-2 border-[#C9A84C] pl-2">
-                            DIRE BUILDS
-                        </div>
-                        <div className="space-y-3">
-                            {direPlayers.map((p) => renderHeroBuildMatrix(p))}
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 }
