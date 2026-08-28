@@ -4,6 +4,7 @@ import OverviewTable from './OverviewTable';
 import React, { useState } from 'react';
 import TowerMapGrid from './TowerMapGrid';
 import PerformanceRadar from './PerformanceRadar';
+import { getHeroImageUrl, HERO_ID_TO_NAME } from '@/lib/dotaAssets';
 import DeepAnalyticsBoard from './DeepAnalyticsBoard';
 import SkillBuildBlock from './SkillBuildBlock';
 
@@ -44,10 +45,25 @@ export default function MatchDetailView({
 }: MatchDetailViewProps) {
     const [activeTab, setActiveTab] = useState<TabId>('kp');
 
-    const getHeroImg = (heroId: number): string => {
+    const getHeroImg = (heroId: number, heroName?: string): string => {
         const path = heroIdToImg[heroId];
-        if (!path) return '';
-        return path.startsWith('http') ? path : `https://cdn.cloudflare.steamstatic.com${path}`;
+        if (path) {
+            return path.startsWith('http') ? path : `https://cdn.cloudflare.steamstatic.com${path}`;
+        }
+        return getHeroImageUrl(heroName, heroId);
+    };
+
+    const getHeroDisplayName = (heroId?: number, heroName?: string): string => {
+        if (heroId && HERO_ID_TO_NAME[heroId]) {
+            return HERO_ID_TO_NAME[heroId]
+                .split('_')
+                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                .join(' ');
+        }
+        if (heroName && !heroName.startsWith('hero_')) {
+            return heroName.replace(/npc_dota_hero_|_/g, ' ').trim();
+        }
+        return heroId ? `Hero ${heroId}` : 'Hero';
     };
 
     const kpPlayers = [...(matchData.kpPlayers || matchData.overviewPlayers || [])]
@@ -85,140 +101,187 @@ export default function MatchDetailView({
             <div className="pt-6">
                 {/* TAB 1: KP INTEL */}
                 {activeTab === 'kp' && (
-                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-6">
                         {topPerformer && (
-                            <div className="border border-[#00D4FF]/30 bg-[#00D4FF]/5 px-4 py-2 font-mono text-xs text-[#00D4FF]">
-                                {'// TOP PERFORMER: '}
-                                <span className="font-bold">{topPerformer.playerName}</span>
-                                {' — KP: '}
-                                <span className="font-bold">{topPerformer.totalKp?.toFixed(1)}</span>
-                                {' | FINAL SCORE: '}
-                                <span className="font-bold">{topPerformer.finalScore?.toFixed(1)}</span>
+                            <div className="border border-[#00D4FF]/30 bg-[#00D4FF]/5 px-4 py-2.5 font-mono text-xs text-[#00D4FF] flex items-center gap-2 shadow-[0_0_15px_rgba(0,212,255,0.08)]">
+                                <span>👑</span>
+                                <span>// TOP PERFORMER:</span>
+                                <span className="font-bold text-white">{topPerformer.playerName}</span>
+                                <span className="text-neutral-500">|</span>
+                                <span>KP: <b className="text-[#00D4FF]">{topPerformer.totalKp?.toFixed(1)}</b></span>
+                                <span className="text-neutral-500">|</span>
+                                <span>FINAL SCORE: <b className="text-[#C9A84C]">{topPerformer.finalScore?.toFixed(1)}</b></span>
                             </div>
                         )}
 
-                        <div className="overflow-x-auto border border-[rgba(0,212,255,0.2)] bg-[#111118]">
-                            <table className="w-full text-left text-[11px] font-mono">
-                                <thead className="border-b border-neutral-800 bg-[#0A0A0F] font-orbitron text-[10px] text-[#00D4FF]">
-                                    <tr>
-                                        <th className="px-3 py-3 w-14">HERO</th>
-                                        <th className="px-3 py-3">ROLE</th>
-                                        <th className="px-3 py-3">PLAYER</th>
-                                        <th className="px-3 py-3 text-center">K/D/A</th>
-                                        <th className="px-3 py-3 text-center">TWR</th>
-                                        <th className="px-3 py-3 text-right">BASE KP</th>
-                                        <th className="px-3 py-3 text-center">MULT</th>
-                                        <th className="px-3 py-3 text-right">ROLE BONUS</th>
-                                        <th className="px-3 py-3 text-right text-[#00D4FF]">TOTAL KP</th>
-                                        <th className="px-3 py-3 text-center">OUTCOME</th>
-                                        <th className="px-3 py-3 text-right text-[#C9A84C]">FINAL</th>
-                                        <th className="px-3 py-3 w-24"></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-neutral-800/50">
-                                    {kpPlayers.map((p, idx) => {
-                                        const isRadiant = (p.playerSlot ?? 0) < 128;
-                                        const isWin = p.matchOutcome > 0;
-                                        const posColor = POS_COLORS[p.role] ?? '#C8CDD4';
-                                        const barWidth = Math.max(4, ((p.finalScore ?? 0) / maxFinalScore) * 100);
-                                        const heroImg = getHeroImg(p.heroId);
+                        {/* RENDER DUAL TABLES: RADIANT & DIRE */}
+                        {[
+                            {
+                                name: 'THE RADIANT',
+                                isRadiant: true,
+                                color: '#00D4FF',
+                                players: kpPlayers.filter((p) => (p.playerSlot ?? 0) < 128),
+                            },
+                            {
+                                name: 'THE DIRE',
+                                isRadiant: false,
+                                color: '#C9A84C',
+                                players: kpPlayers.filter((p) => (p.playerSlot ?? 0) >= 128),
+                            },
+                        ].map((team) => (
+                            <div key={team.name} className="overflow-x-auto border border-neutral-800 bg-[#111118]/90 shadow-xl">
+                                {/* Team Header Bar */}
+                                <div
+                                    className="px-4 py-2.5 bg-[#0A0A0F] border-b border-neutral-800 flex items-center justify-between font-orbitron text-xs font-bold tracking-wider"
+                                    style={{ color: team.color }}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: team.color, boxShadow: `0 0 8px ${team.color}` }} />
+                                        <span>{team.name}</span>
+                                    </div>
+                                    <span className="text-[10px] font-mono text-neutral-400">
+                                        {team.players.some((p) => p.matchOutcome > 0) ? '🏆 VICTORY' : 'DEFEAT'}
+                                    </span>
+                                </div>
 
-                                        return (
-                                            <tr
-                                                key={idx}
-                                                className={`transition-colors hover:bg-[rgba(0,212,255,0.04)] ${p.isRegisteredUser ? 'shadow-[inset_2px_0_0_#00D4FF]' : ''
-                                                    } ${isRadiant ? 'bg-[rgba(0,212,255,0.01)]' : 'bg-[rgba(201,168,76,0.01)]'}`}
-                                            >
-                                                <td className="px-3 py-2.5">
-                                                    <div className="h-7 w-12 overflow-hidden border border-neutral-700 bg-neutral-900">
-                                                        {heroImg ? (
-                                                            <img
-                                                                src={heroImg}
-                                                                alt={p.heroName || 'hero'}
-                                                                className="h-full w-full object-cover"
-                                                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                                            />
-                                                        ) : (
-                                                            <span className="flex h-full w-full items-center justify-center text-[9px] text-neutral-500">
-                                                                {p.heroName?.substring(0, 3).toUpperCase() || '???'}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 py-2.5">
-                                                    <span
-                                                        className="rounded-sm px-1.5 py-0.5 text-[9px] font-bold"
-                                                        style={{ color: posColor, border: `1px solid ${posColor}40`, background: `${posColor}15` }}
-                                                    >
-                                                        {p.role ?? '—'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-3 py-2.5 font-semibold">
-                                                    <span className={isRadiant ? 'text-[#00D4FF]' : 'text-[#C9A84C]'}>
-                                                        {p.playerName}
-                                                    </span>
-                                                </td>
-                                                <td className="px-3 py-2.5 text-center">
-                                                    <span className="text-white">{p.kills}</span>/
-                                                    <span className="font-bold text-rose-500">{p.deaths}</span>/
-                                                    <span className="text-neutral-400">{p.assists}</span>
-                                                </td>
-                                                <td className="px-3 py-2.5 text-center text-neutral-300">{p.towerKills ?? 0}</td>
-                                                <td className="px-3 py-2.5 text-right text-neutral-300">{p.baseKp?.toFixed(1)}</td>
-                                                <td className="px-3 py-2.5 text-center">
-                                                    <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${isWin ? 'bg-emerald-900/40 text-emerald-400' : 'bg-rose-900/40 text-rose-400'
-                                                        }`}>
-                                                        ×{p.resultMultiplier?.toFixed(1)}
-                                                    </span>
-                                                </td>
-                                                <td className="px-3 py-2.5 text-right text-neutral-400">+{p.roleBonus?.toFixed(1)}</td>
-                                                <td className="px-3 py-2.5 text-right font-bold text-[#00D4FF]">
-                                                    {p.totalKp?.toFixed(1)}
-                                                </td>
-                                                <td className="px-3 py-2.5 text-center">
-                                                    <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${isWin ? 'bg-emerald-900/40 text-emerald-400' : 'bg-rose-900/40 text-rose-400'
-                                                        }`}>
-                                                        {isWin ? '+25' : '-10'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-3 py-2.5 text-right font-bold text-[#C9A84C] text-sm">
-                                                    {p.finalScore?.toFixed(1)}
-                                                </td>
-                                                <td className="px-3 py-2.5">
-                                                    <div className="h-1.5 w-full rounded-full bg-neutral-800">
+                                <table className="w-full text-left text-[11px] font-mono">
+                                    <thead className="border-b border-neutral-800 bg-[#0E121A] text-[10px] text-neutral-400 font-bold">
+                                        <tr>
+                                            <th className="px-3 py-2.5 w-14">HERO</th>
+                                            <th className="px-3 py-2.5">ROLE</th>
+                                            <th className="px-3 py-2.5">PLAYER</th>
+                                            <th className="px-3 py-2.5 text-center">K/D/A</th>
+                                            <th className="px-3 py-2.5 text-center">TWR</th>
+                                            <th className="px-3 py-2.5 text-right">BASE KP</th>
+                                            <th className="px-3 py-2.5 text-center">MULT</th>
+                                            <th className="px-3 py-2.5 text-right">ROLE BONUS</th>
+                                            <th className="px-3 py-2.5 text-right" style={{ color: team.color }}>TOTAL KP</th>
+                                            <th className="px-3 py-2.5 text-center">OUTCOME</th>
+                                            <th className="px-3 py-2.5 text-right text-[#C9A84C]">FINAL</th>
+                                            <th className="px-3 py-2.5 w-24"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-neutral-800/40">
+                                        {team.players.map((p, idx) => {
+                                            const isWin = p.matchOutcome > 0;
+                                            const posColor = POS_COLORS[p.role] ?? '#C8CDD4';
+                                            const barWidth = Math.max(4, ((p.finalScore ?? 0) / maxFinalScore) * 100);
+                                            const heroImg = getHeroImg(p.heroId, p.heroName);
+                                            const isMvp = topPerformer?.playerSlot === p.playerSlot;
+
+                                            return (
+                                                <tr
+                                                    key={idx}
+                                                    className="transition-colors hover:bg-white/[0.02]"
+                                                >
+                                                    {/* 1. Hero Avatar with Team Glow */}
+                                                    <td className="px-3 py-2.5">
                                                         <div
-                                                            className="h-1.5 rounded-full bg-[#00D4FF]"
-                                                            style={{ width: `${barWidth}%` }}
-                                                        />
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
+                                                            className="h-8 w-12 overflow-hidden rounded-xs bg-neutral-900 border shrink-0 transition-transform hover:scale-105"
+                                                            style={{
+                                                                borderColor: `${team.color}80`,
+                                                                boxShadow: `0 0 8px ${team.color}30`,
+                                                            }}
+                                                        >
+                                                            {heroImg ? (
+                                                                <img
+                                                                    src={heroImg}
+                                                                    alt={p.heroName || 'hero'}
+                                                                    className="h-full w-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <span className="flex h-full w-full items-center justify-center text-[9px] text-neutral-500">
+                                                                    ???
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+
+                                                    {/* 2. Role */}
+                                                    <td className="px-3 py-2.5">
+                                                        <span
+                                                            className="rounded-xs px-1.5 py-0.5 text-[9px] font-bold"
+                                                            style={{ color: posColor, border: `1px solid ${posColor}40`, background: `${posColor}15` }}
+                                                        >
+                                                            {p.role ?? '—'}
+                                                        </span>
+                                                    </td>
+
+                                                    {/* 3. Player Name + MVP Crown + Hero Name */}
+                                                    <td className="px-3 py-2.5">
+                                                        <div className="flex items-center gap-1 font-semibold leading-tight">
+                                                            {isMvp && <span title="MVP (Highest KP)">👑</span>}
+                                                            <span style={{ color: team.color }}>
+                                                                {p.playerName}
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-[10px] text-neutral-400 font-sans mt-0.5">
+                                                            {getHeroDisplayName(p.heroId, p.heroName)}
+                                                        </div>
+                                                    </td>
+
+                                                    {/* 4. K/D/A */}
+                                                    <td className="px-3 py-2.5 text-center">
+                                                        <span className="text-white font-bold">{p.kills}</span>/
+                                                        <span className="font-bold text-[#E8384F]">{p.deaths}</span>/
+                                                        <span className="text-neutral-400">{p.assists}</span>
+                                                    </td>
+
+                                                    <td className="px-3 py-2.5 text-center text-neutral-300">{p.towerKills ?? 0}</td>
+                                                    <td className="px-3 py-2.5 text-right text-neutral-300">{p.baseKp?.toFixed(1)}</td>
+                                                    <td className="px-3 py-2.5 text-center">
+                                                        <span className={`rounded-xs px-1.5 py-0.5 text-[9px] font-bold ${isWin ? 'bg-emerald-900/40 text-emerald-400' : 'bg-rose-900/40 text-rose-400'}`}>
+                                                            ×{p.resultMultiplier?.toFixed(1)}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-3 py-2.5 text-right text-neutral-400">+{p.roleBonus?.toFixed(1)}</td>
+                                                    <td className="px-3 py-2.5 text-right font-bold" style={{ color: team.color }}>
+                                                        {p.totalKp?.toFixed(1)}
+                                                    </td>
+                                                    <td className="px-3 py-2.5 text-center">
+                                                        <span className={`rounded-xs px-1.5 py-0.5 text-[9px] font-bold ${isWin ? 'bg-emerald-900/40 text-emerald-400' : 'bg-rose-900/40 text-rose-400'}`}>
+                                                            {isWin ? '+25' : '-10'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-3 py-2.5 text-right font-bold text-[#C9A84C] text-sm">
+                                                        {p.finalScore?.toFixed(1)}
+                                                    </td>
+                                                    <td className="px-3 py-2.5">
+                                                        <div className="h-1.5 w-full rounded-full bg-neutral-800">
+                                                            <div
+                                                                className="h-1.5 rounded-full"
+                                                                style={{ width: `${barWidth}%`, backgroundColor: team.color, boxShadow: `0 0 6px ${team.color}60` }}
+                                                            />
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ))}
                     </div>
                 )}
 
                 {/* TAB 2: OVERVIEW */}
                 {activeTab === 'overview' && (
-    <div className="flex flex-col gap-4">
-        <OverviewTable
-            players={matchData.overviewPlayers}
-            heroIdToImg={heroIdToImg}
-            itemIdToName={itemIdToName}
-            draftTimeline={matchData.draftTimings}
-            radiantWin={matchData.radiantWin}
-        />
-        
-        <SkillBuildBlock 
-            players={matchData.overviewPlayers || matchData.players} 
-            heroIdToImg={heroIdToImg} 
-            itemIdToName={itemIdToName} 
-        />
-    </div>
-)}
+                    <div className="flex flex-col gap-4">
+                        <OverviewTable
+                            players={matchData.overviewPlayers}
+                            heroIdToImg={heroIdToImg}
+                            itemIdToName={itemIdToName}
+                            draftTimeline={matchData.draftTimings}
+                            radiantWin={matchData.radiantWin}
+                        />
+                        
+                        <SkillBuildBlock 
+                            players={matchData.overviewPlayers || matchData.players} 
+                            heroIdToImg={heroIdToImg} 
+                            itemIdToName={itemIdToName} 
+                        />
+                    </div>
+                )}
 
                 {/* TAB 3: ADVANTAGE / DEEP ANALYTICS */}
                 {activeTab === 'advantage' && (

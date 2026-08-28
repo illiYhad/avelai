@@ -29,16 +29,16 @@ interface TacticalObjectivesBoardProps {
     duration?: number;
 }
 
-const RUNE_NAMES: Record<number | string, string> = {
-    0: 'Double Damage Rune',
-    1: 'Haste Rune',
-    2: 'Illusion Rune',
-    3: 'Invisibility Rune',
-    4: 'Regeneration Rune',
-    5: 'Bounty Rune',
-    6: 'Arcane Rune',
-    7: 'Water Rune',
-    8: 'Shield Rune',
+const RUNE_INFO: Record<number | string, { name: string; color: string; icon: string }> = {
+    0: { name: 'Double Damage Rune', color: '#3B82F6', icon: '🔷' },
+    1: { name: 'Haste Rune', color: '#EF4444', icon: '🔴' },
+    2: { name: 'Illusion Rune', color: '#EAB308', icon: '🟡' },
+    3: { name: 'Invisibility Rune', color: '#8B5CF6', icon: '🟣' },
+    4: { name: 'Regeneration Rune', color: '#22C55E', icon: '🟢' },
+    5: { name: 'Bounty Rune', color: '#F97316', icon: '🔶' },
+    6: { name: 'Arcane Rune', color: '#EC4899', icon: '🌸' },
+    7: { name: 'Water Rune', color: '#06B6D4', icon: '💧' },
+    8: { name: 'Shield Rune', color: '#A855F7', icon: '🛡️' },
 };
 
 export default function TacticalObjectivesBoard({
@@ -62,7 +62,7 @@ export default function TacticalObjectivesBoard({
 
     const getHeroImageUrl = (heroId: number, heroName?: string) => {
         if (heroName && heroName.length > 2 && !heroName.startsWith('hero_')) {
-            const cleanName = heroName.replace('npc_dota_hero_', '');
+            const cleanName = heroName.replace('npc_dota_hero_', '').toLowerCase();
             return `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/${cleanName}.png`;
         }
         return `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/hero_${heroId}.png`;
@@ -81,13 +81,13 @@ export default function TacticalObjectivesBoard({
 
                 let actionText = '';
                 let targetText = '';
-                let runeType = '';
+                let runeData = RUNE_INFO[5]; // Default: Bounty Rune
 
-                if (ev.type === 'CHAT_MESSAGE_RUNE_PICKUP' || ev.type === 'CHAT_MESSAGE_RUNE_BOTTLE') {
-                    const runeName = RUNE_NAMES[ev.key] || ev.key || 'Bounty Rune';
-                    runeType = runeName;
-                    actionText = ev.type.includes('BOTTLE') ? 'bottled the' : 'activated the';
-                    targetText = runeName;
+                if (ev.type === 'CHAT_MESSAGE_RUNE_PICKUP' || ev.type === 'CHAT_MESSAGE_RUNE_BOTTLE' || ev.type === 'RUNE_PICKUP') {
+                    runeData = RUNE_INFO[ev.key] || RUNE_INFO[5];
+                    const loc = ev.location || (idx % 2 === 0 ? 'Top' : 'Bottom');
+                    actionText = ev.type.includes('BOTTLE') ? `bottled the ${loc}` : `activated the ${loc}`;
+                    targetText = runeData.name;
                 } else if (ev.type === 'CHAT_MESSAGE_TOWER_KILL' || ev.type === 'building_kill') {
                     actionText = 'destroyed';
                     targetText = ev.key ? ev.key.replace(/npc_dota_badguys_|npc_dota_goodguys_/g, '').replace(/_/g, ' ') : 'Tower';
@@ -97,6 +97,9 @@ export default function TacticalObjectivesBoard({
                 } else if (ev.type === 'CHAT_MESSAGE_AEGIS') {
                     actionText = 'picked up';
                     targetText = 'Aegis of the Immortal';
+                } else if (ev.type === 'CHAT_MESSAGE_FIRSTBLOOD') {
+                    actionText = 'drew First Blood against';
+                    targetText = 'Enemy Hero';
                 } else if (ev.detail || ev.key) {
                     actionText = ev.type?.replace(/CHAT_MESSAGE_/g, '').replace(/_/g, ' ').toLowerCase();
                     targetText = ev.key || ev.detail || '';
@@ -107,19 +110,22 @@ export default function TacticalObjectivesBoard({
                     time,
                     player,
                     heroId: player?.heroId || ev.hero_id || ev.heroId,
-                    heroImage: player?.heroImage,
-                    playerName: player?.playerName || (slot !== undefined ? `Player ${slot}` : null),
+                    heroName: player?.heroName || `Hero_${ev.hero_id || ''}`,
+                    heroImage: player?.heroImage || (player?.heroId ? getHeroImageUrl(player.heroId, player.heroName) : undefined),
+                    playerName: player?.playerName || (slot !== undefined ? `Player ${slot}` : 'Hero'),
                     actionText,
                     targetText,
-                    runeType,
+                    runeData,
                     isRad,
+                    isSpawn: false,
                 });
             });
         } else {
-            // Fallback: ถ้า API ไม่มี Log มาให้ ให้สร้าง Timeline อัตโนมัติจากสถิติผู้เล่น
-            // 1. Bounty Rune Spawns ทุก 3 นาที
+            // ── Fallback Generation: จำลอง Event Objective Log ตามเวลาแข่งขันจริง ──
             const maxMin = Math.floor(duration / 60);
-            for (let m = 0; m <= Math.min(maxMin, 30); m += 3) {
+
+            // 1. Spawns Rune ทุก 3 นาที
+            for (let m = 0; m <= Math.min(maxMin, 40); m += 3) {
                 list.push({
                     id: `spawn_top_${m}`,
                     time: m * 60,
@@ -127,6 +133,7 @@ export default function TacticalObjectivesBoard({
                     heroId: null,
                     actionText: 'has spawned Top',
                     targetText: 'Bounty Rune',
+                    runeData: RUNE_INFO[5],
                     isSpawn: true,
                 });
                 list.push({
@@ -136,38 +143,68 @@ export default function TacticalObjectivesBoard({
                     heroId: null,
                     actionText: 'has spawned Bottom',
                     targetText: 'Bounty Rune',
+                    runeData: RUNE_INFO[5],
                     isSpawn: true,
                 });
             }
 
-            // 2. กระจาย Event การทำลายป้อมของผู้เล่น
-            allPlayers.forEach((p) => {
+            // 2. Action การเก็บ Rune ของผู้เล่นแต่ละคน
+            allPlayers.forEach((p, pIdx) => {
+                const runeTotal = p.runes?.activated || 0;
+                for (let r = 0; r < runeTotal; r++) {
+                    const pickMin = (r * 3) + (pIdx % 3);
+                    if (pickMin <= maxMin) {
+                        const loc = (pIdx + r) % 2 === 0 ? 'Top' : 'Bottom';
+                        list.push({
+                            id: `rune_act_${p.playerSlot}_${r}`,
+                            time: (pickMin * 60) + 2 + (pIdx * 3),
+                            player: p,
+                            heroId: p.heroId,
+                            heroName: p.heroName,
+                            heroImage: p.heroImage || getHeroImageUrl(p.heroId, p.heroName),
+                            playerName: p.playerName,
+                            actionText: `activated the ${loc}`,
+                            targetText: 'Bounty Rune',
+                            runeData: RUNE_INFO[5],
+                            isRad: p.isRadiant,
+                            isSpawn: false,
+                        });
+                    }
+                }
+
+                // 3. Action การทำลายป้อม (Towers)
                 if (p.towersKilled > 0) {
                     for (let k = 0; k < p.towersKilled; k++) {
                         list.push({
                             id: `tow_${p.playerSlot}_${k}`,
-                            time: (12 + k * 8) * 60,
+                            time: (10 + k * 7 + (pIdx % 4)) * 60,
                             player: p,
                             heroId: p.heroId,
-                            heroImage: p.heroImage,
+                            heroName: p.heroName,
+                            heroImage: p.heroImage || getHeroImageUrl(p.heroId, p.heroName),
                             playerName: p.playerName,
                             actionText: 'destroyed',
-                            targetText: p.isRadiant ? 'Dire Tower' : 'Radiant Tower',
+                            targetText: p.isRadiant ? 'Dire Tier 1 Tower' : 'Radiant Tier 1 Tower',
                             isRad: p.isRadiant,
+                            isSpawn: false,
                         });
                     }
                 }
+
+                // 4. Roshan Kills
                 if (p.roshanKilled > 0) {
                     list.push({
                         id: `rosh_${p.playerSlot}`,
-                        time: 21 * 60,
+                        time: 21 * 60 + 15,
                         player: p,
                         heroId: p.heroId,
-                        heroImage: p.heroImage,
+                        heroName: p.heroName,
+                        heroImage: p.heroImage || getHeroImageUrl(p.heroId, p.heroName),
                         playerName: p.playerName,
                         actionText: 'slain',
                         targetText: 'Roshan',
                         isRad: p.isRadiant,
+                        isSpawn: false,
                     });
                 }
             });
@@ -182,11 +219,12 @@ export default function TacticalObjectivesBoard({
             const q = filterText.toLowerCase();
             return (
                 ev.playerName?.toLowerCase().includes(q) ||
+                ev.heroName?.toLowerCase().includes(q) ||
                 ev.targetText?.toLowerCase().includes(q) ||
                 ev.actionText?.toLowerCase().includes(q)
             );
         })
-        .slice(0, isExpanded ? 500 : 20);
+        .slice(0, isExpanded ? 500 : 25);
 
     const renderObjectivesTable = (players: PlayerObjectiveMetrics[], isRadiant: boolean) => {
         const themeColor = isRadiant ? '#00D4FF' : '#C9A84C';
@@ -333,37 +371,37 @@ export default function TacticalObjectivesBoard({
                     />
                 </div>
 
-                <div className="divide-y divide-neutral-900/80 max-h-[480px] overflow-y-auto">
+                <div className="divide-y divide-neutral-900/80 max-h-[500px] overflow-y-auto">
                     {visibleEvents.length === 0 ? (
                         <div className="p-6 text-center text-neutral-600 text-[10px]">
                             // NO OBJECTIVE EVENTS RECORDED IN THIS MATCH
                         </div>
                     ) : (
                         visibleEvents.map((ev) => (
-                            <div key={ev.id} className="px-4 py-2 flex items-center gap-2.5 hover:bg-white/[0.02] text-[11px]">
-                                {/* Time & Icon */}
+                            <div key={ev.id} className="px-4 py-2 flex items-center gap-3 hover:bg-white/[0.02] text-[11px]">
+                                {/* Time & Indicator */}
                                 <div className="flex items-center gap-1.5 text-neutral-400 font-bold w-14 shrink-0">
                                     <span>{formatTime(ev.time)}</span>
-                                    <span className="text-[10px]">🏹</span>
+                                    <span className="text-[10px] text-neutral-500">🏹</span>
                                 </div>
 
                                 {/* Event Body */}
                                 {ev.isSpawn ? (
                                     <div className="flex items-center gap-2 text-neutral-300">
-                                        <span className="text-amber-500">🟡</span>
-                                        <span className="text-amber-400 font-semibold">{ev.targetText}</span>
+                                        <span className="text-amber-500 text-xs">🔶</span>
+                                        <span className="text-[#F97316] font-semibold">{ev.targetText}</span>
                                         <span className="text-neutral-400">{ev.actionText}</span>
                                     </div>
                                 ) : (
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        {/* Hero Icon */}
+                                        {/* Hero Avatar */}
                                         {ev.heroId && (
                                             <div
-                                                className="w-5 h-4 rounded-xs overflow-hidden bg-neutral-900 border shrink-0"
-                                                style={{ borderColor: ev.isRad ? '#00D4FF' : '#C9A84C' }}
+                                                className="w-6 h-4 rounded-xs overflow-hidden bg-neutral-900 border shrink-0"
+                                                style={{ borderColor: ev.isRad ? '#39FF6A' : '#E8384F' }}
                                             >
                                                 <img
-                                                    src={ev.heroImage || getHeroImageUrl(ev.heroId)}
+                                                    src={ev.heroImage || getHeroImageUrl(ev.heroId, ev.heroName)}
                                                     alt="hero"
                                                     className="w-full h-full object-cover"
                                                     onError={(e: any) => { e.target.style.display = 'none'; }}
@@ -371,18 +409,22 @@ export default function TacticalObjectivesBoard({
                                             </div>
                                         )}
 
-                                        {/* Player Name */}
-                                        {ev.playerName && (
-                                            <span className={ev.isRad ? 'text-[#00D4FF] font-bold' : 'text-[#C9A84C] font-bold'}>
-                                                {ev.playerName}
-                                            </span>
-                                        )}
+                                        {/* Hero / Player Name (สี Radiant เขียว / Dire แดง แบบ Dotabuff) */}
+                                        <span className={ev.isRad ? 'text-[#39FF6A] font-semibold' : 'text-[#E8384F] font-semibold'}>
+                                            {ev.heroName && !ev.heroName.startsWith('hero_') ? ev.heroName.replace(/_/g, ' ') : ev.playerName}
+                                        </span>
 
                                         {/* Action */}
                                         <span className="text-neutral-400">{ev.actionText}</span>
 
-                                        {/* Target */}
-                                        <span className="text-amber-400 font-semibold">{ev.targetText}</span>
+                                        {/* Rune Icon & Target */}
+                                        {ev.runeData && <span className="text-xs">{ev.runeData.icon}</span>}
+                                        <span
+                                            className="font-semibold"
+                                            style={{ color: ev.runeData ? ev.runeData.color : '#F97316' }}
+                                        >
+                                            {ev.targetText}
+                                        </span>
                                     </div>
                                 )}
                             </div>
@@ -390,7 +432,7 @@ export default function TacticalObjectivesBoard({
                     )}
                 </div>
 
-                {processedEvents.length > 20 && (
+                {processedEvents.length > 25 && (
                     <button
                         onClick={() => setIsExpanded(!isExpanded)}
                         className="w-full py-2 bg-[#080B10] hover:bg-neutral-900 border-t border-neutral-800 text-[10px] text-neutral-400 hover:text-white uppercase font-bold tracking-wider transition-all"
