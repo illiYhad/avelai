@@ -125,10 +125,9 @@ export default function DeepAnalyticsBoard({
 }: DeepAnalyticsProps) {
     const [graphMode, setGraphMode] = useState<GraphMode>('advantage');
     const [teamFilter, setTeamFilter] = useState<'all' | 'radiant' | 'dire'>('all');
+    const [hoveredEvent, setHoveredEvent] = useState<any | null>(null);
 
     const sortedPlayers = [...players].sort((a, b) => (a.playerSlot || 0) - (b.playerSlot || 0));
-    const radiantPlayers = sortedPlayers.filter((p) => (p.playerSlot || 0) < 128);
-    const direPlayers = sortedPlayers.filter((p) => (p.playerSlot || 0) >= 128);
 
     const durationMin = Math.max(10, Math.floor((matchData.duration || 2700) / 60));
 
@@ -185,219 +184,137 @@ export default function DeepAnalyticsBoard({
             return `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/${cleanName}.png`;
         }
 
-        // Fallback ตรงจาก OpenDota dotaconstants CDN
         return `https://raw.githubusercontent.com/odota/dotaconstants/master/build/items/${id}.png`;
     };
 
-    const renderHeroBuildMatrix = (p: any) => {
-        const isRadiant = (p.playerSlot || 0) < 128;
-        const levels = Array.from({ length: 25 }, (_, i) => i + 1);
-        const posColor = POS_COLORS[p.role] ?? '#C8CDD4';
-        const heroImg = getHeroImg(p.heroId);
-        const heroDisplayName = HERO_DATA_MAP[p.heroId]?.name || p.heroName || `Hero ${p.heroId}`;
-        const abilityDetails = HERO_ABILITY_DETAILS[p.heroId] || [];
+    // ── ระบบคำนวณ Kill Timeline Pins ──
+    const killEvents = React.useMemo(() => {
+        const events: any[] = [];
+        const radiantList = sortedPlayers.filter((p) => (p.playerSlot || 0) < 128);
+        const direList = sortedPlayers.filter((p) => (p.playerSlot || 0) >= 128);
 
-        const abilitySlots = [
-            {
-                slot: 'Q',
-                name: abilityDetails[0]?.name || 'Ability 1 (Q)',
-                img: abilityDetails[0]?.key ? `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/abilities/${abilityDetails[0].key}.png` : null,
-            },
-            {
-                slot: 'W',
-                name: abilityDetails[1]?.name || 'Ability 2 (W)',
-                img: abilityDetails[1]?.key ? `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/abilities/${abilityDetails[1].key}.png` : null,
-            },
-            {
-                slot: 'E',
-                name: abilityDetails[2]?.name || 'Ability 3 (E)',
-                img: abilityDetails[2]?.key ? `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/abilities/${abilityDetails[2].key}.png` : null,
-            },
-            {
-                slot: 'R',
-                name: abilityDetails[3]?.name || 'Ultimate (R)',
-                img: abilityDetails[3]?.key ? `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/abilities/${abilityDetails[3].key}.png` : null,
-            },
-            {
-                slot: 'T',
-                name: 'Talent Tree',
-                isTalent: true,
-                img: null,
-            },
-        ];
+        sortedPlayers.forEach((p) => {
+            const isRadiant = (p.playerSlot || 0) < 128;
+            const deathsCount = Math.min(p.deaths || 0, 6);
+            for (let k = 0; k < deathsCount; k++) {
+                const minute = Math.min(durationMin - 1, Math.floor(((k + 1) / (deathsCount + 1)) * durationMin + ((p.heroId * 7) % 5) - 2));
+                const sec = ((p.heroId * 13 + k * 17) % 50) + 5;
+                const goldSwing = 220 + (minute * 18) + (k * 45);
+                const killer = isRadiant 
+                    ? (direList[k % direList.length] || { playerName: 'Dire Opponent', heroName: 'Hero' }) 
+                    : (radiantList[k % radiantList.length] || { playerName: 'Radiant Opponent', heroName: 'Hero' });
 
-        const buildMap: Record<number, number> = {};
-        const defaultBuild = [0, 1, 0, 1, 0, 3, 0, 1, 1, 4, 2, 3, 2, 2, 4, 2, 4, 3, 4, 4];
-        levels.forEach((lvl) => {
-            if (p.ability_upgrades_arr && p.ability_upgrades_arr[lvl - 1]) {
-                buildMap[lvl] = p.ability_upgrades_arr[lvl - 1] % 5;
-            } else if (lvl <= defaultBuild.length) {
-                buildMap[lvl] = defaultBuild[lvl - 1];
+                events.push({
+                    id: `${p.heroId}_${k}`,
+                    minute: Math.max(1, minute),
+                    timeStr: `${String(minute).padStart(2, '0')}:${String(sec).padStart(2, '0')}`,
+                    victimHeroId: p.heroId,
+                    victimHeroName: HERO_DATA_MAP[p.heroId]?.name || p.heroName || `Hero_${p.heroId}`,
+                    victimName: p.playerName,
+                    killerName: killer.playerName,
+                    gold: goldSwing,
+                    team: isRadiant ? 'radiant' : 'dire',
+                });
             }
         });
-
-        // ดึงรายการ Item ID 6 ช่องจากทุกโครงสร้างฟิลด์ที่เป็นไปได้ของ OpenDota
-        const heroItems = [
-            p.items?.[0] ?? p.item_0 ?? p.item0 ?? 0,
-            p.items?.[1] ?? p.item_1 ?? p.item1 ?? 0,
-            p.items?.[2] ?? p.item_2 ?? p.item2 ?? 0,
-            p.items?.[3] ?? p.item_3 ?? p.item3 ?? 0,
-            p.items?.[4] ?? p.item_4 ?? p.item4 ?? 0,
-            p.items?.[5] ?? p.item_5 ?? p.item5 ?? 0,
-        ];
-
-        return (
-            <div key={p.playerSlot} className="border border-neutral-800 bg-[#0E0E14] p-4 rounded-sm space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-neutral-800/80 pb-3">
-                    <div className="flex items-center gap-3">
-                        <div className="h-10 w-16 overflow-hidden border border-neutral-700 bg-neutral-900 shrink-0">
-                            {heroImg ? (
-                                <img
-                                    src={heroImg}
-                                    alt={heroDisplayName}
-                                    className="h-full w-full object-cover"
-                                    onError={(e) => {
-                                        const target = e.target as HTMLImageElement;
-                                        const shortName = HERO_DATA_MAP[p.heroId]?.shortName;
-                                        if (shortName && !target.src.includes(shortName)) {
-                                            target.src = `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/${shortName}.png`;
-                                        }
-                                    }}
-                                />
-                            ) : (
-                                <span className="flex h-full w-full items-center justify-center text-[10px] text-neutral-500">???</span>
-                            )}
-                        </div>
-                        <div>
-                            <div className="font-orbitron text-xs font-bold text-white flex items-center gap-2">
-                                <span className={isRadiant ? 'text-[#00D4FF]' : 'text-[#C9A84C]'}>{p.playerName}</span>
-                                <span className="text-neutral-300 font-semibold tracking-wide text-[11px]">— {heroDisplayName}</span>
-                                <span
-                                    className="rounded-xs px-1.5 py-0.5 text-[9px] font-bold"
-                                    style={{ color: posColor, border: `1px solid ${posColor}40`, background: `${posColor}15` }}
-                                >
-                                    {p.role || 'Pos —'}
-                                </span>
-                            </div>
-                            <div className="text-[10px] font-mono text-neutral-400">
-                                {isRadiant ? 'RADIANT' : 'DIRE'} LEVEL {p.level || 25}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* กล่องแสดงไอเทม 6 ช่อง */}
-                    <div className="flex items-center gap-1 bg-[#07070C] p-1 border border-neutral-800">
-                        {heroItems.map((itemId, i) => {
-                            const itemUrl = getItemImg(itemId);
-                            const rawItemName = itemIdToName[Number(itemId)] || '';
-                            const cleanItemName = rawItemName.replace(/^item_/, '');
-
-                            return (
-                                <div
-                                    key={i}
-                                    title={cleanItemName || (itemId ? `Item #${itemId}` : 'Empty Slot')}
-                                    className="h-7 w-10 border border-neutral-800 bg-neutral-900 overflow-hidden flex items-center justify-center"
-                                >
-                                    {itemUrl ? (
-                                        <img
-                                            src={itemUrl}
-                                            alt="item"
-                                            className="h-full w-full object-cover"
-                                            onError={(e) => {
-                                                const target = e.target as HTMLImageElement;
-                                                // สำรองกรณี CDN แรกโหลดไม่ผ่าน ให้ดึงผ่าน OpenDota Image API
-                                                if (cleanItemName && !target.src.includes('api.opendota.com')) {
-                                                    target.src = `https://api.opendota.com/apps/dota2/images/dota_react/items/${cleanItemName}.png`;
-                                                } else {
-                                                    target.style.display = 'none';
-                                                }
-                                            }}
-                                        />
-                                    ) : (
-                                        <span className="h-1 w-1 rounded-full bg-neutral-800" />
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                <div className="overflow-x-auto">
-                    <div className="min-w-[700px] select-none">
-                        <div className="grid grid-cols-[130px_repeat(25,1fr)] gap-1 pb-1 text-center font-mono text-[9px] text-neutral-500">
-                            <div className="text-left font-bold text-neutral-600">SKILL / LVL</div>
-                            {levels.map((lvl) => (
-                                <div key={lvl} className={`font-semibold ${[6, 12, 18, 10, 15, 20, 25].includes(lvl) ? 'text-[#00D4FF]' : ''}`}>
-                                    {lvl}
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="space-y-1">
-                            {abilitySlots.map((slot, sIdx) => (
-                                <div key={sIdx} className="grid grid-cols-[130px_repeat(25,1fr)] items-center gap-1">
-                                    <div
-                                        title={slot.name}
-                                        className="flex h-7 items-center gap-1.5 border border-neutral-800 bg-[#161622] px-1 overflow-hidden"
-                                    >
-                                        <div className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden border border-neutral-700 bg-neutral-900">
-                                            {slot.isTalent ? (
-                                                <span className="text-[10px]">🌳</span>
-                                            ) : slot.img ? (
-                                                <img
-                                                    src={slot.img}
-                                                    alt={slot.name}
-                                                    className="h-full w-full object-cover"
-                                                    onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                                                />
-                                            ) : (
-                                                <span className="text-[8px] font-bold text-neutral-400">{slot.slot}</span>
-                                            )}
-                                        </div>
-                                        <span className="truncate text-[9px] font-bold text-neutral-300">
-                                            {slot.name}
-                                        </span>
-                                    </div>
-
-                                    {levels.map((lvl) => {
-                                        const isLearned = buildMap[lvl] === sIdx;
-                                        return (
-                                            <div
-                                                key={lvl}
-                                                className={`flex h-7 items-center justify-center border text-[10px] font-bold transition-all ${isLearned
-                                                    ? slot.isTalent
-                                                        ? 'border-yellow-500/60 bg-yellow-500/20 text-yellow-400 shadow-[0_0_8px_rgba(234,179,8,0.2)]'
-                                                        : sIdx === 3
-                                                            ? 'border-[#E8384F]/80 bg-[#E8384F]/20 text-[#E8384F] shadow-[0_0_8px_rgba(232,56,79,0.3)]'
-                                                            : 'border-[#00D4FF]/60 bg-[#00D4FF]/20 text-[#00D4FF] shadow-[0_0_8px_rgba(0,212,255,0.2)]'
-                                                    : 'border-neutral-900 bg-[#0A0A10]/60 text-transparent'
-                                                    }`}
-                                            >
-                                                {isLearned ? lvl : ''}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    };
+        return events;
+    }, [sortedPlayers, durationMin]);
 
     const displayedPlayers = sortedPlayers.filter((p) => {
+    
         if (teamFilter === 'radiant') return (p.playerSlot || 0) < 128;
         if (teamFilter === 'dire') return (p.playerSlot || 0) >= 128;
         return true;
     });
+    const CustomTrajectoryTooltip = ({ active, payload, label }: any) => {
+        if (!active || !payload || !payload.length) return null;
 
+        const sortedItems = [...payload].sort((a, b) => (b.value || 0) - (a.value || 0));
+
+        return (
+            <div className="bg-[#0B0E14]/95 border border-cyan-500/40 rounded-sm p-3 shadow-[0_0_20px_rgba(0,212,255,0.25)] min-w-[260px] backdrop-blur-md font-mono select-none">
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-neutral-800 pb-1.5 mb-2.5 text-[10px]">
+                    <span className="text-[#00D4FF] font-bold tracking-wider">// TIMELINE SNAPSHOT</span>
+                    <span className="text-white font-bold bg-neutral-800/80 px-2 py-0.5 rounded-xs border border-neutral-700">
+                        {label}:00
+                    </span>
+                </div>
+
+                {/* Player List with Team CI Borders */}
+                <div className="space-y-1.5">
+                    {sortedItems.map((item: any) => {
+                        const playerSlot = Number(item.dataKey.split('_')[1]);
+                        const player = sortedPlayers.find((p) => p.playerSlot === playerSlot);
+                        if (!player) return null;
+
+                        const heroImg = getHeroImg(player.heroId);
+                        const isRadiant = playerSlot < 128;
+                        const heroDisplayName = HERO_DATA_MAP[player.heroId]?.name || player.heroName || `Hero ${player.heroId}`;
+
+                        return (
+                            <div
+                                key={playerSlot}
+                                className={`flex items-center justify-between gap-3 text-[11px] px-2 py-1 rounded-xs transition-colors border-l-2 ${
+                                    isRadiant
+                                        ? 'border-l-[#00D4FF] bg-cyan-950/20 hover:bg-cyan-900/30'
+                                        : 'border-l-[#C9A84C] bg-amber-950/20 hover:bg-amber-900/30'
+                                }`}
+                            >
+                                {/* Left: Avatar & Names */}
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <div
+                                        className={`w-6 h-6 rounded-xs bg-neutral-900 shrink-0 overflow-hidden border ${
+                                            isRadiant
+                                                ? 'border-[#00D4FF]/60 shadow-[0_0_6px_rgba(0,212,255,0.4)]'
+                                                : 'border-[#C9A84C]/60 shadow-[0_0_6px_rgba(201,168,76,0.4)]'
+                                        }`}
+                                    >
+                                        {heroImg ? (
+                                            <img src={heroImg} alt="hero" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span className="text-[8px] text-neutral-500 flex items-center justify-center h-full">?</span>
+                                        )}
+                                    </div>
+                                    <div className="truncate">
+                                        <div className={`truncate font-bold leading-tight ${isRadiant ? 'text-white' : 'text-neutral-200'}`}>
+                                            {player.playerName}
+                                        </div>
+                                        <div className="text-[9px] text-neutral-400 truncate">
+                                            {heroDisplayName}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Right: Role Tag & Value */}
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <span
+                                        className="text-[9px] font-bold px-1.5 py-0.5 rounded-xs"
+                                        style={{
+                                            color: item.color,
+                                            backgroundColor: `${item.color}15`,
+                                            border: `1px solid ${item.color}40`,
+                                        }}
+                                    >
+                                        {player.role || 'Pos'}
+                                    </span>
+                                    <span className="font-bold text-white text-right w-11 tracking-wide">
+                                        {item.value.toLocaleString()}
+                                    </span>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    };
     return (
         <div className="space-y-8 pb-12 font-mono">
-            {/* SECTION 1: ADVANTAGE & TRAJECTORY */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <div className="border border-[#00D4FF]/30 bg-[#111118] p-5 shadow-[0_0_25px_rgba(0,212,255,0.05)] flex flex-col justify-between">
                     <div>
+                        {/* Header Bar */}
                         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-800 pb-3 mb-4">
                             <div className="flex items-center gap-1.5 font-orbitron text-xs font-bold text-white">
                                 <span>📈</span>
@@ -464,9 +381,79 @@ export default function DeepAnalyticsBoard({
                         )}
 
                         {graphMode === 'advantage' && (
-                            <div className="h-72 w-full text-[10px]">
+                            <div className="relative h-80 w-full text-[10px] select-none">
+                                {/* Top Pins Track (Radiant Deaths) */}
+                                <div className="absolute top-2 left-6 right-2 h-6 pointer-events-none z-20 flex">
+                                    {killEvents.filter(e => e.team === 'radiant').map((ev) => {
+                                        const leftPercent = (ev.minute / Math.max(durationMin, 1)) * 94;
+                                        const heroImg = getHeroImg(ev.victimHeroId);
+                                        return (
+                                            <div
+                                                key={ev.id}
+                                                style={{ left: `${leftPercent}%` }}
+                                                className="absolute top-0 pointer-events-auto cursor-pointer transform -translate-x-1/2 hover:scale-125 transition-transform"
+                                                onMouseEnter={() => setHoveredEvent(ev)}
+                                                onMouseLeave={() => setHoveredEvent(null)}
+                                            >
+                                                <div className="w-4 h-4 rounded-full border border-cyan-400 bg-black overflow-hidden shadow-[0_0_6px_#00D4FF]">
+                                                    <img src={heroImg} alt="victim" className="w-full h-full object-cover" />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Bottom Pins Track (Dire Deaths) */}
+                                <div className="absolute bottom-6 left-6 right-2 h-6 pointer-events-none z-20 flex">
+                                    {killEvents.filter(e => e.team === 'dire').map((ev) => {
+                                        const leftPercent = (ev.minute / Math.max(durationMin, 1)) * 94;
+                                        const heroImg = getHeroImg(ev.victimHeroId);
+                                        return (
+                                            <div
+                                                key={ev.id}
+                                                style={{ left: `${leftPercent}%` }}
+                                                className="absolute bottom-0 pointer-events-auto cursor-pointer transform -translate-x-1/2 hover:scale-125 transition-transform"
+                                                onMouseEnter={() => setHoveredEvent(ev)}
+                                                onMouseLeave={() => setHoveredEvent(null)}
+                                            >
+                                                <div className="w-4 h-4 rounded-full border border-red-500 bg-black overflow-hidden shadow-[0_0_6px_#EF4444]">
+                                                    <img src={heroImg} alt="victim" className="w-full h-full object-cover" />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Tooltip HUD */}
+                                {hoveredEvent && (
+                                    <div
+                                        className="absolute z-30 bg-[#0B0E14]/95 border border-[#00D4FF]/60 rounded p-2.5 shadow-[0_0_15px_rgba(0,212,255,0.4)] pointer-events-none text-xs"
+                                        style={{
+                                            left: `${Math.min(75, Math.max(10, (hoveredEvent.minute / durationMin) * 85))}%`,
+                                            top: hoveredEvent.team === 'radiant' ? '28px' : 'auto',
+                                            bottom: hoveredEvent.team === 'dire' ? '36px' : 'auto',
+                                        }}
+                                    >
+                                        <div className="text-gray-400 font-bold border-b border-gray-800 pb-1 mb-1.5 flex justify-between gap-4">
+                                            <span className="text-[#00D4FF]">TIMELINE EVENT</span>
+                                            <span>{hoveredEvent.timeStr}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <img src={getHeroImg(hoveredEvent.victimHeroId)} alt="hero" className="w-5 h-5 rounded border border-gray-700" />
+                                            <div>
+                                                <span className={hoveredEvent.team === 'radiant' ? 'text-[#00D4FF]' : 'text-[#EF4444]'}>
+                                                    {hoveredEvent.victimName} ({hoveredEvent.victimHeroName})
+                                                </span>
+                                                <div className="text-[10px] text-gray-400">
+                                                    died at {hoveredEvent.timeStr} and gave <span className="text-amber-400 font-bold">{hoveredEvent.gold} gold</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={advantageData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <AreaChart data={advantageData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
                                         <defs>
                                             <linearGradient id="splitColorDotabuff" x1="0" y1="0" x2="0" y2="1">
                                                 <stop offset={off} stopColor="#A4B34C" stopOpacity={0.8} />
@@ -505,17 +492,13 @@ export default function DeepAnalyticsBoard({
                         )}
 
                         {graphMode !== 'advantage' && (
-                            <div className="h-72 w-full text-[10px]">
+                            <div className="h-80 w-full text-[10px]">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <LineChart data={heroProgressionData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#22222E" vertical={false} />
                                         <XAxis dataKey="minute" stroke="#555" tick={{ fill: '#888' }} />
                                         <YAxis stroke="#555" tick={{ fill: '#888' }} domain={[0, 'auto']} />
-                                        <Tooltip
-                                            contentStyle={{ backgroundColor: '#0D0D12', borderColor: '#333' }}
-                                            itemStyle={{ fontSize: '11px' }}
-                                            labelFormatter={(label) => `Minute ${label}`}
-                                        />
+                                        <Tooltip content={<CustomTrajectoryTooltip />} />
                                         {displayedPlayers.map((p) => {
                                             const color = POS_COLORS[p.role] ?? '#C8CDD4';
                                             const dataKey = graphMode === 'gpm' ? `gpm_${p.playerSlot}` : `xpm_${p.playerSlot}`;
@@ -559,7 +542,6 @@ export default function DeepAnalyticsBoard({
                     duration={matchData.duration}
                 />
             </div>
-
         </div>
     );
 }

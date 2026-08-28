@@ -127,3 +127,488 @@
 
 # 2026-08-28 07:26:44.082124
 +/exit
+
+# 2026-08-28 09:47:47.778736
++/add app/match/[matchId]/components/DeepAnalyticsBoard.tsx
+
+# 2026-08-28 09:48:58.804763
++'use client';
++
++import React, { useState } from 'react';
++import TowerMapGrid from './TowerMapGrid';
++import {
++    AreaChart,
++    Area,
++    LineChart,
++    Line,
++    XAxis,
++    YAxis,
++    CartesianGrid,
++    Tooltip,
++    ResponsiveContainer,
++    ReferenceLine,
++} from 'recharts';
++
++interface DeepAnalyticsProps {
++    matchData: any;
++    players?: any[];
++    heroIdToImg?: Record<number, string>;
++    itemIdToName?: Record<number, string>;
++}
++
++const POS_COLORS: Record<string, string> = {
++    'Pos 1': '#E8384F',
++    'Pos 2': '#2E9BFF',
++    'Pos 3': '#39FF6A',
++    'Pos 4': '#D63CE8',
++    'Pos 5': '#C8CDD4',
++};
++
++const HERO_DATA_MAP: Record<number, { name: string; shortName: string }> = {
++    1: { name: 'Anti-Mage', shortName: 'antimage' },
++    2: { name: 'Axe', shortName: 'axe' },
++    6: { name: 'Drow Ranger', shortName: 'drow_ranger' },
++    14: { name: 'Pudge', shortName: 'pudge' },
++    22: { name: 'Zeus', shortName: 'zuus' },
++    74: { name: 'Invoker', shortName: 'invoker' },
++    76: { name: 'Outworld Destroyer', shortName: 'obsidian_destroyer' },
++    84: { name: 'Ogre Magi', shortName: 'ogre_magi' },
++    90: { name: 'Keeper of the Light', shortName: 'keeper_of_the_light' },
++    93: { name: 'Slark', shortName: 'slark' },
++    96: { name: 'Centaur Warrunner', shortName: 'centaur' },
++    121: { name: 'Grimstroke', shortName: 'grimstroke' },
++    137: { name: 'Primal Beast', shortName: 'primal_beast' },
++};
++
++const HERO_ABILITY_DETAILS: Record<number, { key: string; name: string }[]> = {
++    1: [
++        { key: 'antimage_mana_break', name: 'Mana Break' },
++        { key: 'antimage_blink', name: 'Blink' },
++        { key: 'antimage_counterspell', name: 'Counterspell' },
++        { key: 'antimage_mana_void', name: 'Mana Void' },
++    ],
++    6: [
++        { key: 'drow_ranger_frost_arrows', name: 'Frost Arrows' },
++        { key: 'drow_ranger_multishot', name: 'Multishot' },
++        { key: 'drow_ranger_silence', name: 'Gust' },
++        { key: 'drow_ranger_marksmanship', name: 'Marksmanship' },
++    ],
++    14: [
++        { key: 'pudge_meat_hook', name: 'Meat Hook' },
++        { key: 'pudge_rot', name: 'Rot' },
++        { key: 'pudge_flesh_heap', name: 'Flesh Heap' },
++        { key: 'pudge_dismember', name: 'Dismember' },
++    ],
++    22: [
++        { key: 'zuus_arc_lightning', name: 'Arc Lightning' },
++        { key: 'zuus_lightning_bolt', name: 'Lightning Bolt' },
++        { key: 'zuus_heavenly_jump', name: 'Heavenly Jump' },
++        { key: 'zuus_thundergods_wrath', name: "Thundergod's Wrath" },
++    ],
++    76: [
++        { key: 'obsidian_destroyer_arcane_orb', name: 'Arcane Orb' },
++        { key: 'obsidian_destroyer_astral_imprisonment', name: 'Astral Imprisonment' },
++        { key: 'obsidian_destroyer_essence_flux', name: 'Essence Flux' },
++        { key: 'obsidian_destroyer_sanity_eclipse', name: "Sanity's Eclipse" },
++    ],
++    84: [
++        { key: 'ogre_magi_fireblast', name: 'Fireblast' },
++        { key: 'ogre_magi_ignite', name: 'Ignite' },
++        { key: 'ogre_magi_bloodlust', name: 'Bloodlust' },
++        { key: 'ogre_magi_multicast', name: 'Multicast' },
++    ],
++    90: [
++        { key: 'keeper_of_the_light_illuminate', name: 'Illuminate' },
++        { key: 'keeper_of_the_light_blinding_light', name: 'Blinding Light' },
++        { key: 'keeper_of_the_light_chakra_magic', name: 'Chakra Magic' },
++        { key: 'keeper_of_the_light_spirit_form', name: 'Spirit Form' },
++    ],
++    93: [
++        { key: 'slark_dark_pact', name: 'Dark Pact' },
++        { key: 'slark_pounce', name: 'Pounce' },
++        { key: 'slark_essence_shift', name: 'Essence Shift' },
++        { key: 'slark_shadow_dance', name: 'Shadow Dance' },
++    ],
++    96: [
++        { key: 'centaur_hoof_stomp', name: 'Hoof Stomp' },
++        { key: 'centaur_double_edge', name: 'Double Edge' },
++        { key: 'centaur_work_horse', name: 'Work Horse' },
++        { key: 'centaur_stampede', name: 'Stampede' },
++    ],
++    121: [
++        { key: 'grimstroke_dark_artistry', name: 'Stroke of Fate' },
++        { key: 'grimstroke_ink_creature', name: "Phantom's Embrace" },
++        { key: 'grimstroke_spirit_walk', name: 'Ink Swell' },
++        { key: 'grimstroke_soul_chain', name: 'Soulbind' },
++    ],
++    137: [
++        { key: 'primal_beast_onslaught', name: 'Onslaught' },
++        { key: 'primal_beast_trample', name: 'Trample' },
++        { key: 'primal_beast_uproar', name: 'Uproar' },
++        { key: 'primal_beast_pulverize', name: 'Pulverize' },
++    ],
++};
++
++type GraphMode = 'advantage' | 'gpm' | 'xpm';
++
++export default function DeepAnalyticsBoard({
++    matchData,
++    players = [],
++    heroIdToImg = {},
++    itemIdToName = {},
++}: DeepAnalyticsProps) {
++    const [graphMode, setGraphMode] = useState<GraphMode>('advantage');
++    const [teamFilter, setTeamFilter] = useState<'all' | 'radiant' | 'dire'>('all');
++    const [hoveredEvent, setHoveredEvent] = useState<any | null>(null);
++
++    const sortedPlayers = [...players].sort((a, b) => (a.playerSlot || 0) - (b.playerSlot || 0));
++
++    const durationMin = Math.max(10, Math.floor((matchData.duration || 2700) / 60));
++
++    const advantageData = (matchData.radiantGoldAdv && matchData.radiantGoldAdv.length > 0)
++        ? matchData.radiantGoldAdv.map((gold: number, idx: number) => ({
++            minute: idx,
++            gold: gold,
++            xp: matchData.radiantXpAdv?.[idx] || 0,
++        }))
++        : Array.from({ length: durationMin }, (_, i) => {
++            const factor = -Math.sin(i / 5.5) * 6000 - (i * 180) + (i > 25 ? (i - 25) * 450 : 0);
++            return { minute: i, gold: Math.round(factor), xp: Math.round(factor * 1.05) };
++        });
++
++    const advMaxVal = Math.max(...advantageData.map((d: any) => Math.abs(d.gold)), 3000);
++    const dataMax = Math.max(...advantageData.map((i: any) => i.gold));
++    const dataMin = Math.min(...advantageData.map((i: any) => i.gold));
++    const off = dataMax <= 0 ? 0 : dataMin >= 0 ? 1 : dataMax / (dataMax - dataMin);
++
++    const heroProgressionData = Array.from({ length: durationMin }, (_, m) => {
++        const row: Record<string, any> = { minute: m };
++        sortedPlayers.forEach((p) => {
++            const finalGpm = p.gpm || 450;
++            const finalXpm = p.xpm || 550;
++            const curve = Math.min(1, Math.pow((m + 1) / durationMin, 0.7));
++            const variance = Math.sin((m + p.playerSlot) * 0.8) * 35;
++            row[`gpm_${p.playerSlot}`] = Math.max(100, Math.round(finalGpm * curve + variance));
++            row[`xpm_${p.playerSlot}`] = Math.max(80, Math.round(finalXpm * curve + variance * 0.8));
++        });
++        return row;
++    });
++
++    const getHeroImg = (heroId: number) => {
++        if (heroIdToImg[heroId]) {
++            const path = heroIdToImg[heroId];
++            return path.startsWith('http') ? path : `https://cdn.cloudflare.steamstatic.com${path}`;
++        }
++        const shortName = HERO_DATA_MAP[heroId]?.shortName;
++        if (shortName) {
++            return `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/${shortName}.png`;
++        }
++        return '';
++    };
++
++    // ── ระบบดึง URL ไอเทมแบบ Multi-CDN Auto-Update ──
++    const getItemImg = (itemId: number | string) => {
++        if (!itemId || itemId === 0 || itemId === '0') return '';
++        const id = Number(itemId);
++        if (isNaN(id) || id <= 0) return '';
++
++        const rawName = itemIdToName[id];
++        if (rawName) {
++            const cleanName = rawName.replace(/^item_/, '');
++            return `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/${cleanName}.png`;
++        }
++
++        return `https://raw.githubusercontent.com/odota/dotaconstants/master/build/items/${id}.png`;
++    };
++
++    // ── ระบบคำนวณ Kill Timeline Pins ──
++    const killEvents = React.useMemo(() => {
++        const events: any[] = [];
++        const radiantList = sortedPlayers.filter((p) => (p.playerSlot || 0) < 128);
++        const direList = sortedPlayers.filter((p) => (p.playerSlot || 0) >= 128);
++
++        sortedPlayers.forEach((p) => {
++            const isRadiant = (p.playerSlot || 0) < 128;
++            const deathsCount = Math.min(p.deaths || 0, 6);
++            for (let k = 0; k < deathsCount; k++) {
++                const minute = Math.min(durationMin - 1, Math.floor(((k + 1) / (deathsCount + 1)) * durationMin + ((p.heroId * 7) % 5) - 2));
++                const sec = ((p.heroId * 13 + k * 17) % 50) + 5;
++                const goldSwing = 220 + (minute * 18) + (k * 45);
++                const killer = isRadiant 
++                    ? (direList[k % direList.length] || { playerName: 'Dire Opponent', heroName: 'Hero' }) 
++                    : (radiantList[k % radiantList.length] || { playerName: 'Radiant Opponent', heroName: 'Hero' });
++
++                events.push({
++                    id: `${p.heroId}_${k}`,
++                    minute: Math.max(1, minute),
++                    timeStr: `${String(minute).padStart(2, '0')}:${String(sec).padStart(2, '0')}`,
++                    victimHeroId: p.heroId,
++                    victimHeroName: HERO_DATA_MAP[p.heroId]?.name || p.heroName || `Hero_${p.heroId}`,
++                    victimName: p.playerName,
++                    killerName: killer.playerName,
++                    gold: goldSwing,
++                    team: isRadiant ? 'radiant' : 'dire',
++                });
++            }
++        });
++        return events;
++    }, [sortedPlayers, durationMin]);
++
++    const displayedPlayers = sortedPlayers.filter((p) => {
++        if (teamFilter === 'radiant') return (p.playerSlot || 0) < 128;
++        if (teamFilter === 'dire') return (p.playerSlot || 0) >= 128;
++        return true;
++    });
++
++    return (
++        <div className="space-y-8 pb-12 font-mono">
++            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
++                <div className="border border-[#00D4FF]/30 bg-[#111118] p-5 shadow-[0_0_25px_rgba(0,212,255,0.05)] flex flex-col justify-between">
++                    <div>
++                        {/* Header Bar */}
++                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-800 pb-3 mb-4">
++                            <div className="flex items-center gap-1.5 font-orbitron text-xs font-bold text-white">
+
+# 2026-08-28 09:49:43.954644
++s
+
+# 2026-08-28 09:51:34.959020
++/add app/match/[matchId]/components/DeepAnalyticsBoard.tsx
+
+# 2026-08-28 09:51:50.515965
++'use client';
++
++import React, { useState } from 'react';
++import TowerMapGrid from './TowerMapGrid';
++import {
++    AreaChart,
++    Area,
++    LineChart,
++    Line,
++    XAxis,
++    YAxis,
++    CartesianGrid,
++    Tooltip,
++    ResponsiveContainer,
++    ReferenceLine,
++} from 'recharts';
++
++interface DeepAnalyticsProps {
++    matchData: any;
++    players?: any[];
++    heroIdToImg?: Record<number, string>;
++    itemIdToName?: Record<number, string>;
++}
++
++const POS_COLORS: Record<string, string> = {
++    'Pos 1': '#E8384F',
++    'Pos 2': '#2E9BFF',
++    'Pos 3': '#39FF6A',
++    'Pos 4': '#D63CE8',
++    'Pos 5': '#C8CDD4',
++};
++
++const HERO_DATA_MAP: Record<number, { name: string; shortName: string }> = {
++    1: { name: 'Anti-Mage', shortName: 'antimage' },
++    2: { name: 'Axe', shortName: 'axe' },
++    6: { name: 'Drow Ranger', shortName: 'drow_ranger' },
++    14: { name: 'Pudge', shortName: 'pudge' },
++    22: { name: 'Zeus', shortName: 'zuus' },
++    74: { name: 'Invoker', shortName: 'invoker' },
++    76: { name: 'Outworld Destroyer', shortName: 'obsidian_destroyer' },
++    84: { name: 'Ogre Magi', shortName: 'ogre_magi' },
++    90: { name: 'Keeper of the Light', shortName: 'keeper_of_the_light' },
++    93: { name: 'Slark', shortName: 'slark' },
++    96: { name: 'Centaur Warrunner', shortName: 'centaur' },
++    121: { name: 'Grimstroke', shortName: 'grimstroke' },
++    137: { name: 'Primal Beast', shortName: 'primal_beast' },
++};
++
++const HERO_ABILITY_DETAILS: Record<number, { key: string; name: string }[]> = {
++    1: [
++        { key: 'antimage_mana_break', name: 'Mana Break' },
++        { key: 'antimage_blink', name: 'Blink' },
++        { key: 'antimage_counterspell', name: 'Counterspell' },
++        { key: 'antimage_mana_void', name: 'Mana Void' },
++    ],
++    6: [
++        { key: 'drow_ranger_frost_arrows', name: 'Frost Arrows' },
++        { key: 'drow_ranger_multishot', name: 'Multishot' },
++        { key: 'drow_ranger_silence', name: 'Gust' },
++        { key: 'drow_ranger_marksmanship', name: 'Marksmanship' },
++    ],
++    14: [
++        { key: 'pudge_meat_hook', name: 'Meat Hook' },
++        { key: 'pudge_rot', name: 'Rot' },
++        { key: 'pudge_flesh_heap', name: 'Flesh Heap' },
++        { key: 'pudge_dismember', name: 'Dismember' },
++    ],
++    22: [
++        { key: 'zuus_arc_lightning', name: 'Arc Lightning' },
++        { key: 'zuus_lightning_bolt', name: 'Lightning Bolt' },
++        { key: 'zuus_heavenly_jump', name: 'Heavenly Jump' },
++        { key: 'zuus_thundergods_wrath', name: "Thundergod's Wrath" },
++    ],
++    76: [
++        { key: 'obsidian_destroyer_arcane_orb', name: 'Arcane Orb' },
++        { key: 'obsidian_destroyer_astral_imprisonment', name: 'Astral Imprisonment' },
++        { key: 'obsidian_destroyer_essence_flux', name: 'Essence Flux' },
++        { key: 'obsidian_destroyer_sanity_eclipse', name: "Sanity's Eclipse" },
++    ],
++    84: [
++        { key: 'ogre_magi_fireblast', name: 'Fireblast' },
++        { key: 'ogre_magi_ignite', name: 'Ignite' },
++        { key: 'ogre_magi_bloodlust', name: 'Bloodlust' },
++        { key: 'ogre_magi_multicast', name: 'Multicast' },
++    ],
++    90: [
++        { key: 'keeper_of_the_light_illuminate', name: 'Illuminate' },
++        { key: 'keeper_of_the_light_blinding_light', name: 'Blinding Light' },
++        { key: 'keeper_of_the_light_chakra_magic', name: 'Chakra Magic' },
++        { key: 'keeper_of_the_light_spirit_form', name: 'Spirit Form' },
++    ],
++    93: [
++        { key: 'slark_dark_pact', name: 'Dark Pact' },
++        { key: 'slark_pounce', name: 'Pounce' },
++        { key: 'slark_essence_shift', name: 'Essence Shift' },
++        { key: 'slark_shadow_dance', name: 'Shadow Dance' },
++    ],
++    96: [
++        { key: 'centaur_hoof_stomp', name: 'Hoof Stomp' },
++        { key: 'centaur_double_edge', name: 'Double Edge' },
++        { key: 'centaur_work_horse', name: 'Work Horse' },
++        { key: 'centaur_stampede', name: 'Stampede' },
++    ],
++    121: [
++        { key: 'grimstroke_dark_artistry', name: 'Stroke of Fate' },
++        { key: 'grimstroke_ink_creature', name: "Phantom's Embrace" },
++        { key: 'grimstroke_spirit_walk', name: 'Ink Swell' },
++        { key: 'grimstroke_soul_chain', name: 'Soulbind' },
++    ],
++    137: [
++        { key: 'primal_beast_onslaught', name: 'Onslaught' },
++        { key: 'primal_beast_trample', name: 'Trample' },
++        { key: 'primal_beast_uproar', name: 'Uproar' },
++        { key: 'primal_beast_pulverize', name: 'Pulverize' },
++    ],
++};
++
++type GraphMode = 'advantage' | 'gpm' | 'xpm';
++
++export default function DeepAnalyticsBoard({
++    matchData,
++    players = [],
++    heroIdToImg = {},
++    itemIdToName = {},
++}: DeepAnalyticsProps) {
++    const [graphMode, setGraphMode] = useState<GraphMode>('advantage');
++    const [teamFilter, setTeamFilter] = useState<'all' | 'radiant' | 'dire'>('all');
++    const [hoveredEvent, setHoveredEvent] = useState<any | null>(null);
++
++    const sortedPlayers = [...players].sort((a, b) => (a.playerSlot || 0) - (b.playerSlot || 0));
++
++    const durationMin = Math.max(10, Math.floor((matchData.duration || 2700) / 60));
++
++    const advantageData = (matchData.radiantGoldAdv && matchData.radiantGoldAdv.length > 0)
++        ? matchData.radiantGoldAdv.map((gold: number, idx: number) => ({
++            minute: idx,
++            gold: gold,
++            xp: matchData.radiantXpAdv?.[idx] || 0,
++        }))
++        : Array.from({ length: durationMin }, (_, i) => {
++            const factor = -Math.sin(i / 5.5) * 6000 - (i * 180) + (i > 25 ? (i - 25) * 450 : 0);
++            return { minute: i, gold: Math.round(factor), xp: Math.round(factor * 1.05) };
++        });
++
++    const advMaxVal = Math.max(...advantageData.map((d: any) => Math.abs(d.gold)), 3000);
++    const dataMax = Math.max(...advantageData.map((i: any) => i.gold));
++    const dataMin = Math.min(...advantageData.map((i: any) => i.gold));
++    const off = dataMax <= 0 ? 0 : dataMin >= 0 ? 1 : dataMax / (dataMax - dataMin);
++
++    const heroProgressionData = Array.from({ length: durationMin }, (_, m) => {
++        const row: Record<string, any> = { minute: m };
++        sortedPlayers.forEach((p) => {
++            const finalGpm = p.gpm || 450;
++            const finalXpm = p.xpm || 550;
++            const curve = Math.min(1, Math.pow((m + 1) / durationMin, 0.7));
++            const variance = Math.sin((m + p.playerSlot) * 0.8) * 35;
++            row[`gpm_${p.playerSlot}`] = Math.max(100, Math.round(finalGpm * curve + variance));
++            row[`xpm_${p.playerSlot}`] = Math.max(80, Math.round(finalXpm * curve + variance * 0.8));
++        });
++        return row;
++    });
++
++    const getHeroImg = (heroId: number) => {
++        if (heroIdToImg[heroId]) {
++            const path = heroIdToImg[heroId];
++            return path.startsWith('http') ? path : `https://cdn.cloudflare.steamstatic.com${path}`;
++        }
++        const shortName = HERO_DATA_MAP[heroId]?.shortName;
++        if (shortName) {
++            return `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/${shortName}.png`;
++        }
++        return '';
++    };
++
++    // ── ระบบดึง URL ไอเทมแบบ Multi-CDN Auto-Update ──
++    const getItemImg = (itemId: number | string) => {
++        if (!itemId || itemId === 0 || itemId === '0') return '';
++        const id = Number(itemId);
++        if (isNaN(id) || id <= 0) return '';
++
++        const rawName = itemIdToName[id];
++        if (rawName) {
++            const cleanName = rawName.replace(/^item_/, '');
++            return `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/${cleanName}.png`;
++        }
++
++        return `https://raw.githubusercontent.com/odota/dotaconstants/master/build/items/${id}.png`;
++    };
++
++    // ── ระบบคำนวณ Kill Timeline Pins ──
++    const killEvents = React.useMemo(() => {
++        const events: any[] = [];
++        const radiantList = sortedPlayers.filter((p) => (p.playerSlot || 0) < 128);
++        const direList = sortedPlayers.filter((p) => (p.playerSlot || 0) >= 128);
++
++        sortedPlayers.forEach((p) => {
++            const isRadiant = (p.playerSlot || 0) < 128;
++            const deathsCount = Math.min(p.deaths || 0, 6);
++            for (let k = 0; k < deathsCount; k++) {
++                const minute = Math.min(durationMin - 1, Math.floor(((k + 1) / (deathsCount + 1)) * durationMin + ((p.heroId * 7) % 5) - 2));
++                const sec = ((p.heroId * 13 + k * 17) % 50) + 5;
++                const goldSwing = 220 + (minute * 18) + (k * 45);
++                const killer = isRadiant 
++                    ? (direList[k % direList.length] || { playerName: 'Dire Opponent', heroName: 'Hero' }) 
++                    : (radiantList[k % radiantList.length] || { playerName: 'Radiant Opponent', heroName: 'Hero' });
++
++                events.push({
++                    id: `${p.heroId}_${k}`,
++                    minute: Math.max(1, minute),
++                    timeStr: `${String(minute).padStart(2, '0')}:${String(sec).padStart(2, '0')}`,
++                    victimHeroId: p.heroId,
++                    victimHeroName: HERO_DATA_MAP[p.heroId]?.name || p.heroName || `Hero_${p.heroId}`,
++                    victimName: p.playerName,
++                    killerName: killer.playerName,
++                    gold: goldSwing,
++                    team: isRadiant ? 'radiant' : 'dire',
++                });
++            }
++        });
++        return events;
++    }, [sortedPlayers, durationMin]);
++
++    const displayedPlayers = sortedPlayers.filter((p) => {
++        if (teamFilter === 'radiant') return (p.playerSlot || 0) < 128;
++        if (teamFilter === 'dire') return (p.playerSlot || 0) >= 128;
++        return true;
++    });
++
++    return (
++        <div className="space-y-8 pb-12 font-mono">
++            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
++                <div className="border border-[#00D4FF]/30 bg-[#111118] p-5 shadow-[0_0_25px_rgba(0,212,255,0.05)] flex flex-col justify-between">
++                    <div>
++                        {/* Header Bar */}
++                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-800 pb-3 mb-4">
++                            <div className="flex items-center gap-1.5 font-orbitron text-xs font-bold text-white">
