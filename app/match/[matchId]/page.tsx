@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import React from 'react';
 import MatchHeader from './components/MatchHeader';
 import MatchDetailView from './components/MatchDetailView';
