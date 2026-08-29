@@ -27,13 +27,26 @@ function getFormattedTimestamp() {
 const timestamp = getFormattedTimestamp();
 
 try {
-    // 3. ดึงรายชื่อไฟล์ที่มีการเปลี่ยนแปลง
+    // 3. ดึงรายชื่อไฟล์ที่มีการเปลี่ยนแปลง (ใช้ RegExp ตัด 2-3 ตัวอักษรสถานะข้างหน้าออกอย่างแม่นยำ)
     const statusOutput = execSync('git status --porcelain', { encoding: 'utf-8' });
+
+    const ignoreList = ['diff_check.txt', 'diff-check.mjs', 'diff-check.js'];
 
     const changedFiles = statusOutput
         .split('\n')
-        .map(line => line.trim().slice(3))
-        .filter(file => file && !file.includes('diff_check.txt') && !file.includes('node_modules'))
+        .map(line => line.trim())
+        .filter(Boolean)
+        .map(line => {
+            const match = line.match(/^(\S+|\?\?)\s+(.*)$/);
+            const rawPath = match ? match[2].trim() : line.slice(3).trim();
+            return rawPath.replace(/^["']|["']$/g, '');
+        })
+        .filter(file => {
+            const baseName = path.basename(file);
+            return file &&
+                !ignoreList.includes(baseName) &&
+                !file.includes('node_modules');
+        })
         .slice(0, fileLimit);
 
     if (changedFiles.length === 0) {
@@ -47,13 +60,14 @@ try {
     diffContent += `📋 [MODIFIED FILES LIST]\n`;
 
     changedFiles.forEach((file, index) => {
-        const fileName = path.basename(file);
-        const fileDir = path.dirname(file).replace(/\\/g, '/');
+        const cleanPath = file.replace(/^["']|["']$/g, ''); // ตัด quote กรณี path มี space
+        const fileName = path.basename(cleanPath);
+        const fileDir = path.dirname(cleanPath).replace(/\\/g, '/');
         const displayLocation = fileDir === '.' ? 'root' : `${fileDir}/`;
 
         diffContent += `${index + 1}. File: [${fileName}]\n`;
         diffContent += `   Location: ${displayLocation}\n`;
-        diffContent += `   Full Path: ${file.replace(/\\/g, '/')}\n\n`;
+        diffContent += `   Full Path: ${cleanPath.replace(/\\/g, '/')}\n\n`;
     });
 
     diffContent += `======================================================\n\n`;
@@ -61,7 +75,8 @@ try {
     // 5. ดึงเนื้อหา Diff
     changedFiles.forEach(file => {
         try {
-            const fileDiff = execSync(`git diff HEAD -- "${file}"`, { encoding: 'utf-8' });
+            const cleanPath = file.replace(/^["']|["']$/g, '');
+            const fileDiff = execSync(`git diff HEAD -- "${cleanPath}"`, { encoding: 'utf-8' });
             if (fileDiff) {
                 diffContent += `${fileDiff}\n`;
             }
