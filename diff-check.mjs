@@ -2,12 +2,11 @@ import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
-// วิธีใช้งาน npm run diff:check หรือ npm run diff:check -- [จำนวนไฟล์]
+const inputArg = process.argv[2];
+const isNumber = !isNaN(parseInt(inputArg, 10)) && !inputArg.includes('.');
+const fileLimit = isNumber ? parseInt(inputArg, 10) : 3;
+const targetSpecificFile = (!isNumber && inputArg) ? inputArg.trim() : null;
 
-// 1. รับจำนวนไฟล์จาก argument (ค่าเริ่มต้น 3 ไฟล์)
-const fileLimit = parseInt(process.argv[2], 10) || 3;
-
-// 2. ฟังก์ชัน Timestamp ภาษาไทย
 function getFormattedTimestamp() {
     const now = new Date();
     const thaiDays = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
@@ -27,40 +26,64 @@ function getFormattedTimestamp() {
 const timestamp = getFormattedTimestamp();
 
 try {
-    // 3. ดึงรายชื่อไฟล์ที่มีการเปลี่ยนแปลง (ใช้ RegExp ตัด 2-3 ตัวอักษรสถานะข้างหน้าออกอย่างแม่นยำ)
-    const statusOutput = execSync('git status --porcelain', { encoding: 'utf-8' });
-
     const ignoreList = ['diff_check.txt', 'diff-check.mjs', 'diff-check.js'];
+    let changedFiles = [];
 
-    const changedFiles = statusOutput
-        .split('\n')
-        .map(line => line.trim())
-        .filter(Boolean)
-        .map(line => {
-            const match = line.match(/^(\S+|\?\?)\s+(.*)$/);
-            const rawPath = match ? match[2].trim() : line.slice(3).trim();
-            return rawPath.replace(/^["']|["']$/g, '');
-        })
-        .filter(file => {
-            const baseName = path.basename(file);
-            return file &&
-                !ignoreList.includes(baseName) &&
-                !file.includes('node_modules');
-        })
-        .slice(0, fileLimit);
+    if (targetSpecificFile) {
+        // โหมด 1: ค้นหาไฟล์ทั่วทั้งโปรเจกต์ผ่าน Git และ System
+        let foundPath = '';
+        try {
+            const allFiles = execSync('git ls-files', { encoding: 'utf-8' })
+                .split('\n')
+                .map(line => line.trim())
+                .filter(Boolean);
+
+            const match = allFiles.find(f =>
+                path.basename(f).toLowerCase() === targetSpecificFile.toLowerCase() ||
+                f.toLowerCase() === targetSpecificFile.toLowerCase()
+            );
+            if (match) foundPath = match;
+        } catch (e) { }
+
+        // ถ้าใน Git หาไม่เจอ ลองหาไฟล์ในเครื่อง
+        if (!foundPath && fs.existsSync(targetSpecificFile)) {
+            foundPath = targetSpecificFile;
+        }
+
+        changedFiles = foundPath ? [foundPath] : [targetSpecificFile];
+    } else {
+        // โหมด 2: ดึงจาก git status อัตโนมัติ
+        const statusOutput = execSync('git status --porcelain', { encoding: 'utf-8' });
+
+        changedFiles = statusOutput
+            .split('\n')
+            .map(line => line.trim())
+            .filter(Boolean)
+            .map(line => {
+                const match = line.match(/^(\S+|\?\?)\s+(.*)$/);
+                const rawPath = match ? match[2].trim() : line.slice(3).trim();
+                return rawPath.replace(/^["']|["']$/g, '');
+            })
+            .filter(file => {
+                const baseName = path.basename(file);
+                return file &&
+                    !ignoreList.includes(baseName) &&
+                    !file.includes('node_modules');
+            })
+            .slice(0, fileLimit);
+    }
 
     if (changedFiles.length === 0) {
-        console.log('ℹ️ ไม่พบไฟล์ที่มีการเปลี่ยนแปลงในระบบ');
+        console.log('ℹ️ ไม่พบไฟล์ที่ต้องการประมวลผล');
         process.exit(0);
     }
 
-    // 4. ประกอบ Header ข้อมูล Timestamp และ Location ของไฟล์
     let diffContent = `HEAD\n💎 [DIFF CHECK TIMESTAMP: ${timestamp}]\n`;
-    diffContent += `📁 [TARGET FILES: ${changedFiles.length} / Limit: ${fileLimit}]\n\n`;
+    diffContent += `📁 [TARGET FILES: ${changedFiles.length}]\n\n`;
     diffContent += `📋 [MODIFIED FILES LIST]\n`;
 
     changedFiles.forEach((file, index) => {
-        const cleanPath = file.replace(/^["']|["']$/g, ''); // ตัด quote กรณี path มี space
+        const cleanPath = file.replace(/^["']|["']$/g, '');
         const fileName = path.basename(cleanPath);
         const fileDir = path.dirname(cleanPath).replace(/\\/g, '/');
         const displayLocation = fileDir === '.' ? 'root' : `${fileDir}/`;
@@ -72,24 +95,52 @@ try {
 
     diffContent += `======================================================\n\n`;
 
-    // 5. ดึงเนื้อหา Diff
+    // ดึง Diff / Log History / Content
     changedFiles.forEach(file => {
+        const cleanPath = file.replace(/^["']|["']$/g, '');
+        let fileDiff = '';
+
         try {
-            const cleanPath = file.replace(/^["']|["']$/g, '');
-            const fileDiff = execSync(`git diff HEAD -- "${cleanPath}"`, { encoding: 'utf-8' });
+            // 1. ลองดึง Uncommitted Diff ปัจจุบัน
+            fileDiff = execSync(`git diff HEAD -- "${cleanPath}"`, { encoding: 'utf-8' });
+
+            // 2. ถ้าไม่มี Diff ลองดึง Commit Diff ล่าสุดของไฟล์
+            if (!fileDiff.trim()) {
+                try {
+                    const lastCommitHash = execSync(`git log -n 1 --pretty=format:%h -- "${cleanPath}"`, { encoding: 'utf-8' }).trim();
+                    const lastCommitSubject = execSync(`git log -n 1 --pretty=format:%s -- "${cleanPath}"`, { encoding: 'utf-8' }).trim();
+
+                    if (lastCommitHash) {
+                        const commitDiff = execSync(`git diff ${lastCommitHash}^! -- "${cleanPath}"`, { encoding: 'utf-8' });
+                        if (commitDiff.trim()) {
+                            fileDiff = `// 🕒 [LATEST COMMIT DIFF: ${lastCommitHash} - "${lastCommitSubject}"]\n` + commitDiff;
+                        }
+                    }
+                } catch (e) { }
+            }
+
+            // 3. Fallback: ถ้ายังไม่มี ให้ Dump ไฟล์เต็ม
+            if (!fileDiff.trim()) {
+                const fullPath = path.resolve(process.cwd(), cleanPath);
+                if (fs.existsSync(fullPath)) {
+                    fileDiff = `// 📄 [FULL FILE CONTENT]\n` + fs.readFileSync(fullPath, 'utf-8');
+                }
+            }
+
             if (fileDiff) {
-                diffContent += `${fileDiff}\n`;
+                diffContent += `${fileDiff}\n\n`;
+            } else {
+                diffContent += `// ⚠️ ไม่พบการเปลี่ยนแปลงหรือเนื้อหาของไฟล์: ${cleanPath}\n\n`;
             }
         } catch (err) {
-            // ข้ามไฟล์ที่มีปัญหา
+            diffContent += `// ⚠️ เกิดข้อผิดพลาดในการอ่านไฟล์: ${cleanPath}\n\n`;
         }
     });
 
-    // 6. บันทึกลง diff_check.txt
     const outputPath = path.resolve(process.cwd(), 'diff_check.txt');
     fs.writeFileSync(outputPath, diffContent, 'utf-8');
 
-    console.log(`✅ เขียน diff (${timestamp}) ลง diff_check.txt เรียบร้อย!`);
+    console.log(`✅ เขียน Diff & History (${timestamp}) ลง diff_check.txt เรียบร้อย!`);
 
 } catch (error) {
     console.error('❌ เกิดข้อผิดพลาด:', error.message);

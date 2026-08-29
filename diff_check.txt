@@ -1,71 +1,179 @@
-HEAD
-💎 [DIFF CHECK TIMESTAMP: เวลา 05:34:44 อาทิตย์ 30/08/2026]
-📁 [TARGET FILES: 1 / Limit: 3]
+﻿HEAD
+💎 [DIFF CHECK TIMESTAMP: เวลา 06:14:50 อาทิตย์ 30/08/2026]
+📁 [TARGET FILES: 1]
 
 📋 [MODIFIED FILES LIST]
-1. File: [diff-check.mjs]
-   Location: root
-   Full Path: diff-check.mjs
+1. File: [circuitPoints.ts]
+   Location: lib/tournament/
+   Full Path: lib/tournament/circuitPoints.ts
 
 ======================================================
 
-diff --git a/diff-check.mjs b/diff-check.mjs
-index 08eaa76..ca144a5 100644
---- a/diff-check.mjs
-+++ b/diff-check.mjs
-@@ -27,13 +27,23 @@ function getFormattedTimestamp() {
- const timestamp = getFormattedTimestamp();
- 
- try {
--    // 3. ดึงรายชื่อไฟล์ที่มีการเปลี่ยนแปลง
-+    // 3. ดึงรายชื่อไฟล์ที่มีการเปลี่ยนแปลง (ใช้ RegExp ตัด 2-3 ตัวอักษรสถานะข้างหน้าออกอย่างแม่นยำ)
-     const statusOutput = execSync('git status --porcelain', { encoding: 'utf-8' });
- 
-     const changedFiles = statusOutput
-         .split('\n')
--        .map(line => line.trim().slice(3))
--        .filter(file => file && !file.includes('diff_check.txt') && !file.includes('node_modules'))
-+        .map(line => line.trim())
-+        .filter(Boolean)
-+        .map(line => {
-+            // ดึงเฉพาะ path หลังช่องว่างแรก เพื่อป้องกัน slice โดนตัวอักษรชื่อไฟล์
-+            const match = line.match(/^(\S+|\?\?)\s+(.*)$/);
-+            return match ? match[2].trim() : line.slice(3).trim();
-+        })
-+        .filter(file =>
-+            file &&
-+            !file.endsWith('diff_check.txt') &&
-+            !file.includes('node_modules')
-+        )
-         .slice(0, fileLimit);
- 
-     if (changedFiles.length === 0) {
-@@ -47,13 +57,14 @@ try {
-     diffContent += `📋 [MODIFIED FILES LIST]\n`;
- 
-     changedFiles.forEach((file, index) => {
--        const fileName = path.basename(file);
--        const fileDir = path.dirname(file).replace(/\\/g, '/');
-+        const cleanPath = file.replace(/^["']|["']$/g, ''); // ตัด quote กรณี path มี space
-+        const fileName = path.basename(cleanPath);
-+        const fileDir = path.dirname(cleanPath).replace(/\\/g, '/');
-         const displayLocation = fileDir === '.' ? 'root' : `${fileDir}/`;
- 
-         diffContent += `${index + 1}. File: [${fileName}]\n`;
-         diffContent += `   Location: ${displayLocation}\n`;
--        diffContent += `   Full Path: ${file.replace(/\\/g, '/')}\n\n`;
-+        diffContent += `   Full Path: ${cleanPath.replace(/\\/g, '/')}\n\n`;
-     });
- 
-     diffContent += `======================================================\n\n`;
-@@ -61,7 +72,8 @@ try {
-     // 5. ดึงเนื้อหา Diff
-     changedFiles.forEach(file => {
-         try {
--            const fileDiff = execSync(`git diff HEAD -- "${file}"`, { encoding: 'utf-8' });
-+            const cleanPath = file.replace(/^["']|["']$/g, '');
-+            const fileDiff = execSync(`git diff HEAD -- "${cleanPath}"`, { encoding: 'utf-8' });
-             if (fileDiff) {
-                 diffContent += `${fileDiff}\n`;
-             }
+// 📄 [FULL FILE CONTENT]
+// ============================================================================
+// 1. TYPE DEFINITIONS & INTERFACES (FEATURE-4203 COMPLIANT)
+// ============================================================================
+
+export type CircuitPointSource =
+  | 'weekly_champion'
+  | 'runner_up'
+  | 'top4'
+  | 'top8'
+  | 'swiss'
+  | 'unranked';
+
+export interface WeeklyPlacementInput {
+  userId: string;
+  rank: number;
+  swissWins: number;
+  swissWinRate: number;
+  totalScore: number;
+}
+
+export interface CircuitPointAward {
+  idempotencyKey: string;
+  userId: string;
+  seasonId: string;
+  weeklyTournamentId: string;
+  pointsEarned: number;
+  source: CircuitPointSource;
+  awardedAt: string;
+}
+
+export interface LeaderboardEntry {
+  userId: string;
+  totalCircuitPoints: number;
+  weeklyWinRate: number;
+  bestRank: number;
+  achievedAt: string; // ISO Timestamp สำหรับ Tiebreaker ลำดับที่ 4
+}
+
+export interface MonthlyQualifierCandidate {
+  userId: string;
+  circuitPoints: number;
+  weeklyWinRate: number;
+  bestRank: number;
+  seed: number;
+  hasMonthlyPass: boolean;
+  qualifiedAt: string;
+}
+
+// ============================================================================
+// 2. CIRCUIT POINTS ALLOCATION MATRIX
+// ============================================================================
+
+/**
+ * เกณฑ์การแปลงอันดับจาก Weekly Tournament เป็นคะแนน Circuit Points (CP)
+ * สเปก FEATURE-4203:
+ * - Rank 1: 100 CP
+ * - Rank 2: 60 CP
+ * - Rank 3-4: 35 CP
+ * - Rank 5-8: 20 CP
+ * - Rank 9-16: 5 CP
+ * - Rank 17+: 0 CP
+ */
+export function getCircuitPointsByRank(rank: number): { points: number; source: CircuitPointSource } {
+  if (rank === 1) {
+    return { points: 100, source: 'weekly_champion' };
+  } else if (rank === 2) {
+    return { points: 60, source: 'runner_up' };
+  } else if (rank <= 4) {
+    return { points: 35, source: 'top4' };
+  } else if (rank <= 8) {
+    return { points: 20, source: 'top8' };
+  } else if (rank <= 16) {
+    return { points: 5, source: 'swiss' };
+  } else {
+    // Rank 17+ ไม่ได้รับ Circuit Points
+    return { points: 0, source: 'unranked' };
+  }
+}
+
+// ============================================================================
+// 3. ENGINE: AWARDING & EVALUATION
+// ============================================================================
+
+/**
+ * ประมวลผลแจกแต้ม Circuit Points ให้แก่ผู้เข้าแข่งขัน Weekly
+ * รองรับ Idempotency ป้องกันการแจกแต้มซ้ำด้วย Key และ Set ตรวจสอบ
+ */
+export function processWeeklyCircuitPoints(
+  seasonId: string,
+  weeklyTournamentId: string,
+  placements: WeeklyPlacementInput[],
+  processedKeys: Set<string> = new Set<string>()
+): { awards: CircuitPointAward[]; skippedCount: number } {
+  const awards: CircuitPointAward[] = [];
+  let skippedCount = 0;
+  const now = new Date().toISOString();
+
+  for (const placement of placements) {
+    const idempotencyKey = `${seasonId}_${weeklyTournamentId}_${placement.userId}`;
+
+    // ตรวจสอบ Idempotency เพื่อกันแจกซ้ำ
+    if (processedKeys.has(idempotencyKey)) {
+      skippedCount++;
+      continue;
+    }
+
+    const { points, source } = getCircuitPointsByRank(placement.rank);
+
+    awards.push({
+      idempotencyKey,
+      userId: placement.userId,
+      seasonId,
+      weeklyTournamentId,
+      pointsEarned: points,
+      source,
+      awardedAt: now,
+    });
+  }
+
+  return { awards, skippedCount };
+}
+
+/**
+ * Snapshot คัดเลือก Top 16 ผู้เล่นเข้าสู่ Monthly Championship (Week 4 Final)
+ * Tiebreaker 4 ชั้น:
+ * 1. Total Circuit Points (มากไปน้อย)
+ * 2. Weekly Win Rate (มากไปน้อย)
+ * 3. Best Rank (น้อยไปมาก เช่น Rank 1 ชนะ Rank 2)
+ * 4. Qualification Timestamp (ใครทำเวลาได้ก่อน ชนะ)
+ */
+export function evaluateMonthlyQualifiers(
+  leaderboard: LeaderboardEntry[]
+): MonthlyQualifierCandidate[] {
+  const sorted = [...leaderboard].sort((a, b) => {
+    // Tier 1: Total Circuit Points
+    if (b.totalCircuitPoints !== a.totalCircuitPoints) {
+      return b.totalCircuitPoints - a.totalCircuitPoints;
+    }
+
+    // Tier 2: Weekly Win Rate
+    if (b.weeklyWinRate !== a.weeklyWinRate) {
+      return b.weeklyWinRate - a.weeklyWinRate;
+    }
+
+    // Tier 3: Best Rank (Lower number is better)
+    if (a.bestRank !== b.bestRank) {
+      return a.bestRank - b.bestRank;
+    }
+
+    // Tier 4: Timestamp (First-to-achieve wins)
+    return new Date(a.achievedAt).getTime() - new Date(b.achievedAt).getTime();
+  });
+
+  const evaluationTime = new Date().toISOString();
+
+  // ล็อกสิทธิ์ Top 16 ผู้มีสิทธิ์เข้ารอบ Monthly Qualifier
+  return sorted.slice(0, 16).map((player, index) => ({
+    userId: player.userId,
+    circuitPoints: player.totalCircuitPoints,
+    weeklyWinRate: player.weeklyWinRate,
+    bestRank: player.bestRank,
+    seed: index + 1,
+    hasMonthlyPass: true,
+    qualifiedAt: evaluationTime,
+  }));
+}
 

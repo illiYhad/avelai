@@ -7,9 +7,29 @@ const TARGET_DIRS = ['app', 'lib', 'src'];
 const IGNORE_PATTERNS = [/node_modules/, /\.next/, /\.git/, /\.DS_Store/];
 const MD_FILE_PATH = path.resolve(process.cwd(), 'DataTree.md');
 
+function getFormattedTimestamp() {
+    const now = new Date();
+    const thaiDays = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+
+    const dayName = thaiDays[now.getDay()];
+    const date = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+
+    return `เวลา ${hours}:${minutes}:${seconds} ${dayName} ${date}/${month}/${year}`;
+}
+
+const timestamp = getFormattedTimestamp();
+
 // 1. อ่าน Comment เดิมจาก DataTree.md เพื่อนำมาแปะกลับ
 function extractExistingComments(content) {
     const commentMap = new Map();
+    if (!content) return commentMap;
+
     const lines = content.split('\n');
     for (const line of lines) {
         const match = line.match(/(?:├──|└──|│\s+)\s*([\w\-./[\]]+)\s+(#.+)$/);
@@ -47,13 +67,12 @@ function generateTree(dirPath, prefix = '', comments = new Map()) {
 
 // 3. รวมร่างและอัปเดตไฟล์ DataTree.md
 function updateDataTree() {
-    if (!fs.existsSync(MD_FILE_PATH)) {
-        console.error('❌ DataTree.md not found.');
-        return;
+    let content = '';
+    if (fs.existsSync(MD_FILE_PATH)) {
+        content = fs.readFileSync(MD_FILE_PATH, 'utf-8');
     }
 
-    const oldContent = fs.readFileSync(MD_FILE_PATH, 'utf-8');
-    const comments = extractExistingComments(oldContent);
+    const comments = extractExistingComments(content);
 
     let newTree = 'avelai/\n';
     TARGET_DIRS.forEach(dir => {
@@ -64,13 +83,33 @@ function updateDataTree() {
         }
     });
 
-    const updatedContent = oldContent.replace(
-        /```text[\s\S]*?```/,
-        `\`\`\`text\n${newTree.trimEnd()}\n\`\`\``
-    );
+    const treeBlock = `\`\`\`text\n${newTree.trimEnd()}\n\`\`\``;
 
-    fs.writeFileSync(MD_FILE_PATH, updatedContent, 'utf-8');
-    console.log('✅ DataTree.md updated successfully!');
+    // อัปเดตเนื้อหา Tree ในบล็อก ```text ... ```
+    if (/```text[\s\S]*?```/.test(content)) {
+        content = content.replace(/```text[\s\S]*?```/, treeBlock);
+    } else {
+        content = `${content.trimEnd()}\n\n${treeBlock}\n`;
+    }
+
+    // อัปเดตหรือแทรก Timestamp บรรทัดใต้หัวข้อ H1 ทันที
+    const timestampLine = `> 💎 **Last Updated:** ${timestamp}`;
+    if (/> 💎 \*\*Last Updated:\*\* .*/.test(content)) {
+        content = content.replace(/> 💎 \*\*Last Updated:\*\* .*/, timestampLine);
+    } else if (content.startsWith('# ')) {
+        // ถ้ายังไม่มี ให้แทรกต่อจากบรรทัดแรกที่เป็น # Title
+        const firstLineEnd = content.indexOf('\n');
+        if (firstLineEnd !== -1) {
+            content = content.slice(0, firstLineEnd) + `\n${timestampLine}` + content.slice(firstLineEnd);
+        } else {
+            content = `${content}\n${timestampLine}\n`;
+        }
+    } else {
+        content = `${timestampLine}\n\n` + content;
+    }
+
+    fs.writeFileSync(MD_FILE_PATH, content, 'utf-8');
+    console.log(`✅ DataTree.md updated successfully! (${timestamp})`);
 }
 
 updateDataTree();

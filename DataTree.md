@@ -1,4 +1,5 @@
 # 🌳 AVELAi Master Data Tree & Schema Map (V1.06)
+> 💎 **Last Updated:** เวลา 06:09:19 อาทิตย์ 30/08/2026
 
 ีวิธีใช้ = node update-tree.mjs
 
