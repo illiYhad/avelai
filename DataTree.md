@@ -1,5 +1,7 @@
 # 🌳 AVELAi Master Data Tree & Schema Map (V1.06)
 
+ีวิธีใช้ = node update-tree.mjs
+
 ## 📁 1. Project Directory Architecture (Next.js App Router)
 ```text
 avelai/

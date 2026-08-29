@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+﻿ HEAD
 ﻿[DIFF CHECK TIMESTAMP: 2026-08-27 17:54:25]
 diff --git a/lib/performanceCalculator.ts b/lib/performanceCalculator.ts
 index b1f5f10..971f3ef 100644
