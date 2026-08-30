@@ -41,7 +41,7 @@ export default function MatchHistoryPage() {
   return (
     <div className="min-h-screen bg-[#07090E] text-white pt-24 pb-12 px-4 md:px-8 flex flex-col items-center font-mono selection:bg-[#00D4FF] selection:text-black">
       {/* Background Grid */}
-      <div className="absolute inset-0 bg-[radial-gradient(#00D4FF_1px,transparent_1px)] [background-size:28px_28px] opacity-10 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(#00D4FF_1px,transparent_1px)] bg-size-[28px_28px] opacity-10 pointer-events-none" />
 
       <header className="w-full max-w-6xl border-b border-[#00D4FF]/20 pb-4 mb-6 z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -77,7 +77,7 @@ export default function MatchHistoryPage() {
 
       {/* Filter & Search Bar */}
       <div className="w-full max-w-6xl bg-[#12121A] border border-[#00D4FF]/30 p-4 rounded-xl mb-6 z-10 flex flex-wrap items-center justify-between gap-4 shadow-[0_0_15px_rgba(0,212,255,0.05)]">
-        <div className="flex-1 min-w-[260px]">
+        <div className="flex-1 min-w-65">
           <input
             type="text"
             placeholder="Search Match ID, Player Name, or Hero..."
@@ -170,7 +170,7 @@ export default function MatchHistoryPage() {
               </thead>
               <tbody className="divide-y divide-gray-800">
                 {filteredMatches.map((m) => (
-                  <tr key={m.id} className="hover:bg-white/[0.02]">
+                  <tr key={m.id} className="hover:bg-white/2">
                     <td className="p-3.5 text-gray-400 font-bold">{m.id}</td>
                     <td className="p-3.5 text-[#00D4FF] font-bold">{m.player}</td>
                     <td className="p-3.5 text-white font-bold">

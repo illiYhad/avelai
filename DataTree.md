@@ -1,9 +1,11 @@
 # 🌳 AVELAi Master Data Tree & Schema Map (V1.06)
-> 💎 **Last Updated:** เวลา 06:09:19 อาทิตย์ 30/08/2026
+
+> 💎 **Last Updated:** เวลา 13:40:37 อาทิตย์ 30/08/2026
 
 ีวิธีใช้ = node update-tree.mjs
 
 ## 📁 1. Project Directory Architecture (Next.js App Router)
+
 ```text
 avelai/
 ├── app/
@@ -64,3 +66,6 @@ avelai/
 │       ├── circuitPoints.ts                  # FEATURE-4203 Engine
 │       ├── prizeCalculator.ts                # FEATURE-4202 Engine
 │       └── swissPairing.ts                   # FEATURE-4200 Engine
+
+
+```

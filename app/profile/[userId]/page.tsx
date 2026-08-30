@@ -1,4 +1,5 @@
-﻿'use client';
+﻿/* eslint-disable @next/next/no-img-element */
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -123,7 +124,7 @@ export default function ProfilePage() {
 
             {/* ── Passport Card (3:4 ratio) ─────────────────────────────────────── */}
             <div
-                className="relative w-full max-w-[420px] rounded-2xl overflow-hidden border border-[#C9A84C]/40"
+                className="relative w-full max-w-105 rounded-2xl overflow-hidden border border-[#C9A84C]/40"
                 style={{
                     aspectRatio: '3/4',
                     background: 'linear-gradient(160deg, #12121A 0%, #0A0A0F 60%, #0D0D14 100%)',
@@ -153,7 +154,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Divider */}
-                <div className="mx-4 h-px bg-gradient-to-r from-transparent via-[#C9A84C]/30 to-transparent" />
+                <div className="mx-4 h-px bg-linear-to-r from-transparent via-[#C9A84C]/30 to-transparent" />
 
                 {/* ── Main body: Left 3/5 + Right 2/5 ─────────────────────────────── */}
                 <div className="relative z-20 flex h-[55%]">
@@ -172,9 +173,9 @@ export default function ProfilePage() {
                                 style={{ filter: 'brightness(0.85) contrast(1.1)' }}
                             />
                             {/* Gradient fade right */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#0A0A0F]" />
+                            <div className="absolute inset-0 bg-linear-to-r from-transparent via-transparent to-[#0A0A0F]" />
                             {/* Gradient fade bottom */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0F] via-[#0A0A0F]/20 to-transparent" />
+                            <div className="absolute inset-0 bg-linear-to-t from-[#0A0A0F] via-[#0A0A0F]/20 to-transparent" />
                         </div>
 
                         {/* Name + tag over avatar bottom */}
@@ -226,7 +227,7 @@ export default function ProfilePage() {
                             {/* Karma bar */}
                             <div className="mt-1 h-1 rounded-full bg-zinc-800 overflow-hidden">
                                 <div
-                                    className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all"
+                                    className="h-full rounded-full bg-linear-to-r from-emerald-600 to-emerald-400 transition-all"
                                     style={{ width: `${profile.karma_score}%` }}
                                 />
                             </div>
@@ -248,7 +249,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Divider */}
-                <div className="mx-4 h-px bg-gradient-to-r from-transparent via-[#C9A84C]/20 to-transparent" />
+                <div className="mx-4 h-px bg-linear-to-r from-transparent via-[#C9A84C]/20 to-transparent" />
 
                 {/* ── Badge Slots ──────────────────────────────────────────────────── */}
                 <div className="relative z-20 px-4 py-4">
@@ -266,8 +267,7 @@ export default function ProfilePage() {
                             ) : (
                                 <div
                                     key={i}
-                                    className="flex flex-col items-center justify-center gap-1 p-2.5 rounded-xl border border-dashed border-zinc-800 bg-zinc-900/30"
-                                    style={{ minHeight: '64px' }}
+                                    className="flex flex-col items-center justify-center gap-1 p-2.5 rounded-xl border border-dashed border-zinc-800 bg-zinc-900/30 min-h-16"
                                 >
                                     <div className="w-5 h-5 rounded-full border border-zinc-700 flex items-center justify-center">
                                         <span className="text-zinc-700 text-xs">+</span>
@@ -282,7 +282,7 @@ export default function ProfilePage() {
                 {/* Footer */}
                 <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-4">
                     <div className="flex items-center justify-between">
-                        <span className="font-mono text-[8px] text-zinc-700 tracking-[0.1em]">PRECISION IS FREEDOM</span>
+                        <span className="font-mono text-[8px] text-zinc-700 tracking-widest">PRECISION IS FREEDOM</span>
                         <span className="font-mono text-[8px] text-zinc-700">AVELAi © 2026</span>
                     </div>
                 </div>

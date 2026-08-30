@@ -1,899 +1,315 @@
-﻿HEAD
-💎 [DIFF CHECK TIMESTAMP: เวลา 13:11:09 อาทิตย์ 30/08/2026]
-📁 [TARGET FILES: 3 (Max Limit: 3)]
+HEAD
+💎 [DIFF CHECK TIMESTAMP: เวลา 16:05:48 อาทิตย์ 30/08/2026]
+📁 [TARGET FILES: 1 (Max Limit: 2)]
 
 📋 [MODIFIED FILES LIST]
-1. File: [Key_shot_cut]
-   Location: root
-   Full Path: Key_shot_cut
-
-2. File: [route.ts]
-   Location: app/api/v1/tournament/bracket/create-monthly/
-   Full Path: app/api/v1/tournament/bracket/create-monthly/route.ts
-
-3. File: [bracketEngine.ts]
+1. File: [monthlyDoubleElim.ts]
    Location: lib/tournament/
-   Full Path: lib/tournament/bracketEngine.ts
+   Full Path: lib/tournament/monthlyDoubleElim.ts
 
 ======================================================
 
 // -----------------------------------------------------
-// 📄 FILE: Key_shot_cut
+// 📄 FILE: lib/tournament/monthlyDoubleElim.ts
 // -----------------------------------------------------
-// 🕒 [LATEST COMMIT: 9b418c9 - "feat(FEATURE-4201): implement monthly double elimination bracket engine and v1 api route"]
-commit 9b418c9a619287b4bde34b09388bd1178da83852
+// 🕒 [LATEST COMMIT: 99b6600 - "fix(FEATURE-4201): fix WB R2 loser crossover mapping and set explicit null for LB loserAdvancesTo"]
+commit 99b6600bb3865595b2edec7fe38f35a1f0660688
 Author: illiYhad <suriyabalem@gmail.com>
-Date:   Sun Aug 30 13:08:01 2026 +0700
+Date:   Sun Aug 30 16:02:01 2026 +0700
 
-    feat(FEATURE-4201): implement monthly double elimination bracket engine and v1 api route
+    fix(FEATURE-4201): fix WB R2 loser crossover mapping and set explicit null for LB loserAdvancesTo
 
-diff --git a/Key_shot_cut b/Key_shot_cut
-index 0aadc17..7beb925 100644
---- a/Key_shot_cut
-+++ b/Key_shot_cut
-@@ -1,3 +1,2 @@
- npm run diff:check -- 5             = "diff_check"   
--npm run tree:update                 = "tree:update"
--npm run diff:check -- 
-\ No newline at end of file
-+npm run tree:update                 = "tree:update"
-\ No newline at end of file
-
-
-// 📦 [FULL FILE CONTENT]
-npm run diff:check -- 5             = "diff_check"   
-npm run tree:update                 = "tree:update"
-
-// -----------------------------------------------------
-// 📄 FILE: app/api/v1/tournament/bracket/create-monthly/route.ts
-// -----------------------------------------------------
-// 🕒 [LATEST COMMIT: 9b418c9 - "feat(FEATURE-4201): implement monthly double elimination bracket engine and v1 api route"]
-commit 9b418c9a619287b4bde34b09388bd1178da83852
-Author: illiYhad <suriyabalem@gmail.com>
-Date:   Sun Aug 30 13:08:01 2026 +0700
-
-    feat(FEATURE-4201): implement monthly double elimination bracket engine and v1 api route
-
-diff --git a/app/api/v1/tournament/bracket/create-monthly/route.ts b/app/api/v1/tournament/bracket/create-monthly/route.ts
-index 8183ccb..89bcdfd 100644
---- a/app/api/v1/tournament/bracket/create-monthly/route.ts
-+++ b/app/api/v1/tournament/bracket/create-monthly/route.ts
-@@ -1,6 +1,9 @@
- import { NextResponse } from 'next/server';
- import { createClient } from '@supabase/supabase-js';
--import { createMonthlyDoubleElimination, type DbBracketSlotRow } from '@/lib/tournament/bracketEngine';
-+import { 
-+  createMonthlyDoubleElimination, 
-+  MonthlyQualifierCandidate 
-+} from '@/lib/tournament/monthlyDoubleElim'; // 👈 ชี้ตรงมาที่ไฟล์นี้โดยตรง
- 
- const supabase = createClient(
-   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-@@ -9,60 +12,63 @@ const supabase = createClient(
- 
- export async function POST(req: Request) {
-   try {
--    const { tournamentId } = await req.json();
-+    const body = await req.json();
-+    const { seasonId, monthlyTournamentId, qualifiedPlayers } = body;
- 
--    if (!tournamentId) {
--      return NextResponse.json({ error: 'Missing tournamentId' }, { status: 400 });
-+    // 1. Validation
-+    if (!seasonId || !monthlyTournamentId || !Array.isArray(qualifiedPlayers)) {
-+      return NextResponse.json(
-+        { error: 'Missing required parameters: seasonId, monthlyTournamentId, qualifiedPlayers' },
-+        { status: 400 }
-+      );
-     }
- 
--    // 1. ดึง Top 16 ผู้ถือ Monthly Pass เรียงตาม Seed
--    const { data: top16, error: fetchError } = await supabase
--      .from('tournament_participants')
--      .select('player_id, seed, users(display_name)')
--      .eq('tournament_id', tournamentId)
--      .eq('has_monthly_pass', true)
--      .order('seed', { ascending: true });
--
--    if (fetchError) throw fetchError;
--
--    if (!top16 || top16.length !== 16) {
-+    if (qualifiedPlayers.length !== 16) {
-       return NextResponse.json(
--        { error: `Exactly 16 Monthly Pass holders required. Found: ${top16?.length || 0}` },
-+        { error: `Expected exactly 16 qualified players, received ${qualifiedPlayers.length}` },
-         { status: 400 }
-       );
-     }
- 
--    // 2. แปลงข้อมูลให้อยู่ในรูป DbBracketSlotRow
--    const top16Slots: DbBracketSlotRow[] = top16.map((p, index) => ({
--      slot_id: `SLOT_SEED_${index + 1}`,
--      user_id: p.player_id,
--      seed: p.seed ?? index + 1,
--      display_name: (p.users as any)?.display_name ?? `Seed #${index + 1}`,
--    }));
--
--    // 3. สร้าง Full Double Elimination Bracket (ได้ DbBracketNode[] ที่เป็น Snake_case ตรงกับ Database ทันที)
--    const nodes = createMonthlyDoubleElimination(tournamentId, top16Slots);
-+    // 2. Generate Bracket Structure
-+    const bracketData = createMonthlyDoubleElimination({
-+      seasonId,
-+      monthlyTournamentId,
-+      qualifiedPlayers: qualifiedPlayers as MonthlyQualifierCandidate[],
-+    });
- 
--    // 4. บันทึก Upsert ลง Supabase ตรงๆ ได้เลย
--    const { error: upsertError } = await supabase
--      .from('bracket_slots')
--      .upsert(nodes, { onConflict: 'slot_id,tournament_id' });
-+    // 3. Upsert into Supabase for Idempotency
-+    const { data, error } = await supabase
-+      .from('monthly_brackets')
-+      .upsert(
-+        {
-+          season_id: seasonId,
-+          tournament_id: monthlyTournamentId,
-+          bracket_type: 'double_elimination',
-+          winners_bracket: bracketData.winnersTree,
-+          losers_bracket: bracketData.losersTree,
-+          grand_final: bracketData.grandFinal,
-+          status: 'ready',
-+          created_at: bracketData.createdAt,
-+        },
-+        { onConflict: 'season_id,tournament_id' }
-+      )
-+      .select()
-+      .single();
- 
--    if (upsertError) throw upsertError;
-+    if (error) {
-+      return NextResponse.json({ error: error.message }, { status: 500 });
-+    }
- 
--    return NextResponse.json(
--      {
--        success: true,
--        message: 'Monthly Double Elimination Bracket created successfully.',
--        nodesCreated: nodes.length,
--      },
--      { status: 200 }
--    );
--  } catch (error: any) {
--    console.error('[/api/v1/tournament/bracket/create-monthly Error]:', error);
--    return NextResponse.json(
--      { error: error.message || 'Internal Server Error' },
--      { status: 500 }
--    );
--  }
-+    return NextResponse.json({
-+      success: true,
-+      bracketId: data.id,
-+      status: data.status,
-+      winnersRound1Matches: 8,
-+      createdAt: data.created_at,
-+    });
-+  } catch (err: unknown) {
-+  const errorMessage = err instanceof Error ? err.message : 'Internal Server Error';
-+  return NextResponse.json({ error: errorMessage }, { status: 500 });
-+}
+diff --git a/lib/tournament/monthlyDoubleElim.ts b/lib/tournament/monthlyDoubleElim.ts
+index 0050607..cd4ee32 100644
+--- a/lib/tournament/monthlyDoubleElim.ts
++++ b/lib/tournament/monthlyDoubleElim.ts
+@@ -17,8 +17,8 @@ export interface BracketMatch {
+   seed2: number | null;
+   player1Id?: string | null;
+   player2Id?: string | null;
+-  winnerAdvancesTo?: string;
+-  loserAdvancesTo?: string;
++  winnerAdvancesTo?: string | null;
++  loserAdvancesTo?: string | null;
+   status: 'waiting' | 'ready' | 'completed';
  }
-\ No newline at end of file
-
-
-// 📦 [FULL FILE CONTENT]
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { 
-  createMonthlyDoubleElimination, 
-  MonthlyQualifierCandidate 
-} from '@/lib/tournament/monthlyDoubleElim'; // 👈 ชี้ตรงมาที่ไฟล์นี้โดยตรง
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-    const { seasonId, monthlyTournamentId, qualifiedPlayers } = body;
-
-    // 1. Validation
-    if (!seasonId || !monthlyTournamentId || !Array.isArray(qualifiedPlayers)) {
-      return NextResponse.json(
-        { error: 'Missing required parameters: seasonId, monthlyTournamentId, qualifiedPlayers' },
-        { status: 400 }
-      );
-    }
-
-    if (qualifiedPlayers.length !== 16) {
-      return NextResponse.json(
-        { error: `Expected exactly 16 qualified players, received ${qualifiedPlayers.length}` },
-        { status: 400 }
-      );
-    }
-
-    // 2. Generate Bracket Structure
-    const bracketData = createMonthlyDoubleElimination({
-      seasonId,
-      monthlyTournamentId,
-      qualifiedPlayers: qualifiedPlayers as MonthlyQualifierCandidate[],
-    });
-
-    // 3. Upsert into Supabase for Idempotency
-    const { data, error } = await supabase
-      .from('monthly_brackets')
-      .upsert(
-        {
-          season_id: seasonId,
-          tournament_id: monthlyTournamentId,
-          bracket_type: 'double_elimination',
-          winners_bracket: bracketData.winnersTree,
-          losers_bracket: bracketData.losersTree,
-          grand_final: bracketData.grandFinal,
-          status: 'ready',
-          created_at: bracketData.createdAt,
-        },
-        { onConflict: 'season_id,tournament_id' }
-      )
-      .select()
-      .single();
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      success: true,
-      bracketId: data.id,
-      status: data.status,
-      winnersRound1Matches: 8,
-      createdAt: data.created_at,
-    });
-  } catch (err: unknown) {
-  const errorMessage = err instanceof Error ? err.message : 'Internal Server Error';
-  return NextResponse.json({ error: errorMessage }, { status: 500 });
-}
-}
-
-// -----------------------------------------------------
-// 📄 FILE: lib/tournament/bracketEngine.ts
-// -----------------------------------------------------
-// 🕒 [LATEST COMMIT: 9b418c9 - "feat(FEATURE-4201): implement monthly double elimination bracket engine and v1 api route"]
-commit 9b418c9a619287b4bde34b09388bd1178da83852
-Author: illiYhad <suriyabalem@gmail.com>
-Date:   Sun Aug 30 13:08:01 2026 +0700
-
-    feat(FEATURE-4201): implement monthly double elimination bracket engine and v1 api route
-
-diff --git a/lib/tournament/bracketEngine.ts b/lib/tournament/bracketEngine.ts
-index 5f79810..aa4c5b7 100644
---- a/lib/tournament/bracketEngine.ts
-+++ b/lib/tournament/bracketEngine.ts
-@@ -6,6 +6,12 @@
- // ----------------------------------------------------------------------------
- // 1. BASE / WEEKLY TYPES (LOCKED SYSTEM - VERIFIED)
- // ----------------------------------------------------------------------------
-+// lib/tournament/bracketEngine.ts
-+
-+// Export Tournament Engines
-+export * from './monthlyDoubleElim';
-+export * from './swissPairing';
-+// export * from './annualFinals'; (ในอนาคต)
- export type MatchStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'WALKOVER';
  
- export interface Team {
+@@ -73,14 +73,14 @@ export function createMonthlyDoubleElimination(input: {
+     status: 'ready'
+   }));
+ 
+-  // R2: 4 Matches
++  // R2: 4 Matches (แก้ Crossover ให้ตรงตาม Slot ของ LB R2)
+   const wbR2Matches: BracketMatch[] = Array.from({ length: 4 }, (_, i) => ({
+     matchId: `WB_R2_M${i + 1}`,
+     roundNumber: 2,
+     seed1: null,
+     seed2: null,
+     winnerAdvancesTo: `WB_R3_M${Math.floor(i / 2) + 1}`,
+-    loserAdvancesTo: `LB_R2_M${4 - i}`, // Cross over to LB R2
++    loserAdvancesTo: `LB_R2_M${i + 1}`,
+     status: 'waiting'
+   }));
+ 
+@@ -107,12 +107,14 @@ export function createMonthlyDoubleElimination(input: {
+   }];
+ 
+   // 2. Losers Bracket (6 Rounds - 14 Matches total)
++  // LB R1: กำหนด loserAdvancesTo เป็น null ชัดเจน (แพ้ = ตกรอบ)
+   const lbR1Matches: BracketMatch[] = Array.from({ length: 4 }, (_, i) => ({
+     matchId: `LB_R1_M${i + 1}`,
+     roundNumber: 1,
+     seed1: null,
+     seed2: null,
+     winnerAdvancesTo: `LB_R2_M${i + 1}`,
++    loserAdvancesTo: null,
+     status: 'waiting'
+   }));
+ 
+@@ -122,6 +124,7 @@ export function createMonthlyDoubleElimination(input: {
+     seed1: null,
+     seed2: null,
+     winnerAdvancesTo: `LB_R3_M${Math.floor(i / 2) + 1}`,
++    loserAdvancesTo: null,
+     status: 'waiting'
+   }));
+ 
+@@ -131,6 +134,7 @@ export function createMonthlyDoubleElimination(input: {
+     seed1: null,
+     seed2: null,
+     winnerAdvancesTo: `LB_R4_M${i + 1}`,
++    loserAdvancesTo: null,
+     status: 'waiting'
+   }));
+ 
+@@ -140,6 +144,7 @@ export function createMonthlyDoubleElimination(input: {
+     seed1: null,
+     seed2: null,
+     winnerAdvancesTo: `LB_R5_M1`,
++    loserAdvancesTo: null,
+     status: 'waiting'
+   }));
+ 
+@@ -149,6 +154,7 @@ export function createMonthlyDoubleElimination(input: {
+     seed1: null,
+     seed2: null,
+     winnerAdvancesTo: `LB_R6_M1`,
++    loserAdvancesTo: null,
+     status: 'waiting'
+   }];
+ 
+@@ -158,6 +164,7 @@ export function createMonthlyDoubleElimination(input: {
+     seed1: null,
+     seed2: null,
+     winnerAdvancesTo: `GF_GAME1`,
++    loserAdvancesTo: null,
+     status: 'waiting'
+   }];
+ 
 
 
 // 📦 [FULL FILE CONTENT]
-// ============================================================================
-// lib/tournament/bracketEngine.ts
-// FEATURE-4201 (Weekly Single Elimination) & FEATURE-4201B (Monthly Double Elimination)
-// ============================================================================
+// lib/tournament/monthlyDoubleElim.ts
 
-// ----------------------------------------------------------------------------
-// 1. BASE / WEEKLY TYPES (LOCKED SYSTEM - VERIFIED)
-// ----------------------------------------------------------------------------
-// lib/tournament/bracketEngine.ts
-
-// Export Tournament Engines
-export * from './monthlyDoubleElim';
-export * from './swissPairing';
-// export * from './annualFinals'; (ในอนาคต)
-export type MatchStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'WALKOVER';
-
-export interface Team {
-  id: string;
-  name: string;
+export interface MonthlyQualifierCandidate {
+  userId: string;
+  circuitPoints: number;
+  weeklyWinRate: number;
+  bestRank: number;
   seed: number;
+  hasMonthlyPass: boolean;
+  qualifiedAt: string;
 }
 
-export interface Match {
-  id: string;
-  round: number;
-  matchNumber: number;
-  team1: Team | null;
-  team2: Team | null;
-  winner: Team | null;
-  status: MatchStatus;
+export interface BracketMatch {
+  matchId: string;
+  roundNumber: number;
+  seed1: number | null;
+  seed2: number | null;
+  player1Id?: string | null;
+  player2Id?: string | null;
+  winnerAdvancesTo?: string | null;
+  loserAdvancesTo?: string | null;
+  status: 'waiting' | 'ready' | 'completed';
 }
 
-export interface Bracket {
-  id: string;
+export interface BracketRound {
+  roundId: string;
+  roundNumber: number;
+  matches: BracketMatch[];
+}
+
+export interface MonthlyDoubleEliminationBracket {
+  bracketId: string;
+  seasonId: string;
   tournamentId: string;
-  rounds: Match[][];
+  winnersTree: { rounds: BracketRound[] };
+  losersTree: { rounds: BracketRound[] };
+  grandFinal: {
+    matchId: string;
+    seed1: number | null;
+    seed2: number | null;
+    requiresReset: boolean;
+    status: 'waiting' | 'ready' | 'completed';
+  };
+  status: 'ready' | 'in_progress' | 'completed';
+  createdAt: string;
 }
 
-export interface DbBracketSlotRow {
-  slot_id: string;
-  user_id: string;
-  seed: number;
-  display_name?: string;
-  [key: string]: unknown;
-}
+export function createMonthlyDoubleElimination(input: {
+  seasonId: string;
+  monthlyTournamentId: string;
+  qualifiedPlayers: MonthlyQualifierCandidate[];
+  startTime?: string;
+}): MonthlyDoubleEliminationBracket {
+  const { seasonId, monthlyTournamentId, qualifiedPlayers, startTime } = input;
+  const playerMap = new Map(qualifiedPlayers.map(p => [p.seed, p.userId]));
 
-export interface DbBracketNode {
-  slot_id: string;
-  tournament_id: string;
-  round_number: number;
-  match_index: number;
-  player1_id: string | null;
-  player2_id: string | null;
-  winner_id: string | null;
-  loser_id: string | null;
-  status: MatchStatus;
-  next_upper_slot_id: string | null;
-  next_lower_slot_id: string | null;
-  is_grand_final_reset: boolean;
-}
+  // 1. Winners Bracket (4 Rounds)
+  // R1: 8 Matches
+  const wbR1SeedPairings = [
+    [1, 16], [8, 9], [5, 12], [4, 13],
+    [6, 11], [3, 14], [7, 10], [2, 15]
+  ];
 
-// ----------------------------------------------------------------------------
-// 2. FEATURE-4201B TYPE EXTENSIONS (MONTHLY DOUBLE ELIMINATION)
-// ----------------------------------------------------------------------------
-export type BracketSide = 'WINNER' | 'LOSER' | 'GRAND_FINAL';
+  const wbR1Matches: BracketMatch[] = wbR1SeedPairings.map((pair, idx) => ({
+    matchId: `WB_R1_M${idx + 1}`,
+    roundNumber: 1,
+    seed1: pair[0],
+    seed2: pair[1],
+    player1Id: playerMap.get(pair[0]) || null,
+    player2Id: playerMap.get(pair[1]) || null,
+    winnerAdvancesTo: `WB_R2_M${Math.floor(idx / 2) + 1}`,
+    loserAdvancesTo: `LB_R1_M${Math.floor(idx / 2) + 1}`,
+    status: 'ready'
+  }));
 
-export interface DEMatch {
-  id: string;
-  side: BracketSide;
-  round: number; // นับแยกอิสระต่อ side (Winner round 1..4 / Loser round 1..6 / GF 1..2)
-  matchNumber: number;
-  team1: Team | null;
-  team2: Team | null;
-  winner: Team | null;
-  loser: Team | null;
-  nextMatchIdOnWin: string | null;
-  nextMatchIdOnLose: string | null;
-  isGrandFinalReset: boolean;
-  status: MatchStatus;
-}
+  // R2: 4 Matches (แก้ Crossover ให้ตรงตาม Slot ของ LB R2)
+  const wbR2Matches: BracketMatch[] = Array.from({ length: 4 }, (_, i) => ({
+    matchId: `WB_R2_M${i + 1}`,
+    roundNumber: 2,
+    seed1: null,
+    seed2: null,
+    winnerAdvancesTo: `WB_R3_M${Math.floor(i / 2) + 1}`,
+    loserAdvancesTo: `LB_R2_M${i + 1}`,
+    status: 'waiting'
+  }));
 
-export interface DoubleEliminationBracket {
-  id: string;
-  tournamentId: string;
-  winnerBracket: DEMatch[][];
-  loserBracket: DEMatch[][];
-  grandFinal: DEMatch[];
-}
+  // R3: 2 Matches (Semi-Finals)
+  const wbR3Matches: BracketMatch[] = Array.from({ length: 2 }, (_, i) => ({
+    matchId: `WB_R3_M${i + 1}`,
+    roundNumber: 3,
+    seed1: null,
+    seed2: null,
+    winnerAdvancesTo: `WB_R4_M1`,
+    loserAdvancesTo: `LB_R4_M${2 - i}`,
+    status: 'waiting'
+  }));
 
-// ----------------------------------------------------------------------------
-// 3. SEEDING ALGORITHM (STANDARD RECURSIVE)
-// ----------------------------------------------------------------------------
-export function generateStandardSeedOrder(numTeams: number): number[] {
-  const rounds = Math.log2(numTeams) - 1;
-  let pls = [1, 2];
-  for (let i = 0; i < rounds; i++) {
-    const nextPls: number[] = [];
-    const length = pls.length * 2 + 1;
-    for (const d of pls) {
-      nextPls.push(d);
-      nextPls.push(length - d);
-    }
-    pls = nextPls;
-  }
-  return pls;
-}
+  // R4: 1 Match (Winners Final)
+  const wbR4Matches: BracketMatch[] = [{
+    matchId: `WB_R4_M1`,
+    roundNumber: 4,
+    seed1: null,
+    seed2: null,
+    winnerAdvancesTo: `GF_GAME1`,
+    loserAdvancesTo: `LB_R6_M1`,
+    status: 'waiting'
+  }];
 
-// ----------------------------------------------------------------------------
-// 4. WEEKLY SINGLE ELIMINATION (LOCKED CORE - ORIGINAL RESTORED)
-// ----------------------------------------------------------------------------
-export function generateSingleEliminationBracket(
-  tournamentId: string,
-  teams: Team[]
-): Bracket {
-  const seedOrder = generateStandardSeedOrder(8);
-  const teamMap = new Map<number, Team>();
-  teams.forEach((t) => teamMap.set(t.seed, t));
+  // 2. Losers Bracket (6 Rounds - 14 Matches total)
+  // LB R1: กำหนด loserAdvancesTo เป็น null ชัดเจน (แพ้ = ตกรอบ)
+  const lbR1Matches: BracketMatch[] = Array.from({ length: 4 }, (_, i) => ({
+    matchId: `LB_R1_M${i + 1}`,
+    roundNumber: 1,
+    seed1: null,
+    seed2: null,
+    winnerAdvancesTo: `LB_R2_M${i + 1}`,
+    loserAdvancesTo: null,
+    status: 'waiting'
+  }));
 
-  const rounds: Match[][] = [];
+  const lbR2Matches: BracketMatch[] = Array.from({ length: 4 }, (_, i) => ({
+    matchId: `LB_R2_M${i + 1}`,
+    roundNumber: 2,
+    seed1: null,
+    seed2: null,
+    winnerAdvancesTo: `LB_R3_M${Math.floor(i / 2) + 1}`,
+    loserAdvancesTo: null,
+    status: 'waiting'
+  }));
 
-  // Round 1 (QF: 4 Matches)
-  const r1Matches: Match[] = [];
-  for (let i = 0; i < 4; i++) {
-    const s1 = seedOrder[i * 2];
-    const s2 = seedOrder[i * 2 + 1];
-    r1Matches.push({
-      id: `SE_R1_M${i + 1}`,
-      round: 1,
-      matchNumber: i + 1,
-      team1: teamMap.get(s1) ?? null,
-      team2: teamMap.get(s2) ?? null,
-      winner: null,
-      status: 'PENDING',
-    });
-  }
-  rounds.push(r1Matches);
+  const lbR3Matches: BracketMatch[] = Array.from({ length: 2 }, (_, i) => ({
+    matchId: `LB_R3_M${i + 1}`,
+    roundNumber: 3,
+    seed1: null,
+    seed2: null,
+    winnerAdvancesTo: `LB_R4_M${i + 1}`,
+    loserAdvancesTo: null,
+    status: 'waiting'
+  }));
 
-  // Round 2 (SF: 2 Matches)
-  const r2Matches: Match[] = [];
-  for (let i = 0; i < 2; i++) {
-    r2Matches.push({
-      id: `SE_R2_M${i + 1}`,
-      round: 2,
-      matchNumber: i + 1,
-      team1: null,
-      team2: null,
-      winner: null,
-      status: 'PENDING',
-    });
-  }
-  rounds.push(r2Matches);
+  const lbR4Matches: BracketMatch[] = Array.from({ length: 2 }, (_, i) => ({
+    matchId: `LB_R4_M${i + 1}`,
+    roundNumber: 4,
+    seed1: null,
+    seed2: null,
+    winnerAdvancesTo: `LB_R5_M1`,
+    loserAdvancesTo: null,
+    status: 'waiting'
+  }));
 
-  // Round 3 (Final: 1 Match)
-  rounds.push([
-    {
-      id: `SE_R3_FINAL`,
-      round: 3,
-      matchNumber: 1,
-      team1: null,
-      team2: null,
-      winner: null,
-      status: 'PENDING',
-    },
-  ]);
+  const lbR5Matches: BracketMatch[] = [{
+    matchId: `LB_R5_M1`,
+    roundNumber: 5,
+    seed1: null,
+    seed2: null,
+    winnerAdvancesTo: `LB_R6_M1`,
+    loserAdvancesTo: null,
+    status: 'waiting'
+  }];
+
+  const lbR6Matches: BracketMatch[] = [{
+    matchId: `LB_R6_M1`,
+    roundNumber: 6,
+    seed1: null,
+    seed2: null,
+    winnerAdvancesTo: `GF_GAME1`,
+    loserAdvancesTo: null,
+    status: 'waiting'
+  }];
 
   return {
-    id: `SE_BRACKET_${tournamentId}`,
-    tournamentId,
-    rounds,
+    bracketId: `BRACKET_${seasonId}_${monthlyTournamentId}`,
+    seasonId,
+    tournamentId: monthlyTournamentId,
+    winnersTree: {
+      rounds: [
+        { roundId: 'WB_R1', roundNumber: 1, matches: wbR1Matches },
+        { roundId: 'WB_R2', roundNumber: 2, matches: wbR2Matches },
+        { roundId: 'WB_R3', roundNumber: 3, matches: wbR3Matches },
+        { roundId: 'WB_R4', roundNumber: 4, matches: wbR4Matches },
+      ]
+    },
+    losersTree: {
+      rounds: [
+        { roundId: 'LB_R1', roundNumber: 1, matches: lbR1Matches },
+        { roundId: 'LB_R2', roundNumber: 2, matches: lbR2Matches },
+        { roundId: 'LB_R3', roundNumber: 3, matches: lbR3Matches },
+        { roundId: 'LB_R4', roundNumber: 4, matches: lbR4Matches },
+        { roundId: 'LB_R5', roundNumber: 5, matches: lbR5Matches },
+        { roundId: 'LB_R6', roundNumber: 6, matches: lbR6Matches },
+      ]
+    },
+    grandFinal: {
+      matchId: 'GF_GAME1',
+      seed1: null,
+      seed2: null,
+      requiresReset: true,
+      status: 'waiting'
+    },
+    status: 'ready',
+    createdAt: startTime || new Date().toISOString()
   };
 }
-
-export function advanceWinner(
-  bracket: Bracket,
-  matchId: string,
-  winnerId: string
-): Bracket {
-  const allMatches = bracket.rounds.flat();
-  const currentMatch = allMatches.find((m) => m.id === matchId);
-
-  if (!currentMatch || !currentMatch.team1 || !currentMatch.team2) {
-    return bracket;
-  }
-
-  // 🛑 [GUARD 1] Idempotency Protection: ป้องกันการประมวลผลแมตช์ซ้ำ
-  if (currentMatch.status === 'COMPLETED' || currentMatch.status === 'WALKOVER') {
-    throw new Error(`[Idempotency Guard] Match ${matchId} has already been completed.`);
-  }
-
-  const winner = currentMatch.team1.id === winnerId ? currentMatch.team1 : currentMatch.team2;
-  currentMatch.winner = winner;
-  currentMatch.status = 'COMPLETED';
-
-  // Advance to next round in Single Elimination
-  if (currentMatch.round === 1) {
-    const nextMatchId = currentMatch.matchNumber <= 2 ? 'SE_R2_M1' : 'SE_R2_M2';
-    const nextMatch = allMatches.find((m) => m.id === nextMatchId);
-    if (nextMatch) {
-      if (currentMatch.matchNumber % 2 !== 0) {
-        nextMatch.team1 = winner;
-      } else {
-        nextMatch.team2 = winner;
-      }
-    }
-  } else if (currentMatch.round === 2) {
-    const finalMatch = allMatches.find((m) => m.id === 'SE_R3_FINAL');
-    if (finalMatch) {
-      if (currentMatch.matchNumber === 1) {
-        finalMatch.team1 = winner;
-      } else {
-        finalMatch.team2 = winner;
-      }
-    }
-  }
-
-  return { ...bracket };
-}
-
-export function createTop8SingleElimination(
-  tournamentId: string,
-  top8Slots: DbBracketSlotRow[]
-): DbBracketNode[] {
-  const teams: Team[] = top8Slots.map((slot) => ({
-    id: slot.user_id,
-    name: slot.display_name ?? `Seed #${slot.seed}`,
-    seed: slot.seed,
-  }));
-
-  const bracket = generateSingleEliminationBracket(tournamentId, teams);
-  const allMatches = bracket.rounds.flat();
-
-  return allMatches.map((m) => {
-    let nextUpperSlotId: string | null = null;
-    if (m.round === 1) {
-      nextUpperSlotId = m.matchNumber <= 2 ? 'SE_R2_M1' : 'SE_R2_M2';
-    } else if (m.round === 2) {
-      nextUpperSlotId = 'SE_R3_FINAL';
-    }
-
-    return {
-      slot_id: m.id,
-      tournament_id: tournamentId,
-      round_number: m.round,
-      match_index: m.matchNumber,
-      player1_id: m.team1 ? m.team1.id : null,
-      player2_id: m.team2 ? m.team2.id : null,
-      winner_id: m.winner ? m.winner.id : null,
-      loser_id: null,
-      status: m.status,
-      next_upper_slot_id: nextUpperSlotId,
-      next_lower_slot_id: null,
-      is_grand_final_reset: false,
-    };
-  });
-}
-
-// ----------------------------------------------------------------------------
-// 5. MONTHLY DOUBLE ELIMINATION (16 TEAMS - FEATURE-4201B)
-// ----------------------------------------------------------------------------
-export const generateDoubleEliminationBracket = (
-  tournamentId: string,
-  teams: Team[]
-): DoubleEliminationBracket => {
-  const seedOrder16 = generateStandardSeedOrder(16);
-  const teamMap = new Map<number, Team>();
-  teams.forEach((t) => teamMap.set(t.seed, t));
-
-  // --- WINNER BRACKET (4 Rounds: 8 -> 4 -> 2 -> 1) ---
-  const wb: DEMatch[][] = [];
-
-  // WB R1 (8 Matches)
-  const wbR1: DEMatch[] = [];
-  for (let i = 0; i < 8; i++) {
-    const s1 = seedOrder16[i * 2];
-    const s2 = seedOrder16[i * 2 + 1];
-    wbR1.push({
-      id: `WB_R1_M${i + 1}`,
-      side: 'WINNER',
-      round: 1,
-      matchNumber: i + 1,
-      team1: teamMap.get(s1) ?? null,
-      team2: teamMap.get(s2) ?? null,
-      winner: null,
-      loser: null,
-      nextMatchIdOnWin: `WB_R2_M${Math.floor(i / 2) + 1}`,
-      nextMatchIdOnLose: `LB_R1_M${Math.floor(i / 2) + 1}`,
-      isGrandFinalReset: false,
-      status: 'PENDING',
-    });
-  }
-  wb.push(wbR1);
-
-  // WB R2 (4 Matches - Quarter Finals)
-  const wbR2: DEMatch[] = [];
-  for (let i = 0; i < 4; i++) {
-    wbR2.push({
-      id: `WB_R2_M${i + 1}`,
-      side: 'WINNER',
-      round: 2,
-      matchNumber: i + 1,
-      team1: null,
-      team2: null,
-      winner: null,
-      loser: null,
-      nextMatchIdOnWin: `WB_R3_M${Math.floor(i / 2) + 1}`,
-      nextMatchIdOnLose: `LB_R2_M${i + 1}`,
-      isGrandFinalReset: false,
-      status: 'PENDING',
-    });
-  }
-  wb.push(wbR2);
-
-  // WB R3 (2 Matches - Semi Finals)
-  const wbR3: DEMatch[] = [];
-  for (let i = 0; i < 2; i++) {
-    wbR3.push({
-      id: `WB_R3_M${i + 1}`,
-      side: 'WINNER',
-      round: 3,
-      matchNumber: i + 1,
-      team1: null,
-      team2: null,
-      winner: null,
-      loser: null,
-      nextMatchIdOnWin: `WB_R4_M1`,
-      nextMatchIdOnLose: `LB_R4_M${i + 1}`,
-      isGrandFinalReset: false,
-      status: 'PENDING',
-    });
-  }
-  wb.push(wbR3);
-
-  // WB R4 (1 Match - WB Final)
-  wb.push([
-    {
-      id: `WB_R4_M1`,
-      side: 'WINNER',
-      round: 4,
-      matchNumber: 1,
-      team1: null,
-      team2: null,
-      winner: null,
-      loser: null,
-      nextMatchIdOnWin: `GF_M1`,
-      nextMatchIdOnLose: `LB_R6_M1`,
-      isGrandFinalReset: false,
-      status: 'PENDING',
-    },
-  ]);
-
-  // --- LOSER BRACKET (6 Rounds: 2*(4)-2 = 6 Rounds) ---
-  const lb: DEMatch[][] = [];
-
-  // LB R1 (4 Matches)
-  const lbR1: DEMatch[] = [];
-  for (let i = 0; i < 4; i++) {
-    lbR1.push({
-      id: `LB_R1_M${i + 1}`,
-      side: 'LOSER',
-      round: 1,
-      matchNumber: i + 1,
-      team1: null,
-      team2: null,
-      winner: null,
-      loser: null,
-      nextMatchIdOnWin: `LB_R2_M${i + 1}`,
-      nextMatchIdOnLose: null,
-      isGrandFinalReset: false,
-      status: 'PENDING',
-    });
-  }
-  lb.push(lbR1);
-
-  // LB R2 (4 Matches)
-  const lbR2: DEMatch[] = [];
-  for (let i = 0; i < 4; i++) {
-    lbR2.push({
-      id: `LB_R2_M${i + 1}`,
-      side: 'LOSER',
-      round: 2,
-      matchNumber: i + 1,
-      team1: null,
-      team2: null,
-      winner: null,
-      loser: null,
-      nextMatchIdOnWin: `LB_R3_M${Math.floor(i / 2) + 1}`,
-      nextMatchIdOnLose: null,
-      isGrandFinalReset: false,
-      status: 'PENDING',
-    });
-  }
-  lb.push(lbR2);
-
-  // LB R3 (2 Matches)
-  const lbR3: DEMatch[] = [];
-  for (let i = 0; i < 2; i++) {
-    lbR3.push({
-      id: `LB_R3_M${i + 1}`,
-      side: 'LOSER',
-      round: 3,
-      matchNumber: i + 1,
-      team1: null,
-      team2: null,
-      winner: null,
-      loser: null,
-      nextMatchIdOnWin: `LB_R4_M${i + 1}`,
-      nextMatchIdOnLose: null,
-      isGrandFinalReset: false,
-      status: 'PENDING',
-    });
-  }
-  lb.push(lbR3);
-
-  // LB R4 (2 Matches)
-  const lbR4: DEMatch[] = [];
-  for (let i = 0; i < 2; i++) {
-    lbR4.push({
-      id: `LB_R4_M${i + 1}`,
-      side: 'LOSER',
-      round: 4,
-      matchNumber: i + 1,
-      team1: null,
-      team2: null,
-      winner: null,
-      loser: null,
-      nextMatchIdOnWin: `LB_R5_M1`,
-      nextMatchIdOnLose: null,
-      isGrandFinalReset: false,
-      status: 'PENDING',
-    });
-  }
-  lb.push(lbR4);
-
-  // LB R5 (1 Match - LB Semi Final)
-  lb.push([
-    {
-      id: `LB_R5_M1`,
-      side: 'LOSER',
-      round: 5,
-      matchNumber: 1,
-      team1: null,
-      team2: null,
-      winner: null,
-      loser: null,
-      nextMatchIdOnWin: `LB_R6_M1`,
-      nextMatchIdOnLose: null,
-      isGrandFinalReset: false,
-      status: 'PENDING',
-    },
-  ]);
-
-  // LB R6 (1 Match - LB Final)
-  lb.push([
-    {
-      id: `LB_R6_M1`,
-      side: 'LOSER',
-      round: 6,
-      matchNumber: 1,
-      team1: null,
-      team2: null,
-      winner: null,
-      loser: null,
-      nextMatchIdOnWin: `GF_M1`,
-      nextMatchIdOnLose: null,
-      isGrandFinalReset: false,
-      status: 'PENDING',
-    },
-  ]);
-
-  // --- GRAND FINAL (GF_M1) ---
-  const grandFinal: DEMatch[] = [
-    {
-      id: `GF_M1`,
-      side: 'GRAND_FINAL',
-      round: 1,
-      matchNumber: 1,
-      team1: null,
-      team2: null,
-      winner: null,
-      loser: null,
-      nextMatchIdOnWin: null,
-      nextMatchIdOnLose: null,
-      isGrandFinalReset: false,
-      status: 'PENDING',
-    },
-  ];
-
-  return {
-    id: `DE_BRACKET_${tournamentId}`,
-    tournamentId,
-    winnerBracket: wb,
-    loserBracket: lb,
-    grandFinal,
-  };
-};
-
-export const advanceDoubleEliminationWinner = (
-  bracket: DoubleEliminationBracket,
-  matchId: string,
-  winnerId: string
-): DoubleEliminationBracket => {
-  const allMatches: DEMatch[] = [
-    ...bracket.winnerBracket.flat(),
-    ...bracket.loserBracket.flat(),
-    ...bracket.grandFinal,
-  ];
-
-  const currentMatch = allMatches.find((m) => m.id === matchId);
-  if (!currentMatch || !currentMatch.team1 || !currentMatch.team2) {
-    return bracket;
-  }
-
-  // 🛑 [GUARD 2] Idempotency Protection: ป้องกันการประมวลผล Double Elimination แมตช์ซ้ำ
-  if (currentMatch.status === 'COMPLETED' || currentMatch.status === 'WALKOVER') {
-    throw new Error(`[Idempotency Guard] DEMatch ${matchId} has already been completed.`);
-  }
-
-  const isTeam1Winner = currentMatch.team1.id === winnerId;
-  const winner = isTeam1Winner ? currentMatch.team1 : currentMatch.team2;
-  const loser = isTeam1Winner ? currentMatch.team2 : currentMatch.team1;
-
-  currentMatch.winner = winner;
-  currentMatch.loser = loser;
-  currentMatch.status = 'COMPLETED';
-
-  // 1. Advance Winner
-  if (currentMatch.nextMatchIdOnWin) {
-    const nextWinMatch = allMatches.find((m) => m.id === currentMatch.nextMatchIdOnWin);
-    if (nextWinMatch) {
-      if (!nextWinMatch.team1) {
-        nextWinMatch.team1 = winner;
-      } else if (!nextWinMatch.team2) {
-        nextWinMatch.team2 = winner;
-      }
-    }
-  }
-
-  // 2. Drop Loser to LB
-  if (currentMatch.nextMatchIdOnLose) {
-    const nextLoseMatch = allMatches.find((m) => m.id === currentMatch.nextMatchIdOnLose);
-    if (nextLoseMatch) {
-      if (!nextLoseMatch.team1) {
-        nextLoseMatch.team1 = loser;
-      } else if (!nextLoseMatch.team2) {
-        nextLoseMatch.team2 = loser;
-      }
-    }
-  }
-
-  // 3. Grand Final Reset Case
-  if (currentMatch.id === 'GF_M1') {
-    const isLbChampionWinner = currentMatch.team2?.id === winnerId;
-    if (isLbChampionWinner) {
-      if (bracket.grandFinal.length === 1) {
-        const gfResetMatch: DEMatch = {
-          id: `GF_M2_RESET`,
-          side: 'GRAND_FINAL',
-          round: 2,
-          matchNumber: 2,
-          team1: currentMatch.team1,
-          team2: currentMatch.team2,
-          winner: null,
-          loser: null,
-          nextMatchIdOnWin: null,
-          nextMatchIdOnLose: null,
-          isGrandFinalReset: true,
-          status: 'PENDING',
-        };
-        bracket.grandFinal.push(gfResetMatch);
-      }
-    }
-  }
-
-  return { ...bracket };
-};
-
-export const createMonthlyDoubleElimination = (
-  tournamentId: string,
-  top16Slots: DbBracketSlotRow[]
-): (DbBracketNode & { side: BracketSide })[] => {
-  const teams: Team[] = top16Slots.map((slot) => ({
-    id: slot.user_id,
-    name: slot.display_name ?? `Seed #${slot.seed}`,
-    seed: slot.seed,
-  }));
-
-  const bracket = generateDoubleEliminationBracket(tournamentId, teams);
-  const allMatches: DEMatch[] = [
-    ...bracket.winnerBracket.flat(),
-    ...bracket.loserBracket.flat(),
-    ...bracket.grandFinal,
-  ];
-
-  return allMatches.map((m) => ({
-    slot_id: m.id,
-    tournament_id: tournamentId,
-    round_number: m.round,
-    side: m.side,
-    match_index: m.matchNumber,
-    player1_id: m.team1 ? m.team1.id : null,
-    player2_id: m.team2 ? m.team2.id : null,
-    winner_id: m.winner ? m.winner.id : null,
-    loser_id: m.loser ? m.loser.id : null,
-    status: m.status,
-    next_upper_slot_id: m.nextMatchIdOnWin,
-    next_lower_slot_id: m.nextMatchIdOnLose,
-    is_grand_final_reset: m.isGrandFinalReset,
-  }));
-};
 
