@@ -67,11 +67,26 @@ export default function MatchResultPage({ params }: PageProps) {
     }
   }, [countdown]);
 
+  // Handle vote with Toggle & Bijective Selection
   const handleVoteChange = (type: 'ALLY' | 'OPPONENT', targetId: string, score: number) => {
     if (type === 'ALLY') {
-      setAllyVotes(prev => ({ ...prev, [targetId]: score }));
+      setAllyVotes(prev => {
+        if (prev[targetId] === score) {
+          const updated = { ...prev };
+          delete updated[targetId];
+          return updated;
+        }
+        return { ...prev, [targetId]: score };
+      });
     } else {
-      setOpponentVotes(prev => ({ ...prev, [targetId]: score }));
+      setOpponentVotes(prev => {
+        if (prev[targetId] === score) {
+          const updated = { ...prev };
+          delete updated[targetId];
+          return updated;
+        }
+        return { ...prev, [targetId]: score };
+      });
     }
   };
 
@@ -147,7 +162,7 @@ export default function MatchResultPage({ params }: PageProps) {
               <Shield className="w-4 h-4 text-[#00D4FF]" /> RATE ALLY PERFORMANCE (REQUIRED: 5, 4, 3, 2)
             </h2>
             <span className="text-xs font-bold text-zinc-400">
-              STATUS: {isAllyComplete ? <b className="text-emerald-400">COMPLETE</b> : <b className="text-rose-400">INCOMPLETE</b>}
+              STATUS: {isAllyComplete ? <b className="text-emerald-400">COMPLETE</b> : <b className="text-rose-400">INCOMPLETE ({4 - Object.keys(allyVotes).length} LEFT)</b>}
             </span>
           </div>
 
@@ -172,16 +187,23 @@ export default function MatchResultPage({ params }: PageProps) {
                 <div className="flex gap-1.5 justify-center">
                   {[5, 4, 3, 2].map(score => {
                     const isSelected = allyVotes[player.userId] === score;
+                    const isTakenByOther = Object.entries(allyVotes).some(
+                      ([pId, s]) => pId !== player.userId && s === score
+                    );
+
                     return (
                       <button
                         key={score}
                         onClick={() => handleVoteChange('ALLY', player.userId, score)}
-                        disabled={votingCompleted}
-                        className={`flex-1 py-1 text-xs font-black rounded border transition-all ${
+                        disabled={votingCompleted || (!isSelected && isTakenByOther)}
+                        className={`flex-1 py-1.5 text-xs font-black rounded border transition-all ${
                           isSelected
-                            ? 'bg-[#00D4FF] text-slate-950 border-[#00D4FF] shadow-[0_0_10px_rgba(0,212,255,0.4)]'
-                            : 'bg-slate-950 border-slate-700 text-zinc-400 hover:border-zinc-500'
+                            ? 'bg-[#00D4FF] text-slate-950 border-[#00D4FF] shadow-[0_0_12px_rgba(0,212,255,0.5)] scale-105 z-10 cursor-pointer'
+                            : isTakenByOther
+                            ? 'bg-slate-950/40 border-slate-900 text-zinc-700 cursor-not-allowed opacity-30 line-through'
+                            : 'bg-slate-950 border-slate-700 text-zinc-400 hover:border-[#00D4FF]/50 hover:text-white cursor-pointer'
                         }`}
+                        title={isTakenByOther ? 'Score already assigned to another ally' : ''}
                       >
                         {score}★
                       </button>
@@ -200,7 +222,7 @@ export default function MatchResultPage({ params }: PageProps) {
               <Flame className="w-4 h-4 text-[#C9A84C]" /> RATE OPPONENT RESPECT (REQUIRED: 5, 4, 3, 2, 1)
             </h2>
             <span className="text-xs font-bold text-zinc-400">
-              STATUS: {isOpponentComplete ? <b className="text-emerald-400">COMPLETE</b> : <b className="text-rose-400">INCOMPLETE</b>}
+              STATUS: {isOpponentComplete ? <b className="text-emerald-400">COMPLETE</b> : <b className="text-rose-400">INCOMPLETE ({5 - Object.keys(opponentVotes).length} LEFT)</b>}
             </span>
           </div>
 
@@ -225,16 +247,23 @@ export default function MatchResultPage({ params }: PageProps) {
                 <div className="flex gap-1 justify-center">
                   {[5, 4, 3, 2, 1].map(score => {
                     const isSelected = opponentVotes[player.userId] === score;
+                    const isTakenByOther = Object.entries(opponentVotes).some(
+                      ([pId, s]) => pId !== player.userId && s === score
+                    );
+
                     return (
                       <button
                         key={score}
                         onClick={() => handleVoteChange('OPPONENT', player.userId, score)}
-                        disabled={votingCompleted}
+                        disabled={votingCompleted || (!isSelected && isTakenByOther)}
                         className={`flex-1 py-1 text-[10px] font-black rounded border transition-all ${
                           isSelected
-                            ? 'bg-[#C9A84C] text-slate-950 border-[#C9A84C] shadow-[0_0_10px_rgba(201,168,76,0.4)]'
-                            : 'bg-slate-950 border-slate-700 text-zinc-400 hover:border-zinc-500'
+                            ? 'bg-[#C9A84C] text-slate-950 border-[#C9A84C] shadow-[0_0_12px_rgba(201,168,76,0.5)] scale-105 z-10 cursor-pointer'
+                            : isTakenByOther
+                            ? 'bg-slate-950/40 border-slate-900 text-zinc-700 cursor-not-allowed opacity-30 line-through'
+                            : 'bg-slate-950 border-slate-700 text-zinc-400 hover:border-[#C9A84C]/50 hover:text-white cursor-pointer'
                         }`}
+                        title={isTakenByOther ? 'Score already assigned to another opponent' : ''}
                       >
                         {score}
                       </button>
@@ -251,7 +280,7 @@ export default function MatchResultPage({ params }: PageProps) {
           <div className="text-xs text-zinc-400">
             {!isFormValid ? (
               <span className="text-amber-400 flex items-center gap-1.5">
-                <AlertTriangle className="w-4 h-4" /> Please distribute all ratings uniquely without duplication.
+                <AlertTriangle className="w-4 h-4" /> Please assign all available unique scores to every player.
               </span>
             ) : votingCompleted ? (
               <span className="text-emerald-400 flex items-center gap-1.5">
