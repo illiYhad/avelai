@@ -53,7 +53,14 @@ try {
         changedFiles = foundPath ? [foundPath] : [targetSpecificFile];
     } else {
         // โหมด 2: ดึงจาก git status อัตโนมัติ
-        const statusOutput = execSync('git status --porcelain', { encoding: 'utf-8' });
+        let statusOutput = execSync('git status --porcelain', { encoding: 'utf-8' });
+
+        // ถ้าไม่มีไฟล์ที่กำลังแก้ค้างอยู่ ให้ดึงรายชื่อไฟล์จาก Commit ล่าสุดแทน
+        if (!statusOutput.trim()) {
+            try {
+                statusOutput = execSync('git diff-tree --no-commit-id --name-only -r HEAD', { encoding: 'utf-8' });
+            } catch (e) { }
+        }
 
         changedFiles = statusOutput
             .split('\n')
@@ -61,7 +68,7 @@ try {
             .filter(Boolean)
             .map(line => {
                 const match = line.match(/^(\S+|\?\?)\s+(.*)$/);
-                const rawPath = match ? match[2].trim() : line.slice(3).trim();
+                const rawPath = match ? match[2].trim() : line.trim();
                 return rawPath.replace(/^["']|["']$/g, '');
             })
             .filter(file => {
