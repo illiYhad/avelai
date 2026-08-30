@@ -12,8 +12,20 @@ import {
 } from 'recharts';
 
 interface AdvantageGraphProps {
-    goldAdv: number[];
-    xpAdv: number[];
+    goldAdv?: number[];
+    xpAdv?: number[];
+}
+
+interface TooltipPayloadItem {
+    dataKey: string | number;
+    name: string;
+    value: number;
+}
+
+interface CustomTooltipProps {
+    active?: boolean;
+    payload?: TooltipPayloadItem[];
+    label?: string | number;
 }
 
 export default function AdvantageGraph({ goldAdv = [], xpAdv = [] }: AdvantageGraphProps) {
@@ -21,12 +33,11 @@ export default function AdvantageGraph({ goldAdv = [], xpAdv = [] }: AdvantageGr
 
     const maxLength = Math.max(goldAdv.length, xpAdv.length);
 
-    // Fallback กรณีไม่มีข้อมูลตามสเปก
     if (maxLength === 0) {
         return (
             <div className="border border-[#00D4FF]/30 bg-[#111118] p-8 text-center font-mono">
                 <p className="text-xs text-neutral-400">
-          // TACTICAL DATA UNAVAILABLE FOR THIS MATCH
+                    TACTICAL DATA UNAVAILABLE FOR THIS MATCH
                 </p>
             </div>
         );
@@ -50,14 +61,13 @@ export default function AdvantageGraph({ goldAdv = [], xpAdv = [] }: AdvantageGr
                     📈 TEAM ADVANTAGE TIMELINE
                 </h3>
 
-                {/* Toggle Mode */}
                 <div className="flex gap-1 bg-[#0A0A0F] p-1 border border-neutral-800">
                     {(['gold', 'xp', 'both'] as const).map((mode) => (
                         <button
                             key={mode}
                             onClick={() => setViewMode(mode)}
-                            className={`px-3 py-1 text-[10px] font-orbitron font-bold uppercase transition-all ${viewMode === mode
-                                    ? 'bg-[#00D4FF] text-black'
+                            className={`px-3 py-1 text-[10px] font-orbitron font-bold uppercase transition-all cursor-pointer ${viewMode === mode
+                                    ? 'bg-[#00D4FF] text-black font-bold'
                                     : 'text-neutral-400 hover:text-white'
                                 }`}
                         >
@@ -75,15 +85,15 @@ export default function AdvantageGraph({ goldAdv = [], xpAdv = [] }: AdvantageGr
                         <ReferenceLine y={0} stroke="#333333" strokeDasharray="3 3" />
 
                         <Tooltip
-                            content={({ active, payload, label }: any) => {
+                            content={({ active, payload, label }: CustomTooltipProps) => {
                                 if (active && payload && payload.length) {
                                     return (
                                         <div className="border border-[#00D4FF]/50 bg-[#0A0A0F] p-2 text-xs font-mono shadow-lg">
                                             <p className="text-neutral-400">Time: {label}:00</p>
-                                            {payload.map((p: any) => {
+                                            {payload.map((p) => {
                                                 const isRadiant = p.value >= 0;
                                                 return (
-                                                    <p key={p.dataKey} className={p.dataKey === 'gold' ? 'text-[#C9A84C]' : 'text-[#00D4FF]'}>
+                                                    <p key={String(p.dataKey)} className={p.dataKey === 'gold' ? 'text-[#C9A84C]' : 'text-[#00D4FF]'}>
                                                         {p.name}: {isRadiant ? `+${p.value} (RAD)` : `${p.value} (DIRE)`}
                                                     </p>
                                                 );

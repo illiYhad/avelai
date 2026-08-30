@@ -16,7 +16,8 @@ export async function POST(req: Request) {
             message: 'Ticket spent successfully',
             sessionId,
         });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message || 'Ticket deduction failed' }, { status: 400 });
-    }
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return NextResponse.json({ error: message }, { status: 500 });
+}
 }

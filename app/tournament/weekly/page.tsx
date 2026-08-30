@@ -31,7 +31,7 @@ export default function WeeklyTournamentPage() {
             <div className="max-w-6xl mx-auto space-y-6">
 
                 {/* Banner: Weekly Pool & Swiss Header */}
-                <div className="relative overflow-hidden bg-gradient-to-r from-[#161B22] via-[#0D1117] to-[#1F242C] border border-cyan-500/30 rounded-2xl p-6 md:p-8 shadow-2xl">
+                <div className="relative overflow-hidden bg-linear-to-r from-[#161B22] via-[#0D1117] to-[#1F242C] border border-cyan-500/30 rounded-2xl p-6 md:p-8 shadow-2xl">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
                             <span className="text-xs font-mono px-2.5 py-1 rounded bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
@@ -94,7 +94,7 @@ export default function WeeklyTournamentPage() {
                         </div>
 
                         {/* SVG Interactive Bracket */}
-                        <div className="min-w-[700px] flex justify-between items-center gap-6 py-4 font-mono">
+                        <div className="min-w-175 flex justify-between items-center gap-6 py-4 font-mono">
                             {/* Quarterfinals */}
                             <div className="flex-1 space-y-6">
                                 <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">Quarterfinals (Bo1)</div>
@@ -140,7 +140,7 @@ export default function WeeklyTournamentPage() {
                             {/* Grand Final */}
                             <div className="flex-1">
                                 <div className="text-xs text-amber-400 uppercase tracking-wider mb-2 font-bold">Grand Final</div>
-                                <div className="bg-gradient-to-b from-[#1C1F26] to-[#12151B] border-2 border-amber-400/80 rounded-xl p-4 text-center shadow-[0_0_25px_rgba(255,184,0,0.2)]">
+                                <div className="bg-linear-to-b from-[#1C1F26] to-[#12151B] border-2 border-amber-400/80 rounded-xl p-4 text-center shadow-[0_0_25px_rgba(255,184,0,0.2)]">
                                     <div className="text-xs text-gray-400 font-mono">CHAMPION MATCH</div>
                                     <div className="text-base font-black text-amber-400 mt-2">TBD vs TBD</div>
                                     <div className="mt-3 text-[11px] font-mono text-emerald-400 bg-emerald-950/40 py-1 rounded border border-emerald-500/30">

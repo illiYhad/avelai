@@ -66,11 +66,9 @@ export async function POST(req: Request) {
             message: 'Draft finalized and Steam Lobby creation triggered successfully.',
             lobbyData: botResponse,
         });
-    } catch (error: any) {
-        console.error('[AVELAi Webhook Error]:', error);
-        return NextResponse.json(
-            { error: error.message || 'Internal Server Error' },
-            { status: 500 }
-        );
-    }
+    //  แบบมาตรฐาน:
+} catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return NextResponse.json({ error: message }, { status: 500 });
+}
 }

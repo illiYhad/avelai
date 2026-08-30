@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import React, { useState } from 'react';
@@ -15,11 +16,52 @@ import {
     ReferenceLine,
 } from 'recharts';
 
+export interface AnalyticsPlayer {
+    playerSlot: number;
+    heroId: number;
+    heroName?: string;
+    playerName: string;
+    role?: string;
+    level?: number;
+    gpm?: number;
+    xpm?: number;
+    items?: (number | string)[];
+    item_0?: number;
+    item_1?: number;
+    item_2?: number;
+    item_3?: number;
+    item_4?: number;
+    item_5?: number;
+    item0?: number;
+    item1?: number;
+    item2?: number;
+    item3?: number;
+    item4?: number;
+    item5?: number;
+    ability_upgrades_arr?: number[];
+}
+
+export interface AnalyticsMatchData {
+    duration?: number;
+    radiantGoldAdv?: number[];
+    radiantXpAdv?: number[];
+    towerStatusRadiant?: number;
+    towerStatusDire?: number;
+    barracksStatusRadiant?: number;
+    barracksStatusDire?: number;
+}
+
 interface DeepAnalyticsProps {
-    matchData: any;
-    players?: any[];
+    matchData: AnalyticsMatchData;
+    players?: AnalyticsPlayer[];
     heroIdToImg?: Record<number, string>;
     itemIdToName?: Record<number, string>;
+}
+
+interface AdvantageDataPoint {
+    minute: number;
+    gold: number;
+    xp: number;
 }
 
 const POS_COLORS: Record<string, string> = {
@@ -132,7 +174,7 @@ export default function DeepAnalyticsBoard({
 
     const durationMin = Math.max(10, Math.floor((matchData.duration || 2700) / 60));
 
-    const advantageData = (matchData.radiantGoldAdv && matchData.radiantGoldAdv.length > 0)
+    const advantageData: AdvantageDataPoint[] = (matchData.radiantGoldAdv && matchData.radiantGoldAdv.length > 0)
         ? matchData.radiantGoldAdv.map((gold: number, idx: number) => ({
             minute: idx,
             gold: gold,
@@ -143,13 +185,13 @@ export default function DeepAnalyticsBoard({
             return { minute: i, gold: Math.round(factor), xp: Math.round(factor * 1.05) };
         });
 
-    const advMaxVal = Math.max(...advantageData.map((d: any) => Math.abs(d.gold)), 3000);
-    const dataMax = Math.max(...advantageData.map((i: any) => i.gold));
-    const dataMin = Math.min(...advantageData.map((i: any) => i.gold));
+    const advMaxVal = Math.max(...advantageData.map((d) => Math.abs(d.gold)), 3000);
+    const dataMax = Math.max(...advantageData.map((i) => i.gold));
+    const dataMin = Math.min(...advantageData.map((i) => i.gold));
     const off = dataMax <= 0 ? 0 : dataMin >= 0 ? 1 : dataMax / (dataMax - dataMin);
 
     const heroProgressionData = Array.from({ length: durationMin }, (_, m) => {
-        const row: Record<string, any> = { minute: m };
+        const row: Record<string, number> = { minute: m };
         sortedPlayers.forEach((p) => {
             const finalGpm = p.gpm || 450;
             const finalXpm = p.xpm || 550;
@@ -173,7 +215,6 @@ export default function DeepAnalyticsBoard({
         return '';
     };
 
-    // ── ระบบดึง URL ไอเทมแบบ Multi-CDN Auto-Update ──
     const getItemImg = (itemId: number | string) => {
         if (!itemId || itemId === 0 || itemId === '0') return '';
         const id = Number(itemId);
@@ -185,14 +226,13 @@ export default function DeepAnalyticsBoard({
             return `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/${cleanName}.png`;
         }
 
-        // Fallback ตรงจาก OpenDota dotaconstants CDN
         return `https://raw.githubusercontent.com/odota/dotaconstants/master/build/items/${id}.png`;
     };
 
-    const renderHeroBuildMatrix = (p: any) => {
+    const renderHeroBuildMatrix = (p: AnalyticsPlayer) => {
         const isRadiant = (p.playerSlot || 0) < 128;
         const levels = Array.from({ length: 25 }, (_, i) => i + 1);
-        const posColor = POS_COLORS[p.role] ?? '#C8CDD4';
+        const posColor = POS_COLORS[p.role ?? ''] ?? '#C8CDD4';
         const heroImg = getHeroImg(p.heroId);
         const heroDisplayName = HERO_DATA_MAP[p.heroId]?.name || p.heroName || `Hero ${p.heroId}`;
         const abilityDetails = HERO_ABILITY_DETAILS[p.heroId] || [];
@@ -236,7 +276,6 @@ export default function DeepAnalyticsBoard({
             }
         });
 
-        // ดึงรายการ Item ID 6 ช่องจากทุกโครงสร้างฟิลด์ที่เป็นไปได้ของ OpenDota
         const heroItems = [
             p.items?.[0] ?? p.item_0 ?? p.item0 ?? 0,
             p.items?.[1] ?? p.item_1 ?? p.item1 ?? 0,
@@ -285,7 +324,6 @@ export default function DeepAnalyticsBoard({
                         </div>
                     </div>
 
-                    {/* กล่องแสดงไอเทม 6 ช่อง */}
                     <div className="flex items-center gap-1 bg-[#07070C] p-1 border border-neutral-800">
                         {heroItems.map((itemId, i) => {
                             const itemUrl = getItemImg(itemId);
@@ -305,7 +343,6 @@ export default function DeepAnalyticsBoard({
                                             className="h-full w-full object-cover"
                                             onError={(e) => {
                                                 const target = e.target as HTMLImageElement;
-                                                // สำรองกรณี CDN แรกโหลดไม่ผ่าน ให้ดึงผ่าน OpenDota Image API
                                                 if (cleanItemName && !target.src.includes('api.opendota.com')) {
                                                     target.src = `https://api.opendota.com/apps/dota2/images/dota_react/items/${cleanItemName}.png`;
                                                 } else {
@@ -411,7 +448,7 @@ export default function DeepAnalyticsBoard({
                             <div className="flex items-center rounded-xs bg-[#07070C] p-0.5 border border-neutral-800 text-[10px]">
                                 <button
                                     onClick={() => setGraphMode('advantage')}
-                                    className={`px-2.5 py-1 rounded-xs transition-all ${graphMode === 'advantage'
+                                    className={`px-2.5 py-1 rounded-xs transition-all cursor-pointer ${graphMode === 'advantage'
                                         ? 'bg-[#00D4FF] text-black font-bold shadow-[0_0_10px_rgba(0,212,255,0.5)]'
                                         : 'text-neutral-400 hover:text-white'
                                         }`}
@@ -420,7 +457,7 @@ export default function DeepAnalyticsBoard({
                                 </button>
                                 <button
                                     onClick={() => setGraphMode('gpm')}
-                                    className={`px-2.5 py-1 rounded-xs transition-all ${graphMode === 'gpm'
+                                    className={`px-2.5 py-1 rounded-xs transition-all cursor-pointer ${graphMode === 'gpm'
                                         ? 'bg-[#E8384F] text-white font-bold shadow-[0_0_10px_rgba(232,56,79,0.5)]'
                                         : 'text-neutral-400 hover:text-white'
                                         }`}
@@ -429,7 +466,7 @@ export default function DeepAnalyticsBoard({
                                 </button>
                                 <button
                                     onClick={() => setGraphMode('xpm')}
-                                    className={`px-2.5 py-1 rounded-xs transition-all ${graphMode === 'xpm'
+                                    className={`px-2.5 py-1 rounded-xs transition-all cursor-pointer ${graphMode === 'xpm'
                                         ? 'bg-[#2E9BFF] text-white font-bold shadow-[0_0_10px_rgba(46,155,255,0.5)]'
                                         : 'text-neutral-400 hover:text-white'
                                         }`}
@@ -441,13 +478,13 @@ export default function DeepAnalyticsBoard({
 
                         {graphMode !== 'advantage' && (
                             <div className="flex items-center justify-between mb-3 text-[10px]">
-                                <span className="text-neutral-500">// ROLE COLOR-CODED TRAJECTORY</span>
+                                <span className="text-neutral-500">ROLE COLOR-CODED TRAJECTORY</span>
                                 <div className="flex gap-2">
                                     {(['all', 'radiant', 'dire'] as const).map((team) => (
                                         <button
                                             key={team}
                                             onClick={() => setTeamFilter(team)}
-                                            className={`px-2 py-0.5 uppercase rounded-xs border transition-all ${teamFilter === team
+                                            className={`px-2 py-0.5 uppercase rounded-xs border transition-all cursor-pointer ${teamFilter === team
                                                 ? team === 'radiant'
                                                     ? 'border-[#00D4FF] bg-[#00D4FF]/20 text-[#00D4FF]'
                                                     : team === 'dire'
@@ -485,9 +522,9 @@ export default function DeepAnalyticsBoard({
                                             contentStyle={{ backgroundColor: '#0D0D12', borderColor: '#333' }}
                                             itemStyle={{ color: '#E0E0E0' }}
                                             labelStyle={{ color: '#00D4FF' }}
-                                            formatter={(value: any) => [
-                                                Math.abs(Number(value)).toLocaleString(),
-                                                Number(value) >= 0 ? 'Radiant advantage' : 'Dire advantage',
+                                            formatter={(value: unknown) => [
+                                                Math.abs(Number(value || 0)).toLocaleString(),
+                                                Number(value || 0) >= 0 ? 'Radiant advantage' : 'Dire advantage',
                                             ]}
                                             labelFormatter={(label) => `Minute ${label}`}
                                         />
@@ -517,14 +554,14 @@ export default function DeepAnalyticsBoard({
                                             labelFormatter={(label) => `Minute ${label}`}
                                         />
                                         {displayedPlayers.map((p) => {
-                                            const color = POS_COLORS[p.role] ?? '#C8CDD4';
+                                            const color = POS_COLORS[p.role ?? ''] ?? '#C8CDD4';
                                             const dataKey = graphMode === 'gpm' ? `gpm_${p.playerSlot}` : `xpm_${p.playerSlot}`;
                                             return (
                                                 <Line
                                                     key={p.playerSlot}
                                                     type="monotone"
                                                     dataKey={dataKey}
-                                                    name={`${p.playerName} (${p.role})`}
+                                                    name={`${p.playerName} (${p.role || 'Pos'})`}
                                                     stroke={color}
                                                     strokeWidth={2}
                                                     dot={false}
@@ -566,7 +603,7 @@ export default function DeepAnalyticsBoard({
                     <h3 className="font-orbitron text-xs font-bold uppercase tracking-wider text-[#00D4FF]">
                         🧬 ABILITY & SKILL BUILDS (LEVEL 1–25)
                     </h3>
-                    <span className="text-[10px] text-neutral-500 font-mono">// TIMELINE UPGRADE SEQUENCE</span>
+                    <span className="text-[10px] text-neutral-500 font-mono">TIMELINE UPGRADE SEQUENCE</span>
                 </div>
 
                 <div className="space-y-6">

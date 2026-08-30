@@ -10,27 +10,52 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'live' | 'recent'>('live');
   const [lastSync, setLastSync] = useState<string>('');
 
-  // โหลดค่า Scope ที่ผู้ใช้เลือกไว้ล่าสุด
+  // โหลดค่า Scope จาก LocalStorage แบบ Asynchronous Microtask
   useEffect(() => {
-    const savedScope = localStorage.getItem('avela_tournament_scope') as TournamentScope;
-    if (savedScope) {
-      setScope(savedScope);
-    }
+    let isMounted = true;
+    const timer = setTimeout(() => {
+      if (typeof window !== 'undefined' && isMounted) {
+        const savedScope = localStorage.getItem('avela_tournament_scope') as TournamentScope;
+        if (savedScope && ['daily', 'weekly', 'monthly'].includes(savedScope)) {
+          setScope(savedScope);
+        }
+      }
+    }, 0);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
   }, []);
 
   // ฟังก์ชันเปลี่ยน Scope พร้อมบันทึกลง LocalStorage
   const handleScopeChange = (newScope: TournamentScope) => {
     setScope(newScope);
-    localStorage.setItem('avela_tournament_scope', newScope);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('avela_tournament_scope', newScope);
+    }
   };
 
-  // Fallback Polling 30s ตามกฎ CTO
+  // Fallback Polling 30s ตามกฎ CTO (ป้องกัน Sync SetState ใน Effect)
   useEffect(() => {
-    setLastSync(new Date().toLocaleTimeString());
+    let isMounted = true;
+    const initTimer = setTimeout(() => {
+      if (isMounted) {
+        setLastSync(new Date().toLocaleTimeString());
+      }
+    }, 0);
+
     const interval = setInterval(() => {
-      setLastSync(new Date().toLocaleTimeString());
+      if (isMounted) {
+        setLastSync(new Date().toLocaleTimeString());
+      }
     }, 30000);
-    return () => clearInterval(interval);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(initTimer);
+      clearInterval(interval);
+    };
   }, []);
 
   // ข้อมูลจำลองสถิติรวม (Global Stats)
@@ -65,7 +90,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#07090E] text-white pt-24 pb-12 px-4 md:px-8 flex flex-col items-center relative font-mono selection:bg-[#00D4FF] selection:text-black">
       {/* Background Grid Pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(#00D4FF_1px,transparent_1px)] [background-size:28px_28px] opacity-10 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(#00D4FF_1px,transparent_1px)] bg-size-[28px_28px] opacity-10 pointer-events-none" />
 
       {/* Tournament Scope Controller Bar */}
       <aside aria-label="Tournament Scope Bar" className="w-full max-w-6xl mb-6 p-3 bg-[#12121A] border border-[#00D4FF]/30 rounded-xl flex flex-wrap items-center justify-between gap-4 z-20 shadow-[0_0_20px_rgba(0,212,255,0.1)]">
@@ -182,7 +207,7 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <div className="md:col-span-12 bg-gradient-to-r from-[#00D4FF]/10 via-[#12121A] to-[#C9A84C]/10 border border-[#00D4FF]/30 p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="md:col-span-12 bg-linear-to-r from-[#00D4FF]/10 via-[#12121A] to-[#C9A84C]/10 border border-[#00D4FF]/30 p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
               <div className="text-xs font-bold text-[#00D4FF]">DAILY TOP 3 OPERATORS</div>
               <div className="text-sm text-gray-300 mt-1 font-mono">
@@ -243,7 +268,7 @@ export default function DashboardPage() {
               </thead>
               <tbody className="divide-y divide-gray-800/50">
                 {recentMatches.map((m, idx) => (
-                  <tr key={idx} className="hover:bg-white/[0.02]">
+                  <tr key={idx} className="hover:bg-white/2">
                     <td className="py-2.5 text-gray-400">{m.id}</td>
                     <td className="py-2.5 text-white font-bold">{m.radiant} vs {m.dire}</td>
                     <td className="py-2.5 text-gray-300">{m.score}</td>
@@ -366,14 +391,14 @@ export default function DashboardPage() {
                 <div className="space-y-3">
                   {topPlayers.map((p, idx) => (
                     <div key={idx} className="p-3 bg-[#07090E]/60 border border-gray-800 rounded-lg flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-black text-[#C9A84C]">#{p.rank}</span>
-                    <div>
-                      <div className="text-xs font-bold text-white">{p.name}</div>
-                      <div className="text-[10px] text-gray-400">WR: {p.winRate}</div>
-                    </div>
-                  </div>
-                  <div className="text-xs font-bold text-[#00D4FF]">{p.elo}</div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-black text-[#C9A84C]">#{p.rank}</span>
+                        <div>
+                          <div className="text-xs font-bold text-white">{p.name}</div>
+                          <div className="text-[10px] text-gray-400">WR: {p.winRate}</div>
+                        </div>
+                      </div>
+                      <div className="text-xs font-bold text-[#00D4FF]">{p.elo}</div>
                     </div>
                   ))}
                 </div>

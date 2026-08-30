@@ -1,5 +1,6 @@
 {
   "editor.formatOnSave": true,
   "git.enableSmartCommit": true,
-  "css.lint.unknownAtRules": "ignore"
+  "css.lint.unknownAtRules": "ignore",
+  "python-envs.defaultEnvManager": "ms-python.python:system"
 }

@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
+'use client';
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -151,12 +153,13 @@ export default function DailyArenaPage() {
             if (data.lobbyId) {
                 router.push(`/waiting-room/${data.lobbyId}`);
             }
-        } catch (err: any) {
-            setErrorMessage(err.message || 'An unexpected error occurred.');
-            if (userId) {
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Error';
+            console.error(msg);
+                if (userId) {
                 fetchUserData(userId); // Re-sync ตั๋วเผื่อมีการ Rollback
             }
-        } finally {
+        
             setIsEntering(false);
         }
     };
@@ -234,15 +237,15 @@ export default function DailyArenaPage() {
 
                             {/* Stats Overview 3 ช่อง */}
                             <div className="grid grid-cols-3 gap-2.5 font-mono">
-                                <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-center min-w-[78px]">
+                                <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-center min-w-19.5">
                                     <span className="text-[10px] text-slate-400 block font-semibold">TICKETS</span>
                                     <span className="text-xl font-black text-[#00D4FF]">{dailyTickets}</span>
                                 </div>
-                                <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-center min-w-[78px]">
+                                <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-center min-w-19.5">
                                     <span className="text-[10px] text-slate-400 block font-semibold">MATCHES</span>
                                     <span className="text-xl font-black text-slate-200">{matchesPlayedToday}/5</span>
                                 </div>
-                                <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-center min-w-[78px]">
+                                <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-center min-w-19.5">
                                     <span className="text-[10px] text-slate-400 block font-semibold">BEST SCORE</span>
                                     <span className="text-xl font-black text-[#C9A84C]">{bestScoreToday.toFixed(2)}</span>
                                 </div>
@@ -356,7 +359,7 @@ export default function DailyArenaPage() {
                                     type="button"
                                     onClick={handleEnterArena}
                                     disabled={isEntering}
-                                    className="w-full py-4 bg-gradient-to-r from-[#00D4FF] to-cyan-600 hover:from-cyan-400 hover:to-[#00D4FF] text-slate-950 font-black text-sm rounded-xl tracking-wider transition-all shadow-[0_0_20px_rgba(0,212,255,0.25)] font-mono disabled:opacity-50 cursor-pointer"
+                                    className="w-full py-4 bg-linear-to-r from-[#00D4FF] to-cyan-600 hover:from-cyan-400 hover:to-[#00D4FF] text-slate-950 font-black text-sm rounded-xl tracking-wider transition-all shadow-[0_0_20px_rgba(0,212,255,0.25)] font-mono disabled:opacity-50 cursor-pointer"
                                 >
                                     {isEntering ? 'SEARCHING & BALANCING DRAFT...' : 'ENTER ARENA (1 TICKET) →'}
                                 </button>
@@ -384,7 +387,7 @@ export default function DailyArenaPage() {
                                 NO MATCHES RECORDED TODAY
                             </div>
                         ) : (
-                            <div className="space-y-2 font-mono text-xs max-h-[480px] overflow-y-auto pr-1">
+                            <div className="space-y-2 font-mono text-xs max-h-120 overflow-y-auto pr-1">
                                 {leaderboard.map((player) => (
                                     <div
                                         key={player.user_id}
@@ -397,7 +400,7 @@ export default function DailyArenaPage() {
                                             <span className={`w-5 font-bold ${player.rank === 1 ? 'text-[#C9A84C]' : 'text-slate-500'}`}>
                                                 #{player.rank}
                                             </span>
-                                            <span className="font-semibold truncate max-w-[110px]">
+                                            <span className="font-semibold truncate max-w-27.5">
                                                 {player.username || player.user_id.slice(0, 8)}
                                             </span>
                                         </div>

@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { processDailyArenaQueue } from '@/lib/matchmaking/dailyArenaTierEngine';
+import { processDailyArenaQueue, DailyQueuePlayer } from '@/lib/matchmaking/dailyArenaTierEngine';
+
+interface RawQueueRecord {
+    user_id: string;
+    primary_position: number;
+    secondary_position: number;
+    queued_at: string;
+    users: {
+        elo_rating?: number | null;
+    } | null;
+}
+
+interface TeamMember {
+    userId: string;
+}
 
 export async function POST(req: NextRequest) {
     const supabase = await createClient();
@@ -35,8 +49,8 @@ export async function POST(req: NextRequest) {
 
         // 3. อ่าน Position Preference จาก Body
         const body = await req.json().catch(() => ({}));
-        const primaryPos = body.primaryPosition || 1;
-        const secondaryPos = body.secondaryPosition || 2;
+        const primaryPos = Number(body.primaryPosition) || 1;
+        const secondaryPos = Number(body.secondaryPosition) || 2;
 
         // 4. หักตั๋ว 1 ใบ
         const { error: deductError } = await supabase
@@ -68,7 +82,7 @@ export async function POST(req: NextRequest) {
         }
 
         // 6. ดึงรายชื่อผู้เล่นที่กำลังรอคิว (สถานะ waiting เรียงตามเวลา)
-        const { data: rawQueue, error: fetchQueueError } = await supabase
+        const { data: rawQueueData, error: fetchQueueError } = await supabase
             .from('daily_arena_queue')
             .select(`
                 user_id,
@@ -83,19 +97,21 @@ export async function POST(req: NextRequest) {
             .order('queued_at', { ascending: true })
             .limit(50);
 
-        if (fetchQueueError || !rawQueue) {
-            // คืนตั๋วหากดึง queue ล้มเหลว
+        if (fetchQueueError || !rawQueueData) {
             await supabase.from('users').update({ daily_tickets: userProfile.daily_tickets }).eq('id', userId);
             return NextResponse.json({ error: 'Failed to fetch queue pool. Ticket refunded.' }, { status: 500 });
         }
 
+        const rawQueue = rawQueueData as unknown as RawQueueRecord[];
+
         // 7. จัด Data Shape ให้ตรงกับ DailyQueuePlayer[] สำหรับ Engine
-        const queuePool = rawQueue.map((p: any) => {
-            const formLevel = p.users?.elo_rating ? Math.max(1, Math.min(20, Math.floor(p.users.elo_rating / 100))) : 10;
+        const queuePool: DailyQueuePlayer[] = rawQueue.map((p) => {
+            const elo = p.users?.elo_rating;
+            const formLevel = elo ? Math.max(1, Math.min(20, Math.floor(elo / 100))) : 10;
             return {
                 userId: p.user_id,
-                primaryPosition: p.primary_position,
-                secondaryPosition: p.secondary_position,
+                primaryPosition: p.primary_position as 1 | 2 | 3 | 4 | 5,
+                secondaryPosition: p.secondary_position as 1 | 2 | 3 | 4 | 5,
                 queuedAt: p.queued_at,
                 tierProfile: {
                     formLevel: formLevel,
@@ -107,7 +123,7 @@ export async function POST(req: NextRequest) {
         // 8. รัน Matchmaking Engine
         const formation = processDailyArenaQueue(queuePool);
 
-        // ถ้าผู้เล่นยังไม่พอ หรือจัดทีมตามกฎไม่ได้ -> ให้อยู่ในสถานะรอคิว (ไม่ mock ปลอม)
+        // ถ้าผู้เล่นยังไม่พอ ให้รอในคิวต่อไป
         if (!formation) {
             return NextResponse.json({
                 success: true,
@@ -129,15 +145,16 @@ export async function POST(req: NextRequest) {
             .single();
 
         if (lobbyError || !lobbyRecord) {
-            // Atomic Rollback: คืนตั๋ว
             await supabase.from('users').update({ daily_tickets: userProfile.daily_tickets }).eq('id', userId);
             return NextResponse.json({ error: 'Lobby creation failed. Ticket refunded.' }, { status: 500 });
         }
 
         // 10. อัปเดตสถานะผู้เล่นทั้ง 10 คนใน Queue เป็น matched
+        const teamA = (formation.teamA || []) as TeamMember[];
+        const teamB = (formation.teamB || []) as TeamMember[];
         const matchedUserIds = [
-            ...formation.teamA.map((p: any) => p.userId),
-            ...formation.teamB.map((p: any) => p.userId)
+            ...teamA.map((p) => p.userId),
+            ...teamB.map((p) => p.userId)
         ];
 
         await supabase
@@ -152,12 +169,13 @@ export async function POST(req: NextRequest) {
             matchId: formation.matchId,
         }, { status: 200 });
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         // Rollback ในระดับ Exception ป้องกันตั๋วหาย
         const { data: userProfile } = await supabase.from('users').select('daily_tickets').eq('id', userId).single();
         if (userProfile) {
             await supabase.from('users').update({ daily_tickets: userProfile.daily_tickets }).eq('id', userId);
         }
-        return NextResponse.json({ error: err?.message || 'Internal Server Error. Ticket refunded.' }, { status: 500 });
+        const message = err instanceof Error ? err.message : 'Internal Server Error. Ticket refunded.';
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }

@@ -200,7 +200,7 @@ export default function TournamentHubPage() {
             {/* FEATURE-4160: Mercenary Arena */}
             <div
               id="mercenary-section"
-              className="bg-gradient-to-r from-indigo-950/40 via-slate-900 to-slate-900 border border-indigo-800/40 rounded-2xl p-6 shadow-xl flex flex-col justify-between flex-1 scroll-mt-6"
+              className="bg-linear-to-r from-indigo-950/40 via-slate-900 to-slate-900 border border-indigo-800/40 rounded-2xl p-6 shadow-xl flex flex-col justify-between flex-1 scroll-mt-6"
             >
               <div>
                 <div className="flex justify-between items-start">
@@ -232,7 +232,7 @@ export default function TournamentHubPage() {
                   </div>
                   <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
                     <div
-                      className="h-full bg-gradient-to-r from-indigo-500 to-amber-500 transition-all duration-300"
+                      className="h-full bg-linear-to-r from-indigo-500 to-amber-500 transition-all duration-300"
                       style={{
                         width: `${(hubData.mercenaryArena.filledSeats / hubData.mercenaryArena.maxSeats) * 100}%`,
                       }}

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import React from 'react';
@@ -89,7 +90,6 @@ export default function OverviewTable({
     const radiantPlayers = players.filter((p) => (p.playerSlot || 0) < 128);
     const direPlayers = players.filter((p) => (p.playerSlot || 0) >= 128);
 
-    // ── ข้อมูล Draft Picks & Bans (ใช้ข้อมูลจริงจาก OpenDota ถ้ามี หากไม่มีใช้ Mock เป็น Fallback) ──
     const realPicksBans: DraftEntry[] = Array.isArray(draftTimeline) && draftTimeline.length > 0
         ? draftTimeline
         : [
@@ -171,7 +171,7 @@ export default function OverviewTable({
                                 const hasShard = p.hasShard ?? p.hasAghsShard ?? false;
 
                                 return (
-                                    <tr key={idx} className="transition-colors hover:bg-white/[0.02]">
+                                    <tr key={idx} className="transition-colors hover:bg-white/2">
                                         <td className="px-4 py-2 flex items-center gap-3">
                                             <div className="h-8 w-14 overflow-hidden border border-neutral-700 bg-neutral-900 shrink-0">
                                                 {heroImg ? (
@@ -342,21 +342,18 @@ export default function OverviewTable({
                     {title}:
                 </span>
 
-                {/* Picks Group */}
                 <div className="flex flex-wrap items-center gap-2.5">
                     {picks.length > 0 ? (
                         picks.map((draft, idx) => renderDraftBadge(draft, idx))
                     ) : (
-                        <span className="text-[10px] text-neutral-600 font-mono">// NO PICK DATA</span>
+                        <span className="text-[10px] text-neutral-600 font-mono">NO PICK DATA</span>
                     )}
                 </div>
 
-                {/* Phase Separator Divider */}
                 {bans.length > 0 && (
                     <div className="h-4 w-px bg-neutral-700/60 mx-1 hidden sm:block"></div>
                 )}
 
-                {/* Bans Group */}
                 <div className="flex flex-wrap items-center gap-2.5">
                     {bans.map((draft, idx) => renderDraftBadge(draft, idx + 100))}
                 </div>
@@ -366,19 +363,16 @@ export default function OverviewTable({
 
     return (
         <div className="space-y-6 pb-12">
-            {/* 1. RADIANT TEAM TABLE */}
             {renderTeamTable(radiantPlayers, true)}
 
-            {/* 2. SPLIT DRAFT PICKS & BANS BOX */}
             <div className="border border-neutral-800 bg-[#0D0D14] p-3 shadow-inner space-y-2">
                 <div className="text-[10px] font-orbitron font-bold text-neutral-500 pb-1 border-b border-neutral-800/60">
-          // DRAFT PICKS & BANS TIMELINE
+                    DRAFT PICKS & BANS TIMELINE
                 </div>
                 {renderDraftRow('RADIANT DRAFT', radiantDrafts, '#00D4FF')}
                 {renderDraftRow('DIRE DRAFT', direDrafts, '#C9A84C')}
             </div>
 
-            {/* 3. DIRE TEAM TABLE */}
             {renderTeamTable(direPlayers, false)}
         </div>
     );

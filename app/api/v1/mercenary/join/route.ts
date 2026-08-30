@@ -165,10 +165,9 @@ export async function POST(request: Request) {
       },
       { status: 200 }
     );
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: 'INTERNAL_SERVER_ERROR', message: error.message || 'Internal Server Error' },
-      { status: 500 }
-    );
-  }
+ //  แบบมาตรฐาน:
+} catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return NextResponse.json({ error: message }, { status: 500 });
+}
 }

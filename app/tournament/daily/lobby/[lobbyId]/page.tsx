@@ -30,10 +30,9 @@ export default function DailyArenaLobbyPage() {
     const [isLoading, setIsLoading] = useState<boolean>(true);
 
     // Stats State สำหรับ Header Banner
-    const [dailyTickets, setDailyTickets] = useState<number>(3);
-    const [matchesPlayedToday, setMatchesPlayedToday] = useState<number>(0);
-    const [bestScoreToday, setBestScoreToday] = useState<number>(0.0);
-
+    const [dailyTickets] = useState<number>(3);
+    const [matchesPlayedToday] = useState<number>(0);
+    const [bestScoreToday] = useState<number>(0.0);
     useEffect(() => {
         const initLobby = async () => {
             setIsLoading(true);
@@ -199,7 +198,7 @@ export default function DailyArenaLobbyPage() {
                         <div className="flex flex-col sm:flex-row items-center gap-5 w-full xl:w-auto">
 
                             {/* Pilot Avatar Frame */}
-                            <div className="relative group cursor-pointer flex-shrink-0">
+                            <div className="relative group cursor-pointer shrink-0">
                                 <div className="w-24 h-28 rounded-2xl bg-slate-950 border-2 border-[#00D4FF]/50 flex items-center justify-center font-['Orbitron'] font-black text-2xl text-[#00D4FF] shadow-[0_0_20px_rgba(0,212,255,0.25)] overflow-hidden transition-all group-hover:border-[#00D4FF] group-hover:shadow-[0_0_30px_rgba(0,212,255,0.4)]">
                                     <span className="group-hover:scale-110 transition-transform duration-300">SH</span>
                                 </div>
@@ -233,15 +232,15 @@ export default function DailyArenaLobbyPage() {
                                 </div>
 
                                 <div className="grid grid-cols-3 gap-2.5 font-mono pt-1">
-                                    <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-center min-w-[75px]">
+                                    <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-center min-w-18.75">
                                         <span className="text-[10px] text-slate-400 block font-semibold">TICKETS</span>
                                         <span className="text-lg font-black text-[#00D4FF]">{dailyTickets}</span>
                                     </div>
-                                    <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-center min-w-[75px]">
+                                    <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-center min-w-18.75">
                                         <span className="text-[10px] text-slate-400 block font-semibold">MATCHES</span>
                                         <span className="text-lg font-black text-slate-200">{matchesPlayedToday}/5</span>
                                     </div>
-                                    <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-center min-w-[75px]">
+                                    <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-center min-w-18.75">
                                         <span className="text-[10px] text-slate-400 block font-semibold">BEST SCORE</span>
                                         <span className="text-lg font-black text-[#C9A84C]">{bestScoreToday.toFixed(2)}</span>
                                     </div>
@@ -276,7 +275,7 @@ export default function DailyArenaLobbyPage() {
                         ) : (
                             <button
                                 onClick={handleReady}
-                                className="w-full md:w-auto px-8 py-3.5 bg-gradient-to-r from-[#00D4FF] to-cyan-600 hover:from-cyan-400 hover:to-[#00D4FF] text-slate-950 font-black text-sm rounded-xl tracking-wider transition-all shadow-[0_0_15px_rgba(0,212,255,0.25)] cursor-pointer font-mono"
+                                className="w-full md:w-auto px-8 py-3.5 bg-linear-to-r from-[#00D4FF] to-cyan-600 hover:from-cyan-400 hover:to-[#00D4FF] text-slate-950 font-black text-sm rounded-xl tracking-wider transition-all shadow-[0_0_15px_rgba(0,212,255,0.25)] cursor-pointer font-mono"
                             >
                                 READY TO DEPLOY →
                             </button>

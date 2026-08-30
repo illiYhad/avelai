@@ -1,17 +1,17 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client' // หรือดึงจากตำแหน่งที่ตั้งของ supabase client ในโปรเจกต์
+import React, { useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const supabase = createClient()
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const supabase = createClient();
 
   const handleSteamLogin = () => {
     // TODO: implement Steam OpenID login
-    console.log('Steam login')
-  }
+    console.log('Steam login');
+  };
 
   const handleGoogleLogin = async () => {
     await supabase.auth.signInWithOAuth({
@@ -19,18 +19,17 @@ export default function LoginPage() {
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
-    })
-  }
+    });
+  };
 
   const handleEmailLogin = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     // TODO: implement email/password login via Supabase
-    console.log('Email login', { email, password })
-  }
+    console.log('Email login', { email, password });
+  };
 
   return (
-    <main className="min-h-screen bg-[#0A0A0F] flex items-center justify-center p-6 relative overflow-hidden">
-
+    <main className="min-h-screen bg-[#0A0A0F] flex items-center justify-center p-6 relative overflow-hidden font-mono">
       {/* Grid background */}
       <div
         className="absolute inset-0 pointer-events-none"
@@ -58,7 +57,7 @@ export default function LoginPage() {
 
       {/* Card */}
       <div
-        className="relative z-10 w-full max-w-[400px] rounded-xl p-10"
+        className="relative z-10 w-full max-w-100 rounded-xl p-10"
         style={{
           background: '#12121A',
           border: '0.5px solid rgba(201,168,76,0.25)',
@@ -114,13 +113,13 @@ export default function LoginPage() {
         {/* Steam button */}
         <button
           onClick={handleSteamLogin}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-md mb-3 transition-all"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-md mb-3 transition-all cursor-pointer"
           style={{
             background: 'rgba(255,255,255,0.03)',
             border: '0.5px solid rgba(201,168,76,0.3)',
           }}
-          onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.6)')}
-          onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.3)')}
+          onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.6)')}
+          onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.3)')}
         >
           <SteamIcon />
           <span
@@ -139,8 +138,8 @@ export default function LoginPage() {
             background: 'rgba(255,255,255,0.03)',
             border: '0.5px solid rgba(255,255,255,0.1)',
           }}
-          onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.35)')}
-          onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
+          onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.35)')}
+          onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
         >
           <GoogleIcon />
           <span
@@ -170,12 +169,12 @@ export default function LoginPage() {
               className="block text-[9px] tracking-[2px] mb-1.5"
               style={{ fontFamily: "'JetBrains Mono', monospace", color: 'rgba(0,212,255,0.5)' }}
             >
-              // IDENTIFIER
+              {'// IDENTIFIER'}
             </label>
             <input
               type="email"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="player@avelai.gg"
               className="w-full px-4 py-2.5 rounded-md text-[13px] outline-none transition-all"
               style={{
@@ -184,8 +183,8 @@ export default function LoginPage() {
                 color: '#E8E8F0',
                 fontFamily: "'Inter', sans-serif",
               }}
-              onFocus={e => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.5)')}
-              onBlur={e => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.15)')}
+              onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.5)')}
+              onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.15)')}
             />
           </div>
 
@@ -194,12 +193,12 @@ export default function LoginPage() {
               className="block text-[9px] tracking-[2px] mb-1.5"
               style={{ fontFamily: "'JetBrains Mono', monospace", color: 'rgba(0,212,255,0.5)' }}
             >
-              // ACCESS KEY
+              {'// ACCESS KEY'}
             </label>
             <input
               type="password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••••••"
               className="w-full px-4 py-2.5 rounded-md text-[13px] outline-none transition-all"
               style={{
@@ -208,8 +207,8 @@ export default function LoginPage() {
                 color: '#E8E8F0',
                 fontFamily: "'Inter', sans-serif",
               }}
-              onFocus={e => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.5)')}
-              onBlur={e => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.15)')}
+              onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.5)')}
+              onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.15)')}
             />
           </div>
 
@@ -225,7 +224,7 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="w-full py-3 rounded-md text-[11px] font-bold tracking-[3px] transition-opacity hover:opacity-85"
+            className="w-full py-3 rounded-md text-[11px] font-bold tracking-[3px] transition-opacity hover:opacity-85 cursor-pointer"
             style={{
               background: '#C9A84C',
               color: '#0A0A0F',
@@ -256,7 +255,7 @@ export default function LoginPage() {
         input::placeholder { color: rgba(232,232,240,0.18); }
       `}</style>
     </main>
-  )
+  );
 }
 
 function SteamIcon() {
@@ -269,7 +268,7 @@ function SteamIcon() {
       />
       <circle cx="14.62" cy="9.38" r="2.25" fill="#c7d5e0" />
     </svg>
-  )
+  );
 }
 
 function GoogleIcon() {
@@ -280,5 +279,5 @@ function GoogleIcon() {
       <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
       <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
     </svg>
-  )
+  );
 }
