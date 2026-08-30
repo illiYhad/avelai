@@ -28,7 +28,7 @@ const ROLE_THEMES = {
 };
 
 /* ----------------------------------------------------
-   1. CAPTAIN HEADER CARD (Cyan vs Gold)
+   1. CAPTAIN HEADER CARD (Cyan vs Gold Glow on Hover)
 ---------------------------------------------------- */
 function CaptainHeaderCard({
     player,
@@ -42,9 +42,9 @@ function CaptainHeaderCard({
 
     return (
         <div
-            className={`relative w-full bg-slate-950 border-2 rounded-xl p-2.5 font-mono shadow-lg transition-all ${isRadiant
-                ? 'border-[#00D4FF]/70 shadow-[0_0_15px_rgba(0,212,255,0.25)]'
-                : 'border-[#C9A84C]/80 shadow-[0_0_15px_rgba(201,168,76,0.3)]'
+            className={`relative w-full bg-slate-950 border-2 rounded-xl p-2.5 font-mono shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer ${isRadiant
+                ? 'border-[#00D4FF]/70 shadow-[0_0_15px_rgba(0,212,255,0.25)] hover:border-[#00D4FF] hover:shadow-[0_0_25px_rgba(0,212,255,0.6)]'
+                : 'border-[#C9A84C]/80 shadow-[0_0_15px_rgba(201,168,76,0.3)] hover:border-[#C9A84C] hover:shadow-[0_0_25px_rgba(201,168,76,0.65)]'
                 }`}
         >
             <div className={`absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 ${isRadiant ? 'border-[#00D4FF]' : 'border-[#C9A84C]'}`} />
@@ -95,7 +95,7 @@ function CaptainHeaderCard({
 }
 
 /* ----------------------------------------------------
-   2. VERTICAL 2x2 DRAFTED CARD
+   2. VERTICAL 2x2 DRAFTED CARD (Glow Effect)
 ---------------------------------------------------- */
 function VerticalDraftedCard({
     player,
@@ -111,9 +111,9 @@ function VerticalDraftedCard({
 
     return (
         <div
-            className={`relative w-full h-45 bg-slate-950 border-2 rounded-xl p-2 font-mono flex flex-col justify-between transition-all duration-700 ${isRadiant
-                ? 'border-[#00D4FF]/60 shadow-[0_0_15px_rgba(0,212,255,0.25)]'
-                : 'border-[#C9A84C]/70 shadow-[0_0_15px_rgba(201,168,76,0.3)]'
+            className={`relative group w-full h-45 bg-slate-950 border-2 rounded-xl p-2 font-mono flex flex-col justify-between transition-all duration-300 transform hover:-translate-y-1 cursor-pointer ${isRadiant
+                ? 'border-[#00D4FF]/60 shadow-[0_0_15px_rgba(0,212,255,0.25)] hover:border-[#00D4FF] hover:shadow-[0_0_25px_rgba(0,212,255,0.55)]'
+                : 'border-[#C9A84C]/70 shadow-[0_0_15px_rgba(201,168,76,0.3)] hover:border-[#C9A84C] hover:shadow-[0_0_25px_rgba(201,168,76,0.6)]'
                 } ${isJustDrafted ? 'animate-team-slam' : ''}`}
             style={{ transformStyle: 'preserve-3d' }}
         >
@@ -129,7 +129,7 @@ function VerticalDraftedCard({
             <div className="relative w-full h-22 bg-slate-900 border border-[#C9A84C]/50 rounded-lg overflow-hidden flex items-center justify-center shadow-inner">
                 <div className="w-full h-full bg-linear-to-tr from-black via-slate-900 to-[#1e2433] flex flex-col items-center justify-center relative">
                     <span className="text-[8px] text-[#C9A84C] font-bold tracking-wider">GACHA CARD</span>
-                    <span className="text-sm font-black text-white">{player.avatarPlaceholder || player.name.substring(0, 2).toUpperCase()}</span>
+                    <span className="text-sm font-black text-white group-hover:scale-110 transition-transform duration-300">{player.avatarPlaceholder || player.name.substring(0, 2).toUpperCase()}</span>
                     {isJustDrafted && (
                         <div className="absolute inset-0 bg-linear-to-t from-[#00D4FF]/30 to-[#C9A84C]/30 animate-pulse pointer-events-none" />
                     )}
@@ -144,7 +144,7 @@ function VerticalDraftedCard({
 
             <div className="space-y-1 mt-1">
                 <div className="flex items-center justify-between">
-                    <div className="font-black text-[11px] text-white truncate">{player.name}</div>
+                    <div className="font-black text-[11px] text-white truncate group-hover:text-cyan-300 transition-colors">{player.name}</div>
                     <span className="text-[7px] font-bold" style={{ color: role.hex }}>{role.name}</span>
                 </div>
 
@@ -188,11 +188,11 @@ function VerticalEmptySlot({
     const isRadiant = teamSide === 'RADIANT';
     return (
         <div
-            className={`w-full h-45 border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-1.5 font-mono text-center p-2 transition-all ${isTeamActive
+            className={`w-full h-45 border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-1.5 font-mono text-center p-2 transition-all duration-300 ${isTeamActive
                 ? isRadiant
-                    ? 'bg-[#00D4FF]/5 border-[#00D4FF]/40 text-[#00D4FF] animate-pulse'
-                    : 'bg-[#C9A84C]/5 border-[#C9A84C]/40 text-[#C9A84C] animate-pulse'
-                : 'bg-slate-950/40 border-slate-800 text-zinc-600'
+                    ? 'bg-[#00D4FF]/5 border-[#00D4FF]/60 text-[#00D4FF] shadow-[0_0_20px_rgba(0,212,255,0.3)] animate-pulse'
+                    : 'bg-[#C9A84C]/5 border-[#C9A84C]/60 text-[#C9A84C] shadow-[0_0_20px_rgba(201,168,76,0.3)] animate-pulse'
+                : 'bg-slate-950/40 border-slate-800 text-zinc-600 hover:border-slate-700'
                 }`}
         >
             <UserPlus className={`w-5 h-5 ${isTeamActive ? isRadiant ? 'text-[#00D4FF]' : 'text-[#C9A84C]' : 'text-zinc-700'}`} />
@@ -229,7 +229,7 @@ function SnakeMatrix10Slots3D({
 
     return (
         <div className="w-full h-full flex flex-col justify-between items-center font-mono">
-            <div className="w-full flex justify-between items-center bg-slate-950 border border-slate-800 p-3.5 rounded-xl">
+            <div className="w-full flex justify-between items-center bg-slate-950 border border-slate-800 p-3.5 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.5)]">
                 <div>
                     <div className="text-[9px] text-zinc-400 uppercase flex items-center gap-1.5">
                         <Sparkles className="w-3 h-3 text-[#C9A84C]" /> ACTIVE PROTOCOL TURN
@@ -237,13 +237,13 @@ function SnakeMatrix10Slots3D({
                     <div className="text-sm font-black mt-0.5 flex items-center gap-2">
                         {!isDraftComplete && activeTeam ? (
                             <>
-                                <span className={activeTeam === 'RADIANT' ? 'text-[#00D4FF]' : 'text-[#C9A84C]'}>
+                                <span className={activeTeam === 'RADIANT' ? 'text-[#00D4FF] drop-shadow-[0_0_10px_rgba(0,212,255,0.8)]' : 'text-[#C9A84C] drop-shadow-[0_0_10px_rgba(201,168,76,0.8)]'}>
                                     {activeTeam}
                                 </span>
                                 <span className="text-zinc-400 text-xs">(Slot #{currentTurn + 1})</span>
                             </>
                         ) : (
-                            <span className="text-emerald-400">DRAFT COMPLETED</span>
+                            <span className="text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.8)]">DRAFT COMPLETED</span>
                         )}
                     </div>
                 </div>
@@ -281,7 +281,7 @@ function SnakeMatrix10Slots3D({
                         return (
                             <div
                                 key={node.slotId}
-                                className={`w-22 h-26.25 rounded-xl flex flex-col justify-between p-1.5 transition-all duration-500 border-2 relative overflow-hidden ${isLanding
+                                className={`w-22 h-26.25 rounded-xl flex flex-col justify-between p-1.5 transition-all duration-500 border-2 relative overflow-hidden cursor-pointer hover:scale-110 ${isLanding
                                     ? 'animate-matrix-vortex-slam'
                                     : isActive
                                         ? isRadiant
@@ -289,9 +289,9 @@ function SnakeMatrix10Slots3D({
                                             : 'bg-[#C9A84C]/20 border-[#C9A84C] shadow-[0_0_30px_rgba(201,168,76,1)] scale-105'
                                         : isAssigned
                                             ? isRadiant
-                                                ? 'bg-slate-900 border-[#00D4FF]/80 shadow-[0_0_18px_rgba(0,212,255,0.45)]'
-                                                : 'bg-slate-900 border-[#C9A84C]/80 shadow-[0_0_18px_rgba(201,168,76,0.45)]'
-                                            : 'bg-slate-950/80 border-slate-800 text-zinc-600'
+                                                ? 'bg-slate-900 border-[#00D4FF]/80 shadow-[0_0_18px_rgba(0,212,255,0.45)] hover:shadow-[0_0_25px_rgba(0,212,255,0.8)]'
+                                                : 'bg-slate-900 border-[#C9A84C]/80 shadow-[0_0_18px_rgba(201,168,76,0.45)] hover:shadow-[0_0_25px_rgba(201,168,76,0.8)]'
+                                            : 'bg-slate-950/80 border-slate-800 text-zinc-600 hover:border-slate-600'
                                     }`}
                                 style={{
                                     boxShadow: isActive
@@ -356,7 +356,7 @@ function SnakeMatrix10Slots3D({
 }
 
 /* ----------------------------------------------------
-   5. MASTER GOLD PLAYER CARD
+   5. MASTER GOLD PLAYER CARD (Enhanced Neon Cyberpunk Glow)
 ---------------------------------------------------- */
 function MasterGoldPlayerCard({
     player,
@@ -373,21 +373,25 @@ function MasterGoldPlayerCard({
 
     return (
         <div
-            className={`relative group w-full bg-slate-950 border-2 border-[#C9A84C]/60 hover:border-[#C9A84C] rounded-xl p-3 font-mono shadow-[0_0_20px_rgba(0,0,0,0.9)] transition-all duration-300 ${isDrafting ? 'animate-card-pick-warp pointer-events-none' : ''
+            className={`relative group w-full bg-slate-950 border-2 border-[#C9A84C]/50 hover:border-[#00D4FF] rounded-xl p-3 font-mono shadow-[0_0_20px_rgba(0,0,0,0.9)] hover:shadow-[0_0_30px_rgba(0,212,255,0.6)] transition-all duration-300 transform hover:-translate-y-1.5 cursor-pointer ${isDrafting ? 'animate-card-pick-warp pointer-events-none' : ''
                 }`}
             style={{ transformStyle: 'preserve-3d' }}
         >
-            <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[#C9A84C]" />
-            <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[#C9A84C]" />
-            <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-[#C9A84C]" />
-            <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[#C9A84C]" />
+            {/* Ambient Background Glow Layer */}
+            <div className="absolute inset-0 rounded-xl bg-linear-to-b from-[#00D4FF]/5 via-transparent to-[#C9A84C]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+            {/* Corner Bracket Accents */}
+            <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[#C9A84C] group-hover:border-[#00D4FF] transition-colors duration-300" />
+            <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[#C9A84C] group-hover:border-[#00D4FF] transition-colors duration-300" />
+            <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-[#C9A84C] group-hover:border-[#00D4FF] transition-colors duration-300" />
+            <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[#C9A84C] group-hover:border-[#00D4FF] transition-colors duration-300" />
 
             <div className="flex items-center gap-3 relative z-10">
                 <div className="relative shrink-0">
-                    <div className="w-14 h-18 bg-slate-900 border-2 border-[#C9A84C]/80 rounded-lg overflow-hidden flex items-center justify-center relative shadow-inner group-hover:scale-105 transition-transform">
+                    <div className="w-14 h-18 bg-slate-900 border-2 border-[#C9A84C]/80 group-hover:border-[#00D4FF] group-hover:shadow-[0_0_15px_rgba(0,212,255,0.5)] rounded-lg overflow-hidden flex items-center justify-center relative shadow-inner group-hover:scale-105 transition-all duration-300">
                         <div className="w-full h-full bg-linear-to-tr from-black via-slate-900 to-[#1e2538] flex flex-col items-center justify-center">
-                            <span className="text-[8px] text-[#C9A84C] font-bold">GACHA</span>
-                            <span className="text-xs font-black text-white">{player.avatarPlaceholder || player.name.substring(0, 2).toUpperCase()}</span>
+                            <span className="text-[8px] text-[#C9A84C] group-hover:text-[#00D4FF] font-bold transition-colors">GACHA</span>
+                            <span className="text-xs font-black text-white group-hover:text-cyan-200 transition-colors">{player.avatarPlaceholder || player.name.substring(0, 2).toUpperCase()}</span>
                         </div>
                     </div>
                     <div
@@ -399,17 +403,17 @@ function MasterGoldPlayerCard({
                 </div>
 
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-1 border-b border-[#C9A84C]/20 pb-1">
-                        <div className="font-black text-xs text-zinc-100 truncate">{player.name}</div>
+                    <div className="flex items-center justify-between gap-1 border-b border-[#C9A84C]/20 group-hover:border-[#00D4FF]/30 pb-1 transition-colors">
+                        <div className="font-black text-xs text-zinc-100 truncate group-hover:text-cyan-300 transition-colors">{player.name}</div>
                         <span className="text-[8px] font-black tracking-wider" style={{ color: role.hex }}>
                             {role.name.toUpperCase()}
                         </span>
                     </div>
 
-                    <div className="mt-1.5 bg-slate-900 border border-[#C9A84C]/40 rounded p-1.5 grid grid-cols-3 gap-1 text-[8px]">
+                    <div className="mt-1.5 bg-slate-900 border border-[#C9A84C]/40 group-hover:border-[#00D4FF]/40 rounded p-1.5 grid grid-cols-3 gap-1 text-[8px] transition-colors">
                         <div>
                             <div className="text-zinc-500 text-[6px] uppercase font-bold">Current Elo</div>
-                            <div className="font-black text-[#C9A84C] mt-0.5">{player.currentElo}</div>
+                            <div className="font-black text-[#C9A84C] group-hover:text-[#00D4FF] mt-0.5 transition-colors">{player.currentElo}</div>
                         </div>
                         <div>
                             <div className="text-zinc-500 text-[6px] uppercase font-bold">Peak Elo</div>
@@ -425,19 +429,19 @@ function MasterGoldPlayerCard({
                 <div className="shrink-0 flex flex-col items-center justify-between h-18 py-0.5">
                     <div className="relative w-7 h-7 flex items-center justify-center">
                         <div className="absolute inset-0 rounded-full border-2 border-dashed border-[#00D4FF] animate-spin" style={{ animationDuration: '8s' }} />
-                        <div className="w-4 h-4 rounded-full border border-[#C9A84C] flex items-center justify-center text-[5px] font-black text-[#C9A84C]">
+                        <div className="w-4 h-4 rounded-full border border-[#C9A84C] group-hover:border-[#00D4FF] flex items-center justify-center text-[5px] font-black text-[#C9A84C] group-hover:text-[#00D4FF] transition-colors">
                             HUD
                         </div>
                     </div>
 
                     <div className="flex gap-1 items-center">
                         {player.authProviders.includes('steam') && (
-                            <span className="w-3.5 h-3.5 rounded bg-[#171a21] border border-[#00D4FF]/60 flex items-center justify-center text-[7px] text-[#00D4FF] font-black">
+                            <span className="w-3.5 h-3.5 rounded bg-[#171a21] border border-[#00D4FF]/60 flex items-center justify-center text-[7px] text-[#00D4FF] font-black shadow-[0_0_8px_rgba(0,212,255,0.4)]">
                                 S
                             </span>
                         )}
                         {player.authProviders.includes('google') && (
-                            <span className="w-3.5 h-3.5 rounded bg-zinc-900 border border-[#C9A84C]/60 flex items-center justify-center text-[7px] text-[#C9A84C] font-black">
+                            <span className="w-3.5 h-3.5 rounded bg-zinc-900 border border-[#C9A84C]/60 flex items-center justify-center text-[7px] text-[#C9A84C] font-black shadow-[0_0_8px_rgba(201,168,76,0.4)]">
                                 G
                             </span>
                         )}
@@ -448,9 +452,9 @@ function MasterGoldPlayerCard({
             <button
                 disabled={disabled}
                 onClick={onPick}
-                className={`mt-2.5 w-full py-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow ${disabled
+                className={`mt-2.5 w-full py-2 rounded-lg text-xs font-black transition-all duration-300 flex items-center justify-center gap-1.5 shadow ${disabled
                     ? 'bg-slate-800 text-zinc-600 border border-slate-700 cursor-not-allowed opacity-50'
-                    : 'bg-linear-to-r from-[#C9A84C]/20 via-[#C9A84C]/40 to-[#C9A84C]/20 hover:from-[#C9A84C] hover:to-amber-500 text-[#C9A84C] hover:text-black border border-[#C9A84C]/60 hover:shadow-[0_0_20px_rgba(201,168,76,0.8)] cursor-pointer'
+                    : 'bg-linear-to-r from-[#C9A84C]/20 via-[#C9A84C]/40 to-[#C9A84C]/20 hover:from-[#00D4FF] hover:to-cyan-400 text-[#C9A84C] hover:text-black border border-[#C9A84C]/60 hover:border-[#00D4FF] hover:shadow-[0_0_25px_rgba(0,212,255,0.8)] cursor-pointer'
                     }`}
             >
                 <Zap className="w-3.5 h-3.5 fill-current" /> DRAFT INTO PROTOCOL <ChevronRight className="w-4 h-4" />
@@ -668,7 +672,7 @@ export default function SnakeDraftPage() {
                                 <Shield className="w-4 h-4 text-[#00D4FF]" />
                                 <span className="font-black text-xs text-[#00D4FF] font-['Orbitron']">1: RADIANT (C1)</span>
                                 {currentActiveTeam === 'RADIANT' && (
-                                    <span className="text-[8px] px-1.5 py-0.2 rounded bg-[#00D4FF] text-black font-black animate-pulse">
+                                    <span className="text-[8px] px-1.5 py-0.2 rounded bg-[#00D4FF] text-black font-black animate-pulse shadow-[0_0_10px_rgba(0,212,255,0.8)]">
                                         ACTIVE PICK
                                     </span>
                                 )}
@@ -701,7 +705,7 @@ export default function SnakeDraftPage() {
                                 <Flame className="w-4 h-4 text-[#C9A84C]" />
                                 <span className="font-black text-xs text-[#C9A84C] font-['Orbitron']">2: DIRE (C4)</span>
                                 {currentActiveTeam === 'DIRE' && (
-                                    <span className="text-[8px] px-1.5 py-0.2 rounded bg-[#C9A84C] text-black font-black animate-pulse">
+                                    <span className="text-[8px] px-1.5 py-0.2 rounded bg-[#C9A84C] text-black font-black animate-pulse shadow-[0_0_10px_rgba(201,168,76,0.8)]">
                                         ACTIVE PICK
                                     </span>
                                 )}
@@ -732,7 +736,7 @@ export default function SnakeDraftPage() {
                             </span>
                             <button
                                 onClick={() => router.push(`/match/daily_${Date.now()}`)}
-                                className="px-6 py-2.5 bg-linear-to-r from-[#00D4FF] to-cyan-600 hover:from-cyan-400 hover:to-[#00D4FF] text-slate-950 font-black text-xs rounded-lg tracking-wider transition-all shadow-[0_0_15px_rgba(0,212,255,0.3)] cursor-pointer"
+                                className="px-6 py-2.5 bg-linear-to-r from-[#00D4FF] to-cyan-600 hover:from-cyan-400 hover:to-[#00D4FF] text-slate-950 font-black text-xs rounded-lg tracking-wider transition-all duration-300 shadow-[0_0_20px_rgba(0,212,255,0.4)] hover:shadow-[0_0_30px_rgba(0,212,255,0.8)] hover:scale-105 active:scale-95 cursor-pointer"
                             >
                                 PROCEED TO MATCH SERVER →
                             </button>
