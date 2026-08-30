@@ -17,8 +17,8 @@ export interface BracketMatch {
   seed2: number | null;
   player1Id?: string | null;
   player2Id?: string | null;
-  winnerAdvancesTo?: string;
-  loserAdvancesTo?: string;
+  winnerAdvancesTo?: string | null;
+  loserAdvancesTo?: string | null;
   status: 'waiting' | 'ready' | 'completed';
 }
 
@@ -73,14 +73,14 @@ export function createMonthlyDoubleElimination(input: {
     status: 'ready'
   }));
 
-  // R2: 4 Matches
+  // R2: 4 Matches (แก้ Crossover ให้ตรงตาม Slot ของ LB R2)
   const wbR2Matches: BracketMatch[] = Array.from({ length: 4 }, (_, i) => ({
     matchId: `WB_R2_M${i + 1}`,
     roundNumber: 2,
     seed1: null,
     seed2: null,
     winnerAdvancesTo: `WB_R3_M${Math.floor(i / 2) + 1}`,
-    loserAdvancesTo: `LB_R2_M${4 - i}`, // Cross over to LB R2
+    loserAdvancesTo: `LB_R2_M${i + 1}`,
     status: 'waiting'
   }));
 
@@ -107,12 +107,14 @@ export function createMonthlyDoubleElimination(input: {
   }];
 
   // 2. Losers Bracket (6 Rounds - 14 Matches total)
+  // LB R1: กำหนด loserAdvancesTo เป็น null ชัดเจน (แพ้ = ตกรอบ)
   const lbR1Matches: BracketMatch[] = Array.from({ length: 4 }, (_, i) => ({
     matchId: `LB_R1_M${i + 1}`,
     roundNumber: 1,
     seed1: null,
     seed2: null,
     winnerAdvancesTo: `LB_R2_M${i + 1}`,
+    loserAdvancesTo: null,
     status: 'waiting'
   }));
 
@@ -122,6 +124,7 @@ export function createMonthlyDoubleElimination(input: {
     seed1: null,
     seed2: null,
     winnerAdvancesTo: `LB_R3_M${Math.floor(i / 2) + 1}`,
+    loserAdvancesTo: null,
     status: 'waiting'
   }));
 
@@ -131,6 +134,7 @@ export function createMonthlyDoubleElimination(input: {
     seed1: null,
     seed2: null,
     winnerAdvancesTo: `LB_R4_M${i + 1}`,
+    loserAdvancesTo: null,
     status: 'waiting'
   }));
 
@@ -140,6 +144,7 @@ export function createMonthlyDoubleElimination(input: {
     seed1: null,
     seed2: null,
     winnerAdvancesTo: `LB_R5_M1`,
+    loserAdvancesTo: null,
     status: 'waiting'
   }));
 
@@ -149,6 +154,7 @@ export function createMonthlyDoubleElimination(input: {
     seed1: null,
     seed2: null,
     winnerAdvancesTo: `LB_R6_M1`,
+    loserAdvancesTo: null,
     status: 'waiting'
   }];
 
@@ -158,6 +164,7 @@ export function createMonthlyDoubleElimination(input: {
     seed1: null,
     seed2: null,
     winnerAdvancesTo: `GF_GAME1`,
+    loserAdvancesTo: null,
     status: 'waiting'
   }];
 
