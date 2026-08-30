@@ -12,13 +12,14 @@ export async function POST(request: NextRequest) {
         if (!supabaseUrl || !supabaseServiceKey) {
             return NextResponse.json({ error: 'Supabase credentials missing' }, { status: 500 });
         }
-
-        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const _supabase = createClient(supabaseUrl, supabaseServiceKey);
         const body = await request.json();
 
         // Match Evaluation Logic...
         return NextResponse.json({ success: true, data: body });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Internal Server Error';
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }

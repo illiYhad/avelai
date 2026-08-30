@@ -35,7 +35,7 @@ export interface DbBracketSlotRow {
   user_id: string;
   seed: number;
   display_name?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface DbBracketNode {
@@ -85,7 +85,7 @@ export interface DoubleEliminationBracket {
 // 3. SEEDING ALGORITHM (STANDARD RECURSIVE)
 // ----------------------------------------------------------------------------
 export function generateStandardSeedOrder(numTeams: number): number[] {
-  let rounds = Math.log2(numTeams) - 1;
+  const rounds = Math.log2(numTeams) - 1;
   let pls = [1, 2];
   for (let i = 0; i < rounds; i++) {
     const nextPls: number[] = [];

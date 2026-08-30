@@ -85,7 +85,8 @@ export async function POST(req: NextRequest) {
         const qualifiers = evaluateMonthlyQualifiers(leaderboard);
 
         // 5. บันทึกสิทธิ์ Monthly Pass (Top 16) ลงฐานข้อมูล
-        const qualifierUserIds = qualifiers.map((q) => q.userId);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+const qualifierUserIds = qualifiers.map((q) => q.userId);
 
         const { error: updateError } = await supabase
             .from('season_qualifiers')

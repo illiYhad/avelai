@@ -1,4 +1,5 @@
 {
-    "editor.formatOnSave": true,
-    "git.enableSmartCommit": true
+  "editor.formatOnSave": true,
+  "git.enableSmartCommit": true,
+  "css.lint.unknownAtRules": "ignore"
 }

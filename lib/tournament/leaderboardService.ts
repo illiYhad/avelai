@@ -10,6 +10,21 @@ export interface DailyLeaderboardEntry {
     trend: 'up' | 'down' | 'same';
 }
 
+interface RawLeaderboardRow {
+    rank: number;
+    user_id: string;
+    tournament_points: number | null;
+    matches_played: number | null;
+    trend: 'up' | 'down' | 'same' | null;
+    profiles: {
+        username: string | null;
+        primary_role: string | null;
+    } | {
+        username: string | null;
+        primary_role: string | null;
+    }[] | null;
+}
+
 /**
  * ดึงข้อมูล Leaderboard รายวันจาก Supabase
  */
@@ -20,16 +35,16 @@ export async function fetchDailyLeaderboard(dateStr?: string): Promise<DailyLead
     const { data, error } = await supabase
         .from('daily_leaderboard')
         .select(`
-      rank,
-      user_id,
-      tournament_points,
-      matches_played,
-      trend,
-      profiles:user_id (
-        username,
-        primary_role
-      )
-    `)
+            rank,
+            user_id,
+            tournament_points,
+            matches_played,
+            trend,
+            profiles:user_id (
+                username,
+                primary_role
+            )
+        `)
         .eq('tournament_date', targetDate)
         .order('rank', { ascending: true })
         .limit(20);
@@ -39,13 +54,19 @@ export async function fetchDailyLeaderboard(dateStr?: string): Promise<DailyLead
         return [];
     }
 
-    return data.map((row: any) => ({
-        rank: row.rank,
-        userId: row.user_id,
-        playerName: row.profiles?.username || `Player_${row.user_id.slice(0, 5)}`,
-        roleBadge: row.profiles?.primary_role || 'Core',
-        dailyTp: Number(row.tournament_points || 0),
-        matchesPlayed: row.matches_played || 0,
-        trend: row.trend || 'same',
-    }));
+    const rows = data as unknown as RawLeaderboardRow[];
+
+    return rows.map((row) => {
+        const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+
+        return {
+            rank: row.rank,
+            userId: row.user_id,
+            playerName: profile?.username || `Player_${row.user_id.slice(0, 5)}`,
+            roleBadge: profile?.primary_role || 'Core',
+            dailyTp: Number(row.tournament_points || 0),
+            matchesPlayed: row.matches_played || 0,
+            trend: (row.trend as 'up' | 'down' | 'same') || 'same',
+        };
+    });
 }

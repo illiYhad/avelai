@@ -1,10 +1,13 @@
+
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
 const inputArg = process.argv[2];
 const isNumber = !isNaN(parseInt(inputArg, 10)) && !inputArg.includes('.');
-const fileLimit = isNumber ? parseInt(inputArg, 10) : 3;
+let fileLimit = isNumber ? parseInt(inputArg, 10) : 2;
+fileLimit = Math.min(Math.max(fileLimit, 1), 5); // ลิมิตระหว่าง 1 - 5 ไฟล์
+
 const targetSpecificFile = (!isNumber && inputArg) ? inputArg.trim() : null;
 
 function getFormattedTimestamp() {
@@ -25,12 +28,53 @@ function getFormattedTimestamp() {
 
 const timestamp = getFormattedTimestamp();
 
+const isIgnoredFile = (filePath) => {
+    const baseName = path.basename(filePath).toLowerCase();
+    const ignoredExtensions = ['.png', '.jpg', '.jpeg', '.svg', '.ico', '.woff', '.woff2', '.lock'];
+    return (
+        baseName.includes('diff_check') ||
+        baseName.includes('diff-check') ||
+        baseName.startsWith('.') ||
+        filePath.includes('node_modules') ||
+        filePath.includes('.next') ||
+        filePath.includes('.git') ||
+        ignoredExtensions.some(ext => baseName.endsWith(ext))
+    );
+};
+
+// ฟังก์ชันสแกนไฟล์ในเครื่องเรียงตามเวลาแก้ไขล่าสุด (Fallback ชั้นสุดท้าย)
+function getRecentModifiedFilesSystem(dir, limit) {
+    let results = [];
+    try {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+            const fullPath = path.join(dir, entry.name);
+            const relativePath = path.relative(process.cwd(), fullPath).replace(/\\/g, '/');
+
+            if (isIgnoredFile(relativePath)) continue;
+
+            if (entry.isDirectory()) {
+                results = results.concat(getRecentModifiedFilesSystem(fullPath, limit));
+            } else if (entry.isFile()) {
+                const stats = fs.statSync(fullPath);
+                results.push({ path: relativePath, mtime: stats.mtimeMs });
+            }
+        }
+    } catch {
+        // ignore error
+    }
+    
+    return results
+        .sort((a, b) => b.mtime - a.mtime)
+        .slice(0, limit)
+        .map(f => f.path);
+}
+
 try {
-    const ignoreList = ['diff_check.txt', 'diff-check.mjs', 'diff-check.js'];
     let changedFiles = [];
 
     if (targetSpecificFile) {
-        // โหมด 1: ค้นหาไฟล์ทั่วทั้งโปรเจกต์ผ่าน Git และ System
+        // โหมดระบุชื่อไฟล์ตรงๆ
         let foundPath = '';
         try {
             const allFiles = execSync('git ls-files', { encoding: 'utf-8' })
@@ -43,41 +87,65 @@ try {
                 f.toLowerCase() === targetSpecificFile.toLowerCase()
             );
             if (match) foundPath = match;
-        } catch (e) { }
+        } catch {
+            // ignore error
+        }
 
-        // ถ้าใน Git หาไม่เจอ ลองหาไฟล์ในเครื่อง
         if (!foundPath && fs.existsSync(targetSpecificFile)) {
             foundPath = targetSpecificFile;
         }
 
         changedFiles = foundPath ? [foundPath] : [targetSpecificFile];
     } else {
-        // โหมด 2: ดึงจาก git status อัตโนมัติ
-        let statusOutput = execSync('git status --porcelain', { encoding: 'utf-8' });
+        const fileSet = new Set();
 
-        // ถ้าไม่มีไฟล์ที่กำลังแก้ค้างอยู่ ให้ดึงรายชื่อไฟล์จาก Commit ล่าสุดแทน
-        if (!statusOutput.trim()) {
-            try {
-                statusOutput = execSync('git diff-tree --no-commit-id --name-only -r HEAD', { encoding: 'utf-8' });
-            } catch (e) { }
+        // 1. ดึงไฟล์ที่ค้างใน Working Tree (Uncommitted)
+        try {
+            const statusOutput = execSync('git status --porcelain', { encoding: 'utf-8' });
+            statusOutput
+                .split('\n')
+                .map(line => line.trim())
+                .filter(Boolean)
+                .map(line => {
+                    const match = line.match(/^(\S+|\?\?)\s+(.*)$/);
+                    const rawPath = match ? match[2].trim() : line.slice(3).trim();
+                    return rawPath.replace(/^["']|["']$/g, '');
+                })
+                .filter(file => file && !isIgnoredFile(file))
+                .forEach(file => fileSet.add(file));
+        } catch {
+            // ignore error
         }
 
-        changedFiles = statusOutput
-            .split('\n')
-            .map(line => line.trim())
-            .filter(Boolean)
-            .map(line => {
-                const match = line.match(/^(\S+|\?\?)\s+(.*)$/);
-                const rawPath = match ? match[2].trim() : line.trim();
-                return rawPath.replace(/^["']|["']$/g, '');
-            })
-            .filter(file => {
-                const baseName = path.basename(file);
-                return file &&
-                    !ignoreList.includes(baseName) &&
-                    !file.includes('node_modules');
-            })
-            .slice(0, fileLimit);
+        // 2. ถ้ายังไม่ครบ ให้ไล่ดึงจาก Commit History ย้อนหลัง
+        if (fileSet.size < fileLimit) {
+            try {
+                const logFiles = execSync('git log -n 15 --name-only --pretty=""', { encoding: 'utf-8' })
+                    .split('\n')
+                    .map(line => line.trim().replace(/^["']|["']$/g, ''))
+                    .filter(file => file && !isIgnoredFile(file));
+
+                for (const file of logFiles) {
+                    if (fileSet.size >= fileLimit) break;
+                    if (fs.existsSync(path.resolve(process.cwd(), file))) {
+                        fileSet.add(file);
+                    }
+                }
+            } catch {
+                // ignore error
+            }
+        }
+
+        // 3. ถ้ายังไม่พออีก กวาดจากเวลาแก้ไขล่าสุดในระบบเครื่อง
+        if (fileSet.size < fileLimit) {
+            const systemFiles = getRecentModifiedFilesSystem(process.cwd(), fileLimit);
+            for (const file of systemFiles) {
+                if (fileSet.size >= fileLimit) break;
+                fileSet.add(file);
+            }
+        }
+
+        changedFiles = Array.from(fileSet).slice(0, fileLimit);
     }
 
     if (changedFiles.length === 0) {
@@ -86,7 +154,7 @@ try {
     }
 
     let diffContent = `HEAD\n💎 [DIFF CHECK TIMESTAMP: ${timestamp}]\n`;
-    diffContent += `📁 [TARGET FILES: ${changedFiles.length}]\n\n`;
+    diffContent += `📁 [TARGET FILES: ${changedFiles.length} (Max Limit: ${fileLimit})]\n\n`;
     diffContent += `📋 [MODIFIED FILES LIST]\n`;
 
     changedFiles.forEach((file, index) => {
@@ -102,53 +170,59 @@ try {
 
     diffContent += `======================================================\n\n`;
 
-    // ดึง Diff / Log History / Content
+    // รวมข้อมูล Diff และ Content ของแต่ละไฟล์
     changedFiles.forEach(file => {
         const cleanPath = file.replace(/^["']|["']$/g, '');
+        const fullPath = path.resolve(process.cwd(), cleanPath);
         let fileDiff = '';
 
+        diffContent += `// -----------------------------------------------------\n`;
+        diffContent += `// 📄 FILE: ${cleanPath}\n`;
+        diffContent += `// -----------------------------------------------------\n`;
+
         try {
-            // 1. ลองดึง Uncommitted Diff ปัจจุบัน
+            // ดึง Uncommitted Diff
             fileDiff = execSync(`git diff HEAD -- "${cleanPath}"`, { encoding: 'utf-8' });
 
-            // 2. ถ้าไม่มี Diff ลองดึง Commit Diff ล่าสุดของไฟล์
+            // ดึง Diff จาก Commit ล่าสุดของไฟล์นั้น
             if (!fileDiff.trim()) {
                 try {
                     const lastCommitHash = execSync(`git log -n 1 --pretty=format:%h -- "${cleanPath}"`, { encoding: 'utf-8' }).trim();
                     const lastCommitSubject = execSync(`git log -n 1 --pretty=format:%s -- "${cleanPath}"`, { encoding: 'utf-8' }).trim();
 
                     if (lastCommitHash) {
-                        const commitDiff = execSync(`git diff ${lastCommitHash}^! -- "${cleanPath}"`, { encoding: 'utf-8' });
+                        const commitDiff = execSync(`git show ${lastCommitHash} -- "${cleanPath}"`, { encoding: 'utf-8' });
                         if (commitDiff.trim()) {
-                            fileDiff = `// 🕒 [LATEST COMMIT DIFF: ${lastCommitHash} - "${lastCommitSubject}"]\n` + commitDiff;
+                            fileDiff = `// 🕒 [LATEST COMMIT: ${lastCommitHash} - "${lastCommitSubject}"]\n` + commitDiff;
                         }
                     }
-                } catch (e) { }
-            }
-
-            // 3. Fallback: ถ้ายังไม่มี ให้ Dump ไฟล์เต็ม
-            if (!fileDiff.trim()) {
-                const fullPath = path.resolve(process.cwd(), cleanPath);
-                if (fs.existsSync(fullPath)) {
-                    fileDiff = `// 📄 [FULL FILE CONTENT]\n` + fs.readFileSync(fullPath, 'utf-8');
+                } catch {
+                    // ignore error
                 }
             }
 
-            if (fileDiff) {
-                diffContent += `${fileDiff}\n\n`;
+            // Dump โค้ดเต็มของไฟล์แนบลงไปด้วยเสมอ
+            if (fs.existsSync(fullPath)) {
+                const fullText = fs.readFileSync(fullPath, 'utf-8');
+                if (fileDiff.trim()) {
+                    diffContent += `${fileDiff}\n\n// 📦 [FULL FILE CONTENT]\n${fullText}\n\n`;
+                } else {
+                    diffContent += `// 📦 [FULL FILE CONTENT]\n${fullText}\n\n`;
+                }
             } else {
-                diffContent += `// ⚠️ ไม่พบการเปลี่ยนแปลงหรือเนื้อหาของไฟล์: ${cleanPath}\n\n`;
+                diffContent += fileDiff ? `${fileDiff}\n\n` : `// ⚠️ ไฟล์ถูกลบหรือไม่พบพาธไฟล์\n\n`;
             }
         } catch (err) {
-            diffContent += `// ⚠️ เกิดข้อผิดพลาดในการอ่านไฟล์: ${cleanPath}\n\n`;
+            const msg = err instanceof Error ? err.message : String(err);
+            diffContent += `// ⚠️ เกิดข้อผิดพลาดในการอ่านไฟล์: ${cleanPath} (${msg})\n\n`;
         }
     });
 
     const outputPath = path.resolve(process.cwd(), 'diff_check.txt');
     fs.writeFileSync(outputPath, diffContent, 'utf-8');
 
-    console.log(`✅ เขียน Diff & History (${timestamp}) ลง diff_check.txt เรียบร้อย!`);
+    console.log(`✅ เขียน Diff & History ล่าสุด ${changedFiles.length} ไฟล์ (${timestamp}) ลง diff_check.txt เรียบร้อย!`);
 
-} catch (error) {
-    console.error('❌ เกิดข้อผิดพลาด:', error.message);
+} catch (err) {
+    console.error('❌ เกิดข้อผิดพลาดร้ายแรงในระบบ Diff Check:', err);
 }

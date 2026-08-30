@@ -22,6 +22,16 @@ export interface MercenaryMatchSettledPayload {
   payoutThb: number;
 }
 
+interface MercenaryLobbyRow {
+  id: string;
+  room_code: string;
+  current_players: number;
+  max_players: number;
+  total_pot_thb: number;
+  status: 'WAITING' | 'IN_PROGRESS' | 'SETTLED' | 'CANCELLED';
+  winner_user_id: string;
+}
+
 interface UseMercenarySocketOptions {
   roomId: string | null; // ห้องที่กำลังติดตามอยู่ (null = ยังไม่เข้าห้อง)
   onRoomFilled?: (state: MercenaryRoomState) => void;
@@ -44,10 +54,14 @@ export const useMercenaryArenaSocket = ({
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [roomState, setRoomState] = useState<MercenaryRoomState | null>(null);
 
+  // เก็บ Callback ไว้ใน Ref เพื่อเลี่ยงปัญหาวน Re-subscribe ทุกครั้งที่ Re-render
+  const callbacksRef = useRef({ onRoomFilled, onMatchSettled, onError });
+  useEffect(() => {
+    callbacksRef.current = { onRoomFilled, onMatchSettled, onError };
+  });
+
   useEffect(() => {
     if (!roomId) {
-      setIsConnected(false);
-      setRoomState(null);
       return;
     }
 
@@ -63,7 +77,7 @@ export const useMercenaryArenaSocket = ({
           filter: `id=eq.${roomId}`,
         },
         (payload) => {
-          const row = payload.new as any;
+          const row = payload.new as MercenaryLobbyRow;
           const nextState: MercenaryRoomState = {
             roomId: row.id,
             roomCode: row.room_code,
@@ -74,12 +88,12 @@ export const useMercenaryArenaSocket = ({
           };
           setRoomState(nextState);
 
-          if (nextState.status === 'IN_PROGRESS' && onRoomFilled) {
-            onRoomFilled(nextState);
+          if (nextState.status === 'IN_PROGRESS' && callbacksRef.current.onRoomFilled) {
+            callbacksRef.current.onRoomFilled(nextState);
           }
 
-          if (nextState.status === 'SETTLED' && onMatchSettled) {
-            onMatchSettled({
+          if (nextState.status === 'SETTLED' && callbacksRef.current.onMatchSettled) {
+            callbacksRef.current.onMatchSettled({
               roomId: row.id,
               winnerUserId: row.winner_user_id,
               payoutThb: row.total_pot_thb,
@@ -91,8 +105,8 @@ export const useMercenaryArenaSocket = ({
         if (status === 'SUBSCRIBED') {
           setIsConnected(true);
         }
-        if (status === 'CHANNEL_ERROR' && onError) {
-          onError('REALTIME_CHANNEL_ERROR');
+        if (status === 'CHANNEL_ERROR' && callbacksRef.current.onError) {
+          callbacksRef.current.onError('REALTIME_CHANNEL_ERROR');
           setIsConnected(false);
         }
       });
@@ -103,8 +117,12 @@ export const useMercenaryArenaSocket = ({
       channel.unsubscribe();
       channelRef.current = null;
       setIsConnected(false);
+      setRoomState(null);
     };
   }, [roomId]);
 
-  return { isConnected, roomState };
+  return {
+    isConnected: Boolean(roomId && isConnected),
+    roomState: roomId ? roomState : null,
+  };
 };
