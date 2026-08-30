@@ -54,7 +54,7 @@ export const MatchNode: React.FC<MatchNodeProps> = ({
           )}
         </div>
 
-        <div className="h-[1px] w-full bg-gray-800" />
+        <div className="h-px w-full bg-gray-800" />
 
         {/* Player 2 Row */}
         <div className="flex items-center justify-between text-xs">

@@ -208,7 +208,7 @@ export default function MatchResultPage({ params }: PageProps) {
             {opponents.map(player => (
               <div key={player.userId} className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-white truncate max-w-[100px]">{player.displayName}</span>
+                  <span className="text-xs font-bold text-white truncate max-w-25">{player.displayName}</span>
                   <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-[#C9A84C] font-bold">POS {player.position}</span>
                 </div>
 
@@ -271,7 +271,7 @@ export default function MatchResultPage({ params }: PageProps) {
                 disabled={!isFormValid || submitting}
                 className={`px-8 py-3 rounded-xl font-['Orbitron'] text-xs font-black uppercase tracking-widest transition-all ${
                   isFormValid && !submitting
-                    ? 'bg-gradient-to-r from-[#00D4FF] to-[#C9A84C] text-slate-950 hover:brightness-110 shadow-[0_0_20px_rgba(0,212,255,0.4)] cursor-pointer'
+                    ? 'bg-linear-to-r from-[#00D4FF] to-[#C9A84C] text-slate-950 hover:brightness-110 shadow-[0_0_20px_rgba(0,212,255,0.4)] cursor-pointer'
                     : 'bg-slate-800 text-zinc-500 border border-slate-700 cursor-not-allowed'
                 }`}
               >
