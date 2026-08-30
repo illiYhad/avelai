@@ -6,6 +6,12 @@
 // ----------------------------------------------------------------------------
 // 1. BASE / WEEKLY TYPES (LOCKED SYSTEM - VERIFIED)
 // ----------------------------------------------------------------------------
+// lib/tournament/bracketEngine.ts
+
+// Export Tournament Engines
+export * from './monthlyDoubleElim';
+export * from './swissPairing';
+// export * from './annualFinals'; (ในอนาคต)
 export type MatchStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'WALKOVER';
 
 export interface Team {

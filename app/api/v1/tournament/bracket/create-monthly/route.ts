@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { createMonthlyDoubleElimination, type DbBracketSlotRow } from '@/lib/tournament/bracketEngine';
+import { 
+  createMonthlyDoubleElimination, 
+  MonthlyQualifierCandidate 
+} from '@/lib/tournament/monthlyDoubleElim'; // 👈 ชี้ตรงมาที่ไฟล์นี้โดยตรง
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,60 +12,63 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { tournamentId } = await req.json();
+    const body = await req.json();
+    const { seasonId, monthlyTournamentId, qualifiedPlayers } = body;
 
-    if (!tournamentId) {
-      return NextResponse.json({ error: 'Missing tournamentId' }, { status: 400 });
-    }
-
-    // 1. ดึง Top 16 ผู้ถือ Monthly Pass เรียงตาม Seed
-    const { data: top16, error: fetchError } = await supabase
-      .from('tournament_participants')
-      .select('player_id, seed, users(display_name)')
-      .eq('tournament_id', tournamentId)
-      .eq('has_monthly_pass', true)
-      .order('seed', { ascending: true });
-
-    if (fetchError) throw fetchError;
-
-    if (!top16 || top16.length !== 16) {
+    // 1. Validation
+    if (!seasonId || !monthlyTournamentId || !Array.isArray(qualifiedPlayers)) {
       return NextResponse.json(
-        { error: `Exactly 16 Monthly Pass holders required. Found: ${top16?.length || 0}` },
+        { error: 'Missing required parameters: seasonId, monthlyTournamentId, qualifiedPlayers' },
         { status: 400 }
       );
     }
 
-    // 2. แปลงข้อมูลให้อยู่ในรูป DbBracketSlotRow
-    const top16Slots: DbBracketSlotRow[] = top16.map((p, index) => ({
-      slot_id: `SLOT_SEED_${index + 1}`,
-      user_id: p.player_id,
-      seed: p.seed ?? index + 1,
-      display_name: (p.users as any)?.display_name ?? `Seed #${index + 1}`,
-    }));
+    if (qualifiedPlayers.length !== 16) {
+      return NextResponse.json(
+        { error: `Expected exactly 16 qualified players, received ${qualifiedPlayers.length}` },
+        { status: 400 }
+      );
+    }
 
-    // 3. สร้าง Full Double Elimination Bracket (ได้ DbBracketNode[] ที่เป็น Snake_case ตรงกับ Database ทันที)
-    const nodes = createMonthlyDoubleElimination(tournamentId, top16Slots);
+    // 2. Generate Bracket Structure
+    const bracketData = createMonthlyDoubleElimination({
+      seasonId,
+      monthlyTournamentId,
+      qualifiedPlayers: qualifiedPlayers as MonthlyQualifierCandidate[],
+    });
 
-    // 4. บันทึก Upsert ลง Supabase ตรงๆ ได้เลย
-    const { error: upsertError } = await supabase
-      .from('bracket_slots')
-      .upsert(nodes, { onConflict: 'slot_id,tournament_id' });
+    // 3. Upsert into Supabase for Idempotency
+    const { data, error } = await supabase
+      .from('monthly_brackets')
+      .upsert(
+        {
+          season_id: seasonId,
+          tournament_id: monthlyTournamentId,
+          bracket_type: 'double_elimination',
+          winners_bracket: bracketData.winnersTree,
+          losers_bracket: bracketData.losersTree,
+          grand_final: bracketData.grandFinal,
+          status: 'ready',
+          created_at: bracketData.createdAt,
+        },
+        { onConflict: 'season_id,tournament_id' }
+      )
+      .select()
+      .single();
 
-    if (upsertError) throw upsertError;
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Monthly Double Elimination Bracket created successfully.',
-        nodesCreated: nodes.length,
-      },
-      { status: 200 }
-    );
-  } catch (error: any) {
-    console.error('[/api/v1/tournament/bracket/create-monthly Error]:', error);
-    return NextResponse.json(
-      { error: error.message || 'Internal Server Error' },
-      { status: 500 }
-    );
-  }
+    return NextResponse.json({
+      success: true,
+      bracketId: data.id,
+      status: data.status,
+      winnersRound1Matches: 8,
+      createdAt: data.created_at,
+    });
+  } catch (err: unknown) {
+  const errorMessage = err instanceof Error ? err.message : 'Internal Server Error';
+  return NextResponse.json({ error: errorMessage }, { status: 500 });
+}
 }
