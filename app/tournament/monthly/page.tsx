@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 // 1. TYPES & INTERFACES
 // ============================================================================
 
-interface CircuitPlayer {
+export interface CircuitPlayer {
     rank: number;
     name: string;
     circuitPoints: number;
@@ -17,6 +17,7 @@ interface CircuitPlayer {
 
 export type IntegrityRarity = 'NONE' | 'COMMON' | 'EPIC' | 'LEGENDARY';
 export type PlayerPosition = 1 | 2 | 3 | 4 | 5;
+
 export interface IntegrityCardProps {
     userId: string;
     displayName: string;
@@ -53,11 +54,13 @@ export interface BracketMatch {
     loserAdvancesTo?: string | null;
     status: 'waiting' | 'ready' | 'completed';
 }
+
 export interface BracketRound {
     roundId: string;
     roundNumber: number;
     matches: BracketMatch[];
 }
+
 export interface MonthlyDoubleEliminationBracket {
     bracketId: string;
     seasonId: string;
@@ -81,6 +84,7 @@ export interface MonthlyDoubleEliminationBracket {
 
 const ROLE_COLORS: Record<PlayerPosition, string> = { 1: '#E8384F', 2: '#2E9BFF', 3: '#39FF6A', 4: '#D63CE8', 5: '#C8CDD4' };
 const ROLE_NAMES: Record<PlayerPosition, string> = { 1: 'POS 1 · CARRY', 2: 'POS 2 · MID', 3: 'POS 3 · OFF', 4: 'POS 4 · SOFT', 5: 'POS 5 · HARD' };
+
 const MOCK_LOBBY_PARTICIPANTS: IntegrityCardProps[] = [
     { userId: 'u1', displayName: 'AcesHigh', rarity: 'LEGENDARY', position: 1, team: 'TEAM_A', winRate: 64.2, karmaScore: 120 },
     { userId: 'u2', displayName: 'MidOrFeed', rarity: 'EPIC', position: 2, team: 'TEAM_A', winRate: 58.0, karmaScore: 105 },
@@ -99,6 +103,7 @@ const CATALOG_ITEMS: StoreItem[] = [
     { itemId: 'PACK_BOOSTER_CARD_01', name: 'Alpha Cyber Booster Pack', description: 'การ์ดบูสเตอร์เสริมพลังแต้มโบนัส Hero Mastery + ชิ้นส่วนการ์ด 3 ชิ้น', category: 'BOOSTERS', costRewardPoints: 250, stockRemaining: 45, rarity: 'EPIC', icon: '📦', badge: 'LIMITED' },
     { itemId: 'MAT_CYBER_ALLOY_01', name: 'Cyber Alloy Shard (x10)', description: 'ชิ้นส่วนอัลลอยสำหรับคราฟต์กรอบ Avatar และตกแต่ง Profile Holo-Frame', category: 'MATERIALS', costRewardPoints: 50, stockRemaining: 200, rarity: 'COMMON', icon: '🔩' },
 ];
+
 const RARITY_COLORS: Record<string, string> = {
     COMMON: 'border-gray-700 text-gray-300',
     UNCOMMON: 'border-[#39FF6A]/60 text-[#39FF6A]',
@@ -108,7 +113,8 @@ const RARITY_COLORS: Record<string, string> = {
 };
 
 function generateMockBracketData(): MonthlyDoubleEliminationBracket {
-    const wbR1Matches: BracketMatch[] = Array.from({ length: 4 }, (_, i) => ({
+    // แก้ไข WB R1 ให้ครบ 8 แมทช์ (สำหรับ 16 ทีม) ตามคำท้วงของ QA
+    const wbR1Matches: BracketMatch[] = Array.from({ length: 8 }, (_, i) => ({
         matchId: `WB_R1_M${i + 1}`,
         roundNumber: 1,
         seed1: (i * 2) + 1,
@@ -119,15 +125,17 @@ function generateMockBracketData(): MonthlyDoubleEliminationBracket {
         loserAdvancesTo: `LB_R1_M${Math.floor(i / 2) + 1}`,
         status: i === 0 ? 'completed' : 'ready'
     }));
-    const wbR2Matches: BracketMatch[] = Array.from({ length: 2 }, (_, i) => ({
+    
+    const wbR2Matches: BracketMatch[] = Array.from({ length: 4 }, (_, i) => ({
         matchId: `WB_R2_M${i + 1}`,
         roundNumber: 2,
         seed1: null,
         seed2: null,
-        winnerAdvancesTo: `WB_R3_M1`,
+        winnerAdvancesTo: `WB_R3_M${Math.floor(i / 2) + 1}`,
         loserAdvancesTo: `LB_R2_M${i + 1}`,
         status: 'waiting'
     }));
+
     return {
         bracketId: `BRACKET_01`,
         seasonId: 'SS_01',
@@ -191,23 +199,30 @@ const IntegrityCard: React.FC<IntegrityCardProps> = ({ displayName, avatarUrl, r
     );
 };
 
-const BracketVisualizer: React.FC<{ bracketData: MonthlyDoubleEliminationBracket }> = ({ bracketData }) => {
+const BracketVisualizer: React.FC<{ bracketData: MonthlyDoubleEliminationBracket; isAdminMode?: boolean; onMatchClick?: (matchId: string) => void }> = ({ bracketData, isAdminMode, onMatchClick }) => {
     return (
         <div className="w-full bg-[#0D1117] border border-cyan-500/30 rounded-xl p-8 overflow-x-auto min-h-100 font-mono flex gap-12">
             {bracketData.winnersTree.rounds.map((round) => (
                 <div key={round.roundId} className="flex flex-col justify-around gap-6">
                     <h4 className="text-center text-amber-400 text-[10px] font-bold">ROUND {round.roundNumber}</h4>
-                    {round.matches.map((match) => (
-                        <div key={match.matchId} className={`w-48 rounded-lg border p-2 text-[10px] ${match.status === 'ready' ? 'border-cyan-400 bg-cyan-950/20' : 'border-gray-700 bg-gray-900/50'}`}>
-                            <div className="flex justify-between pb-1">
-                                <span className={match.status === 'ready' ? 'text-white' : 'text-gray-500'}>{match.player1Id || 'TBD'}</span>
+                    {round.matches.map((match) => {
+                        const isClickable = isAdminMode ? true : match.status !== 'waiting';
+                        return (
+                            <div 
+                                key={match.matchId} 
+                                onClick={() => isClickable && onMatchClick?.(match.matchId)}
+                                className={`w-48 rounded-lg border p-2 text-[10px] transition-all ${match.status === 'ready' ? 'border-cyan-400 bg-cyan-950/20' : 'border-gray-700 bg-gray-900/50'} ${isClickable ? 'cursor-pointer hover:border-cyan-300' : 'cursor-not-allowed opacity-60'}`}
+                            >
+                                <div className="flex justify-between pb-1">
+                                    <span className={match.status === 'ready' ? 'text-white' : 'text-gray-500'}>{match.player1Id || 'TBD'}</span>
+                                </div>
+                                <div className="h-px w-full bg-gray-800 my-0.5" />
+                                <div className="flex justify-between pt-1">
+                                    <span className={match.status === 'ready' ? 'text-white' : 'text-gray-500'}>{match.player2Id || 'TBD'}</span>
+                                </div>
                             </div>
-                            <div className="h-px w-full bg-gray-800 my-0.5" />
-                            <div className="flex justify-between pt-1">
-                                <span className={match.status === 'ready' ? 'text-white' : 'text-gray-500'}>{match.player2Id || 'TBD'}</span>
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             ))}
         </div>
@@ -220,6 +235,7 @@ const BracketVisualizer: React.FC<{ bracketData: MonthlyDoubleEliminationBracket
 
 export default function MonthlyTournamentPage() {
     const [activeTab, setActiveTab] = useState<'double_elim' | 'circuit_rank' | 'season_info' | 'integrity_showcase' | 'rewards_store'>('double_elim');
+    const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
     
     const [circuitRankings] = useState<CircuitPlayer[]>([
         { rank: 1, name: 'CyberShadow', circuitPoints: 260, winRate: 78.5, isQualified: true },
@@ -237,6 +253,10 @@ export default function MonthlyTournamentPage() {
 
     const teamA = MOCK_LOBBY_PARTICIPANTS.filter((p) => p.team === 'TEAM_A');
     const teamB = MOCK_LOBBY_PARTICIPANTS.filter((p) => p.team === 'TEAM_B');
+
+    const handleMatchClick = (matchId: string) => {
+        console.log('Clicked match ID:', matchId);
+    };
 
     return (
         <div className="min-h-screen bg-[#090D14] text-white p-6 md:p-10 font-sans">
@@ -268,6 +288,20 @@ export default function MonthlyTournamentPage() {
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {/* ADMIN MODE TOGGLE */}
+                <div className="flex justify-end items-center">
+                    <button
+                        onClick={() => setIsAdminMode(!isAdminMode)}
+                        className={`px-4 py-1.5 rounded-lg border font-['Orbitron'] text-xs font-bold tracking-wider transition-all duration-200 cursor-pointer ${
+                            isAdminMode
+                                ? 'border-[#00D4FF] text-[#00D4FF] bg-[#00D4FF]/10 shadow-[0_0_10px_rgba(0,212,255,0.2)]'
+                                : 'border-gray-700 text-gray-400 hover:border-gray-500'
+                        }`}
+                    >
+                        ADMIN MODE: {isAdminMode ? 'ACTIVE' : 'OFF'}
+                    </button>
                 </div>
 
                 {/* 2. NAVIGATION TABS */}
@@ -310,7 +344,15 @@ export default function MonthlyTournamentPage() {
                         <div className="bg-[#0D1117] border border-amber-500/30 rounded-xl p-4 flex items-center justify-between text-xs text-amber-400 font-mono">
                             <span>*Interactive Data Tree from Part 3</span>
                         </div>
-                        {bracketData && <BracketVisualizer bracketData={bracketData} />}
+                        
+                        {/* แก้ไขตาม QA: ส่ง isAdminMode และ onMatchClick ครบถ้วนแล้ว */}
+                        {bracketData && (
+                            <BracketVisualizer 
+                                bracketData={bracketData} 
+                                isAdminMode={isAdminMode}
+                                onMatchClick={handleMatchClick}
+                            />
+                        )}
                         
                         <div className="bg-linear-to-b from-[#1C1F26] to-[#12151B] border-2 border-amber-400 rounded-xl p-6 text-center shadow-[0_0_25px_rgba(255,184,0,0.2)]">
                             <span className="text-xs font-mono uppercase tracking-widest text-amber-400 font-bold">GRAND FINAL (BO3 + BRACKET RESET RULE)</span>
@@ -353,7 +395,7 @@ export default function MonthlyTournamentPage() {
                                         <h3 className="text-sm font-bold text-white">{item.name}</h3>
                                         <span className="text-[9px] text-gray-400 tracking-widest">[{item.rarity}]</span>
                                     </div>
-                                    <button className="mt-4 w-full py-2 bg-amber-500 text-black text-xs font-bold rounded hover:bg-amber-400">
+                                    <button className="mt-4 w-full py-2 bg-amber-500 text-black text-xs font-bold rounded hover:bg-amber-400 cursor-pointer">
                                         REDEEM ({item.costRewardPoints} PTS)
                                     </button>
                                 </div>
@@ -415,7 +457,7 @@ export default function MonthlyTournamentPage() {
                             </p>
                             <ul className="text-xs text-gray-300 space-y-2 list-disc pl-4">
                                 <li>ต้องผ่านการยืนยันตัวตน KYC Gate ก่อนทำการเบิกเงินครั้งแรก</li>
-                                <li>ระบบตัดรอบโอนเงินแบบ Batch รอบ 15:00 น. ทุกวันทำการ[cite: 11]</li>
+                                <li>ระบบตัดรอบโอนเงินแบบ Batch รอบ 15:00 น. ทุกวันทำการ</li>
                             </ul>
                         </div>
                     </div>

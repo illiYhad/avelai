@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
+import type { User } from '@supabase/supabase-js' // นำเข้า User type มาใช้ตรงๆ
+
 export default function SubscribePage() {
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null) // เลิกใช้ any แล้วจ้า
   const [currentTier, setCurrentTier] = useState<string>('free')
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState<boolean>(false)
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key'
@@ -25,7 +27,7 @@ export default function SubscribePage() {
       if (data) setCurrentTier(data.subscription_tier)
     }
     getUser()
-  }, [])
+  }, [router, supabase])
 
   const handleUpgrade = async () => {
     if (!user) return
@@ -94,7 +96,7 @@ export default function SubscribePage() {
           ? 'border-[#C9A84C] shadow-[0_0_32px_rgba(201,168,76,0.3)] bg-[#12121A]'
           : 'border-[#C9A84C]/50 bg-[#12121A]'
           }`}>
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent" />
+          <div className="absolute top-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-[#C9A84C] to-transparent" />
           <div>
             <div className="flex items-center gap-2 mb-1">
               <p className="text-xs text-[#C9A84C] font-mono tracking-widest">TIER 2</p>
