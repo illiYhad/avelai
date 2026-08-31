@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import React, { use, useEffect, useState } from 'react';
@@ -7,18 +6,16 @@ import { createClient } from '@/lib/supabase/client';
 import { 
   Shield, 
   Flame, 
-  Crown, 
   Zap, 
-  CheckCircle2, 
   ArrowLeft,
   Coins
 } from 'lucide-react';
+import { IntegrityCard, IntegrityRarity, PlayerPosition } from '@/components/showcase/IntegrityCard';
+
 
 // ============================================================================
 // 1. TYPES & INTERFACES
 // ============================================================================
-
-export type PlayerPosition = 1 | 2 | 3 | 4 | 5;
 
 export interface TierProfile {
   tierCode?: string;
@@ -60,18 +57,6 @@ export interface StoreItem {
   badge?: string;
 }
 
-// ============================================================================
-// 2. THEMES & CONSTANTS
-// ============================================================================
-
-const ROLE_THEMES: Record<PlayerPosition, { name: string; hex: string; short: string }> = { 
-  1: { name: 'Hard Carry', hex: '#E8384F', short: 'POS 1' }, 
-  2: { name: 'Mid Laner', hex: '#2E9BFF', short: 'POS 2' }, 
-  3: { name: 'Offlaner', hex: '#39FF6A', short: 'POS 3' }, 
-  4: { name: 'Soft Support', hex: '#D63CE8', short: 'POS 4' }, 
-  5: { name: 'Hard Support', hex: '#C8CDD4', short: 'POS 5' } 
-};
-
 const CATALOG_ITEMS: StoreItem[] = [
   { itemId: 'TICKET_GASHA_GENESIS', name: 'Genesis Gasha Ticket', description: 'สุ่มการ์ด Match Integrity Card ระดับ Rare - Legendary', category: 'TICKETS', costRewardPoints: 100, stockRemaining: 999, rarity: 'RARE', icon: '🎟️', badge: 'HOT' },
   { itemId: 'PACK_BOOSTER_CARD_01', name: 'Alpha Cyber Booster Pack', description: 'การ์ดบูสเตอร์เสริมพลัง + ชิ้นส่วนการ์ด 3 ชิ้น', category: 'BOOSTERS', costRewardPoints: 250, stockRemaining: 45, rarity: 'EPIC', icon: '📦', badge: 'LIMITED' },
@@ -79,122 +64,7 @@ const CATALOG_ITEMS: StoreItem[] = [
 ];
 
 // ============================================================================
-// 3. TFT-STYLE TOP CREST INTEGRITY CARD (WITH HOLO SHIMMER)
-// ============================================================================
-
-function TFTStyleHoloCard({ 
-  player, 
-  position, 
-  teamSide 
-}: { 
-  player: LobbyPlayer; 
-  position: PlayerPosition; 
-  teamSide: 'RADIANT' | 'DIRE';
-}) {
-  const isRadiant = teamSide === 'RADIANT';
-  const role = ROLE_THEMES[position] || ROLE_THEMES[1];
-  const rarity = player.card_rarity || 'LEGENDARY';
-
-  const displayName = player.displayName || player.userId?.slice(0, 10) || `Operator_${position}`;
-  const elo = player.currentElo || 2250 + (position * 25);
-  const winRate = player.winRate || 62.5;
-
-  return (
-    <div className="relative flex flex-col items-center pt-3.5 group select-none">
-      
-      {/* 👑 1. TOP CREST EMBLEM */}
-      <div className="absolute top-0 z-30 flex items-center justify-center transform group-hover:-translate-y-1 transition-transform duration-300">
-        <div className={`px-3 py-0.5 rounded-t-md text-[8px] font-black font-mono tracking-widest uppercase border-t-2 border-x-2 flex items-center gap-1 shadow-2xl backdrop-blur-md ${
-          isRadiant 
-            ? 'bg-slate-950 border-[#00D4FF] text-[#00D4FF] shadow-[0_0_15px_rgba(0,212,255,0.8)]' 
-            : 'bg-slate-950 border-[#C9A84C] text-[#C9A84C] shadow-[0_0_15px_rgba(201,168,76,0.8)]'
-        }`}>
-          <Crown className={`w-3 h-3 ${isRadiant ? 'fill-[#00D4FF]' : 'fill-[#C9A84C]'} animate-pulse`} />
-          <span>{role.short}</span>
-        </div>
-      </div>
-
-      {/* 🎴 2. MAIN HOLO CARD BODY */}
-      <div className={`relative w-full max-w-52.5 h-82.5 rounded-2xl bg-slate-950/90 border-2 overflow-hidden flex flex-col justify-between p-3 font-mono transition-all duration-500 group-hover:scale-105 group-hover:-translate-y-1.5 backdrop-blur-xl ${
-        isRadiant 
-          ? 'border-[#00D4FF]/80 shadow-[0_0_25px_rgba(0,212,255,0.25)] hover:shadow-[0_0_40px_rgba(0,212,255,0.6)]' 
-          : 'border-[#C9A84C]/80 shadow-[0_0_25px_rgba(201,168,76,0.25)] hover:shadow-[0_0_40px_rgba(201,168,76,0.6)]'
-      }`}>
-        
-        {/* Holographic Light Foil Sweep Effect */}
-        <div className="absolute inset-0 bg-linear-to-tr from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none z-30" />
-
-        {/* Cyberpunk Top Corner Highlights */}
-        <div className={`absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 ${isRadiant ? 'border-[#00D4FF]' : 'border-[#C9A84C]'}`} />
-        <div className={`absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 ${isRadiant ? 'border-[#00D4FF]' : 'border-[#C9A84C]'}`} />
-
-        {/* Header Metadata */}
-        <div className="flex justify-between items-center z-10 pt-1">
-          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded border shadow-sm" style={{ borderColor: `${role.hex}60`, color: role.hex, backgroundColor: `${role.hex}15` }}>
-            {role.name}
-          </span>
-          <span className={`text-[7px] font-black px-1.5 py-0.5 rounded text-slate-950 uppercase shadow-md ${
-            rarity === 'LEGENDARY' ? 'bg-linear-to-r from-[#C9A84C] via-amber-200 to-[#C9A84C]' : 'bg-[#00D4FF]'
-          }`}>
-            {rarity}
-          </span>
-        </div>
-
-        {/* Center Artwork Canvas */}
-        <div className="relative w-full h-38.75 my-1 rounded-xl bg-slate-900 border border-slate-800 overflow-hidden flex items-center justify-center shadow-inner group-hover:border-white/20 transition-colors">
-          <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-900/40 to-transparent opacity-90 z-10" />
-          
-          {player.avatarUrl ? (
-            <img src={player.avatarUrl} alt={displayName} className="w-full h-full object-cover object-top filter contrast-105" />
-          ) : (
-            <div className="flex flex-col items-center justify-center z-20">
-              <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-slate-800 to-slate-900 border border-slate-700 flex items-center justify-center font-black text-xl text-white shadow-2xl">
-                {displayName.slice(0, 2).toUpperCase()}
-              </div>
-              <span className="text-[8px] text-zinc-500 mt-2 font-bold tracking-widest">AVELAi PROTOCOL</span>
-            </div>
-          )}
-
-          {/* Bottom Title In Card */}
-          <div className="absolute bottom-1.5 left-2 right-2 z-20 flex justify-between items-end">
-            <span className="text-xs font-black text-white truncate drop-shadow-md">{displayName}</span>
-            <span className="text-[9px] font-bold text-emerald-400 drop-shadow">{winRate}% WR</span>
-          </div>
-        </div>
-
-        {/* Combat Telemetry & ELO */}
-        <div className="space-y-1.5 z-10">
-          <div className="grid grid-cols-2 gap-1 bg-slate-900/95 p-1.5 rounded-lg border border-slate-800 text-center">
-            <div>
-              <div className="text-[7px] text-zinc-500 uppercase font-bold">ELO RATING</div>
-              <div className="text-[11px] font-black text-[#00D4FF]">{elo}</div>
-            </div>
-            <div>
-              <div className="text-[7px] text-zinc-500 uppercase font-bold">KARMA SCORE</div>
-              <div className="text-[11px] font-black text-emerald-400">{player.karmaScore || 100}</div>
-            </div>
-          </div>
-
-          {/* Ready Confirmation Status */}
-          <div className={`w-full py-1 rounded-md text-[8px] font-black flex items-center justify-center gap-1 tracking-wider transition-colors ${
-            isRadiant 
-              ? 'bg-[#00D4FF]/15 border border-[#00D4FF]/50 text-[#00D4FF] shadow-[0_0_10px_rgba(0,212,255,0.2)]' 
-              : 'bg-[#C9A84C]/15 border border-[#C9A84C]/50 text-[#C9A84C] shadow-[0_0_10px_rgba(201,168,76,0.2)]'
-          }`}>
-            <CheckCircle2 className="w-3 h-3" /> MATCH READY
-          </div>
-        </div>
-
-        {/* Cyberpunk Bottom Corner Highlights */}
-        <div className={`absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 ${isRadiant ? 'border-[#00D4FF]' : 'border-[#C9A84C]'}`} />
-        <div className={`absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 ${isRadiant ? 'border-[#00D4FF]' : 'border-[#C9A84C]'}`} />
-      </div>
-    </div>
-  );
-}
-
-// ============================================================================
-// 4. MAIN PAGE
+// 2. MAIN PAGE
 // ============================================================================
 
 interface PageProps {
@@ -235,7 +105,7 @@ export default function WaitingRoomPage({ params }: PageProps) {
                 { userId: 'u-2', displayName: 'Mikoto_God', assignedPosition: 2, currentElo: 2280, winRate: 64, card_rarity: 'EPIC' },
                 { userId: 'u-3', displayName: 'Jabz_322', assignedPosition: 3, currentElo: 2190, winRate: 61, card_rarity: 'COMMON' },
                 { userId: 'u-4', displayName: 'Q_Supp', assignedPosition: 4, currentElo: 2110, winRate: 59, card_rarity: 'EPIC' },
-                { userId: 'u-5', displayName: 'Whitemon_V2', assignedPosition: 5, currentElo: 2090, winRate: 58, card_rarity: 'COMMON' },
+                { userId: 'u-5', displayName: 'Whitemon_V2', assignedPosition: 5, currentElo: 2090, winRate: 58, card_rarity: 'NONE' },
               ],
               teamB: [
                 { userId: 'u-6', displayName: 'Devil-llou', assignedPosition: 1, currentElo: 2310, winRate: 66, card_rarity: 'LEGENDARY' },
@@ -290,9 +160,7 @@ export default function WaitingRoomPage({ params }: PageProps) {
 
       <div className="w-full max-w-7xl mx-auto space-y-6 z-10">
         
-        {/* ================================================================= */}
-        {/* TOP HEADER                                                        */}
-        {/* ================================================================= */}
+        {/* TOP HEADER */}
         <header className="flex flex-col md:flex-row items-center justify-between border-b border-slate-800 pb-4 gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -337,33 +205,37 @@ export default function WaitingRoomPage({ params }: PageProps) {
           </button>
         </div>
 
-        {/* ================================================================= */}
-        {/* MAIN BODY: 5v5 CARD SHOWCASE / REWARDS STORE                     */}
-        {/* ================================================================= */}
+        {/* MAIN BODY */}
         {activeTab === 'lobby' ? (
           <main className="space-y-6">
             
-            {/* 🔷 TEAM RADIANT (5 Cards) */}
+            {/* TEAM RADIANT */}
             <section className="bg-slate-950/80 border border-[#00D4FF]/40 p-5 rounded-2xl shadow-2xl space-y-3">
               <div className="flex items-center justify-between border-b border-[#00D4FF]/20 pb-2">
                 <h2 className="text-[#00D4FF] font-black text-sm tracking-widest flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-[#00D4FF]" /> TEAM RADIANT (ORIGIN C1)
+                  <Shield className="w-4 h-4 text-[#00D4FF]"/> TEAM RADIANT (ORIGIN C1)
                 </h2>
                 <span className="text-xs text-zinc-400">STATUS: <b className="text-white">5/5 DECK LOCKED</b></span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 justify-items-center">
                 {teamA.map((player: LobbyPlayer, idx: number) => (
-                  <TFTStyleHoloCard 
-                    key={player.userId || idx} 
-                    player={player} 
-                    position={(player.assignedPosition || idx + 1) as PlayerPosition} 
-                    teamSide="RADIANT" 
+                  <IntegrityCard
+                    key={player.userId || idx}
+                    userId={player.userId}
+                    displayName={player.displayName ?? `Operator_${idx + 1}`}
+                    avatarUrl={player.avatarUrl}
+                    rarity={((player.card_rarity as IntegrityRarity) ?? 'NONE')}
+                    position={((player.assignedPosition || idx + 1) as PlayerPosition)}
+                    team="TEAM_A"
+                    karmaScore={player.karmaScore}
+                    winRate={player.winRate}
+                    isCurrentUser={idx === 4}
                   />
                 ))}
               </div>
             </section>
 
-            {/* ⚡ VS Divider Bar */}
+            {/* VS Divider */}
             <div className="flex items-center justify-center gap-4 my-2">
               <div className="flex-1 h-px bg-linear-to-r from-transparent via-[#00D4FF]/40 to-transparent" />
               <div className="w-11 h-11 rounded-full border-2 border-[#C9A84C] bg-slate-950 flex items-center justify-center font-black text-sm text-[#C9A84C] shadow-[0_0_20px_rgba(201,168,76,0.4)] animate-pulse">
@@ -372,33 +244,37 @@ export default function WaitingRoomPage({ params }: PageProps) {
               <div className="flex-1 h-px bg-linear-to-r from-transparent via-[#C9A84C]/40 to-transparent" />
             </div>
 
-            {/* 🔶 TEAM DIRE (5 Cards) */}
+            {/* TEAM DIRE */}
             <section className="bg-slate-950/80 border border-[#C9A84C]/40 p-5 rounded-2xl shadow-2xl space-y-3">
               <div className="flex items-center justify-between border-b border-[#C9A84C]/20 pb-2">
                 <h2 className="text-[#C9A84C] font-black text-sm tracking-widest flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-[#C9A84C]" /> TEAM DIRE (ORIGIN C4)
+                  <Flame className="w-4 h-4 text-[#C9A84C]"/> TEAM DIRE (ORIGIN C4)
                 </h2>
                 <span className="text-xs text-zinc-400">STATUS: <b className="text-white">5/5 DECK LOCKED</b></span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 justify-items-center">
                 {teamB.map((player: LobbyPlayer, idx: number) => (
-                  <TFTStyleHoloCard 
-                    key={player.userId || idx} 
-                    player={player} 
-                    position={(player.assignedPosition || idx + 1) as PlayerPosition} 
-                    teamSide="DIRE" 
+                  <IntegrityCard
+                    key={player.userId || idx}
+                    userId={player.userId}
+                    displayName={player.displayName ?? `Operator_${idx + 6}`}
+                    avatarUrl={player.avatarUrl}
+                    rarity={((player.card_rarity as IntegrityRarity) ?? 'NONE')}
+                    position={((player.assignedPosition || idx + 1) as PlayerPosition)}
+                    team="TEAM_B"
+                    karmaScore={player.karmaScore}
+                    winRate={player.winRate}
                   />
                 ))}
               </div>
             </section>
           </main>
         ) : (
-          /* Rewards Store Tab */
           <main className="bg-slate-950 border border-[#C9A84C]/30 rounded-2xl p-6 shadow-2xl space-y-6">
             <div className="flex justify-between items-center bg-slate-900 p-4 rounded-xl border border-[#C9A84C]/30">
               <div className="text-zinc-400 text-xs">AVAILABLE BALANCE</div>
               <div className="text-2xl font-black text-[#C9A84C] flex items-center gap-2">
-                <Coins className="w-6 h-6" /> 450 PTS
+                <Coins className="w-6 h-6"/> 450 PTS
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -418,15 +294,13 @@ export default function WaitingRoomPage({ params }: PageProps) {
           </main>
         )}
 
-        {/* ================================================================= */}
-        {/* FOOTER: ACTION BAR                                                */}
-        {/* ================================================================= */}
+        {/* FOOTER */}
         <footer className="flex flex-col sm:flex-row items-center justify-between border-t border-slate-800 pt-5 gap-4">
           <button 
             onClick={() => router.push('/dashboard')} 
             className="px-5 py-2.5 border border-slate-700 hover:border-slate-500 text-zinc-400 hover:text-white rounded-xl transition-all text-xs tracking-widest uppercase font-bold flex items-center gap-2 cursor-pointer"
           >
-            <ArrowLeft className="w-3.5 h-3.5" /> ABORT TO DASHBOARD
+            <ArrowLeft className="w-3.5 h-3.5"/> ABORT TO DASHBOARD
           </button>
 
           <div className="flex items-center gap-4">
@@ -437,7 +311,7 @@ export default function WaitingRoomPage({ params }: PageProps) {
               onClick={() => router.push(`/match/${lobbyId || 'match_01'}`)}
               className="px-8 py-3 bg-[#00D4FF] hover:bg-[#00D4FF]/80 text-slate-950 font-black text-xs tracking-widest uppercase rounded-xl shadow-[0_0_25px_rgba(0,212,255,0.5)] transition-all hover:scale-105 active:scale-95 flex items-center gap-2 cursor-pointer"
             >
-              <Zap className="w-4 h-4 fill-current" /> INITIALIZE MATCH
+              <Zap className="w-4 h-4 fill-current"/> INITIALIZE MATCH
             </button>
           </div>
         </footer>
