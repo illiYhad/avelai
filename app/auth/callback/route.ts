@@ -6,7 +6,9 @@ import { getServerDb } from "@/lib/db/server";
 // แลก code/token จาก magic link เป็น session · next รับเฉพาะ path ภายใน (กัน open redirect)
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const next = safeNext(url.searchParams.get("next"));
+  // ชั้นที่ 2 กัน open redirect: resolve แล้วต้อง origin เดิมเท่านั้น
+  let next = safeNext(url.searchParams.get("next"));
+  if (new URL(next, url.origin).origin !== url.origin) next = "/me";
   const code = url.searchParams.get("code");
   const tokenHash = url.searchParams.get("token_hash");
   const type = url.searchParams.get("type") as EmailOtpType | null;

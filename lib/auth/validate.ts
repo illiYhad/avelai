@@ -28,7 +28,9 @@ export function validateAvatarUrl(input: string): string | null {
 /** กัน open redirect: รับเฉพาะ path ภายในที่ขึ้นต้น / และไม่ขึ้นต้น // หรือ /\ · ไม่ผ่าน = fallback */
 export function safeNext(next: unknown, fallback = "/me"): string {
   if (typeof next !== "string" || next === "") return fallback;
-  if (!next.startsWith("/")) return fallback;
-  if (next.startsWith("//") || next.startsWith("/\\")) return fallback;
-  return next;
+  // เบราว์เซอร์ตัด \t \n \r ใน URL เอง — ตัดก่อนตรวจ กัน "/\t/evil.com" กลายเป็น "//evil.com"
+  const cleaned = next.replace(/[\t\n\r]/g, "");
+  if (!cleaned.startsWith("/")) return fallback;
+  if (cleaned.startsWith("//") || cleaned.startsWith("/\\")) return fallback;
+  return cleaned;
 }

@@ -22,10 +22,16 @@ export async function sendMagicLink(
   const db = await getServerDb();
   if (!db) return { ok: false, message: "ระบบล็อกอินยังไม่เปิด" };
 
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const proto = h.get("x-forwarded-proto") ?? "http";
-  const redirectTo = `${proto}://${host}/auth/callback?next=${encodeURIComponent(next)}`;
+  // กัน host header poisoning: ใช้ SITE_URL ที่ตั้งค่าไว้ก่อนเสมอ · fallback เป็น header เฉพาะ dev ในเครื่อง
+  // ชั้นสุดท้ายคือ Redirect URLs allowlist ใน Supabase (พี่หยัดตั้งตามใบตอบข้อ URL Configuration)
+  let origin = process.env.SITE_URL?.replace(/\/$/, "");
+  if (!origin) {
+    const h = await headers();
+    const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
+    const proto = h.get("x-forwarded-proto") ?? "http";
+    origin = `${proto}://${host}`;
+  }
+  const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
 
   const { error } = await db.auth.signInWithOtp({
     email,

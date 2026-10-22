@@ -64,6 +64,11 @@ describe("safeNext (กัน open redirect)", () => {
     expect(safeNext("/\\evil.com")).toBe("/me");
   });
 
+  it("control char ที่เบราว์เซอร์ตัดเอง: /\\t/evil.com → fallback (กลายเป็น //)", () => {
+    expect(safeNext("/\t/evil.com")).toBe("/me");
+    expect(safeNext("\t/me")).toBe("/me");
+  });
+
   it("ว่าง/ไม่ใช่ string → fallback", () => {
     expect(safeNext("")).toBe("/me");
     expect(safeNext(null)).toBe("/me");
