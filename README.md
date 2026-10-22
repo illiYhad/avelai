@@ -1,36 +1,23 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AVELAi
 
-## Getting Started
+แพลตฟอร์มสังเวียนอีสปอร์ตไทย — จัดแข่งที่ผลเชื่อได้ (หลักฐาน + ผู้ยืนยันทุกแมตช์) · Esports Passport ติดตัวผู้เล่นข้ามงาน.
+**PRECISION IS FREEDOM** — สถานะ: Phase 1 scaffold (ยังไม่มี schema/ฟีเจอร์).
 
-First, run the development server:
+แหล่งอ้างอิงเดียว: `D:\Balehm_Studio\02_Products\AVELAi\AVELAi_SYSTEM_CORE.md`
+
+## รัน
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm ci
+npm run dev    # dev server
+npm test       # vitest
+npm run build  # ต้องผ่านโดยไม่มี env (env-safe)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+env ดู `.env.example` — ไม่ตั้งค่า แอปยังรันได้ แต่ฟีเจอร์ฐานข้อมูลปิด
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## กฎ
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **SQL บน Supabase และการกด merge เข้า `main` = พี่หยัด (CEO) คนเดียว** — migration เป็นไฟล์ใน `supabase/` เท่านั้น (ดู `supabase/README.md`)
+- service role key แตะได้ที่ `lib/db/admin.ts` ที่เดียว
+- ห้าม commit `.env*` (ยกเว้น `.env.example`)
