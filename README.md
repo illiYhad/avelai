@@ -14,7 +14,15 @@ npm test       # vitest
 npm run build  # ต้องผ่านโดยไม่มี env (env-safe)
 ```
 
-env ดู `.env.example` — ไม่ตั้งค่า แอปยังรันได้ แต่ฟีเจอร์ฐานข้อมูลปิด
+env ดู `.env.example` — ไม่ตั้งค่า แอปยังรันได้ แต่ฟีเจอร์ฐานข้อมูล/ล็อกอินปิด
+
+| ตัวแปร | ใช้ทำอะไร | ถ้าไม่ตั้ง |
+|---|---|---|
+| `SUPABASE_URL` + `SUPABASE_ANON_KEY` | ล็อกอิน + อ่าน/เขียนข้อมูลผ่าน RLS | หน้า `/login` แสดง "ระบบล็อกอินยังไม่เปิด" |
+| `SUPABASE_SERVICE_ROLE_KEY` | งานฝั่ง admin ผ่าน `lib/db/admin.ts` ที่เดียว | ฟีเจอร์ admin ฝั่ง server ปิด |
+| `SITE_URL` | โดเมนจริงของเว็บ ใช้สร้างลิงก์ magic link (กัน host header poisoning) | ใช้ host ของ request — **dev ในเครื่องเท่านั้น** |
+
+> ⚠ **ตอนขึ้น Vercel ต้องตั้ง `SITE_URL` เป็นโดเมนจริงเสมอ** (เช่น `https://avelai.com`) และต้องตรงกับ Redirect URLs ใน Supabase → Authentication → URL Configuration
 
 ## กฎ
 
