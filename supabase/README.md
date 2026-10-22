@@ -7,4 +7,8 @@
 3. **ห้ามมี schema นอกโค้ด** — สร้าง/แก้ตารางผ่านไฟล์ในโฟลเดอร์นี้เท่านั้น ห้ามแก้ใน Dashboard โดยไม่มีไฟล์คู่กัน
 4. service role key แตะได้ที่ `lib/db/admin.ts` ที่เดียว — ห้ามใช้ตรงใน route/action
 
-> สถานะ: ยังไม่มีไฟล์ `.sql` — K-AV-0 เป็นโครงเปล่า · ตารางแรกจะมากับ K-AV-1 หลังสเปก Phase 1 เซ็น
+## รันแล้ว
+
+| ไฟล์ | รันเมื่อ | โปรเจกต์ | หมายเหตุ |
+|---|---|---|---|
+| `001_core_auth_roles_audit.sql` | 22 ต.ค. 2026 23:17 (พี่หยัด) | `balehm-studio` (ชั่วคราวช่วงพัฒนา) | users · user_roles · audit_logs · enum platform_role · is_admin() · trigger สมัคร · RLS ครบ |

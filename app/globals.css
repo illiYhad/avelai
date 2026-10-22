@@ -12,12 +12,13 @@
   --color-gold: var(--gold);
   --color-cyan: var(--cyan);
   --font-display: var(--font-orbitron);
-  --font-body: var(--font-inter);
+  --font-body: var(--font-noto-sans-thai);
   --font-numeric: var(--font-jetbrains-mono);
 }
 
 body {
   background: var(--void-black);
   color: #ffffff;
-  font-family: var(--font-inter), system-ui, sans-serif;
+  /* ฟอนต์ไทยนำ (G3 K-AV-0) · Inter ตามหลังสำหรับ latin */
+  font-family: var(--font-noto-sans-thai), var(--font-inter), system-ui, sans-serif;
 }

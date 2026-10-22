@@ -1,8 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono, Orbitron } from "next/font/google";
+import { Inter, JetBrains_Mono, Noto_Sans_Thai, Orbitron } from "next/font/google";
 import "./globals.css";
 
 const orbitron = Orbitron({ subsets: ["latin"], variable: "--font-orbitron" });
+const notoSansThai = Noto_Sans_Thai({
+  subsets: ["thai", "latin"],
+  variable: "--font-noto-sans-thai",
+});
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -24,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="th">
       <body
-        className={`${orbitron.variable} ${inter.variable} ${jetbrainsMono.variable} antialiased`}
+        className={`${orbitron.variable} ${notoSansThai.variable} ${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
         {children}
       </body>
