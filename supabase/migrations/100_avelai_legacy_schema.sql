@@ -1883,8 +1883,10 @@ GRANT ALL ON TABLE public.draft_rooms TO service_role;
 -- Name: TABLE esports_passports; Type: ACL; Schema: public; Owner: postgres
 --
 
-GRANT ALL ON TABLE public.esports_passports TO anon;
-GRANT ALL ON TABLE public.esports_passports TO authenticated;
+-- [SQL QA1 ข้อ 5 — จุดที่สอง] GRANT ALL เดิมมาทีหลัง REVOKE ด้านบน จะคืนสิทธิ์ UPDATE ทุกคอลัมน์
+-- จึงลดเหลือ SELECT (คอลัมน์ UPDATE display_name/avatar_url ให้ไว้แล้วตรง policy)
+GRANT SELECT ON TABLE public.esports_passports TO anon;
+GRANT SELECT ON TABLE public.esports_passports TO authenticated;
 GRANT ALL ON TABLE public.esports_passports TO service_role;
 
 -- Name: TABLE integrity_events; Type: ACL; Schema: public; Owner: postgres
