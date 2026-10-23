@@ -1,3 +1,4 @@
+import { FEATURES, FEATURE_DISABLED_MESSAGE } from '@/lib/featureFlags';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -27,6 +28,9 @@ export interface UserTokenWallet {
 }
 
 export async function POST(req: NextRequest) {
+  if (!FEATURES.payments) {
+    return Response.json({ error: FEATURE_DISABLED_MESSAGE }, { status: 503 });
+  }
   try {
     const body: PrizeSettlePayload = await req.json();
     const { tournamentId, tier, idempotencyKey, rankedParticipants } = body;
