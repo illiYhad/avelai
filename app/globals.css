@@ -1,24 +1,26 @@
 @import "tailwindcss";
 
-/* สีแบรนด์จาก AVELAi_SYSTEM_CORE.md หมวด 5 */
 :root {
-  --void-black: #0b0e14;
-  --gold: #c9a84c;
-  --cyan: #00d4ff;
+  --background: #ffffff;
+  --foreground: #171717;
 }
 
 @theme inline {
-  --color-void: var(--void-black);
-  --color-gold: var(--gold);
-  --color-cyan: var(--cyan);
-  --font-display: var(--font-orbitron);
-  --font-body: var(--font-noto-sans-thai);
-  --font-numeric: var(--font-jetbrains-mono);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
 }
 
 body {
-  background: var(--void-black);
-  color: #ffffff;
-  /* ฟอนต์ไทยนำ (G3 K-AV-0) · Inter ตามหลังสำหรับ latin */
-  font-family: var(--font-noto-sans-thai), var(--font-inter), system-ui, sans-serif;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
