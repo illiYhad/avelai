@@ -1,3 +1,4 @@
+import { FEATURES, FEATURE_DISABLED_MESSAGE } from '@/lib/featureFlags';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createTop8SingleElimination, type DbBracketSlotRow } from '@/lib/tournament/bracketEngine';
@@ -8,6 +9,9 @@ const supabase = createClient(
 );
 
 export async function POST(req: Request) {
+  if (!FEATURES.legacyApi) {
+    return Response.json({ error: FEATURE_DISABLED_MESSAGE }, { status: 503 });
+  }
   try {
     const { tournamentId } = await req.json();
 

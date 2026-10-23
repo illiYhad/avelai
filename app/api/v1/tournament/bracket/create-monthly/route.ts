@@ -1,3 +1,4 @@
+import { FEATURES, FEATURE_DISABLED_MESSAGE } from '@/lib/featureFlags';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { 
@@ -11,6 +12,9 @@ const supabase = createClient(
 );
 
 export async function POST(req: Request) {
+  if (!FEATURES.legacyApi) {
+    return Response.json({ error: FEATURE_DISABLED_MESSAGE }, { status: 503 });
+  }
   try {
     const body = await req.json();
     const { seasonId, monthlyTournamentId, qualifiedPlayers } = body;

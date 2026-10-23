@@ -1,3 +1,4 @@
+import { FEATURES, FEATURE_DISABLED_MESSAGE } from '@/lib/featureFlags';
 import { NextResponse } from 'next/server';
 
 interface FinalizeDraftPayload {
@@ -10,6 +11,9 @@ interface FinalizeDraftPayload {
 }
 
 export async function POST(req: Request) {
+  if (!FEATURES.legacyApi) {
+    return Response.json({ error: FEATURE_DISABLED_MESSAGE }, { status: 503 });
+  }
     try {
         const body: FinalizeDraftPayload = await req.json();
         const { draftRoomId, tournamentId, radiantCaptainId, direCaptainId, radiantPlayers, direPlayers } = body;

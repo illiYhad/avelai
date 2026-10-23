@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
+import { getServerDb } from '@/lib/db/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
+  // K-AV-H2: ต้องล็อกอินก่อนเรียก Groq (กันคนนอกเผาโควตา) · ไม่แตะ DB นอกจากเช็ก session
+  const db = await getServerDb();
+  if (!db) return NextResponse.json({ error: 'ระบบยังไม่พร้อมใช้งาน' }, { status: 503 });
+  const { data: { user } } = await db.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อนใช้งาน' }, { status: 401 });
+
   try {
     const groq = new Groq({
       apiKey: process.env.GROQ_API_KEY || '',

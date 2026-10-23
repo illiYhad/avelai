@@ -1,9 +1,13 @@
-﻿import { NextResponse } from 'next/server';
+﻿import { FEATURES, FEATURE_DISABLED_MESSAGE } from '@/lib/featureFlags';
+import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
+  if (!FEATURES.legacyApi) {
+    return Response.json({ error: FEATURE_DISABLED_MESSAGE }, { status: 503 });
+  }
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';

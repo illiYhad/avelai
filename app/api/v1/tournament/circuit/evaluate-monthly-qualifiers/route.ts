@@ -1,3 +1,4 @@
+import { FEATURES, FEATURE_DISABLED_MESSAGE } from '@/lib/featureFlags';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import {
@@ -15,6 +16,9 @@ interface EvaluateMonthlyRequest {
 }
 
 export async function POST(req: NextRequest) {
+  if (!FEATURES.legacyApi) {
+    return Response.json({ error: FEATURE_DISABLED_MESSAGE }, { status: 503 });
+  }
     try {
         const body: EvaluateMonthlyRequest = await req.json();
         const { seasonId } = body;

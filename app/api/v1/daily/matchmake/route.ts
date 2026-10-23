@@ -20,12 +20,13 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient();
 
     // 1. ตรวจสอบ Session ผู้ใช้
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
-    if (authError || !session?.user) {
+    // getUser() ยืนยันกับ Auth server จริง (getSession อ่านแค่ cookie — ปลอมได้)
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = session.user.id;
+    const userId = user.id;
 
     try {
         // 2. ตรวจสอบ User Profile & Daily Ticket

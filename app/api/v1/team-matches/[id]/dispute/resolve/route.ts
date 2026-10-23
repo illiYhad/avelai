@@ -17,14 +17,19 @@ export async function POST(
   try {
     const { id: matchId } = await params;
     const supabase = await getServerDb();
-    const admin = getAdminDb();
-    if (!supabase || !admin) {
+    if (!supabase) {
       return NextResponse.json({ error: { code: "DB_DISABLED", message: "ยังไม่ต่อฐานข้อมูล" } }, { status: 503 });
     }
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: { code: "UNAUTHORIZED", message: "กรุณาเข้าสู่ระบบก่อนดำเนินการ" } }, { status: 401 });
+    }
+
+    // K-AV-H2: สร้าง service-role client หลังยืนยันตัวตนแล้วเท่านั้น
+    const admin = getAdminDb();
+    if (!admin) {
+      return NextResponse.json({ error: { code: "DB_DISABLED", message: "ยังไม่ต่อฐานข้อมูล" } }, { status: 503 });
     }
 
     // Permission Gate: REFEREE หรือ ADMIN จาก user_roles (001)

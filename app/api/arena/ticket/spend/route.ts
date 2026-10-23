@@ -1,7 +1,11 @@
+import { FEATURES, FEATURE_DISABLED_MESSAGE } from '@/lib/featureFlags';
 import { NextResponse } from 'next/server';
 import { spendArenaTicket } from '@/lib/arena/ticketService';
 
 export async function POST(req: Request) {
+  if (!FEATURES.payments) {
+    return Response.json({ error: FEATURE_DISABLED_MESSAGE }, { status: 503 });
+  }
     try {
         const { userId, sessionId } = await req.json();
 

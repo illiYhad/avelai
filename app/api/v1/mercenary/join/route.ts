@@ -1,3 +1,4 @@
+import { FEATURES, FEATURE_DISABLED_MESSAGE } from '@/lib/featureFlags';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -9,6 +10,9 @@ const MAX_SEATS = 10;
 const POT_SIZE_THB = 90.0;
 
 export async function POST(request: Request) {
+  if (!FEATURES.legacyApi) {
+    return Response.json({ error: FEATURE_DISABLED_MESSAGE }, { status: 503 });
+  }
   try {
     const body = await request.json();
     const { userId } = body; // ไม่รับ tokenAmount / payWith จาก client อีกต่อไป
