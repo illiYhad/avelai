@@ -36,6 +36,9 @@ CREATE POLICY teams_insert_own ON public.teams
     AND (captain_id IS NULL OR captain_id = (SELECT auth.uid()))
     AND wins = 0 AND losses = 0
     AND is_roster_locked = false
+    AND locked_until IS NULL
+    AND is_active = true
+    AND private_beta = false  -- เปิด Private Beta (สเกาต์ Liquipedia) ได้เฉพาะ service role/แอดมิน
     AND deleted_at IS NULL
     AND public.is_not_suspended()
   );
