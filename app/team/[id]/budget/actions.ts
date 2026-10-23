@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { getServerDb } from "@/lib/db/server";
 import { getAdminDb } from "@/lib/db/admin";
 import { logAudit } from "@/lib/audit";
+import { failWith } from "@/lib/server-errors";
+import { isUserSuspended, SUSPENDED_RESULT } from "@/lib/auth/suspension";
 
 export type ActionResult = { success: true } | { error: { code: string; message: string } };
 
@@ -17,6 +19,7 @@ async function requireOwnerManager(teamId: string) {
   if (!db) return { error: DB_OFF.error } as const;
   const { data: auth } = await db.auth.getUser();
   if (!auth.user) return { error: { code: "UNAUTHENTICATED", message: "กรุณาเข้าสู่ระบบก่อน" } } as const;
+  if (await isUserSuspended(db, auth.user.id)) return SUSPENDED_RESULT;
 
   const [{ data: team }, { data: member }] = await Promise.all([
     db.from("teams").select("owner_id").eq("id", teamId).maybeSingle(),
@@ -86,7 +89,7 @@ export async function addBudgetItemAction(teamId: string, formData: FormData): P
     .single();
 
   if (error || !item) {
-    return { error: { code: "ADD_FAILED", message: error?.message ?? "เพิ่มรายการไม่สำเร็จ" } };
+    return failWith("ADD_FAILED", error, "เพิ่มรายการไม่สำเร็จ");
   }
 
   await logAudit({
@@ -117,7 +120,7 @@ export async function deleteBudgetItemAction(teamId: string, itemId: string): Pr
   }
 
   const { error } = await admin.from("team_budget_items").delete().eq("id", itemId);
-  if (error) return { error: { code: "DELETE_FAILED", message: error.message } };
+  if (error) return failWith("DELETE_FAILED", error);
 
   await logAudit({
     action: "BUDGET_ITEM_DELETE",

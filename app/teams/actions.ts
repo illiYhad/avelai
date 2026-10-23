@@ -12,6 +12,8 @@ import { getServerDb } from "@/lib/db/server";
 import { getAdminDb } from "@/lib/db/admin";
 import { checkRosterEligibility } from "@/lib/team/rosterEligibility";
 import { logAudit } from "@/lib/audit";
+import { failWith } from "@/lib/server-errors";
+import { isUserSuspended, SUSPENDED_RESULT } from "@/lib/auth/suspension";
 
 export type ActionResult =
   | { success: true; teamId?: string }
@@ -45,9 +47,7 @@ export async function createTeamAction(formData: FormData): Promise<ActionResult
 
   const session = await getCurrentUserId();
   if (!session) return { error: { code: "UNAUTHENTICATED", message: "กรุณาเข้าสู่ระบบก่อนสร้างทีม" } };
-  const admin = getAdminDb();
-  if (!admin) return DB_OFF;
-
+  if (await isUserSuspended(session.db, session.userId)) return SUSPENDED_RESULT;
   // 1 คนสร้างได้ 1 ทีมต่อเกม (ตรรกะเดิมของ Zodiac)
   const { data: existingOwnTeam } = await session.db
     .from("teams")
@@ -65,7 +65,8 @@ export async function createTeamAction(formData: FormData): Promise<ActionResult
     name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") || tag.toLowerCase();
   const slug = `${baseSlug}-${Date.now().toString().slice(-4)}`;
 
-  const { data: newTeam, error: createError } = await admin
+  // K-AV-H2: เขียนด้วย client ของผู้ใช้ (RLS: owner_id = auth.uid() · 130_fix_teams_insert.sql) ไม่ใช้ service role
+  const { data: newTeam, error: createError } = await session.db
     .from("teams")
     .insert({
       name,
@@ -81,10 +82,10 @@ export async function createTeamAction(formData: FormData): Promise<ActionResult
     .single();
 
   if (createError || !newTeam) {
-    return { error: { code: "CREATE_FAILED", message: createError?.message ?? "สร้างทีมไม่สำเร็จ" } };
+    return failWith("CREATE_FAILED", createError, "สร้างทีมไม่สำเร็จ");
   }
 
-  const { error: memberError } = await admin.from("team_members").insert({
+  const { error: memberError } = await session.db.from("team_members").insert({
     team_id: newTeam.id,
     user_id: session.userId,
     role: "OWNER",
@@ -93,7 +94,7 @@ export async function createTeamAction(formData: FormData): Promise<ActionResult
   });
 
   if (memberError) {
-    return { error: { code: "MEMBER_ADD_FAILED", message: memberError.message } };
+    return failWith("MEMBER_ADD_FAILED", memberError);
   }
 
   await logAudit({
@@ -117,6 +118,7 @@ export async function invitePlayerAction(teamId: string, formData: FormData): Pr
 
   const session = await getCurrentUserId();
   if (!session) return { error: { code: "UNAUTHENTICATED", message: "กรุณาเข้าสู่ระบบก่อน" } };
+  if (await isUserSuspended(session.db, session.userId)) return SUSPENDED_RESULT;
   const admin = getAdminDb();
   if (!admin) return DB_OFF;
 
@@ -175,7 +177,7 @@ export async function invitePlayerAction(teamId: string, formData: FormData): Pr
     if (insertError.code === "23505") {
       return { error: { code: "ALREADY_MEMBER", message: "ผู้เล่นคนนี้อยู่ในทีมอยู่แล้ว" } };
     }
-    return { error: { code: "INVITE_FAILED", message: insertError.message } };
+    return failWith("INVITE_FAILED", insertError);
   }
 
   await logAudit({
@@ -193,6 +195,7 @@ export async function invitePlayerAction(teamId: string, formData: FormData): Pr
 export async function lockRosterAction(teamId: string): Promise<ActionResult> {
   const session = await getCurrentUserId();
   if (!session) return { error: { code: "UNAUTHENTICATED", message: "กรุณาเข้าสู่ระบบก่อน" } };
+  if (await isUserSuspended(session.db, session.userId)) return SUSPENDED_RESULT;
   const admin = getAdminDb();
   if (!admin) return DB_OFF;
 
@@ -231,7 +234,7 @@ export async function lockRosterAction(teamId: string): Promise<ActionResult> {
     .single();
 
   if (snapshotError || !snapshot) {
-    return { error: { code: "SNAPSHOT_FAILED", message: snapshotError?.message ?? "สร้าง roster snapshot ไม่สำเร็จ" } };
+    return failWith("SNAPSHOT_FAILED", snapshotError, "สร้าง roster snapshot ไม่สำเร็จ");
   }
 
   const memberRows = ((activeMembers ?? []) as { user_id: string; role: string }[]).map((m) => ({
@@ -250,7 +253,7 @@ export async function lockRosterAction(teamId: string): Promise<ActionResult> {
     .eq("id", teamId);
 
   if (lockError) {
-    return { error: { code: "LOCK_FAILED", message: lockError.message } };
+    return failWith("LOCK_FAILED", lockError);
   }
 
   await logAudit({

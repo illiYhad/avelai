@@ -9,6 +9,8 @@ import { getServerDb } from "@/lib/db/server";
 import { getAdminDb } from "@/lib/db/admin";
 import { checkRosterEligibility } from "@/lib/team/rosterEligibility";
 import { logAudit } from "@/lib/audit";
+import { failWith } from "@/lib/server-errors";
+import { isUserSuspended, SUSPENDED_RESULT } from "@/lib/auth/suspension";
 
 export type RegistrationResult =
   | { success: true; status: string; existing: boolean }
@@ -23,6 +25,7 @@ export async function registerTeamAction(
 
   const { data: auth } = await db.auth.getUser();
   if (!auth.user) return { error: { code: "UNAUTHENTICATED", message: "กรุณาเข้าสู่ระบบก่อนสมัคร" } };
+  if (await isUserSuspended(db, auth.user.id)) return SUSPENDED_RESULT;
   const userId = auth.user.id;
 
   const { data: team } = await db
@@ -102,7 +105,7 @@ export async function registerTeamAction(
     if (regError?.code === "23505") {
       return { success: true, status: "PENDING", existing: true };
     }
-    return { error: { code: "REGISTRATION_FAILED", message: regError?.message ?? "สมัครไม่สำเร็จ" } };
+    return failWith("REGISTRATION_FAILED", regError, "สมัครไม่สำเร็จ");
   }
 
   await logAudit({

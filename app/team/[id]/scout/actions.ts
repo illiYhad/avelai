@@ -13,6 +13,8 @@ import {
   LIQUIPEDIA_MLBB_API,
   LIQUIPEDIA_USER_AGENT,
 } from "@/lib/liquipedia/rateLimit";
+import { failWith } from "@/lib/server-errors";
+import { isUserSuspended, SUSPENDED_RESULT } from "@/lib/auth/suspension";
 
 export type ActionResult = { success: true } | { error: { code: string; message: string } };
 
@@ -24,6 +26,7 @@ async function requireLeader(teamId: string) {
   if (!db) return { error: DB_OFF.error } as const;
   const { data: auth } = await db.auth.getUser();
   if (!auth.user) return { error: { code: "UNAUTHENTICATED", message: "กรุณาเข้าสู่ระบบก่อน" } } as const;
+  if (await isUserSuspended(db, auth.user.id)) return SUSPENDED_RESULT;
   const [{ data: team }, { data: member }] = await Promise.all([
     db.from("teams").select("owner_id, private_beta").eq("id", teamId).maybeSingle(),
     db
@@ -84,7 +87,7 @@ export async function addProspectAction(teamId: string, formData: FormData): Pro
     .single();
 
   if (error || !prospect) {
-    return { error: { code: "ADD_FAILED", message: error?.message ?? "เพิ่มผู้เล่นไม่สำเร็จ" } };
+    return failWith("ADD_FAILED", error, "เพิ่มผู้เล่นไม่สำเร็จ");
   }
 
   await logAudit({
@@ -115,7 +118,7 @@ export async function deleteProspectAction(teamId: string, prospectId: string): 
   }
 
   const { error } = await admin.from("scout_prospects").delete().eq("id", prospectId);
-  if (error) return { error: { code: "DELETE_FAILED", message: error.message } };
+  if (error) return failWith("DELETE_FAILED", error);
 
   revalidatePath(`/team/${teamId}/scout`);
   return { success: true };
@@ -209,7 +212,7 @@ export async function fetchLiquipediaAction(teamId: string, prospectId: string):
     .eq("id", prospectId);
 
   if (updateError) {
-    return { error: { code: "CACHE_FAILED", message: updateError.message } };
+    return failWith("CACHE_FAILED", updateError);
   }
 
   revalidatePath(`/team/${teamId}/scout`);

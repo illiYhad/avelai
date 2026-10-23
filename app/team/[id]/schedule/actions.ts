@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { getServerDb } from "@/lib/db/server";
 import { getAdminDb } from "@/lib/db/admin";
 import { logAudit } from "@/lib/audit";
+import { failWith } from "@/lib/server-errors";
+import { isUserSuspended, SUSPENDED_RESULT } from "@/lib/auth/suspension";
 
 export type ActionResult = { success: true } | { error: { code: string; message: string } };
 
@@ -16,6 +18,7 @@ async function requireLeader(teamId: string) {
   if (!db) return { error: DB_OFF.error } as const;
   const { data: auth } = await db.auth.getUser();
   if (!auth.user) return { error: { code: "UNAUTHENTICATED", message: "กรุณาเข้าสู่ระบบก่อน" } } as const;
+  if (await isUserSuspended(db, auth.user.id)) return SUSPENDED_RESULT;
   const { data: member } = await db
     .from("team_members")
     .select("role")
@@ -65,7 +68,7 @@ export async function createSessionAction(teamId: string, formData: FormData): P
     .single();
 
   if (error || !session) {
-    return { error: { code: "CREATE_FAILED", message: error?.message ?? "สร้างนัดซ้อมไม่สำเร็จ" } };
+    return failWith("CREATE_FAILED", error, "สร้างนัดซ้อมไม่สำเร็จ");
   }
 
   // สร้างแถว attendance ให้สมาชิก ACTIVE ทุกคน (รอ RSVP)
@@ -98,6 +101,7 @@ export async function rsvpAction(teamId: string, sessionId: string, going: boole
   if (!db) return DB_OFF;
   const { data: auth } = await db.auth.getUser();
   if (!auth.user) return { error: { code: "UNAUTHENTICATED", message: "กรุณาเข้าสู่ระบบก่อน" } };
+  if (await isUserSuspended(db, auth.user.id)) return SUSPENDED_RESULT;
 
   // ผ่าน RLS: อัปเดตได้เฉพาะแถวตัวเอง + คอลัมน์ rsvp เท่านั้น (120_team_management.sql)
   const { error } = await db
@@ -106,7 +110,7 @@ export async function rsvpAction(teamId: string, sessionId: string, going: boole
     .eq("session_id", sessionId)
     .eq("user_id", auth.user.id);
 
-  if (error) return { error: { code: "RSVP_FAILED", message: error.message } };
+  if (error) return failWith("RSVP_FAILED", error);
   revalidatePath(`/team/${teamId}/schedule`);
   return { success: true };
 }
@@ -142,7 +146,7 @@ export async function checkAttendanceAction(
     .eq("session_id", sessionId)
     .eq("user_id", userId);
 
-  if (error) return { error: { code: "CHECK_FAILED", message: error.message } };
+  if (error) return failWith("CHECK_FAILED", error);
 
   revalidatePath(`/team/${teamId}/schedule`);
   return { success: true };
