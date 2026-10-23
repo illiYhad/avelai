@@ -1531,7 +1531,11 @@ CREATE POLICY "Users can see own ticket log" ON public.arena_ticket_log FOR SELE
 -- Name: esports_passports Users can update their own passport; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Users can update their own passport" ON public.esports_passports FOR UPDATE USING ((auth.uid() = user_id));
+-- [SQL QA1 ข้อ 5] จำกัดคอลัมน์ที่ผู้ใช้แก้เองได้ — กันแก้ current_elo / peak_elo / win_rate เอง
+REVOKE UPDATE ON public.esports_passports FROM anon, authenticated;
+GRANT UPDATE (display_name, avatar_url) ON public.esports_passports TO authenticated;
+CREATE POLICY "Users can update their own passport" ON public.esports_passports FOR UPDATE
+    USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
 
 -- Name: kyc_records Users can view and insert own KYC; Type: POLICY; Schema: public; Owner: postgres
 --
@@ -1601,9 +1605,8 @@ ALTER TABLE public.esports_passports ENABLE ROW LEVEL SECURITY;
 -- Name: integrity_events ie_admin_write; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY ie_admin_write ON public.integrity_events USING ((EXISTS ( SELECT 1
-   FROM public.users
-  WHERE ((users.id = auth.uid()) AND (users.role = 'admin'::text)))));
+-- [SQL QA1 ข้อ 3] ใช้ระบบแอดมินเดียวกับ 001 (user_roles) แทน users.role
+CREATE POLICY ie_admin_write ON public.integrity_events USING (public.is_admin());
 
 -- Name: integrity_events ie_read; Type: POLICY; Schema: public; Owner: postgres
 --
@@ -1653,9 +1656,8 @@ ALTER TABLE public.matches ENABLE ROW LEVEL SECURITY;
 -- Name: matches matches_admin_write; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY matches_admin_write ON public.matches USING ((EXISTS ( SELECT 1
-   FROM public.users
-  WHERE ((users.id = auth.uid()) AND (users.role = 'admin'::text)))));
+-- [SQL QA1 ข้อ 3] ใช้ระบบแอดมินเดียวกับ 001
+CREATE POLICY matches_admin_write ON public.matches USING (public.is_admin());
 
 -- Name: matches matches_read; Type: POLICY; Schema: public; Owner: postgres
 --
@@ -1685,7 +1687,8 @@ ALTER TABLE public.monthly_brackets ENABLE ROW LEVEL SECURITY;
 -- Name: match_players mp_insert; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY mp_insert ON public.match_players FOR INSERT WITH CHECK (true);
+-- [SQL QA1 ข้อ 4] ตัด policy mp_insert (WITH CHECK (true) — anon insert ได้) ออก
+-- สถิติแมตช์เขียนผ่าน server (service role) เท่านั้น
 
 -- Name: match_players mp_read; Type: POLICY; Schema: public; Owner: postgres
 --
@@ -1730,9 +1733,8 @@ ALTER TABLE public.seasons ENABLE ROW LEVEL SECURITY;
 -- Name: seasons seasons_admin_write; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY seasons_admin_write ON public.seasons USING ((EXISTS ( SELECT 1
-   FROM public.users
-  WHERE ((users.id = auth.uid()) AND (users.role = 'admin'::text)))));
+-- [SQL QA1 ข้อ 3] ใช้ระบบแอดมินเดียวกับ 001
+CREATE POLICY seasons_admin_write ON public.seasons USING (public.is_admin());
 
 -- Name: seasons seasons_read; Type: POLICY; Schema: public; Owner: postgres
 --
@@ -1747,14 +1749,14 @@ CREATE POLICY standings_read ON public.season_standings FOR SELECT USING (true);
 -- Name: subscriptions sub_admin_read; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY sub_admin_read ON public.subscriptions FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM public.users
-  WHERE ((users.id = auth.uid()) AND (users.role = 'admin'::text)))));
+-- [SQL QA1 ข้อ 3] ใช้ระบบแอดมินเดียวกับ 001
+CREATE POLICY sub_admin_read ON public.subscriptions FOR SELECT USING (public.is_admin());
 
 -- Name: subscriptions sub_own; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY sub_own ON public.subscriptions USING ((auth.uid() = user_id));
+-- [SQL QA1 ข้อ 6] จาก ALL → SELECT อย่างเดียว (สร้าง/แก้ subscription ผ่าน server เท่านั้น)
+CREATE POLICY sub_own ON public.subscriptions FOR SELECT USING ((auth.uid() = user_id));
 
 -- Name: subscriptions; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
@@ -2063,9 +2065,8 @@ GRANT ALL ON TABLE public.user_token_wallets TO service_role;
 -- Name: TABLE users; Type: ACL; Schema: public; Owner: postgres
 --
 
-GRANT ALL ON TABLE public.users TO anon;
-GRANT ALL ON TABLE public.users TO authenticated;
-GRANT ALL ON TABLE public.users TO service_role;
+-- [SQL QA1 ข้อ 2] ตัด GRANT ALL บน users ออก — สิทธิ์ users เป็นของ 001 เท่านั้น
+-- (001: authenticated แก้ได้แค่ username, avatar_url · ห้ามไฟล์นี้ GRANT/REVOKE ตารางของ 001)
 
 -- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: postgres
 --
@@ -2078,10 +2079,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENC
 -- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: supabase_admin
 --
 
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON SEQUENCES TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON SEQUENCES TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON SEQUENCES TO service_role;
 
 -- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: public; Owner: postgres
 --
@@ -2094,10 +2091,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON FUNCTIO
 -- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: public; Owner: supabase_admin
 --
 
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON FUNCTIONS TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON FUNCTIONS TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON FUNCTIONS TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON FUNCTIONS TO service_role;
 
 -- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: postgres
 --
@@ -2110,9 +2103,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES 
 -- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: supabase_admin
 --
 
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON TABLES TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON TABLES TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON TABLES TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON TABLES TO service_role;
 
 COMMIT;
