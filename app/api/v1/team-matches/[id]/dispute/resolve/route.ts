@@ -98,6 +98,23 @@ export async function POST(
       return NextResponse.json({ error: { code: "INVALID_WINNER_ID", message: "ทีมผู้ชนะไม่ตรงกับคู่แข่งขัน" } }, { status: 422 });
     }
 
+    // กันผลประโยชน์ทับซ้อน: REFEREE ที่เป็นสมาชิกทีมคู่กรณีห้ามชี้ขาด (ADMIN แพลตฟอร์มยกเว้น)
+    if (!roles.includes("ADMIN")) {
+      const { data: conflict } = await admin
+        .from("team_members")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("status", "ACTIVE")
+        .in("team_id", [match.team_a_id, match.team_b_id].filter(Boolean) as string[])
+        .limit(1);
+      if (conflict && conflict.length > 0) {
+        return NextResponse.json(
+          { error: { code: "CONFLICT_OF_INTEREST", message: "กรรมการที่อยู่ทีมคู่กรณีไม่มีสิทธิ์ชี้ขาดแมตช์นี้" } },
+          { status: 403 },
+        );
+      }
+    }
+
     const nowISO = new Date().toISOString();
 
     const { error: disputeErr } = await admin
