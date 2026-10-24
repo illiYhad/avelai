@@ -1,6 +1,8 @@
 // สเกาต์ผู้เล่น (K-AV-R เฟส 3 ข้อ 13) — รายชื่อจับตา + ดึงข้อมูล Liquipedia (Private Beta)
 import { notFound } from "next/navigation";
 import { getServerDb } from "@/lib/db/server";
+import { isActiveTeamMember } from "@/lib/team/access";
+import { TeamRestricted } from "../TeamRestricted";
 import { ScoutClient, type ProspectView } from "./ScoutClient";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +23,12 @@ export default async function TeamScoutPage({ params }: PageProps) {
     );
   }
 
+  // K-AV-H3: เช็กสมาชิกก่อน — คนนอก/ไม่ล็อกอินไม่ดึงข้อมูลทีมเลย
+  const { data: auth } = await db.auth.getUser();
+  if (!auth.user || !(await isActiveTeamMember(db, teamId, auth.user.id))) {
+    return <TeamRestricted what="หน้าสเกาต์" />;
+  }
+
   const { data: team } = await db
     .from("teams")
     .select("id, name, tag, owner_id, captain_id, private_beta")
@@ -29,8 +37,7 @@ export default async function TeamScoutPage({ params }: PageProps) {
 
   if (!team) notFound();
 
-  const [{ data: auth }, { data: prospects }] = await Promise.all([
-    db.auth.getUser(),
+  const [{ data: prospects }] = await Promise.all([
     db
       .from("scout_prospects")
       .select("id, nickname, position, current_team, liquipedia_url, notes, stars, liquipedia_cache, liquipedia_fetched_at")

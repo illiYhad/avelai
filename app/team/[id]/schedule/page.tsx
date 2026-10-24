@@ -1,6 +1,8 @@
 // ตารางซ้อม + เช็กชื่อ (K-AV-R เฟส 3 ข้อ 11 — ของน้องเปา · ทีม Underdog MLBB)
 import { notFound } from "next/navigation";
 import { getServerDb } from "@/lib/db/server";
+import { isActiveTeamMember } from "@/lib/team/access";
+import { TeamRestricted } from "../TeamRestricted";
 import { computeAttendanceStats } from "@/lib/team/attendance";
 import { ScheduleClient, type SessionView } from "./ScheduleClient";
 
@@ -22,6 +24,12 @@ export default async function TeamSchedulePage({ params }: PageProps) {
     );
   }
 
+  // K-AV-H3: เช็กสมาชิกก่อน — คนนอก/ไม่ล็อกอินไม่ดึงข้อมูลทีมเลย
+  const { data: auth } = await db.auth.getUser();
+  if (!auth.user || !(await isActiveTeamMember(db, teamId, auth.user.id))) {
+    return <TeamRestricted what="ตารางซ้อม" />;
+  }
+
   const { data: team } = await db
     .from("teams")
     .select("id, name, tag, owner_id, captain_id")
@@ -30,8 +38,7 @@ export default async function TeamSchedulePage({ params }: PageProps) {
 
   if (!team) notFound();
 
-  const [{ data: auth }, { data: sessions }, { data: members }] = await Promise.all([
-    db.auth.getUser(),
+  const [{ data: sessions }, { data: members }] = await Promise.all([
     db
       .from("practice_sessions")
       .select("id, title, session_type, starts_at, ends_at")

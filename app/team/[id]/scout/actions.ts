@@ -27,21 +27,18 @@ async function requireLeader(teamId: string) {
   const { data: auth } = await db.auth.getUser();
   if (!auth.user) return { error: { code: "UNAUTHENTICATED", message: "กรุณาเข้าสู่ระบบก่อน" } } as const;
   if (await isUserSuspended(db, auth.user.id)) return SUSPENDED_RESULT;
-  const [{ data: team }, { data: member }] = await Promise.all([
-    db.from("teams").select("owner_id, private_beta").eq("id", teamId).maybeSingle(),
-    db
-      .from("team_members")
-      .select("role")
-      .eq("team_id", teamId)
-      .eq("user_id", auth.user.id)
-      .eq("status", "ACTIVE")
-      .in("role", ["OWNER", "CAPTAIN", "MANAGER", "COACH"])
-      .maybeSingle(),
-  ]);
+  // K-AV-H3: เช็กว่าเป็นหัวหน้าทีม (สมาชิก ACTIVE) ก่อน — คนนอกไม่ทำให้อ่านข้อมูลทีมเลย
+  const { data: member } = await db
+    .from("team_members")
+    .select("role")
+    .eq("team_id", teamId)
+    .eq("user_id", auth.user.id)
+    .eq("status", "ACTIVE")
+    .in("role", ["OWNER", "CAPTAIN", "MANAGER", "COACH"])
+    .maybeSingle();
+  if (!member) return { error: { code: "FORBIDDEN", message: "เฉพาะหัวหน้าทีมเท่านั้น" } } as const;
+  const { data: team } = await db.from("teams").select("private_beta").eq("id", teamId).maybeSingle();
   if (!team) return { error: { code: "TEAM_NOT_FOUND", message: "ไม่พบทีมนี้" } } as const;
-  if (team.owner_id !== auth.user.id && !member) {
-    return { error: { code: "FORBIDDEN", message: "เฉพาะหัวหน้าทีมเท่านั้น" } } as const;
-  }
   return { db, userId: auth.user.id, privateBeta: Boolean(team.private_beta) } as const;
 }
 

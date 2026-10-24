@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getServerDb } from "@/lib/db/server";
 import { getAdminDb } from "@/lib/db/admin";
 import { logAudit } from "@/lib/audit";
+import { isActiveTeamMember, NOT_MEMBER_RESULT } from "@/lib/team/access";
 import { failWith } from "@/lib/server-errors";
 import { isUserSuspended, SUSPENDED_RESULT } from "@/lib/auth/suspension";
 
@@ -102,6 +103,8 @@ export async function rsvpAction(teamId: string, sessionId: string, going: boole
   const { data: auth } = await db.auth.getUser();
   if (!auth.user) return { error: { code: "UNAUTHENTICATED", message: "กรุณาเข้าสู่ระบบก่อน" } };
   if (await isUserSuspended(db, auth.user.id)) return SUSPENDED_RESULT;
+  // K-AV-H3: ต้องเป็นสมาชิก ACTIVE ของทีมนี้ก่อน RSVP
+  if (!(await isActiveTeamMember(db, teamId, auth.user.id))) return NOT_MEMBER_RESULT;
 
   // ผ่าน RLS: อัปเดตได้เฉพาะแถวตัวเอง + คอลัมน์ rsvp เท่านั้น (120_team_management.sql)
   const { error } = await db
