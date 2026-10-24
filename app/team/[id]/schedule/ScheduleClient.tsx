@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createSessionAction, rsvpAction, checkAttendanceAction } from "./actions";
 import type { MemberAttendanceStat } from "@/lib/team/attendance";
+import { formatBangkokDateTime, formatBangkokTime } from "@/lib/team/time";
 
 export interface SessionView {
   id: string;
@@ -50,6 +51,16 @@ export function ScheduleClient({ teamId, myUserId, isLeader, sessions, stats }: 
     });
   }
 
+  // K-AV-H4: เดิมผลของ RSVP/เช็กชื่อถูกทิ้ง (error เงียบ) → โชว์ข้อความถ้าไม่สำเร็จ
+  function runAction(run: () => Promise<{ success: true } | { error: { message: string } }>) {
+    setError(null);
+    startTransition(async () => {
+      const res = await run();
+      if ("error" in res) setError(res.error.message);
+      router.refresh();
+    });
+  }
+
   const inputCls =
     "rounded border border-white/15 bg-[#0A0A0F] px-2 py-1.5 text-xs text-white focus:border-[#00D4FF] focus:outline-none";
 
@@ -85,6 +96,8 @@ export function ScheduleClient({ teamId, myUserId, isLeader, sessions, stats }: 
         </form>
       )}
 
+      {!isLeader && error && <p className="text-xs text-rose-300">{error}</p>}
+
       <section>
         <h2 className="font-mono text-sm font-bold tracking-wider text-neutral-300 uppercase mb-3">
           นัดซ้อม ({sessions.length})
@@ -101,8 +114,8 @@ export function ScheduleClient({ teamId, myUserId, isLeader, sessions, stats }: 
                       {s.title ? ` · ${s.title}` : ""}
                     </p>
                     <p className="text-xs text-neutral-400 mt-0.5">
-                      {new Date(s.starts_at).toLocaleString("th-TH")}
-                      {s.ends_at ? ` – ${new Date(s.ends_at).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })}` : ""}
+                      {formatBangkokDateTime(s.starts_at)}
+                      {s.ends_at ? ` – ${formatBangkokTime(s.ends_at)}` : ""}
                     </p>
                   </div>
                   {mine && (
@@ -110,7 +123,7 @@ export function ScheduleClient({ teamId, myUserId, isLeader, sessions, stats }: 
                       <button
                         type="button"
                         disabled={isPending}
-                        onClick={() => startTransition(async () => { await rsvpAction(teamId, s.id, true); router.refresh(); })}
+                        onClick={() => runAction(() => rsvpAction(teamId, s.id, true))}
                         className={`rounded px-3 py-1 text-[10px] font-bold border ${mine.rsvp === "GOING" ? "bg-emerald-500/20 border-emerald-400 text-emerald-300" : "border-white/20 text-neutral-400"}`}
                       >
                         มา
@@ -118,7 +131,7 @@ export function ScheduleClient({ teamId, myUserId, isLeader, sessions, stats }: 
                       <button
                         type="button"
                         disabled={isPending}
-                        onClick={() => startTransition(async () => { await rsvpAction(teamId, s.id, false); router.refresh(); })}
+                        onClick={() => runAction(() => rsvpAction(teamId, s.id, false))}
                         className={`rounded px-3 py-1 text-[10px] font-bold border ${mine.rsvp === "NOT_GOING" ? "bg-rose-500/20 border-rose-400 text-rose-300" : "border-white/20 text-neutral-400"}`}
                       >
                         ไม่มา
@@ -141,7 +154,7 @@ export function ScheduleClient({ teamId, myUserId, isLeader, sessions, stats }: 
                           <button
                             type="button"
                             disabled={isPending}
-                            onClick={() => startTransition(async () => { await checkAttendanceAction(teamId, s.id, a.user_id, true); router.refresh(); })}
+                            onClick={() => runAction(() => checkAttendanceAction(teamId, s.id, a.user_id, true))}
                             className={`rounded px-2 py-0.5 text-[10px] border ${a.attended === true ? "bg-emerald-500/20 border-emerald-400 text-emerald-300" : "border-white/20 text-neutral-500"}`}
                           >
                             ✓ มาจริง
@@ -149,7 +162,7 @@ export function ScheduleClient({ teamId, myUserId, isLeader, sessions, stats }: 
                           <button
                             type="button"
                             disabled={isPending}
-                            onClick={() => startTransition(async () => { await checkAttendanceAction(teamId, s.id, a.user_id, false); router.refresh(); })}
+                            onClick={() => runAction(() => checkAttendanceAction(teamId, s.id, a.user_id, false))}
                             className={`rounded px-2 py-0.5 text-[10px] border ${a.attended === false ? "bg-rose-500/20 border-rose-400 text-rose-300" : "border-white/20 text-neutral-500"}`}
                           >
                             ✗ ขาด
@@ -174,6 +187,7 @@ export function ScheduleClient({ teamId, myUserId, isLeader, sessions, stats }: 
         <h2 className="font-mono text-sm font-bold tracking-wider text-neutral-300 uppercase mb-3">
           สรุป % เข้าซ้อมรายคน
         </h2>
+        <p className="text-[11px] text-neutral-500 mb-2">นับเฉพาะนัดที่หัวหน้าเช็กชื่อแล้ว (ตัวเลขในวงเล็บ = มาจริง/ถูกเช็กชื่อ) · นัดที่ยังไม่เช็กชื่อไม่นับ</p>
         <ul className="flex flex-col gap-1">
           {stats.map((s) => (
             <li key={s.userId} className="flex items-center gap-3 text-xs">

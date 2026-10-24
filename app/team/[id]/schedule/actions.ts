@@ -6,6 +6,7 @@ import { getServerDb } from "@/lib/db/server";
 import { getAdminDb } from "@/lib/db/admin";
 import { logAudit } from "@/lib/audit";
 import { isActiveTeamMember, NOT_MEMBER_RESULT } from "@/lib/team/access";
+import { parseBangkokLocal } from "@/lib/team/time";
 import { failWith } from "@/lib/server-errors";
 import { isUserSuspended, SUSPENDED_RESULT } from "@/lib/auth/suspension";
 
@@ -46,12 +47,13 @@ export async function createSessionAction(teamId: string, formData: FormData): P
   if (!SESSION_TYPES.includes(sessionType as (typeof SESSION_TYPES)[number])) {
     return { error: { code: "INVALID_TYPE", message: "ประเภทนัดซ้อมไม่ถูกต้อง" } };
   }
-  const startDate = new Date(startsAt);
-  if (Number.isNaN(startDate.getTime())) {
+  // เวลาที่กรอกคือเวลาไทย (Asia/Bangkok) — ห้ามใช้ new Date(str) ตรง ๆ (server เป็น UTC)
+  const startDate = parseBangkokLocal(startsAt);
+  if (!startDate) {
     return { error: { code: "INVALID_TIME", message: "กรุณาระบุวันเวลาเริ่มให้ถูกต้อง" } };
   }
-  const endDate = endsAt ? new Date(endsAt) : null;
-  if (endDate && (Number.isNaN(endDate.getTime()) || endDate <= startDate)) {
+  const endDate = endsAt ? parseBangkokLocal(endsAt) : null;
+  if (endsAt && (!endDate || endDate <= startDate)) {
     return { error: { code: "INVALID_TIME", message: "เวลาจบต้องอยู่หลังเวลาเริ่ม" } };
   }
 
@@ -83,7 +85,14 @@ export async function createSessionAction(teamId: string, formData: FormData): P
     session_id: session.id,
     user_id: m.user_id,
   }));
-  if (rows.length > 0) await admin.from("practice_attendance").insert(rows);
+  if (rows.length > 0) {
+    const { error: attError } = await admin.from("practice_attendance").insert(rows);
+    if (attError) {
+      // ไม่ปล่อยนัดที่ไม่มีแถวเช็กชื่อค้าง (RSVP/เช็กชื่อจะเงียบหาย) → ลบนัดที่เพิ่งสร้าง
+      await admin.from("practice_sessions").delete().eq("id", session.id);
+      return failWith("ATTENDANCE_ROWS_FAILED", attError, "สร้างนัดซ้อมไม่สำเร็จ กรุณาลองใหม่");
+    }
+  }
 
   await logAudit({
     action: "PRACTICE_SESSION_CREATE",
@@ -139,17 +148,36 @@ export async function checkAttendanceAction(
     return { error: { code: "SESSION_NOT_FOUND", message: "ไม่พบนัดซ้อมของทีมนี้" } };
   }
 
-  const { error } = await admin
+  // ผู้ถูกเช็กชื่อต้องเป็นสมาชิก ACTIVE ของทีมนี้
+  const { data: target } = await admin
+    .from("team_members")
+    .select("user_id")
+    .eq("team_id", teamId)
+    .eq("user_id", userId)
+    .eq("status", "ACTIVE")
+    .maybeSingle();
+  if (!target) return { error: { code: "NOT_A_MEMBER", message: "ผู้เล่นคนนี้ไม่ได้เป็นสมาชิกทีม" } };
+
+  // upsert: สมาชิกที่เข้าทีมหลังสร้างนัดยังไม่มีแถว attendance — เดิม update จะไม่เจอแถวแล้วเงียบ (สำเร็จหลอก)
+  const { data: saved, error } = await admin
     .from("practice_attendance")
-    .update({
-      attended,
-      checked_by: ctx.userId,
-      checked_at: new Date().toISOString(),
-    })
-    .eq("session_id", sessionId)
-    .eq("user_id", userId);
+    .upsert(
+      {
+        session_id: sessionId,
+        user_id: userId,
+        attended,
+        checked_by: ctx.userId,
+        checked_at: new Date().toISOString(),
+      },
+      { onConflict: "session_id,user_id" },
+    )
+    .select("attended")
+    .maybeSingle();
 
   if (error) return failWith("CHECK_FAILED", error);
+  if (!saved || saved.attended !== attended) {
+    return failWith("CHECK_NOT_SAVED", { sessionId, userId, saved }, "บันทึกการเช็กชื่อไม่สำเร็จ กรุณาลองใหม่");
+  }
 
   revalidatePath(`/team/${teamId}/schedule`);
   return { success: true };
