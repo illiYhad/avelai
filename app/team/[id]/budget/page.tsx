@@ -66,7 +66,7 @@ export default async function TeamBudgetPage({ params }: PageProps) {
       .limit(300),
     db
       .from("team_members")
-      .select("user_id, users!inner(username)")
+      .select("user_id, users!user_id!inner(username)")
       .eq("team_id", teamId)
       .eq("status", "ACTIVE"),
   ]);

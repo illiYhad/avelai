@@ -32,15 +32,18 @@ export default async function TeamDetailPage({ params }: PageProps) {
 
   if (!team) notFound();
 
-  const [{ data: auth }, { data: members }] = await Promise.all([
+  const [{ data: auth }, { data: members, error: membersError }] = await Promise.all([
     db.auth.getUser(),
     db
       .from("team_members")
-      .select("user_id, role, status, joined_at, users!inner(username, display_name, avatar_url)")
+      .select("user_id, role, status, joined_at, users!user_id!inner(username, display_name, avatar_url)")
       .eq("team_id", teamId)
       .eq("status", "ACTIVE")
       .order("created_at", { ascending: true }),
   ]);
+
+  // K-AV-H2: เดิม error ถูกกลืนเงียบ → ROSTER (0) · ต้นเหตุ: embed users กำกวม (team_members มี FK ไป users 2 เส้น)
+  if (membersError) console.error("[TEAM_ROSTER_LOAD]", membersError);
 
   const userId = auth.user?.id ?? null;
   const isLeader = userId !== null && (userId === team.owner_id || userId === team.captain_id);

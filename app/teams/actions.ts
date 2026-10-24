@@ -65,8 +65,11 @@ export async function createTeamAction(formData: FormData): Promise<ActionResult
     name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") || tag.toLowerCase();
   const slug = `${baseSlug}-${Date.now().toString().slice(-4)}`;
 
-  // K-AV-H2: เขียนด้วย client ของผู้ใช้ (RLS: owner_id = auth.uid() · 130_fix_teams_insert.sql) ไม่ใช้ service role
-  const { data: newTeam, error: createError } = await session.db
+  // K-AV-H2 (คำตัดสิน 07:15): เขียนด้วย service role ตามแบบ 110 — หลังเช็ก auth + suspended + กฎ 1 ทีม/เกม แล้วเท่านั้น
+  const admin = getAdminDb();
+  if (!admin) return DB_OFF;
+
+  const { data: newTeam, error: createError } = await admin
     .from("teams")
     .insert({
       name,
@@ -85,7 +88,7 @@ export async function createTeamAction(formData: FormData): Promise<ActionResult
     return failWith("CREATE_FAILED", createError, "สร้างทีมไม่สำเร็จ");
   }
 
-  const { error: memberError } = await session.db.from("team_members").insert({
+  const { error: memberError } = await admin.from("team_members").insert({
     team_id: newTeam.id,
     user_id: session.userId,
     role: "OWNER",
@@ -94,7 +97,10 @@ export async function createTeamAction(formData: FormData): Promise<ActionResult
   });
 
   if (memberError) {
-    return failWith("MEMBER_ADD_FAILED", memberError);
+    // ห้ามปล่อยทีมที่ไม่มีเจ้าของค้าง → ลบทีมที่เพิ่งสร้าง (ยังไม่มีสมาชิก/ข้อมูลอื่นผูก)
+    const { error: rollbackError } = await admin.from("teams").delete().eq("id", newTeam.id);
+    if (rollbackError) console.error("[TEAM_CREATE_ROLLBACK_FAILED]", newTeam.id, rollbackError);
+    return failWith("MEMBER_ADD_FAILED", memberError, "สร้างทีมไม่สำเร็จ กรุณาลองใหม่");
   }
 
   await logAudit({
