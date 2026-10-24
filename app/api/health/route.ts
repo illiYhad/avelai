@@ -1,4 +1,8 @@
-// health check — ห้ามคืนค่า env ใด ๆ
-export function GET() {
-  return Response.json({ ok: true, phase: "0" });
+import { NextResponse } from 'next/server';
+
+export async function GET() {
+    return NextResponse.json(
+        { status: 'ok', timestamp: Date.now() },
+        { status: 200 }
+    );
 }

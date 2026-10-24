@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { needsLogin } from "@/lib/auth/protected-paths";
 
 // รีเฟรช session ของ Supabase Auth ทุก request (รูปแบบมาตรฐาน @supabase/ssr)
 // env-safe: ไม่มี env = ปล่อยผ่านเฉย ๆ
@@ -28,7 +29,18 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  const { data } = await supabase.auth.getUser();
+
+  // K-AV-H2: หน้าส่วนตัว/ทีม — ไม่ล็อกอินเด้งไป /login?next=… ฝั่ง server
+  const { pathname, search } = request.nextUrl;
+  if (!data.user && needsLogin(pathname)) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/login";
+    loginUrl.search = `?next=${encodeURIComponent(pathname + search)}`;
+    const redirect = NextResponse.redirect(loginUrl);
+    response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
+    return redirect;
+  }
   return response;
 }
 

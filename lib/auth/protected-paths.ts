@@ -1,0 +1,13 @@
+// K-AV-H2: หน้าที่มีข้อมูลส่วนตัว/ข้อมูลทีม — ไม่ล็อกอินต้องเด้งไป /login?next=… ฝั่ง server (middleware)
+// เปิดสาธารณะ (ตั้งใจ): /leaderboard · /tournament* · /teams · /teams/[id] · /profile/[userId] · /dashboard (จดไว้ในใบตอบ)
+const PROTECTED: RegExp[] = [
+  /^\/me$/,
+  /^\/profile$/,
+  /^\/teams\/create$/,
+  /^\/team\/[^/]+\/(schedule|budget|scout)$/,
+];
+
+export function needsLogin(pathname: string): boolean {
+  const p = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+  return PROTECTED.some((re) => re.test(p));
+}
