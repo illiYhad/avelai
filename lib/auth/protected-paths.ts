@@ -11,6 +11,7 @@ const PROTECTED: RegExp[] = [
   /^\/organizer(\/.*)?$/,
   /^\/pass(\/.*)?$/,
   /^\/admin\/payments$/,
+  /^\/matches\/[^/]+(\/.*)?$/, // K-AV-5: ห้องแมตช์ + สมุดหลักฐาน
 ];
 
 export function needsLogin(pathname: string): boolean {
