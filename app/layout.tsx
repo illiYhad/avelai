@@ -4,8 +4,11 @@ import Navbar from '@/components/Navbar'
 import AVEChatbot from '@/components/AVEChatbot'
 import { getServerDb } from '@/lib/db/server'
 import { navFor } from '@/lib/nav'
+import { metadataBaseFrom } from '@/lib/auth/site-origin'
 
 export const metadata: Metadata = {
+  // K-AV-H8: ตั้งเฉพาะเมื่อ SITE_URL เป็น URL ที่ถูกต้อง (ไม่ตั้ง/เพี้ยน = ไม่ใส่)
+  metadataBase: metadataBaseFrom(process.env.SITE_URL),
   title: 'AVELAi – Precision is Freedom',
   description: 'Esports Arena League powered by AI',
 }

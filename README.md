@@ -22,7 +22,7 @@ env ดู `.env.example` — ไม่ตั้งค่า แอปยัง�
 | `SUPABASE_SERVICE_ROLE_KEY` | งานฝั่ง admin ผ่าน `lib/db/admin.ts` ที่เดียว | ฟีเจอร์ admin ฝั่ง server ปิด |
 | `SITE_URL` | โดเมนจริงของเว็บ ใช้สร้างลิงก์ magic link (กัน host header poisoning) | ใช้ host ของ request — **dev ในเครื่องเท่านั้น** |
 
-> ⚠ **ตอนขึ้น Vercel ต้องตั้ง `SITE_URL` เป็นโดเมนจริงเสมอ** (เช่น `https://avelai.com`) และต้องตรงกับ Redirect URLs ใน Supabase → Authentication → URL Configuration
+> ⚠ **ตอนขึ้น Vercel ต้องตั้ง `SITE_URL` เป็นโดเมนจริงเสมอ** (เช่น `https://avelai.org`) และต้องตรงกับ Redirect URLs ใน Supabase → Authentication → URL Configuration
 
 ## กฎ
 

@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { safeNext } from "@/lib/auth/validate";
+import { resolveSiteOrigin } from "@/lib/auth/site-origin";
 
 export type LoginState = { ok: boolean; message: string };
 
@@ -22,15 +23,16 @@ export async function sendMagicLink(
   const db = await getServerDb();
   if (!db) return { ok: false, message: "ระบบล็อกอินยังไม่เปิด" };
 
-  // กัน host header poisoning: ใช้ SITE_URL ที่ตั้งค่าไว้ก่อนเสมอ · fallback เป็น header เฉพาะ dev ในเครื่อง
-  // ชั้นสุดท้ายคือ Redirect URLs allowlist ใน Supabase (พี่หยัดตั้งตามใบตอบข้อ URL Configuration)
-  let origin = process.env.SITE_URL?.replace(/\/$/, "");
-  if (!origin) {
-    const h = await headers();
-    const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-    const proto = h.get("x-forwarded-proto") ?? "http";
-    origin = `${proto}://${host}`;
-  }
+  // กัน host header poisoning: ใช้ SITE_URL (https) ก่อนเสมอ · production จริงที่ไม่ตั้ง = ไม่ส่งลิงก์ (K-AV-H8)
+  // fallback เป็น header เฉพาะ Preview/dev · ชั้นสุดท้ายคือ Redirect URLs allowlist ใน Supabase
+  const h = await headers();
+  const origin = resolveSiteOrigin({
+    siteUrl: process.env.SITE_URL,
+    vercelEnv: process.env.VERCEL_ENV,
+    host: h.get("x-forwarded-host") ?? h.get("host"),
+    proto: h.get("x-forwarded-proto"),
+  });
+  if (!origin) return { ok: false, message: "ระบบล็อกอินยังตั้งค่าโดเมนไม่ครบ" };
   const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
 
   const { error } = await db.auth.signInWithOtp({
