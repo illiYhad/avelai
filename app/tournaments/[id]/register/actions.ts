@@ -40,7 +40,7 @@ export async function registerTeamAction(tournamentId: string, _prev: RegState, 
     const { count } = await g.ctx.db.from("registrations").select("id", { count: "exact", head: true }).eq("tournament_id", tournamentId).in("status", ["PENDING_PAYMENT", "CONFIRMED", "CHECKED_IN"]);
     if ((count ?? 0) >= t.max_teams) return fail("ทัวร์นี้รับทีมเต็มแล้ว");
   }
-  const { data: members } = await g.ctx.db.from("team_members").select("user_id, users!user_id(username)").eq("team_id", teamId).eq("status", "ACTIVE");
+  const { data: members } = await g.ctx.db.from("team_members").select("user_id, users:public_profiles_v!user_id(username)").eq("team_id", teamId).eq("status", "ACTIVE");
   // K-AV-7: Karma ของสมาชิกทุกคนจาก RPC karma_states (SECURITY DEFINER — คืนแค่คะแนน/วันปลดบล็อก) · RPC พัง = ปิดรับ (fail-closed)
   const memberIds = (members ?? []).map((m) => m.user_id as string);
   const { data: karmaRows, error: karmaErr } = await g.ctx.db.rpc("karma_states", { p_user_ids: memberIds });

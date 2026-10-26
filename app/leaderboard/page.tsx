@@ -10,7 +10,7 @@ type Player = {
     display_name: string
     avatar_url?: string
     current_elo: number
-    karma_score: number
+    karma_score?: number // K-AV-FIX2: ไม่อยู่ใน public_profiles_v → ไม่ได้อ่าน (แสดง —)
     win_rate?: number
     recent_form?: ('W' | 'L')[]
     preferred_position?: string
@@ -48,8 +48,8 @@ export default function LeaderboardPage() {
             setLoading(true)
             try {
                 let query = supabase
-                    .from('users')
-                    .select('id, display_name, avatar_url, current_elo, karma_score, win_rate, recent_form, preferred_position')
+                    .from('public_profiles_v')
+                    .select('id, display_name, avatar_url, current_elo, win_rate, preferred_position')
                     .order('current_elo', { ascending: false })
                     .limit(100)
 
@@ -62,8 +62,8 @@ export default function LeaderboardPage() {
                 if (error) {
                     console.error('profiles error:', error.message)
                     const { data: fallbackData } = await supabase
-                        .from('users')
-                        .select('id, display_name, current_elo, karma_score')
+                        .from('public_profiles_v')
+                        .select('id, display_name, current_elo')
                         .order('current_elo', { ascending: false })
                         .limit(100)
                     if (fallbackData) setPlayers(fallbackData as Player[])
@@ -249,14 +249,18 @@ export default function LeaderboardPage() {
 
                                             {/* Karma */}
                                             <td className="py-4 px-6 text-center">
+                                                {player.karma_score === undefined ? (
+                                                    <span className="text-gray-600 text-xs">—</span>
+                                                ) : (
                                                 <span className={`text-xs font-extrabold px-2 py-1 rounded-sm border ${player.karma_score >= 80
                                                     ? 'border-emerald-500/40 text-emerald-400 bg-emerald-950/20'
                                                     : player.karma_score >= 50
                                                         ? 'border-yellow-500/40 text-yellow-400 bg-yellow-950/20'
                                                         : 'border-red-500/40 text-red-400 bg-red-950/20 animate-pulse'
                                                     }`}>
-                                                    {player.karma_score || 100}
+                                                    {player.karma_score}
                                                 </span>
+                                                )}
                                             </td>
                                         </tr>
                                     )

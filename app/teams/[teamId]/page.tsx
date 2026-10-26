@@ -37,7 +37,7 @@ export default async function TeamDetailPage({ params }: PageProps) {
     db.auth.getUser(),
     db
       .from("team_members")
-      .select("user_id, role, status, joined_at, users!user_id!inner(username, display_name, avatar_url)")
+      .select("user_id, role, status, joined_at, users:public_profiles_v!user_id!inner(username, display_name, avatar_url)")
       .eq("team_id", teamId)
       .eq("status", "ACTIVE")
       .order("created_at", { ascending: true }),

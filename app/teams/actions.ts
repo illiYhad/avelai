@@ -150,7 +150,7 @@ export async function invitePlayerAction(teamId: string, formData: FormData): Pr
   }
 
   const { data: target } = await session.db
-    .from("users")
+    .from("public_profiles_v")
     .select("id, username")
     .eq("username", identifier)
     .maybeSingle();

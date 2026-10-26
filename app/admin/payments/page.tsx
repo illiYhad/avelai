@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPaymentsPage() {
   const { db, user } = await requireAdmin("/admin/payments");
-  const { data: pays } = await db.from("payments").select("id, pass_game, amount_thb, slip_path, created_at, payer_user_id, users!payer_user_id(username)").eq("kind", "PASS").eq("status", "PENDING").order("created_at").limit(50);
+  const { data: pays } = await db.from("payments").select("id, pass_game, amount_thb, slip_path, created_at, payer_user_id, users:public_profiles_v!payer_user_id(username)").eq("kind", "PASS").eq("status", "PENDING").order("created_at").limit(50);
   const rows = await Promise.all((pays ?? []).map(async (p) => {
     const { data } = await db.storage.from("payment-slips").createSignedUrl(p.slip_path, 600);
     const u = (Array.isArray(p.users) ? p.users[0] : p.users) as { username: string } | null;

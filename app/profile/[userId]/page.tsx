@@ -13,7 +13,7 @@ type Profile = {
     display_name: string;
     avatar_url?: string;
     current_elo: number;
-    karma_score: number;
+    karma_score?: number; // K-AV-FIX2: ไม่อยู่ใน public_profiles_v → ไม่แสดง
     win_rate?: number;
     badge_slots?: BadgeSlot[];
     subscription_tier?: string;
@@ -54,16 +54,14 @@ export default function ProfilePage() {
     useEffect(() => {
         if (!userId) return;
         const fetchProfile = async () => {
+            // K-AV-FIX2: โปรไฟล์คนอื่นอ่านจาก public_profiles_v เท่านั้น (คอลัมน์สาธารณะ) · ไม่พบผู้ใช้ = ไม่ log (log เฉพาะ error จริง)
             const { data, error } = await supabase
-                .from('users')
-                .select('id, display_name, avatar_url, current_elo, karma_score, win_rate, badge_slots, subscription_tier, arena_tickets, reward_points')
+                .from('public_profiles_v')
+                .select('id, display_name, avatar_url, current_elo, win_rate, badge_slots')
                 .eq('id', userId)
-                .single();
-            if (!error && data) {
-                setProfile(data as Profile);
-            } else {
-                console.error('Profile fetch error:', error);
-            }
+                .maybeSingle();
+            if (error) console.error('Profile fetch error:', error.message);
+            else if (data) setProfile(data as Profile);
             setLoading(false);
         };
         fetchProfile();
@@ -216,6 +214,7 @@ export default function ProfilePage() {
                         <div className="h-px bg-[#C9A84C]/15" />
 
                         {/* Karma */}
+                        {profile.karma_score !== undefined ? (
                         <div className="flex flex-col gap-0.5">
                             <span className="font-mono text-[9px] text-zinc-500 tracking-[0.2em]">KARMA SCORE</span>
                             <div className="flex items-baseline gap-1">
@@ -232,10 +231,12 @@ export default function ProfilePage() {
                                 />
                             </div>
                         </div>
+                        ) : null}
 
                     </div>
                 </div>
-                {/* Tier + Tickets + Points */}
+                {/* Tier + Tickets + Points — ข้อมูลส่วนตัว ไม่อยู่ใน public_profiles_v (K-AV-FIX2) → แสดงเมื่อมีค่าเท่านั้น */}
+                {profile.subscription_tier !== undefined ? (<>
                 <div className="h-px bg-[#C9A84C]/15" />
                 <div className="flex flex-col gap-0.5">
                     <span className="font-mono text-[9px] text-zinc-500 tracking-[0.2em]">ARENA PASS</span>
@@ -247,6 +248,7 @@ export default function ProfilePage() {
                         <span className="font-mono text-[9px] text-zinc-500">{profile.reward_points ?? 0} PTS</span>
                     </div>
                 </div>
+                </>) : null}
 
                 {/* Divider */}
                 <div className="mx-4 h-px bg-linear-to-r from-transparent via-[#C9A84C]/20 to-transparent" />

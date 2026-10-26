@@ -1,4 +1,5 @@
-import { requireAdmin } from "@/lib/auth/roles";
+import { requireAdmin, isSuperAdmin } from "@/lib/auth/roles";
+import { grantableRoles } from "@/lib/auth/admin-rpc";
 import { GrantForm, RevokeForm } from "./RoleControls";
 
 export const metadata = { title: "จัดการสิทธิ์ — AVELAi" };
@@ -14,6 +15,7 @@ export default async function AdminRolesPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { db } = await requireAdmin("/admin/roles");
+  const roleOptions = grantableRoles(await isSuperAdmin(db));
   const { q } = await searchParams;
   const query = (q ?? "").trim();
 
@@ -58,7 +60,7 @@ export default async function AdminRolesPage({
               {u.user_roles.filter((r) => r.revoked_at === null).map((r) => (
                 <li key={r.id} className="flex items-center gap-2 text-sm text-white/80">
                   <span>{r.role}</span>
-                  <RevokeForm roleRowId={r.id} />
+                  <RevokeForm roleRowId={r.id} role={r.role} username={u.username} />
                 </li>
               ))}
               {u.user_roles.every((r) => r.revoked_at !== null) ? (
@@ -66,7 +68,7 @@ export default async function AdminRolesPage({
               ) : null}
             </ul>
             <div className="mt-3">
-              <GrantForm userId={u.id} />
+              <GrantForm userId={u.id} username={u.username} roles={roleOptions} />
             </div>
           </li>
         ))}

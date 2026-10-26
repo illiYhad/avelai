@@ -27,7 +27,7 @@ export default async function ManageTournamentPage({ params }: { params: Promise
   if (level === "NONE") notFound();
   const [{ data: regsRaw }, { data: staff }] = await Promise.all([
     db.from("registrations").select("id, status, paid_via, seed, teams(name, tag)").eq("tournament_id", id).order("created_at"),
-    db.from("tournament_staff").select("user_id, role, users!user_id(username)").eq("tournament_id", id),
+    db.from("tournament_staff").select("user_id, role, users:public_profiles_v!user_id(username)").eq("tournament_id", id),
   ]);
   const regs = (regsRaw ?? []) as Reg[];
   const regIds = regs.map((r) => r.id);

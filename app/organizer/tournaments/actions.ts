@@ -178,7 +178,7 @@ export async function addStaffAction(tournamentId: string, _prev: OrgState, form
   const t = await loadTournament(g.ctx.db, tournamentId);
   if (!t) return fail("ไม่พบทัวร์นี้");
   if ((await tournamentStaffLevel(g.ctx.db, g.ctx.userId, t)) !== "ORGANIZER") return fail("เฉพาะผู้จัดเจ้าของทัวร์เท่านั้น");
-  const { data: u } = await g.ctx.db.from("users").select("id").eq("username", username).maybeSingle();
+  const { data: u } = await g.ctx.db.from("public_profiles_v").select("id").eq("username", username).maybeSingle();
   if (!u) return fail(`ไม่พบผู้ใช้ "${username}"`);
   if (u.id === g.ctx.userId) return fail("ผู้จัดเป็น staff อยู่แล้วโดยอัตโนมัติ");
   const { error } = await g.ctx.db.from("tournament_staff").insert({ tournament_id: tournamentId, user_id: u.id, role, assigned_by: g.ctx.userId });

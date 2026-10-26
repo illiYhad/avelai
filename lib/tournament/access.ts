@@ -20,8 +20,8 @@ export async function requireActiveUser(): Promise<Guard> {
 }
 
 export async function platformRoles(db: SupabaseClient, userId: string): Promise<string[]> {
-  const { data } = await db.from("user_roles").select("role, revoked_at").eq("user_id", userId);
-  return activeRoles((data ?? []) as { role: string; revoked_at: string | null }[]);
+  const { data } = await db.from("user_roles").select("role, revoked_at, expires_at").eq("user_id", userId);
+  return activeRoles((data ?? []) as { role: string; revoked_at: string | null; expires_at: string | null }[]);
 }
 
 export type TournamentRow = {
