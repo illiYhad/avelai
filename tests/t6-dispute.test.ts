@@ -91,6 +91,7 @@ function setup(o: { me?: string; match?: Record<string, unknown>; leaderOf?: str
     if (c.table === "tournaments") return { data: { id: TID, organizer_id: o.organizer ? (o.me ?? "leaderA") : "org" }, error: null };
     if (c.table === "user_roles") return { data: o.admin ? [{ role: "ADMIN", revoked_at: null }] : [], error: null };
     if (c.table === "tournament_staff") return { data: o.staffRole ? { role: o.staffRole } : null, error: null };
+    if (c.table === "team_members" && "user_id" in c.filters) return { data: o.subjectInScope === false ? [] : [{ user_id: c.filters.user_id }], error: null };
     if (c.table === "team_members") return { data: (o.leaderOf ?? ["A"]).map((id) => ({ role: "OWNER", teams: { id, name: id, tag: id, game: "MLBB", deleted_at: null } })), error: null };
     if (c.table === "disputes" && c.op === "select" && "opened_by_team" in c.filters) return { data: o.existingOpen ? { id: DID, status: "OPEN" } : null, error: null };
     if (c.table === "disputes" && c.op === "select") return { data: o.dispute === undefined ? { id: DID, match_id: MID, tournament_id: TID, opened_by_team: "A", opened_by_user: "leaderA", status: "OPEN", match_status_before: "AWAITING_RESULT" } : o.dispute, error: null };
@@ -100,7 +101,6 @@ function setup(o: { me?: string; match?: Record<string, unknown>; leaderOf?: str
     if (c.table === "tournament_bracket_slots") return o.slotsError ? { data: null, error: { message: "boom" } } : { data: [], error: null };
     if (c.table === "penalties" && c.op === "insert") return { data: { id: "p1" }, error: null };
     if (c.table === "registrations") return { data: (o.registered ?? ["A", "B"]).map((id) => ({ team_id: id })), error: null };
-    if (c.table === "team_members" && "user_id" in c.filters) return { data: o.subjectInScope === false ? [] : [{ user_id: c.filters.user_id }], error: null };
     if (c.table === "penalties" && c.op === "update") return { data: [{ id: "p1" }], error: null };
     return { data: null, error: null };
   };
