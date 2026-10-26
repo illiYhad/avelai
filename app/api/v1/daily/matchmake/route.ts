@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
                 primary_position,
                 secondary_position,
                 queued_at,
-                users (
+                users:public_profiles_v (
                     elo_rating
                 )
             `)

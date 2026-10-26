@@ -26,7 +26,7 @@ export default async function MePage() {
       .select("username, avatar_url, suspended_until")
       .eq("id", user.id)
       .single(),
-    db.from("user_roles").select("role, revoked_at").eq("user_id", user.id),
+    db.from("user_roles").select("role, revoked_at, expires_at").eq("user_id", user.id),
     // K-AV-D1: ตาราง game_accounts มาจาก SQL 130 · ยังไม่รัน = error → แสดง "ยังเปิดใช้ไม่ได้"
     db.from("game_accounts").select("external_id, status").eq("user_id", user.id).eq("game", "DOTA2").maybeSingle(),
   ]);

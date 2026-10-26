@@ -21,17 +21,17 @@ export default async function EvidenceBookPage({ params }: { params: Promise<{ i
   if (!mRaw) notFound();
   const m = mRaw as MatchRow & { result_source: string | null; outcome: string | null; score_a: number | null; score_b: number | null; confirmed_by: string | null; confirmed_at: string | null };
   const [{ data: reports }, { data: transitions }, { data: teams }, { data: disputes }, { data: penalties }] = await Promise.all([
-    db.from("match_reports").select("id, reported_by_team, reported_by_user, winner_team_id, score_a, score_b, evidence_paths, note, created_at, users!reported_by_user(username)").eq("match_id", id).order("created_at"),
-    db.from("match_state_transitions").select("from_status, to_status, actor_id, reason, created_at, users!actor_id(username)").eq("match_id", id).order("created_at"),
+    db.from("match_reports").select("id, reported_by_team, reported_by_user, winner_team_id, score_a, score_b, evidence_paths, note, created_at, users:public_profiles_v!reported_by_user(username)").eq("match_id", id).order("created_at"),
+    db.from("match_state_transitions").select("from_status, to_status, actor_id, reason, created_at, users:public_profiles_v!actor_id(username)").eq("match_id", id).order("created_at"),
     db.from("teams").select("id, name, tag").in("id", [m.team_a_id, m.team_b_id].filter((x): x is string => !!x)),
     // K-AV-6: ข้อพิพาท/โทษของแมตช์นี้ (RLS: คู่กรณี/staff/ADMIN เห็น · คนอื่นได้แถวว่าง)
-    db.from("disputes").select("id, opened_by_team, status, reason, resolution, resolved_at, created_at, users!opened_by_user(username)").eq("match_id", id).order("created_at"),
+    db.from("disputes").select("id, opened_by_team, status, reason, resolution, resolved_at, created_at, users:public_profiles_v!opened_by_user(username)").eq("match_id", id).order("created_at"),
     db.from("penalties").select("id, user_id, team_id, type, value, until, reason, revoked_at, created_at, dispute_id").eq("tournament_id", m.tournament_id).order("created_at"),
   ]);
   const disputeIds = new Set((disputes ?? []).map((d) => d.id as string));
   const matchPenalties = (penalties ?? []).filter((p) => p.dispute_id && disputeIds.has(p.dispute_id as string));
   const names = new Map(((teams ?? []) as TeamName[]).map((x) => [x.id, x]));
-  const confirmer = m.confirmed_by ? (await db.from("users").select("username").eq("id", m.confirmed_by).maybeSingle()).data?.username ?? m.confirmed_by : null;
+  const confirmer = m.confirmed_by ? (await db.from("public_profiles_v").select("username").eq("id", m.confirmed_by).maybeSingle()).data?.username ?? m.confirmed_by : null;
   const signed = new Map<string, string>();
   for (const r of reports ?? []) for (const p of (r.evidence_paths as string[]).slice(0, 5)) {
     const { data } = await db.storage.from("evidence").createSignedUrl(p, SIGNED_URL_SECONDS);

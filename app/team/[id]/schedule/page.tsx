@@ -47,7 +47,7 @@ export default async function TeamSchedulePage({ params }: PageProps) {
       .limit(30),
     db
       .from("team_members")
-      .select("user_id, role, users!user_id!inner(username)")
+      .select("user_id, role, users:public_profiles_v!user_id!inner(username)")
       .eq("team_id", teamId)
       .eq("status", "ACTIVE"),
   ]);

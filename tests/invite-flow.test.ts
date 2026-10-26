@@ -22,7 +22,7 @@ function builder(table: string, admin: boolean) {
     h.calls.push(call);
     if (call.op === "admin:insert") return { data: null, error: h.insertError };
     if (table === "users" && call.cols === "suspended_until") return { data: { suspended_until: h.suspendedUntil }, error: null };
-    if (table === "users") return { data: h.target, error: null };
+    if (table === "public_profiles_v") return { data: h.target, error: null };
     if (table === "teams") return { data: h.team, error: null };
     if (table === "team_members") return { data: h.memberships, error: null };
     return { data: null, error: null };
@@ -160,7 +160,7 @@ describe("invitePlayerAction — ไม่รั่วข้อมูลส่�
     h.target = { id: "p1", username: "player1", ...({ email: "p1@example.com", phone: "0812345678" } as object) } as { id: string; username: string };
     const res = await invite();
     expect(res).toEqual({ success: true });
-    const lookup = h.calls.find((c) => c.table === "users" && c.cols !== "suspended_until");
+    const lookup = h.calls.find((c) => c.table === "public_profiles_v");
     expect(lookup?.cols).toBe("id, username");
     expect(JSON.stringify(res)).not.toMatch(/example\.com|0812345678/);
   });

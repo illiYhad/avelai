@@ -69,7 +69,7 @@ export default function MatchHistoryPage() {
               total_score,
               base_kp,
               is_radiant,
-              users (
+              users:public_profiles_v (
                 display_name,
                 avatar_url
               )

@@ -157,7 +157,7 @@ describe("invitePlayerAction เช็กซ้ำตามเกมของท
     h.user = { id: "owner" };
     h.resolve = (c) => {
       if (c.table === "teams" && c.op === "select") return { data: { id: "t1", owner_id: "owner", captain_id: "owner", is_roster_locked: false, game: teamGameCode }, error: null };
-      if (c.table === "users" && c.op === "select") return { data: { id: "p1", username: "player1" }, error: null };
+      if (c.table === "public_profiles_v" && c.op === "select") return { data: { id: "p1", username: "player1" }, error: null };
       if (c.table === "team_members" && c.op === "select") return { data: targetTeams.map((g) => ({ team_id: `x-${g}`, teams: { game: g } })), error: null };
       return { data: null, error: null };
     };

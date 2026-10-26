@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerDb } from "@/lib/db/server";
 import { getAdminDb } from "@/lib/db/admin";
 import { logAudit } from "@/lib/audit";
+import { activeRoles, type RoleRow } from "@/lib/auth/roles";
 
 // ยกจาก Zodiac app/api/v1/matches/[id]/dispute/resolve/route.ts (เทสแล้ว) ปรับเข้ากับ AVELAi:
 // - สิทธิ์: user_roles (001) role REFEREE/ADMIN ที่ revoked_at เป็น null
@@ -35,11 +36,11 @@ export async function POST(
     // Permission Gate: REFEREE หรือ ADMIN จาก user_roles (001)
     const { data: roleRows } = await supabase
       .from("user_roles")
-      .select("role, revoked_at")
+      .select("role, revoked_at, expires_at")
       .eq("user_id", user.id)
       .is("revoked_at", null);
 
-    const roles = (roleRows ?? []).map((r) => r.role as string);
+    const roles = activeRoles((roleRows ?? []) as RoleRow[]);
     if (!roles.includes("REFEREE") && !roles.includes("ADMIN")) {
       return NextResponse.json(
         { error: { code: "FORBIDDEN_ROLE", message: "สิทธิ์ชี้ขาดข้อพิพาทจำกัดเฉพาะกรรมการหรือแอดมิน" } },

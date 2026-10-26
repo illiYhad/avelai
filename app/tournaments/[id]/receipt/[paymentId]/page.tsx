@@ -10,7 +10,7 @@ export default async function RegistrationReceiptPage({ params }: { params: Prom
   const { db } = await requireUser(`/tournaments/${id}/receipt/${paymentId}`);
   const { data: p } = await db
     .from("payments")
-    .select("id, kind, status, amount_thb, verified_at, payer_user_id, users!payer_user_id(username), registrations!inner(tournament_id, teams(name, tag), tournaments(name))")
+    .select("id, kind, status, amount_thb, verified_at, payer_user_id, users:public_profiles_v!payer_user_id(username), registrations!inner(tournament_id, teams(name, tag), tournaments(name))")
     .eq("id", paymentId).eq("kind", "REGISTRATION").eq("status", "VERIFIED").maybeSingle();
   if (!p) notFound();
   const reg = (Array.isArray(p.registrations) ? p.registrations[0] : p.registrations) as { tournament_id: string; teams: { name: string; tag: string } | { name: string; tag: string }[] | null; tournaments: { name: string } | { name: string }[] | null };
