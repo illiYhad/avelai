@@ -380,9 +380,15 @@ CREATE POLICY evidence_leader_insert ON storage.objects FOR INSERT TO authentica
                             WHERE m.id::text = (storage.foldername(name))[1]
                               AND m.status IN ('LIVE', 'PAUSED', 'AWAITING_RESULT', 'DISPUTED')
                               AND public.is_match_leader(m.id)));
+-- K-AV-3F ข้อ E: อ่านหลักฐานได้เฉพาะหัวหน้าทีมของแมตช์นั้น + staff ของทัวร์ + ADMIN (path ขึ้นต้น {match_id}/) — ไม่ใช่ทุกคนที่ล็อกอิน
 DROP POLICY IF EXISTS evidence_read ON storage.objects;
 CREATE POLICY evidence_read ON storage.objects FOR SELECT TO authenticated
-    USING (bucket_id = 'evidence');
+    USING (bucket_id = 'evidence'
+           AND (public.is_admin()
+                OR EXISTS (SELECT 1 FROM public.tournament_matches m
+                           WHERE m.id::text = (storage.foldername(name))[1]
+                             AND (public.is_match_leader(m.id)
+                                  OR public.is_tournament_staff(m.tournament_id, ARRAY['REFEREE', 'STAFF'])))));
 DROP POLICY IF EXISTS evidence_admin_delete ON storage.objects;
 CREATE POLICY evidence_admin_delete ON storage.objects FOR DELETE TO authenticated
     USING (bucket_id = 'evidence' AND public.is_admin());

@@ -70,6 +70,13 @@ export function dbMessage(error: { code?: string; message?: string } | null | un
   if (error.message?.includes("REGISTRATION_INVALID_TRANSITION") || error.message?.includes("REGISTRATION_IMMUTABLE")) return "เปลี่ยนสถานะใบสมัครแบบนี้ไม่ได้";
   if (error.message?.includes("PAYMENT_ALREADY_DECIDED")) return "รายการนี้ถูกตัดสินไปแล้ว";
   if (error.message?.includes("PAYMENT_IMMUTABLE") || error.message?.includes("PAYMENT_VERIFIER_MISMATCH")) return "แก้รายการชำระแบบนี้ไม่ได้";
+  // K-AV-3F: trigger ฝั่ง DB (140) — ข้อความดิบไม่สะท้อนออกไป
+  if (error.message?.includes("PAYMENT_AMOUNT_MISMATCH")) return "ยอดโอนไม่ตรงค่าเข้าของทัวร์/ราคา Pass";
+  if (error.message?.includes("PAYMENT_SLIP_MISSING")) return "ไม่พบไฟล์สลิปที่อ้างถึง กรุณาอัปโหลดใหม่";
+  if (error.message?.includes("PAYMENT_INSERT_NOT_PENDING") || error.message?.includes("PAYMENT_PAYER_MISMATCH") || error.message?.includes("PAYMENT_REGISTRATION_NOT_FOUND")) return "ส่งสลิปไม่ได้ (ข้อมูลรายการชำระไม่ถูกต้อง)";
+  if (error.message?.includes("PASS_PAYMENT_INVALID") || error.message?.includes("PASS_WINDOW_INVALID")) return "สร้าง Pass ไม่ได้ — ต้องอ้างสลิป Pass ที่ยืนยันแล้วของผู้ใช้/เกมเดียวกัน และอายุ 28 วัน";
+  if (error.message?.includes("TOURNAMENT_LOCKED_FIELD")) return "พ้นช่วงร่างแล้ว แก้เกม/รูปแบบ/ขนาดทีม/best-of/ค่าเข้า/เจ้าของทัวร์ไม่ได้";
+  if (error.message?.includes("TOURNAMENT_MAX_TEAMS_BELOW_REGISTERED")) return "ลดจำนวนทีมสูงสุดให้ต่ำกว่าจำนวนที่สมัครแล้วไม่ได้";
   if (error.code === "23505") return "มีรายการนี้อยู่แล้ว";
   if (error.code === "42501") return "ไม่มีสิทธิ์ทำรายการนี้";
   return fallback;

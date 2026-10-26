@@ -6,6 +6,8 @@
 --   100 (seasons · tournament_instances = อารีน่าอัตโนมัติ daily/weekly/monthly — คนละความหมาย ไม่แตะ)
 --   110 (teams · team_members · is_team_leader · tournament_registrations/roster_snapshots ผูกกับ tournament_instances เดิม — ไม่ใช้ซ้ำ)
 -- เงินไม่ผ่านระบบ: ผู้สมัครโอน PromptPay ตรงผู้จัด → อัปสลิป → คน (staff/ADMIN) กดยืนยัน · ไม่มี OCR
+-- K-AV-3F (แก้ก่อนรันครั้งแรก — ไฟล์นี้ยังไม่เคยรัน): payments_guard_insert (ยอด/สลิปจริง/ผู้จ่าย) · passes_guard_insert (ผูกสลิป VERIFIED · 28 วัน)
+--   · tournaments_guard_update (พ้นร่างล็อกกติกา/ค่าเข้า/organizer_id · max_teams ไม่ต่ำกว่าที่สมัคร)
 -- ============================================================================
 
 BEGIN;
@@ -105,6 +107,34 @@ DROP TRIGGER IF EXISTS tournaments_status_guard ON public.tournaments;
 CREATE TRIGGER tournaments_status_guard
     BEFORE INSERT OR UPDATE OF status, entry_type ON public.tournaments
     FOR EACH ROW EXECUTE FUNCTION public.tournaments_guard_status();
+
+-- K-AV-3F ข้อ C: พ้นร่างแล้วห้ามแก้กติกา/ค่าเข้า/เจ้าของ (organizer_id เปลี่ยนได้เฉพาะ ADMIN) · max_teams ลดต่ำกว่าจำนวนที่สมัครแล้วไม่ได้
+CREATE OR REPLACE FUNCTION public.tournaments_guard_update()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF NEW.organizer_id <> OLD.organizer_id AND NOT public.is_admin() THEN
+    RAISE EXCEPTION 'TOURNAMENT_LOCKED_FIELD: organizer_id' USING ERRCODE = 'check_violation';
+  END IF;
+  IF OLD.status <> 'DRAFT' THEN
+    IF NEW.game <> OLD.game OR NEW.format <> OLD.format OR NEW.team_size <> OLD.team_size OR NEW.best_of <> OLD.best_of
+       OR NEW.entry_type <> OLD.entry_type OR NEW.entry_fee_thb <> OLD.entry_fee_thb THEN
+      RAISE EXCEPTION 'TOURNAMENT_LOCKED_FIELD' USING ERRCODE = 'check_violation';
+    END IF;
+  END IF;
+  IF NEW.max_teams IS NOT NULL AND NEW.max_teams IS DISTINCT FROM OLD.max_teams
+     AND NEW.max_teams < (SELECT count(*) FROM public.registrations r
+                          WHERE r.tournament_id = NEW.id AND r.status IN ('PENDING_PAYMENT', 'CONFIRMED', 'CHECKED_IN')) THEN
+    RAISE EXCEPTION 'TOURNAMENT_MAX_TEAMS_BELOW_REGISTERED' USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+DROP TRIGGER IF EXISTS tournaments_guard_update ON public.tournaments;
+CREATE TRIGGER tournaments_guard_update
+    BEFORE UPDATE ON public.tournaments
+    FOR EACH ROW EXECUTE FUNCTION public.tournaments_guard_update();
 
 -- ลบ PromptPay ไม่ได้ขณะทัวร์ PAID ยังเปิด (พ้นร่างและยังไม่จบ/ยกเลิก)
 CREATE OR REPLACE FUNCTION public.tournament_promptpay_guard_delete()
@@ -378,6 +408,43 @@ CREATE POLICY payments_staff_update ON public.payments FOR UPDATE TO authenticat
                WHERE r.id = payments.registration_id
                  AND public.is_tournament_staff(r.tournament_id, ARRAY['REFEREE', 'STAFF'])))));
 
+-- K-AV-3F ข้อ A + D: INSERT สลิป — ยอดต้องเท่าค่าเข้าจริง (REGISTRATION = tournaments.entry_fee_thb · PASS = 380) · PENDING · ผู้จ่าย = ตัวเอง
+-- · verified_* ว่าง · slip_path ต้องเป็นไฟล์จริงใน bucket payment-slips ใต้โฟลเดอร์ {payer_user_id}/ (เหมือน match_reports_guard_insert ใน 160)
+-- SECURITY DEFINER เพื่ออ่าน tournaments/storage.objects ได้โดยไม่พึ่ง RLS ของผู้เรียก · ไม่ไว้ใจค่าที่ client ส่ง
+CREATE OR REPLACE FUNCTION public.payments_guard_insert()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+  expected numeric(10,2);
+BEGIN
+  IF NEW.status <> 'PENDING' OR NEW.verified_by IS NOT NULL OR NEW.verified_at IS NOT NULL OR NEW.reject_reason IS NOT NULL THEN
+    RAISE EXCEPTION 'PAYMENT_INSERT_NOT_PENDING' USING ERRCODE = 'check_violation';
+  END IF;
+  IF auth.uid() IS NOT NULL AND NEW.payer_user_id <> auth.uid() THEN
+    RAISE EXCEPTION 'PAYMENT_PAYER_MISMATCH' USING ERRCODE = 'check_violation';
+  END IF;
+  IF NEW.kind = 'REGISTRATION' THEN
+    SELECT t.entry_fee_thb INTO expected FROM public.registrations r JOIN public.tournaments t ON t.id = r.tournament_id WHERE r.id = NEW.registration_id;
+    IF expected IS NULL THEN RAISE EXCEPTION 'PAYMENT_REGISTRATION_NOT_FOUND' USING ERRCODE = 'check_violation'; END IF;
+  ELSE
+    expected := 380;
+  END IF;
+  IF NEW.amount_thb <> expected THEN
+    RAISE EXCEPTION 'PAYMENT_AMOUNT_MISMATCH: % <> %', NEW.amount_thb, expected USING ERRCODE = 'check_violation';
+  END IF;
+  IF (storage.foldername(NEW.slip_path))[1] IS DISTINCT FROM NEW.payer_user_id::text
+     OR NOT EXISTS (SELECT 1 FROM storage.objects o WHERE o.bucket_id = 'payment-slips' AND o.name = NEW.slip_path) THEN
+    RAISE EXCEPTION 'PAYMENT_SLIP_MISSING' USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+DROP TRIGGER IF EXISTS payments_guard_insert ON public.payments;
+CREATE TRIGGER payments_guard_insert
+    BEFORE INSERT ON public.payments
+    FOR EACH ROW EXECUTE FUNCTION public.payments_guard_insert();
+
 -- trigger: ตัดสินได้เฉพาะจาก PENDING · แก้ได้แค่ status/verified_by(=ตัวเอง)/verified_at/reject_reason · คอลัมน์อื่นห้ามแตะ
 CREATE OR REPLACE FUNCTION public.payments_guard_update()
 RETURNS trigger
@@ -417,6 +484,31 @@ CREATE POLICY passes_read ON public.passes FOR SELECT TO authenticated
 DROP POLICY IF EXISTS passes_admin_insert ON public.passes;
 CREATE POLICY passes_admin_insert ON public.passes FOR INSERT TO authenticated
     WITH CHECK (public.is_admin());
+
+-- K-AV-3F ข้อ B: pass ต้องผูกสลิป PASS ที่ VERIFIED ของผู้ใช้/เกมเดียวกัน (มีผู้ยืนยัน) · ends_at = starts_at + 28 วัน · ยอด = ยอดสลิป
+-- (ADMIN ยิง API ตรงสร้าง pass ให้ใครก็ได้ไม่ได้อีก — ต้องมีสลิปที่ยืนยันแล้วเสมอ · UNIQUE(payment_id) กันสลิปเดียวออกหลาย pass)
+CREATE OR REPLACE FUNCTION public.passes_guard_insert()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+  p record;
+BEGIN
+  SELECT kind, status, payer_user_id, pass_game, verified_by, amount_thb INTO p FROM public.payments WHERE id = NEW.payment_id;
+  IF p IS NULL OR p.kind <> 'PASS' OR p.status <> 'VERIFIED' OR p.verified_by IS NULL
+     OR p.payer_user_id <> NEW.user_id OR p.pass_game <> NEW.game THEN
+    RAISE EXCEPTION 'PASS_PAYMENT_INVALID' USING ERRCODE = 'check_violation';
+  END IF;
+  IF NEW.ends_at <> NEW.starts_at + interval '28 days' OR NEW.amount_thb <> p.amount_thb THEN
+    RAISE EXCEPTION 'PASS_WINDOW_INVALID' USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+DROP TRIGGER IF EXISTS passes_guard_insert ON public.passes;
+CREATE TRIGGER passes_guard_insert
+    BEFORE INSERT ON public.passes
+    FOR EACH ROW EXECUTE FUNCTION public.passes_guard_insert();
 
 -- tournament_rosters: สมาชิก/หัวหน้าทีมนั้น + staff ทัวร์ + ADMIN อ่าน · สร้างโดย staff/ผู้จัดของทัวร์ (ตอนเข้า CHECK_IN)
 DROP POLICY IF EXISTS tournament_rosters_read ON public.tournament_rosters;
@@ -465,8 +557,8 @@ SELECT schemaname, tablename, policyname, cmd FROM pg_policies
 WHERE (schemaname = 'public' AND tablename IN ('tournaments','tournament_promptpay','tournament_staff','registrations','payments','passes','tournament_rosters'))
    OR (schemaname = 'storage' AND policyname LIKE 'payment_slips_%')
 ORDER BY schemaname, tablename, policyname;
--- 3) trigger: tournaments_status_guard · registrations_guard_update · payments_guard_update + set_*_updated_at 4 ตัว
-SELECT tgname, tgrelid::regclass FROM pg_trigger WHERE NOT tgisinternal AND tgname IN ('tournaments_status_guard','registrations_guard_update','payments_guard_update','tournament_promptpay_guard_delete','set_tournaments_updated_at','set_registrations_updated_at','set_payments_updated_at','set_tournament_promptpay_updated_at');
+-- 3) trigger: tournaments_status_guard · tournaments_guard_update (3F) · registrations_guard_update · payments_guard_insert (3F) · payments_guard_update · passes_guard_insert (3F) + set_*_updated_at 4 ตัว = 11 แถว
+SELECT tgname, tgrelid::regclass FROM pg_trigger WHERE NOT tgisinternal AND tgname IN ('tournaments_status_guard','tournaments_guard_update','registrations_guard_update','payments_guard_insert','payments_guard_update','passes_guard_insert','tournament_promptpay_guard_delete','set_tournaments_updated_at','set_registrations_updated_at','set_payments_updated_at','set_tournament_promptpay_updated_at');
 -- 4) index/unique
 SELECT indexname FROM pg_indexes WHERE schemaname = 'public' AND tablename IN ('tournaments','registrations','payments','passes','tournament_rosters','tournament_staff') ORDER BY indexname;
 -- 5) bucket
@@ -489,6 +581,9 @@ SELECT column_name FROM information_schema.columns WHERE table_schema = 'public'
 -- DROP TABLE IF EXISTS public.tournament_promptpay;
 -- DROP TABLE IF EXISTS public.tournaments;
 -- DROP FUNCTION IF EXISTS public.payments_guard_update();
+-- DROP FUNCTION IF EXISTS public.payments_guard_insert();
+-- DROP FUNCTION IF EXISTS public.passes_guard_insert();
+-- DROP FUNCTION IF EXISTS public.tournaments_guard_update();
 -- DROP FUNCTION IF EXISTS public.tournament_promptpay_guard_delete();
 -- DROP FUNCTION IF EXISTS public.registrations_guard_update();
 -- DROP FUNCTION IF EXISTS public.is_tournament_staff(uuid, text[]);
