@@ -51,13 +51,12 @@ CREATE TABLE IF NOT EXISTS public.tournaments (
     max_teams integer CHECK (max_teams IS NULL OR max_teams BETWEEN 2 AND 256),
     entry_type text NOT NULL DEFAULT 'FREE' CHECK (entry_type IN ('FREE', 'WEEKLY_PASS', 'PAID')),
     entry_fee_thb numeric(10,2) NOT NULL DEFAULT 0 CHECK (entry_fee_thb >= 0),
-    promptpay_id text,                               -- PromptPay ของผู้จัด (เบอร์/เลข 13 หลัก/e-Wallet) · ไม่ใช่ของผู้เล่น
     rules text,
     sponsor_slots jsonb NOT NULL DEFAULT '[]'::jsonb, -- K-AV-8 จะใช้
     obs_theme jsonb,                                  -- K-AV-8 จะใช้
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now(),
-    CONSTRAINT chk_tournaments_paid_needs_fee CHECK (entry_type <> 'PAID' OR (entry_fee_thb > 0 AND promptpay_id IS NOT NULL)),
+    CONSTRAINT chk_tournaments_paid_needs_fee CHECK (entry_type <> 'PAID' OR entry_fee_thb > 0),
     CONSTRAINT chk_tournaments_reg_window CHECK (reg_open_at IS NULL OR reg_close_at IS NULL OR reg_open_at < reg_close_at)
 );
 CREATE INDEX IF NOT EXISTS idx_tournaments_status ON public.tournaments (status);
@@ -68,6 +67,17 @@ CREATE TRIGGER set_tournaments_updated_at
     BEFORE UPDATE ON public.tournaments
     FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
+-- PromptPay ของผู้จัด แยกตาราง (ไม่เปิดสาธารณะ) — อ่านได้เฉพาะ staff/ADMIN/หัวหน้าทีมที่สมัครทัวร์นั้น · เขียน = ผู้จัดเจ้าของ
+CREATE TABLE IF NOT EXISTS public.tournament_promptpay (
+    tournament_id uuid PRIMARY KEY REFERENCES public.tournaments(id) ON DELETE CASCADE,
+    promptpay_id text NOT NULL CHECK (promptpay_id ~ '^[0-9]{10}$' OR promptpay_id ~ '^[0-9]{13}$' OR promptpay_id ~ '^[0-9]{15}$'),
+    updated_at timestamptz NOT NULL DEFAULT now()
+);
+DROP TRIGGER IF EXISTS set_tournament_promptpay_updated_at ON public.tournament_promptpay;
+CREATE TRIGGER set_tournament_promptpay_updated_at
+    BEFORE UPDATE ON public.tournament_promptpay
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
 -- state machine (ตรงกับ lib/tournament/state.ts) · ข้ามขั้น = RAISE → action แปลงเป็นข้อความไทย
 CREATE OR REPLACE FUNCTION public.tournaments_guard_status()
 RETURNS trigger
@@ -75,6 +85,10 @@ LANGUAGE plpgsql SET search_path = ''
 AS $$
 BEGIN
   IF NEW.status = OLD.status THEN RETURN NEW; END IF;
+  IF NEW.status = 'REGISTRATION' AND NEW.entry_type = 'PAID'
+     AND NOT EXISTS (SELECT 1 FROM public.tournament_promptpay p WHERE p.tournament_id = NEW.id) THEN
+    RAISE EXCEPTION 'TOURNAMENT_PAID_NEEDS_PROMPTPAY' USING ERRCODE = 'check_violation';
+  END IF;
   IF (OLD.status = 'DRAFT'        AND NEW.status IN ('REGISTRATION', 'CANCELLED'))
   OR (OLD.status = 'REGISTRATION' AND NEW.status IN ('CHECK_IN', 'CANCELLED'))
   OR (OLD.status = 'CHECK_IN'     AND NEW.status IN ('SEEDING', 'CANCELLED'))
@@ -220,8 +234,20 @@ ALTER TABLE public.registrations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.passes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tournament_rosters ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tournament_promptpay ENABLE ROW LEVEL SECURITY;
 
--- tournaments: ทุกคนอ่านที่ไม่ใช่ร่าง (หน้า /tournaments สาธารณะ · promptpay_id ของผู้จัดไม่แสดงบนหน้าสาธารณะ)
+-- tournament_promptpay: อ่าน = staff/ADMIN + หัวหน้าทีมที่สมัครทัวร์นั้นแล้ว · เขียน = ผู้จัดเจ้าของ/ADMIN
+DROP POLICY IF EXISTS tournament_promptpay_read ON public.tournament_promptpay;
+CREATE POLICY tournament_promptpay_read ON public.tournament_promptpay FOR SELECT TO authenticated
+    USING (public.is_tournament_staff(tournament_id, ARRAY['REFEREE', 'STAFF']) OR public.is_admin()
+           OR EXISTS (SELECT 1 FROM public.registrations r
+                      WHERE r.tournament_id = tournament_promptpay.tournament_id AND public.is_team_leader(r.team_id)));
+DROP POLICY IF EXISTS tournament_promptpay_organizer_write ON public.tournament_promptpay;
+CREATE POLICY tournament_promptpay_organizer_write ON public.tournament_promptpay FOR ALL TO authenticated
+    USING (public.is_tournament_organizer(tournament_id) OR public.is_admin())
+    WITH CHECK (public.is_tournament_organizer(tournament_id) OR public.is_admin());
+
+-- tournaments: ทุกคนอ่านที่ไม่ใช่ร่าง (หน้า /tournaments สาธารณะ · ไม่มีข้อมูลส่วนตัว — PromptPay แยกอยู่ตาราง tournament_promptpay)
 DROP POLICY IF EXISTS tournaments_public_read ON public.tournaments;
 CREATE POLICY tournaments_public_read ON public.tournaments FOR SELECT
     USING (status <> 'DRAFT');
@@ -256,14 +282,54 @@ DROP POLICY IF EXISTS registrations_leader_insert ON public.registrations;
 CREATE POLICY registrations_leader_insert ON public.registrations FOR INSERT TO authenticated
     WITH CHECK (public.is_team_leader(team_id)
                 AND registered_by = (SELECT auth.uid())
-                AND status IN ('PENDING_PAYMENT', 'CONFIRMED')
                 AND seed IS NULL AND checked_in_at IS NULL
-                AND EXISTS (SELECT 1 FROM public.tournaments t WHERE t.id = tournament_id AND t.status = 'REGISTRATION'));
--- หัวหน้าทีม: ถอนตัว หรือเช็กอิน (CONFIRMED → CHECKED_IN ตอนทัวร์อยู่ CHECK_IN) เท่านั้น
+                AND EXISTS (SELECT 1 FROM public.tournaments t
+                            WHERE t.id = tournament_id AND t.status = 'REGISTRATION'
+                              AND (
+                                -- ฟรี: ยืนยันได้ทันที
+                                (t.entry_type = 'FREE' AND status = 'CONFIRMED' AND paid_via = 'FREE')
+                                -- จ่ายค่าเข้า: ต้องรอสลิป (เปลี่ยนเป็น CONFIRMED ได้เฉพาะ staff)
+                                OR (t.entry_type = 'PAID' AND status = 'PENDING_PAYMENT' AND paid_via IS NULL)
+                                -- Weekly Pass: ต้องมี pass ของเกมนั้นที่ยังไม่หมดอายุ
+                                OR (t.entry_type = 'WEEKLY_PASS' AND status = 'CONFIRMED' AND paid_via = 'WEEKLY_PASS'
+                                    AND EXISTS (SELECT 1 FROM public.passes p WHERE p.user_id = (SELECT auth.uid()) AND p.game = t.game
+                                                AND p.starts_at <= now() AND now() < p.ends_at)))));
+-- หัวหน้าทีม: ถอนตัว หรือเช็กอิน เท่านั้น — รายละเอียด (สถานะเดิม/คอลัมน์ห้ามแก้) บังคับด้วย trigger registrations_guard_update
 DROP POLICY IF EXISTS registrations_leader_update ON public.registrations;
 CREATE POLICY registrations_leader_update ON public.registrations FOR UPDATE TO authenticated
     USING (public.is_team_leader(team_id))
-    WITH CHECK (public.is_team_leader(team_id) AND status IN ('WITHDRAWN', 'CHECKED_IN') AND seed IS NULL);
+    WITH CHECK (public.is_team_leader(team_id) AND status IN ('WITHDRAWN', 'CHECKED_IN'));
+
+-- trigger: ผู้ที่ไม่ใช่ staff/ADMIN แก้ได้แค่ status (PENDING_PAYMENT/CONFIRMED → WITHDRAWN · CONFIRMED → CHECKED_IN ตอนทัวร์ CHECK_IN) + checked_in_at
+CREATE OR REPLACE FUNCTION public.registrations_guard_update()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE t_status text;
+BEGIN
+  IF public.is_admin() OR public.is_tournament_staff(OLD.tournament_id, ARRAY['REFEREE', 'STAFF']) THEN
+    IF NEW.tournament_id <> OLD.tournament_id OR NEW.team_id <> OLD.team_id OR NEW.registered_by <> OLD.registered_by THEN
+      RAISE EXCEPTION 'REGISTRATION_IMMUTABLE' USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+  END IF;
+  IF NEW.tournament_id <> OLD.tournament_id OR NEW.team_id <> OLD.team_id OR NEW.registered_by <> OLD.registered_by
+     OR NEW.paid_via IS DISTINCT FROM OLD.paid_via OR NEW.seed IS DISTINCT FROM OLD.seed THEN
+    RAISE EXCEPTION 'REGISTRATION_IMMUTABLE' USING ERRCODE = 'check_violation';
+  END IF;
+  IF NEW.status = OLD.status THEN RETURN NEW; END IF;
+  IF NEW.status = 'WITHDRAWN' AND OLD.status IN ('PENDING_PAYMENT', 'CONFIRMED') THEN RETURN NEW; END IF;
+  IF NEW.status = 'CHECKED_IN' AND OLD.status = 'CONFIRMED' THEN
+    SELECT status INTO t_status FROM public.tournaments WHERE id = OLD.tournament_id;
+    IF t_status = 'CHECK_IN' THEN RETURN NEW; END IF;
+  END IF;
+  RAISE EXCEPTION 'REGISTRATION_INVALID_TRANSITION: % -> %', OLD.status, NEW.status USING ERRCODE = 'check_violation';
+END;
+$$;
+DROP TRIGGER IF EXISTS registrations_guard_update ON public.registrations;
+CREATE TRIGGER registrations_guard_update
+    BEFORE UPDATE ON public.registrations
+    FOR EACH ROW EXECUTE FUNCTION public.registrations_guard_update();
 DROP POLICY IF EXISTS registrations_staff_update ON public.registrations;
 CREATE POLICY registrations_staff_update ON public.registrations FOR UPDATE TO authenticated
     USING (public.is_tournament_staff(tournament_id, ARRAY['REFEREE', 'STAFF']) OR public.is_admin())
@@ -283,14 +349,40 @@ CREATE POLICY payments_payer_insert ON public.payments FOR INSERT TO authenticat
                     SELECT 1 FROM public.registrations r WHERE r.id = registration_id AND r.registered_by = (SELECT auth.uid()))));
 DROP POLICY IF EXISTS payments_staff_update ON public.payments;
 CREATE POLICY payments_staff_update ON public.payments FOR UPDATE TO authenticated
-    USING (public.is_admin() OR (kind = 'REGISTRATION' AND EXISTS (
+    USING (payer_user_id <> (SELECT auth.uid()) AND (public.is_admin() OR (kind = 'REGISTRATION' AND EXISTS (
                SELECT 1 FROM public.registrations r
                WHERE r.id = payments.registration_id
-                 AND public.is_tournament_staff(r.tournament_id, ARRAY['REFEREE', 'STAFF']))))
-    WITH CHECK (public.is_admin() OR (kind = 'REGISTRATION' AND EXISTS (
+                 AND public.is_tournament_staff(r.tournament_id, ARRAY['REFEREE', 'STAFF'])))))
+    WITH CHECK (payer_user_id <> (SELECT auth.uid()) AND (public.is_admin() OR (kind = 'REGISTRATION' AND EXISTS (
                SELECT 1 FROM public.registrations r
                WHERE r.id = payments.registration_id
-                 AND public.is_tournament_staff(r.tournament_id, ARRAY['REFEREE', 'STAFF']))));
+                 AND public.is_tournament_staff(r.tournament_id, ARRAY['REFEREE', 'STAFF'])))));
+
+-- trigger: ตัดสินได้เฉพาะจาก PENDING · แก้ได้แค่ status/verified_by(=ตัวเอง)/verified_at/reject_reason · คอลัมน์อื่นห้ามแตะ
+CREATE OR REPLACE FUNCTION public.payments_guard_update()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF NEW.kind <> OLD.kind OR NEW.payer_user_id <> OLD.payer_user_id OR NEW.registration_id IS DISTINCT FROM OLD.registration_id
+     OR NEW.pass_game IS DISTINCT FROM OLD.pass_game OR NEW.amount_thb <> OLD.amount_thb OR NEW.slip_path <> OLD.slip_path
+     OR NEW.idempotency_key <> OLD.idempotency_key OR NEW.created_at <> OLD.created_at THEN
+    RAISE EXCEPTION 'PAYMENT_IMMUTABLE' USING ERRCODE = 'check_violation';
+  END IF;
+  IF NEW.status = OLD.status THEN RETURN NEW; END IF;
+  IF OLD.status <> 'PENDING' THEN
+    RAISE EXCEPTION 'PAYMENT_ALREADY_DECIDED' USING ERRCODE = 'check_violation';
+  END IF;
+  IF NEW.verified_by IS DISTINCT FROM (SELECT auth.uid()) OR NEW.verified_at IS NULL THEN
+    RAISE EXCEPTION 'PAYMENT_VERIFIER_MISMATCH' USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+DROP TRIGGER IF EXISTS payments_guard_update ON public.payments;
+CREATE TRIGGER payments_guard_update
+    BEFORE UPDATE ON public.payments
+    FOR EACH ROW EXECUTE FUNCTION public.payments_guard_update();
 
 -- passes: อ่านของตัวเอง + ADMIN · สร้างได้เฉพาะ ADMIN
 DROP POLICY IF EXISTS passes_read ON public.passes;
@@ -340,15 +432,15 @@ COMMIT;
 -- ----------------------------------------------------------------------------
 -- 1) 6 ตารางมี + RLS เปิด (relrowsecurity = true ทุกแถว)
 SELECT c.relname, c.relrowsecurity FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-WHERE n.nspname = 'public' AND c.relname IN ('tournaments','tournament_staff','registrations','payments','passes','tournament_rosters')
+WHERE n.nspname = 'public' AND c.relname IN ('tournaments','tournament_promptpay','tournament_staff','registrations','payments','passes','tournament_rosters')
 ORDER BY c.relname;
--- 2) policy: tournaments 4 · tournament_staff 3 · registrations 4 · payments 3 · passes 2 · tournament_rosters 2 · storage.objects มี payment_slips_owner_insert + payment_slips_read
+-- 2) policy: tournaments 4 · tournament_promptpay 2 · tournament_staff 3 · registrations 4 · payments 3 · passes 2 · tournament_rosters 2 · storage.objects มี payment_slips_owner_insert + payment_slips_read
 SELECT schemaname, tablename, policyname, cmd FROM pg_policies
-WHERE (schemaname = 'public' AND tablename IN ('tournaments','tournament_staff','registrations','payments','passes','tournament_rosters'))
+WHERE (schemaname = 'public' AND tablename IN ('tournaments','tournament_promptpay','tournament_staff','registrations','payments','passes','tournament_rosters'))
    OR (schemaname = 'storage' AND policyname LIKE 'payment_slips_%')
 ORDER BY schemaname, tablename, policyname;
--- 3) trigger: tournaments_status_guard + set_*_updated_at 3 ตัว
-SELECT tgname, tgrelid::regclass FROM pg_trigger WHERE NOT tgisinternal AND tgname IN ('tournaments_status_guard','set_tournaments_updated_at','set_registrations_updated_at','set_payments_updated_at');
+-- 3) trigger: tournaments_status_guard · registrations_guard_update · payments_guard_update + set_*_updated_at 4 ตัว
+SELECT tgname, tgrelid::regclass FROM pg_trigger WHERE NOT tgisinternal AND tgname IN ('tournaments_status_guard','registrations_guard_update','payments_guard_update','set_tournaments_updated_at','set_registrations_updated_at','set_payments_updated_at','set_tournament_promptpay_updated_at');
 -- 4) index/unique
 SELECT indexname FROM pg_indexes WHERE schemaname = 'public' AND tablename IN ('tournaments','registrations','payments','passes','tournament_rosters','tournament_staff') ORDER BY indexname;
 -- 5) bucket
@@ -368,7 +460,10 @@ SELECT column_name FROM information_schema.columns WHERE table_schema = 'public'
 -- DROP TABLE IF EXISTS public.payments;
 -- DROP TABLE IF EXISTS public.registrations;
 -- DROP TABLE IF EXISTS public.tournament_staff;
+-- DROP TABLE IF EXISTS public.tournament_promptpay;
 -- DROP TABLE IF EXISTS public.tournaments;
+-- DROP FUNCTION IF EXISTS public.payments_guard_update();
+-- DROP FUNCTION IF EXISTS public.registrations_guard_update();
 -- DROP FUNCTION IF EXISTS public.is_tournament_staff(uuid, text[]);
 -- DROP FUNCTION IF EXISTS public.is_tournament_organizer(uuid);
 -- DROP FUNCTION IF EXISTS public.is_platform_organizer();

@@ -27,9 +27,15 @@ export async function platformRoles(db: SupabaseClient, userId: string): Promise
 export type TournamentRow = {
   id: string; organizer_id: string; name: string; game: string; format: string; team_size: number; best_of: number;
   status: string; reg_open_at: string | null; reg_close_at: string | null; check_in_minutes: number; start_at: string | null;
-  max_teams: number | null; entry_type: string; entry_fee_thb: number | string; promptpay_id: string | null; rules: string | null;
+  max_teams: number | null; entry_type: string; entry_fee_thb: number | string; rules: string | null;
 };
-export const TOURNAMENT_COLS = "id, organizer_id, name, game, format, team_size, best_of, status, reg_open_at, reg_close_at, check_in_minutes, start_at, max_teams, entry_type, entry_fee_thb, promptpay_id, rules";
+export const TOURNAMENT_COLS = "id, organizer_id, name, game, format, team_size, best_of, status, reg_open_at, reg_close_at, check_in_minutes, start_at, max_teams, entry_type, entry_fee_thb, rules";
+
+/** PromptPay ของผู้จัด (ตาราง tournament_promptpay · RLS: staff/ADMIN/หัวหน้าทีมที่สมัครแล้ว) · อ่านไม่ได้/ไม่มี = null */
+export async function tournamentPromptPay(db: SupabaseClient, tournamentId: string): Promise<string | null> {
+  const { data } = await db.from("tournament_promptpay").select("promptpay_id").eq("tournament_id", tournamentId).maybeSingle();
+  return (data as { promptpay_id: string } | null)?.promptpay_id ?? null;
+}
 
 export type StaffLevel = "ORGANIZER" | "STAFF" | "NONE";
 
@@ -60,6 +66,10 @@ export async function leaderTeams(db: SupabaseClient, userId: string, game?: str
 export function dbMessage(error: { code?: string; message?: string } | null | undefined, fallback: string): string {
   if (!error) return fallback;
   if (error.message?.includes("TOURNAMENT_INVALID_TRANSITION")) return "เปลี่ยนสถานะข้ามขั้นไม่ได้";
+  if (error.message?.includes("TOURNAMENT_PAID_NEEDS_PROMPTPAY")) return "ทัวร์แบบจ่ายค่าเข้าต้องตั้ง PromptPay ของผู้จัดก่อนเปิดรับสมัคร";
+  if (error.message?.includes("REGISTRATION_INVALID_TRANSITION") || error.message?.includes("REGISTRATION_IMMUTABLE")) return "เปลี่ยนสถานะใบสมัครแบบนี้ไม่ได้";
+  if (error.message?.includes("PAYMENT_ALREADY_DECIDED")) return "รายการนี้ถูกตัดสินไปแล้ว";
+  if (error.message?.includes("PAYMENT_IMMUTABLE") || error.message?.includes("PAYMENT_VERIFIER_MISMATCH")) return "แก้รายการชำระแบบนี้ไม่ได้";
   if (error.code === "23505") return "มีรายการนี้อยู่แล้ว";
   if (error.code === "42501") return "ไม่มีสิทธิ์ทำรายการนี้";
   return fallback;

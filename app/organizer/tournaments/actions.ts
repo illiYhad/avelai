@@ -61,8 +61,13 @@ export async function createTournamentAction(_prev: OrgState, formData: FormData
   if (!roles.includes("ORGANIZER") && !roles.includes("ADMIN")) return fail("เฉพาะผู้จัด (ORGANIZER) เท่านั้นที่สร้างทัวร์ได้");
   const p = await parseTournamentForm(formData);
   if (!p.ok) return fail(p.message);
-  const { data, error } = await g.ctx.db.from("tournaments").insert({ ...p.v, organizer_id: g.ctx.userId, status: "DRAFT" }).select("id").single();
+  const { promptpay_id, ...row } = p.v;
+  const { data, error } = await g.ctx.db.from("tournaments").insert({ ...row, organizer_id: g.ctx.userId, status: "DRAFT" }).select("id").single();
   if (error || !data) return fail(dbMessage(error, "สร้างทัวร์ไม่สำเร็จ"));
+  if (promptpay_id) {
+    const { error: ppErr } = await g.ctx.db.from("tournament_promptpay").upsert({ tournament_id: data.id, promptpay_id }, { onConflict: "tournament_id" });
+    if (ppErr) return fail("สร้างทัวร์แล้วแต่บันทึก PromptPay ไม่สำเร็จ — แก้ในหน้าทัวร์");
+  }
   await logAudit({ action: "TOURNAMENT_CREATE", table_name: "tournaments", record_id: data.id, payload: { name: p.v.name, game: p.v.game }, performed_by: g.ctx.userId });
   revalidatePath("/organizer/tournaments");
   return { ok: true, message: "สร้างทัวร์แล้ว", id: data.id };
@@ -82,8 +87,13 @@ export async function updateTournamentAction(tournamentId: string, _prev: OrgSta
   if (t.status !== "DRAFT" && t.status !== "REGISTRATION") return fail("แก้รายละเอียดได้เฉพาะช่วงร่าง/เปิดรับสมัคร");
   const p = await parseTournamentForm(formData);
   if (!p.ok) return fail(p.message);
-  const { error } = await g.ctx.db.from("tournaments").update(p.v).eq("id", tournamentId);
+  const { promptpay_id, ...row } = p.v;
+  const { error } = await g.ctx.db.from("tournaments").update(row).eq("id", tournamentId);
   if (error) return fail(dbMessage(error, "บันทึกไม่สำเร็จ"));
+  if (promptpay_id) {
+    const { error: ppErr } = await g.ctx.db.from("tournament_promptpay").upsert({ tournament_id: tournamentId, promptpay_id }, { onConflict: "tournament_id" });
+    if (ppErr) return fail("บันทึกแล้วแต่ PromptPay ไม่สำเร็จ");
+  }
   await logAudit({ action: "TOURNAMENT_UPDATE", table_name: "tournaments", record_id: tournamentId, payload: { name: p.v.name }, performed_by: g.ctx.userId });
   revalidatePath(`/organizer/tournaments/${tournamentId}`);
   return { ok: true, message: "บันทึกแล้ว" };

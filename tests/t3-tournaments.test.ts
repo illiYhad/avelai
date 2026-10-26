@@ -54,7 +54,7 @@ import { reviewPassPaymentAction } from "@/app/admin/payments/actions";
 import type { TournamentRow } from "@/lib/tournament/access";
 
 const NONE = { ok: false, message: "" };
-const T: TournamentRow = { id: "t1", organizer_id: "org", name: "Cup", game: "MLBB", format: "SE", team_size: 5, best_of: 1, status: "REGISTRATION", reg_open_at: null, reg_close_at: null, check_in_minutes: 30, start_at: null, max_teams: null, entry_type: "FREE", entry_fee_thb: 0, promptpay_id: null, rules: null };
+const T: TournamentRow = { id: "t1", organizer_id: "org", name: "Cup", game: "MLBB", format: "SE", team_size: 5, best_of: 1, status: "REGISTRATION", reg_open_at: null, reg_close_at: null, check_in_minutes: 30, start_at: null, max_teams: null, entry_type: "FREE", entry_fee_thb: 0, rules: null };
 const UUID = "11111111-1111-4111-8111-111111111111";
 const TEAM = "22222222-2222-4222-8222-222222222222";
 const REG = "33333333-3333-4333-8333-333333333333";
@@ -215,7 +215,7 @@ describe("registerTeamAction", () => {
     expect(inserted()).toMatchObject({ status: "CONFIRMED", paid_via: "FREE" });
   });
   it("PAID → PENDING_PAYMENT", async () => {
-    setup({ entry_type: "PAID", entry_fee_thb: 100, promptpay_id: "0812345678" });
+    setup({ entry_type: "PAID", entry_fee_thb: 100 });
     expect(await run()).toMatchObject({ ok: true });
     expect(inserted()).toMatchObject({ status: "PENDING_PAYMENT", paid_via: null });
   });

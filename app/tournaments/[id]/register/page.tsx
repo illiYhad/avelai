@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth/roles";
 import { buildPromptPayPayload } from "@/lib/payments/promptpay";
 import { promptPayQrSvg } from "@/lib/payments/qr-svg";
-import { TOURNAMENT_COLS, leaderTeams, type TournamentRow } from "@/lib/tournament/access";
+import { TOURNAMENT_COLS, leaderTeams, tournamentPromptPay, type TournamentRow } from "@/lib/tournament/access";
 import { REG_LABEL, STATUS_LABEL, type RegistrationStatus, type TournamentStatus } from "@/lib/tournament/state";
 import { ActionButton } from "@/components/tournaments/ui";
 import { checkInAction, registerTeamAction, uploadSlipAction } from "./actions";
@@ -30,7 +30,9 @@ export default async function RegisterPage({ params }: { params: Promise<{ id: s
   const pays = (paysRaw ?? []) as Pay[];
   const unregistered = teams.filter((x) => !regs.some((r) => r.team_id === x.id));
   const amount = Number(t.entry_fee_thb);
-  const payload = t.entry_type === "PAID" ? buildPromptPayPayload(t.promptpay_id, amount) : null;
+  // PromptPay ของผู้จัดอ่านได้เฉพาะเมื่อทีมของเราสมัครแล้ว (RLS ตาราง tournament_promptpay)
+  const promptpay = t.entry_type === "PAID" && regs.length ? await tournamentPromptPay(db, id) : null;
+  const payload = promptpay ? buildPromptPayPayload(promptpay, amount) : null;
   const qr = payload ? await promptPayQrSvg(payload) : null;
   const status = t.status as TournamentStatus;
 
@@ -56,7 +58,7 @@ export default async function RegisterPage({ params }: { params: Promise<{ id: s
                 {latest?.status === "REJECTED" ? <p className="text-sm text-red-300">สลิปล่าสุดถูกปฏิเสธ: {latest.reject_reason} — ส่งใหม่ได้</p> : null}
                 {latest?.status !== "PENDING" ? (
                   <>
-                    <p className="text-sm text-white/80">โอน <b className="font-numeric">{amount.toLocaleString("th-TH", { minimumFractionDigits: 2 })} บาท</b> ไป PromptPay ของผู้จัด <span className="font-numeric">{t.promptpay_id}</span> (เงินไม่ผ่านระบบ AVELAi)</p>
+                    <p className="text-sm text-white/80">โอน <b className="font-numeric">{amount.toLocaleString("th-TH", { minimumFractionDigits: 2 })} บาท</b> ไป PromptPay ของผู้จัด <span className="font-numeric">{promptpay ?? "–"}</span> (เงินไม่ผ่านระบบ AVELAi)</p>
                     {qr ? <div className="w-60 rounded bg-white p-2" dangerouslySetInnerHTML={{ __html: qr }} /> : <p className="text-sm text-red-300">สร้าง QR ไม่ได้ — PromptPay ID ของผู้จัดไม่ถูกต้อง ติดต่อผู้จัด</p>}
                     <SlipForm action={uploadSlipAction.bind(null, id)} registrationId={r.id} token={crypto.randomUUID()} />
                   </>

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth/roles";
 import { gameLabel } from "@/lib/games";
-import { TOURNAMENT_COLS, tournamentStaffLevel, type TournamentRow } from "@/lib/tournament/access";
+import { TOURNAMENT_COLS, tournamentPromptPay, tournamentStaffLevel, type TournamentRow } from "@/lib/tournament/access";
 import { REG_LABEL, STATUS_LABEL, isTournamentStatus, nextStatuses, type RegistrationStatus, type TournamentStatus } from "@/lib/tournament/state";
 import { ActionButton } from "@/components/tournaments/ui";
 import { addStaffAction, removeStaffAction, reviewRegistrationPaymentAction, setTournamentStatusAction, updateTournamentAction } from "../actions";
@@ -94,7 +94,7 @@ export default async function ManageTournamentPage({ params }: { params: Promise
           {status === "DRAFT" || status === "REGISTRATION" ? (
             <section className="flex flex-col gap-3">
               <h2 className="text-sm font-semibold text-white/90">แก้รายละเอียด</h2>
-              <TournamentForm action={updateTournamentAction.bind(null, id)} values={t} submitLabel="บันทึก" />
+              <TournamentForm action={updateTournamentAction.bind(null, id)} values={{ ...t, promptpay_id: await tournamentPromptPay(db, id) }} submitLabel="บันทึก" />
             </section>
           ) : null}
         </>
