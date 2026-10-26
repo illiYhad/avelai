@@ -55,7 +55,7 @@ function builder(table: string) {
   const call: Call = { table, op: "select", filters: {} };
   const done = () => { h.calls.push(call); if (table === "users") return { data: { suspended_until: null }, error: null }; return h.resolve(call); };
   const b: Record<string, unknown> = {
-    select: () => b, eq: (k: string, v: unknown) => { call.filters[k] = v; return b; }, in: () => b, is: () => b, order: () => b, limit: () => b,
+    select: () => b, eq: (k: string, v: unknown) => { call.filters[k] = v; return b; }, in: (k: string, v: unknown) => { call.filters[k] = v; return b; }, is: () => b, order: () => b, limit: () => b,
     maybeSingle: async () => done(), single: async () => done(),
     insert: (row: unknown) => { call.op = "insert"; call.row = row; return b; },
     update: (row: unknown) => { call.op = "update"; call.row = row; return b; },
@@ -91,7 +91,7 @@ function setup(o: { me?: string; match?: Record<string, unknown>; leaderOf?: str
     if (c.table === "tournaments") return { data: { id: TID, organizer_id: o.organizer ? (o.me ?? "leaderA") : "org" }, error: null };
     if (c.table === "user_roles") return { data: o.admin ? [{ role: "ADMIN", revoked_at: null }] : [], error: null };
     if (c.table === "tournament_staff") return { data: o.staffRole ? { role: o.staffRole } : null, error: null };
-    if (c.table === "team_members" && "user_id" in c.filters) return { data: o.subjectInScope === false ? [] : [{ user_id: c.filters.user_id }], error: null };
+    if (c.table === "team_members" && "team_id" in c.filters) return { data: o.subjectInScope === false ? [] : [{ user_id: c.filters.user_id }], error: null };
     if (c.table === "team_members") return { data: (o.leaderOf ?? ["A"]).map((id) => ({ role: "OWNER", teams: { id, name: id, tag: id, game: "MLBB", deleted_at: null } })), error: null };
     if (c.table === "disputes" && c.op === "select" && "opened_by_team" in c.filters) return { data: o.existingOpen ? { id: DID, status: "OPEN" } : null, error: null };
     if (c.table === "disputes" && c.op === "select") return { data: o.dispute === undefined ? { id: DID, match_id: MID, tournament_id: TID, opened_by_team: "A", opened_by_user: "leaderA", status: "OPEN", match_status_before: "AWAITING_RESULT" } : o.dispute, error: null };
@@ -208,9 +208,10 @@ describe("issuePenaltyAction / revokePenaltyAction", () => {
     expect(await issuePenaltyAction({ ...base, type: "SUSPENSION", until: "2099-01-01T00:00:00Z" })).toMatchObject({ ok: false, message: expect.stringContaining("7 วัน") });
     setup({ me: "adm", admin: true });
     expect(await issuePenaltyAction({ ...base, type: "SUSPENSION", until: "2099-01-01T00:00:00Z" })).toMatchObject({ ok: true });
+    expect(h.calls.filter((c) => c.table === "penalties" && c.op === "insert")).toHaveLength(1);
     setup({ me: "ref", staffRole: "REFEREE", dispute: { id: DID, match_id: MID, tournament_id: "other", opened_by_team: "A", opened_by_user: "x", status: "OPEN" } });
     expect(await issuePenaltyAction({ ...base, disputeId: DID })).toMatchObject({ ok: false, message: expect.stringContaining("ทัวร์นี้") });
-    expect(h.calls.filter((c) => c.table === "penalties" && c.op === "insert")).toHaveLength(1);
+    expect(h.calls.filter((c) => c.table === "penalties" && c.op === "insert")).toHaveLength(0);
   });
   it("ยกเลิกโทษ: ไม่ใช่ ADMIN → ปฏิเสธ · ADMIN → ตั้ง revoked_at · ยกเลิกซ้ำ → ผลเดิม", async () => {
     setup({ me: "ref", staffRole: "REFEREE" });
