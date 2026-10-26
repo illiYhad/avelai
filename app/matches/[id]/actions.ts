@@ -8,6 +8,7 @@ import { validateSlip } from "@/lib/payments/slip";
 import { advanceBracketAfterMatch } from "@/lib/match/bracket-advance";
 import { evaluateReports, validateScore, type Report } from "@/lib/match/report";
 import { MATCH_COLS, resolveWalkoverIfExpired, type MatchRow } from "@/lib/match/resolve";
+import { applyMatchResult } from "@/lib/passport/applyMatchResult";
 import { OUTCOMES, canTransition, isMatchStatus, isTerminal, transitionError, type MatchStatus, type Outcome } from "@/lib/match/state";
 import { canStartReadyCheck, readyDeadline } from "@/lib/match/walkover";
 import { dbMessage, leaderTeams, requireActiveUser, tournamentStaffLevel, type Ctx } from "@/lib/tournament/access";
@@ -143,7 +144,8 @@ export async function submitReportAction(matchId: string, _prev: MatchActionStat
     const err = await transition(g.ctx, m, "COMPLETED", { winner_team_id: ev.winnerId, score_a: ev.scoreA, score_b: ev.scoreB, result_source: "PLAYER_REPORT", outcome: "NORMAL", confirmed_by: g.ctx.userId }, "confirm:reports", why);
     if (err) return { ok: true, message: `ส่งผลแล้ว แต่ยืนยันอัตโนมัติไม่สำเร็จ: ${err}` };
     const adv = await advanceBracketAfterMatch(g.ctx.db, { ...m, winner_team_id: ev.winnerId }, g.ctx.userId);
-    return { ok: true, message: `${why} — แมตช์จบแล้ว`, warning: adv.advanced ? undefined : adv.message };
+    const pp = await applyMatchResult(m.id, g.ctx.userId); // K-AV-7
+    return { ok: true, message: `${why} — แมตช์จบแล้ว`, warning: [adv.advanced ? null : adv.message, pp.ok ? null : `passport: ${pp.message}`].filter(Boolean).join(" · ") || undefined };
   }
   return { ok: true, message: `ส่งผลแล้ว · ${ev.reason}` };
 }
@@ -178,8 +180,9 @@ export async function refereeResultAction(matchId: string, input: { idempotencyK
   if (err) return fail(err);
   await logAudit({ action: "MATCH_REFEREE_RESULT", table_name: "tournament_matches", record_id: m.id, payload: { outcome, winner: input.winnerTeamId, score_a: scoreA, score_b: scoreB, reason, key }, performed_by: g.ctx.userId });
   const adv = await advanceBracketAfterMatch(g.ctx.db, { ...m, winner_team_id: input.winnerTeamId }, g.ctx.userId);
+  const pp = await applyMatchResult(m.id, g.ctx.userId); // K-AV-7
   revalidatePath(`/matches/${matchId}`); revalidatePath(`/organizer/tournaments/${t.id}/matches`);
-  return { ok: true, message: `ชี้ขาดผลแล้ว (${outcome})`, warning: adv.advanced ? undefined : adv.message };
+  return { ok: true, message: `ชี้ขาดผลแล้ว (${outcome})`, warning: [adv.advanced ? null : adv.message, pp.ok ? null : `passport: ${pp.message}`].filter(Boolean).join(" · ") || undefined };
 }
 
 /** ผู้จัด/staff กำหนดเวลานัดแข่ง (จำเป็นก่อนหัวหน้าทีมจะเริ่มเช็กความพร้อม) */

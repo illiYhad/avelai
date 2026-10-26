@@ -40,8 +40,13 @@ export async function registerTeamAction(tournamentId: string, _prev: RegState, 
     const { count } = await g.ctx.db.from("registrations").select("id", { count: "exact", head: true }).eq("tournament_id", tournamentId).in("status", ["PENDING_PAYMENT", "CONFIRMED", "CHECKED_IN"]);
     if ((count ?? 0) >= t.max_teams) return fail("ทัวร์นี้รับทีมเต็มแล้ว");
   }
-  const { data: members } = await g.ctx.db.from("team_members").select("user_id").eq("team_id", teamId).eq("status", "ACTIVE");
-  const gate = getRegistrationGate((members ?? []).map((m) => m.user_id as string), t.entry_type as EntryType);
+  const { data: members } = await g.ctx.db.from("team_members").select("user_id, users!user_id(username)").eq("team_id", teamId).eq("status", "ACTIVE");
+  // K-AV-7: Karma ของสมาชิกทุกคนจาก RPC karma_states (SECURITY DEFINER — คืนแค่คะแนน/วันปลดบล็อก) · RPC พัง = ปิดรับ (fail-closed)
+  const memberIds = (members ?? []).map((m) => m.user_id as string);
+  const { data: karmaRows, error: karmaErr } = await g.ctx.db.rpc("karma_states", { p_user_ids: memberIds });
+  if (karmaErr) return fail(dbMessage(karmaErr, "ตรวจ Karma ของสมาชิกไม่ได้ กรุณาลองใหม่"));
+  const nameOf = new Map((members ?? []).map((m) => { const u = (Array.isArray(m.users) ? m.users[0] : m.users) as { username: string } | null; return [m.user_id as string, u?.username ?? null]; }));
+  const gate = getRegistrationGate(((karmaRows ?? []) as { user_id: string; score: number; blocked_until: string | null }[]).map((k) => ({ userId: k.user_id, username: nameOf.get(k.user_id), score: k.score, blockedUntil: k.blocked_until })), t.entry_type as EntryType);
   if (!gate.allowed) return fail(gate.reason);
 
   let status = "PENDING_PAYMENT", paid_via: string | null = null;

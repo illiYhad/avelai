@@ -10,6 +10,7 @@ const h = vi.hoisted(() => ({
   uploads: [] as string[],
   resolve: (_c: Call): { data: unknown; error: unknown; count?: number } => ({ data: null, error: null }),
   eligibility: { isComplete: true, requiredCount: 5, activeCount: 5 },
+  karma: {} as Record<string, number>, // K-AV-7: คะแนน Karma ต่อผู้ใช้ที่ RPC karma_states คืน (ไม่ตั้ง = 100)
 }));
 
 function builder(table: string) {
@@ -39,6 +40,8 @@ vi.mock("@/lib/db/server", () => ({
   getServerDb: async () => ({
     auth: { getUser: async () => ({ data: { user: h.user } }) },
     from: (t: string) => builder(t),
+    // K-AV-7: RPC karma_states — ค่าตั้งต้นทุกคน 100/ไม่บล็อก · เทสต์เกณฑ์ Karma อยู่ใน t7-passport
+    rpc: async (fn: string, args: { p_user_ids?: string[] }) => (fn === "karma_states" ? { data: (args.p_user_ids ?? []).map((user_id) => ({ user_id, score: h.karma[user_id] ?? 100, blocked_until: null })), error: null } : { data: null, error: { message: `no rpc ${fn}` } }),
     storage: { from: () => ({ upload: async (path: string) => { h.uploads.push(path); return { error: null }; } }) },
   }),
 }));
@@ -156,8 +159,8 @@ describe("สลิป (pure)", () => {
   });
 });
 
-describe("Karma gate (stub T7)", () => {
-  it("อนุญาตทุกกรณีใน T3", () => { expect(getRegistrationGate(["a", "b"], "PAID")).toEqual({ allowed: true }); });
+describe("Karma gate (T7 เสียบจริง)", () => {
+  it("ทุกคน Karma ≥ 70 ไม่ถูกบล็อก → ผ่าน", () => { expect(getRegistrationGate([{ userId: "a", score: 100, blockedUntil: null }, { userId: "b", score: 70, blockedUntil: null }], "PAID")).toEqual({ allowed: true }); });
 });
 
 describe("parseTournamentForm", () => {
@@ -218,6 +221,15 @@ describe("registerTeamAction", () => {
     setup({ entry_type: "PAID", entry_fee_thb: 100 });
     expect(await run()).toMatchObject({ ok: true });
     expect(inserted()).toMatchObject({ status: "PENDING_PAYMENT", paid_via: null });
+  });
+  it("K-AV-7: สมาชิก Karma < 70 → PAID ปฏิเสธ (บอกชื่อ) · FREE ผ่าน", async () => {
+    h.karma = { p2: 65 };
+    setup({ entry_type: "PAID", entry_fee_thb: 100 });
+    expect(await run()).toMatchObject({ ok: false, message: expect.stringContaining("70") });
+    expect(inserted()).toBeUndefined();
+    setup({});
+    expect(await run()).toMatchObject({ ok: true });
+    h.karma = {};
   });
   it("WEEKLY_PASS: ไม่มี pass → ปฏิเสธ · มี pass ของเกมนี้ → CONFIRMED", async () => {
     setup({ entry_type: "WEEKLY_PASS" });

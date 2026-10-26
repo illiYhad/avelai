@@ -12,6 +12,8 @@ const PROTECTED: RegExp[] = [
   /^\/pass(\/.*)?$/,
   /^\/admin\/payments$/,
   /^\/matches\/[^/]+(\/.*)?$/, // K-AV-5: ห้องแมตช์ + สมุดหลักฐาน
+  /^\/passport(\/.*)?$/, // K-AV-7: Passport (สาธารณะสำหรับผู้ล็อกอิน)
+  /^\/admin\/passport$/, // K-AV-7: ADMIN รันซ้ำ passport
 ];
 
 export function needsLogin(pathname: string): boolean {

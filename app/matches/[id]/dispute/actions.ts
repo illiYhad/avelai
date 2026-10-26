@@ -9,6 +9,7 @@ import { advanceBracketAfterMatch } from "@/lib/match/bracket-advance";
 import { MATCH_COLS, type MatchRow } from "@/lib/match/resolve";
 import { canTransition, transitionError, type MatchStatus } from "@/lib/match/state";
 import { validateSlip } from "@/lib/payments/slip";
+import { applyMatchResult, recordKarmaEvents } from "@/lib/passport/applyMatchResult";
 import { dbMessage, leaderTeams, platformRoles, requireActiveUser, tournamentStaffLevel, type Ctx } from "@/lib/tournament/access";
 
 export type DisputeState = { ok: boolean; message: string; warning?: string; karmaDelta?: number };
@@ -137,6 +138,12 @@ export async function resolveDisputeAction(disputeId: string, input: { idempoten
   if (r.kind === "UPHOLD") {
     const adv = await advanceBracketAfterMatch(g.ctx.db, { ...m, winner_team_id: r.winnerTeamId }, g.ctx.userId);
     if (!adv.advanced) warning = adv.message;
+    const pp = await applyMatchResult(m.id, g.ctx.userId); // K-AV-7: ELO/stats/+2
+    if (!pp.ok) warning = [warning, `passport: ${pp.message}`].filter(Boolean).join(" · ");
+  }
+  // K-AV-7: ข้อพิพาทเท็จ → karma_events −10 ให้ผู้เปิด (idempotent · พัง = audit ไม่โยน)
+  if (karmaDelta !== undefined && !(await recordKarmaEvents([{ userId: d.opened_by_user, delta: karmaDelta, reason: "FALSE_DISPUTE", source: "dispute", refId: d.id, tournamentId: d.tournament_id }], g.ctx.userId))) {
+    warning = [warning, "บันทึก Karma ไม่สำเร็จ (ADMIN รันซ้ำได้)"].filter(Boolean).join(" · ");
   }
   revalidatePath(`/organizer/tournaments/${d.tournament_id}/disputes`); revalidatePath(`/matches/${d.match_id}`);
   return { ok: true, message: r.kind === "UPHOLD" ? "ชี้ขาดและตั้งผลแมตช์แล้ว" : "ปฏิเสธข้อพิพาท — แมตช์กลับไปรอผล", warning, karmaDelta };
@@ -184,9 +191,22 @@ export async function issuePenaltyAction(input: { tournamentId: string; disputeI
   }).select("id").single();
   if (error) return fail(dbMessage(error, "ออกโทษไม่สำเร็จ"));
   const karmaDelta = input.type === "WARNING" ? KARMA_DELTA.WARNING : input.type === "SUSPENSION" ? KARMA_DELTA.SUSPENSION : input.type === "KARMA" ? input.value : undefined;
-  await logAudit({ action: "PENALTY_ISSUE", table_name: "penalties", record_id: data.id, payload: { type: input.type, user_id: input.subjectUserId ?? null, team_id: input.subjectTeamId ?? null, until: input.until ?? null, karma_delta_for_t7: karmaDelta ?? null }, performed_by: g.ctx.userId });
+  await logAudit({ action: "PENALTY_ISSUE", table_name: "penalties", record_id: data.id, payload: { type: input.type, user_id: input.subjectUserId ?? null, team_id: input.subjectTeamId ?? null, until: input.until ?? null, karma_delta: karmaDelta ?? null }, performed_by: g.ctx.userId });
+  // K-AV-7: โทษ → karma_events (ผู้ใช้ตรง ๆ · หรือทุกคนใน roster ของทีมในทัวร์นี้) · BAN ไม่มี delta (ระงับถาวรอยู่แล้ว)
+  let warning: string | undefined;
+  if (karmaDelta !== undefined && karmaDelta !== 0) {
+    let targets: string[] = hasUser ? [input.subjectUserId!] : [];
+    if (hasTeam) {
+      const { data: reg } = await g.ctx.db.from("registrations").select("id").eq("tournament_id", input.tournamentId).eq("team_id", input.subjectTeamId!).maybeSingle();
+      const { data: roster } = reg ? await g.ctx.db.from("tournament_rosters").select("user_id").eq("registration_id", reg.id) : { data: [] };
+      targets = (roster ?? []).map((r) => r.user_id as string);
+    }
+    const kReason = input.type === "WARNING" ? "WARNING" : input.type === "SUSPENSION" ? "SUSPENSION" : "KARMA_PENALTY";
+    const okK = await recordKarmaEvents(targets.map((u) => ({ userId: u, delta: karmaDelta, reason: kReason, source: "penalty", refId: data.id, tournamentId: input.tournamentId })), g.ctx.userId);
+    if (!okK) warning = "บันทึก Karma ไม่สำเร็จ (ADMIN รันซ้ำได้)";
+  }
   revalidatePath(`/organizer/tournaments/${input.tournamentId}/disputes`);
-  return { ok: true, message: `ออกโทษ ${input.type} แล้ว`, karmaDelta };
+  return { ok: true, message: `ออกโทษ ${input.type} แล้ว`, karmaDelta, warning };
 }
 
 export async function revokePenaltyAction(penaltyId: string, reason: string): Promise<DisputeState> {

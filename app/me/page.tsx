@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import Link from "next/link";
 import { requireUser, activeRoles, isSuspended } from "@/lib/auth/roles";
 import { signOutAction } from "@/app/auth/actions";
 import ProfileForm from "./ProfileForm";
@@ -70,6 +71,7 @@ export default async function MePage() {
           <p className="text-sm text-white/60">
             role: {roles.length > 0 ? roles.join(" · ") : "ยังไม่มี"}
           </p>
+          {profile?.username ? <Link href={`/passport/${encodeURIComponent(profile.username)}`} className="text-xs text-cyan underline">Passport ของฉัน (ELO · Karma · สถิติ)</Link> : null}
         </div>
       </section>
 

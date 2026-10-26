@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { logAudit } from "@/lib/audit";
 import { advanceBracketAfterMatch } from "@/lib/match/bracket-advance";
 import { resolveReadyCheck } from "@/lib/match/walkover";
+import { applyMatchResult } from "@/lib/passport/applyMatchResult";
 
 // K-AV-5: resolve walkover แบบ lazy (หน้าแมตช์เปิด) และจาก cron — ใช้ client ที่ผู้เรียกส่งมา (ผู้ใช้ภายใต้ RLS/trigger · หรือ service role จาก cron)
 
@@ -24,5 +25,6 @@ export async function resolveWalkoverIfExpired(db: SupabaseClient, m: MatchRow, 
   if (error || !upd?.length) return false; // คนอื่น resolve ไปแล้ว / trigger ปฏิเสธ / key ซ้ำ
   await logAudit({ action: "MATCH_WALKOVER", table_name: "tournament_matches", record_id: m.id, payload: { winner: d.winnerId, loser: d.loserId }, performed_by: actorId });
   await advanceBracketAfterMatch(db, { ...m, winner_team_id: d.winnerId }, actorId);
+  await applyMatchResult(m.id, actorId); // K-AV-7: no-show −10 ฝั่งไม่มา (พัง = audit ไม่ rollback)
   return true;
 }
