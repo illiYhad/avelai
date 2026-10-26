@@ -37,7 +37,7 @@ describe("navFor (pure)", () => {
   it("ล็อกอินแล้ว → โลโก้ /me · มีแต่ /me และ /teams · มีแชทบอท", () => {
     const m = navFor(true);
     expect(m.home).toBe("/me");
-    expect(m.links.map((l) => l.href)).toEqual(["/me", "/teams"]);
+    expect(m.links.map((l) => l.href)).toEqual(["/me", "/teams", "/tournaments"]);
     expect(m.showChatbot).toBe(true);
   });
   it("ล็อกอินแล้วก็ไม่มีลิงก์ legacy", () => {

@@ -6,6 +6,11 @@ const PROTECTED: RegExp[] = [
   /^\/profile$/,
   /^\/teams\/create$/,
   /^\/team\/[^/]+\/(schedule|budget|scout)$/,
+  // K-AV-3: สมัคร/ใบเสร็จทัวร์ · ฝั่งผู้จัด · Weekly Pass · ตรวจสลิป (เพิ่มอย่างเดียว)
+  /^\/tournaments\/[^/]+\/(register|receipt(\/.*)?)$/,
+  /^\/organizer(\/.*)?$/,
+  /^\/pass(\/.*)?$/,
+  /^\/admin\/payments$/,
 ];
 
 export function needsLogin(pathname: string): boolean {

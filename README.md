@@ -20,6 +20,7 @@ env ดู `.env.example` — ไม่ตั้งค่า แอปยัง�
 |---|---|---|
 | `SUPABASE_URL` + `SUPABASE_ANON_KEY` | ล็อกอิน + อ่าน/เขียนข้อมูลผ่าน RLS | หน้า `/login` แสดง "ระบบล็อกอินยังไม่เปิด" |
 | `SUPABASE_SERVICE_ROLE_KEY` | งานฝั่ง admin ผ่าน `lib/db/admin.ts` ที่เดียว | ฟีเจอร์ admin ฝั่ง server ปิด |
+| `PLATFORM_PROMPTPAY_ID` | PromptPay ของแพลตฟอร์ม (เบอร์ 10 หลัก / เลข 13 หลัก / e-Wallet 15 หลัก) ใช้สร้าง QR ขาย Weekly Pass (K-AV-3) | หน้า `/pass` แสดง "ยังไม่เปิดขาย Pass" |
 | `SITE_URL` | โดเมนจริงของเว็บ ใช้สร้างลิงก์ magic link (กัน host header poisoning) | ใช้ host ของ request — **dev ในเครื่องเท่านั้น** |
 
 > ⚠ **ตอนขึ้น Vercel ต้องตั้ง `SITE_URL` เป็นโดเมนจริงเสมอ** (เช่น `https://avelai.com`) และต้องตรงกับ Redirect URLs ใน Supabase → Authentication → URL Configuration
