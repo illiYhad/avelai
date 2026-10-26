@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { User, Users } from 'lucide-react';
+import { Trophy, User, Users } from 'lucide-react';
 import { navFor, type NavIcon } from '@/lib/nav';
 
 // K-AV-H6: เมนูตามสถานะล็อกอิน — signedIn มาจาก app/layout.tsx (อ่าน session ครั้งเดียวต่อ request)
 const ICONS: Record<NavIcon, React.ReactNode> = {
   user: <User className="w-4 h-4" />,
   users: <Users className="w-4 h-4" />,
+  trophy: <Trophy className="w-4 h-4" />,
 };
 
 export default function Navbar({ signedIn }: { signedIn: boolean }) {

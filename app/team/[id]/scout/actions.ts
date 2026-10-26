@@ -15,9 +15,11 @@ import {
 } from "@/lib/liquipedia/rateLimit";
 import { failWith } from "@/lib/server-errors";
 import { isUserSuspended, SUSPENDED_RESULT } from "@/lib/auth/suspension";
+import { teamGame } from "@/lib/games";
 
 export type ActionResult = { success: true } | { error: { code: string; message: string } };
 
+const SCOUT_GAME_DISABLED = { code: "SCOUT_GAME_DISABLED", message: "สเกาต์เกมนี้ยังไม่เปิดใช้" } as const;
 const DB_OFF = { error: { code: "DB_DISABLED", message: "ยังไม่ต่อฐานข้อมูล (env ไม่ครบ)" } } as const;
 const POSITIONS = ["EXP", "JUNGLE", "MID", "GOLD", "ROAM", ""] as const;
 
@@ -37,8 +39,10 @@ async function requireLeader(teamId: string) {
     .in("role", ["OWNER", "CAPTAIN", "MANAGER", "COACH"])
     .maybeSingle();
   if (!member) return { error: { code: "FORBIDDEN", message: "เฉพาะหัวหน้าทีมเท่านั้น" } } as const;
-  const { data: team } = await db.from("teams").select("private_beta").eq("id", teamId).maybeSingle();
+  const { data: team } = await db.from("teams").select("private_beta, game").eq("id", teamId).maybeSingle();
   if (!team) return { error: { code: "TEAM_NOT_FOUND", message: "ไม่พบทีมนี้" } } as const;
+  // K-AV-D1: สเกาต์ใช้ Liquipedia ของ Mobile Legends เท่านั้น — ทีมเกมอื่นยังไม่เปิด (ไม่เรียก API MLBB)
+  if (teamGame(team.game) !== "MLBB") return { error: SCOUT_GAME_DISABLED } as const;
   return { db, userId: auth.user.id, privateBeta: Boolean(team.private_beta) } as const;
 }
 

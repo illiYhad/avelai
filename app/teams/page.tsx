@@ -2,6 +2,7 @@
 // แนวทางจาก Zodiac app/teams + ปรับธีม AVELAi · env-safe: ไม่มี env = แสดงข้อความแทน
 import Link from "next/link";
 import { getServerDb } from "@/lib/db/server";
+import { gameLabel } from "@/lib/games";
 
 export const dynamic = "force-dynamic";
 
@@ -22,12 +23,12 @@ export default async function MyTeamsPage() {
   const { data: memberships } = userId
     ? await db
         .from("team_members")
-        .select("role, status, teams!inner(id, name, tag, logo_url, is_roster_locked, wins, losses)")
+        .select("role, status, teams!inner(id, name, tag, logo_url, is_roster_locked, wins, losses, game)")
         .eq("user_id", userId)
         .eq("status", "ACTIVE")
     : { data: [] };
 
-  type TeamRow = { id: string; name: string; tag: string; logo_url: string | null; is_roster_locked: boolean; wins: number; losses: number };
+  type TeamRow = { id: string; name: string; tag: string; logo_url: string | null; is_roster_locked: boolean; wins: number; losses: number; game: string | null };
   const teams = (memberships ?? []).map((m) => {
     const t = Array.isArray(m.teams) ? m.teams[0] : m.teams;
     return { ...(t as TeamRow), myRole: m.role as string };
@@ -67,7 +68,7 @@ export default async function MyTeamsPage() {
                     {t.name} <span className="text-[#00D4FF]">[{t.tag}]</span>
                   </p>
                   <p className="text-xs text-neutral-400 mt-0.5">
-                    บทบาท: {t.myRole} · {t.wins}W-{t.losses}L {t.is_roster_locked ? "· 🔒 roster ล็อกแล้ว" : ""}
+                    {gameLabel(t.game)} · บทบาท: {t.myRole} · {t.wins}W-{t.losses}L {t.is_roster_locked ? "· 🔒 roster ล็อกแล้ว" : ""}
                   </p>
                 </div>
                 <span className="text-neutral-500 text-sm shrink-0">→</span>

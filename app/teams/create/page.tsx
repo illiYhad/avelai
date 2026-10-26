@@ -4,6 +4,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createTeamAction } from "@/app/teams/actions";
+import { DEFAULT_GAME, GAMES } from "@/lib/games";
 
 export default function CreateTeamPage() {
   const router = useRouter();
@@ -31,9 +32,17 @@ export default function CreateTeamPage() {
     <main className="min-h-screen bg-[#0A0A0F] px-4 pt-20 pb-10 text-white">
       <div className="mx-auto w-full max-w-md">
         <p className="text-[#00D4FF] font-mono text-xs tracking-widest mb-2">TEAM MANAGEMENT</p>
-        <h1 className="text-2xl font-bold mb-6">สร้างทีมใหม่ (MLBB)</h1>
+        <h1 className="text-2xl font-bold mb-6">สร้างทีมใหม่</h1>
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
+          <label className="text-sm text-neutral-300">
+            เกม *
+            <select name="game" defaultValue={DEFAULT_GAME} className={`mt-1 ${inputCls}`}>
+              {Object.entries(GAMES).map(([code, g]) => (
+                <option key={code} value={code}>{g.label}</option>
+              ))}
+            </select>
+          </label>
           <label className="text-sm text-neutral-300">
             ชื่อทีม *
             <input name="name" required minLength={2} maxLength={50} className={`mt-1 ${inputCls}`} placeholder="เช่น Underdog Esports" />
