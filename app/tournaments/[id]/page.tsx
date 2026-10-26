@@ -41,6 +41,7 @@ export default async function TournamentDetailPage({ params }: { params: Promise
             {auth.user ? (status === "CHECK_IN" ? "เช็กอิน / ดูใบสมัคร" : "สมัครแข่ง") : "เข้าสู่ระบบเพื่อสมัคร"}
           </Link>
         ) : null}
+        {status === "RUNNING" || status === "COMPLETED" || status === "SEEDING" ? <Link href={t.format === "SWISS" ? `/tournaments/${id}/swiss` : `/tournaments/${id}/bracket`} className="rounded border border-white/30 px-4 py-2 text-sm text-white/80">{t.format === "SWISS" ? "ตาราง Swiss" : "ดูสาย"}</Link> : null}
         <Link href="/tournaments" className="rounded border border-white/30 px-4 py-2 text-sm text-white/80">กลับรายการ</Link>
       </div>
     </main>

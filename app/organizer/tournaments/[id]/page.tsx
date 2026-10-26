@@ -7,6 +7,7 @@ import { TOURNAMENT_COLS, tournamentPromptPay, tournamentStaffLevel, type Tourna
 import { REG_LABEL, STATUS_LABEL, isTournamentStatus, nextStatuses, type RegistrationStatus, type TournamentStatus } from "@/lib/tournament/state";
 import { ActionButton } from "@/components/tournaments/ui";
 import { addStaffAction, removeStaffAction, reviewRegistrationPaymentAction, setTournamentStatusAction, updateTournamentAction } from "../actions";
+import { generateBracketAction, generateSwissRoundAction } from "../bracket-actions";
 import { TournamentForm } from "../TournamentForm";
 import { PaymentReview, StaffForm, StatusButtons } from "./ManageClient";
 
@@ -52,6 +53,18 @@ export default async function ManageTournamentPage({ params }: { params: Promise
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-semibold text-white/90">สถานะ</h2>
           <StatusButtons next={next} setStatus={setTournamentStatusAction.bind(null, id)} />
+        </section>
+      ) : null}
+
+      {status === "SEEDING" || status === "RUNNING" ? (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-semibold text-white/90">สาย / รอบ (K-AV-4)</h2>
+          <div className="flex flex-wrap items-center gap-3">
+            {t.format === "SWISS"
+              ? <ActionButton action={generateSwissRoundAction.bind(null, id)} label="สร้างรอบ Swiss ถัดไป" className="rounded bg-gold px-3 py-1.5 text-sm font-semibold text-void" />
+              : status === "SEEDING" ? <ActionButton action={generateBracketAction.bind(null, id)} label={`สร้างสาย ${t.format}`} confirmText="สร้างสายจากทีมที่เช็กอินแล้ว — ทำครั้งเดียว ทัวร์จะเริ่มแข่งทันที" className="rounded bg-gold px-3 py-1.5 text-sm font-semibold text-void" /> : null}
+            <Link href={t.format === "SWISS" ? `/tournaments/${id}/swiss` : `/tournaments/${id}/bracket`} className="text-sm text-cyan underline">ดูสาย/ตาราง</Link>
+          </div>
         </section>
       ) : null}
 
