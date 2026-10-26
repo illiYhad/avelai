@@ -17,11 +17,11 @@ export async function resolveWalkoverIfExpired(db: SupabaseClient, m: MatchRow, 
   const d = resolveReadyCheck({ status: m.status, teamA: m.team_a_id, teamB: m.team_b_id, checkInA: m.check_in_a_at, checkInB: m.check_in_b_at, forfeitDeadlineAt: m.forfeit_deadline_at }, now);
   if (d.kind !== "WALKOVER") return false;
   const key = `walkover:${m.forfeit_deadline_at}`;
+  // transition บันทึกโดย trigger จาก last_reason/last_idempotency_key · confirmed_at/ended_at ตั้งโดย trigger (หัวหน้าทีม) หรือส่งเอง (service role)
   const { data: upd, error } = await db.from("tournament_matches")
-    .update({ status: "WALKOVER", winner_team_id: d.winnerId, result_source: "WALKOVER", outcome: "WALKOVER", ended_at: now.toISOString() })
+    .update({ status: "WALKOVER", winner_team_id: d.winnerId, result_source: "WALKOVER", outcome: "WALKOVER", last_reason: "ทีมเดียวพร้อมและหมดเวลาเช็กความพร้อม", last_idempotency_key: key, ...(actorId ? {} : { ended_at: now.toISOString(), confirmed_at: now.toISOString() }) })
     .eq("id", m.id).eq("status", "READY_CHECK").select("id");
-  if (error || !upd?.length) return false; // คนอื่น resolve ไปแล้ว / trigger ปฏิเสธ
-  await db.from("match_state_transitions").insert({ match_id: m.id, from_status: "READY_CHECK", to_status: "WALKOVER", actor_id: actorId, reason: "ทีมเดียวพร้อมและหมดเวลาเช็กความพร้อม", idempotency_key: key });
+  if (error || !upd?.length) return false; // คนอื่น resolve ไปแล้ว / trigger ปฏิเสธ / key ซ้ำ
   await logAudit({ action: "MATCH_WALKOVER", table_name: "tournament_matches", record_id: m.id, payload: { winner: d.winnerId, loser: d.loserId }, performed_by: actorId });
   await advanceBracketAfterMatch(db, { ...m, winner_team_id: d.winnerId }, actorId);
   return true;

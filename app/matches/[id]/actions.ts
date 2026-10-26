@@ -39,11 +39,10 @@ async function mySide(ctx: Ctx, m: MatchRow): Promise<"A" | "B" | null> {
 async function transition(ctx: Ctx, m: MatchRow, to: MatchStatus, patch: Record<string, unknown>, key: string, reason: string): Promise<string | null> {
   const from = m.status as MatchStatus;
   if (!canTransition(from, to)) return transitionError(from, to);
-  const { data: upd, error } = await ctx.db.from("tournament_matches").update({ ...patch, status: to }).eq("id", m.id).eq("status", from).select("id");
-  if (error) return dbMessage(error, "เปลี่ยนสถานะไม่สำเร็จ");
+  // reason/key ส่งไปใน UPDATE เดียวกัน → trigger ฝั่ง DB บันทึก match_state_transitions เอง (key ซ้ำต่อแมตช์ = UNIQUE ปฏิเสธทั้งก้อน)
+  const { data: upd, error } = await ctx.db.from("tournament_matches").update({ ...patch, status: to, last_reason: reason, last_idempotency_key: key }).eq("id", m.id).eq("status", from).select("id");
+  if (error) return error.code === "23505" ? "คำขอนี้ถูกดำเนินการไปแล้ว (key ซ้ำ)" : dbMessage(error, "เปลี่ยนสถานะไม่สำเร็จ");
   if (!upd?.length) return "สถานะแมตช์เปลี่ยนไปแล้ว กรุณาโหลดหน้าใหม่";
-  const { error: tErr } = await ctx.db.from("match_state_transitions").insert({ match_id: m.id, from_status: from, to_status: to, actor_id: ctx.userId, reason, idempotency_key: key });
-  if (tErr && tErr.code !== "23505") console.error("[match] transition log failed:", tErr.message);
   return null;
 }
 
@@ -66,9 +65,10 @@ export async function readyCheckAction(matchId: string): Promise<MatchActionStat
   const patch: Record<string, unknown> = { [myCol]: now.toISOString() };
   let err: string | null;
   if (m.status === "SCHEDULED") {
-    err = await transition(g.ctx, m, "READY_CHECK", { ...patch, forfeit_deadline_at: readyDeadline(now, t.ready_check_minutes).toISOString() }, `ready:${side}:${g.ctx.userId}`, `ทีม ${side} กดพร้อม — เริ่มนับถอยหลัง ${t.ready_check_minutes} นาที`);
+    // forfeit_deadline_at คำนวณฝั่ง DB (trigger) จาก ready_check_minutes — ค่าที่แสดงใน UI = readyDeadline() ประมาณเดียวกัน
+    err = await transition(g.ctx, m, "READY_CHECK", patch, `ready:${side}:${g.ctx.userId}`, `ทีม ${side} กดพร้อม — เริ่มนับถอยหลัง ${t.ready_check_minutes} นาที (ครบประมาณ ${readyDeadline(now, t.ready_check_minutes).toISOString()})`);
   } else if (otherIn) {
-    err = await transition(g.ctx, m, "LIVE", { ...patch, started_at: now.toISOString() }, `ready:${side}:${g.ctx.userId}`, "ทั้งสองทีมพร้อม — เริ่มแข่ง");
+    err = await transition(g.ctx, m, "LIVE", patch, `ready:${side}:${g.ctx.userId}`, "ทั้งสองทีมพร้อม — เริ่มแข่ง");
   } else {
     const { error } = await g.ctx.db.from("tournament_matches").update(patch).eq("id", m.id).eq("status", "READY_CHECK");
     err = error ? dbMessage(error, "บันทึกไม่สำเร็จ") : null;
@@ -136,9 +136,8 @@ export async function submitReportAction(matchId: string, _prev: MatchActionStat
   const ev = evaluateReports(rA ? toReport(rA) : null, rB ? toReport(rB) : null, { bestOf: m.best_of, teamA: m.team_a_id!, teamB: m.team_b_id!, autoConfirm: t.auto_confirm, autoConfirmMinutes: t.auto_confirm_minutes }, new Date());
   revalidatePath(`/matches/${matchId}`);
   if (ev.kind === "CONFIRMED" || ev.kind === "AUTO_CONFIRM") {
-    const now = new Date().toISOString();
     const why = ev.kind === "CONFIRMED" ? "รายงานสองฝั่งตรงกัน" : `ยืนยันอัตโนมัติ (อีกฝั่งไม่ส่งภายใน ${t.auto_confirm_minutes} นาที)`;
-    const err = await transition(g.ctx, m, "COMPLETED", { winner_team_id: ev.winnerId, score_a: ev.scoreA, score_b: ev.scoreB, result_source: "PLAYER_REPORT", outcome: "NORMAL", confirmed_by: g.ctx.userId, confirmed_at: now, ended_at: now }, "confirm:reports", why);
+    const err = await transition(g.ctx, m, "COMPLETED", { winner_team_id: ev.winnerId, score_a: ev.scoreA, score_b: ev.scoreB, result_source: "PLAYER_REPORT", outcome: "NORMAL", confirmed_by: g.ctx.userId }, "confirm:reports", why);
     if (err) return { ok: true, message: `ส่งผลแล้ว แต่ยืนยันอัตโนมัติไม่สำเร็จ: ${err}` };
     const adv = await advanceBracketAfterMatch(g.ctx.db, { ...m, winner_team_id: ev.winnerId }, g.ctx.userId);
     return { ok: true, message: `${why} — แมตช์จบแล้ว`, warning: adv.advanced ? undefined : adv.message };

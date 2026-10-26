@@ -205,7 +205,8 @@ describe("submitReportAction", () => {
     const r = await submitReportAction(MID, NONE, form({ winner_team_id: "A", score_a: "2", score_b: "1" }, [jpeg()]));
     expect(r).toMatchObject({ ok: true, message: expect.stringContaining("จบแล้ว") });
     expect(updates("tournament_matches")[0].row).toMatchObject({ status: "COMPLETED", winner_team_id: "A", score_a: 2, score_b: 1, result_source: "PLAYER_REPORT", confirmed_by: "leaderA" });
-    expect(h.calls.find((c) => c.table === "match_state_transitions" && c.op === "insert")?.row).toMatchObject({ from_status: "AWAITING_RESULT", to_status: "COMPLETED", idempotency_key: "confirm:reports" });
+    expect(updates("tournament_matches")[0].row).toMatchObject({ last_idempotency_key: "confirm:reports" });
+    expect(h.calls.some((c) => c.table === "match_state_transitions" && c.op === "insert")).toBe(false); // trigger ฝั่ง DB บันทึกเอง
   });
   it("ไม่ตรงกัน → ส่งได้ แต่ไม่จบ (รอผู้ตัดสิน)", async () => {
     setup({ otherReport: { winner: "B", a: 1, b: 2 } });
@@ -241,7 +242,7 @@ describe("refereeResultAction", () => {
     const r = await refereeResultAction(MID, input);
     expect(r.ok).toBe(true);
     expect(updates("tournament_matches")[0].row).toMatchObject({ status: "WALKOVER", winner_team_id: "A", result_source: "WALKOVER", outcome: "WALKOVER", confirmed_by: "org", score_a: null, score_b: null });
-    expect(h.calls.find((c) => c.table === "match_state_transitions" && c.op === "insert")?.row).toMatchObject({ idempotency_key: "referee:k-1", reason: "ทีม B ไม่มา" });
+    expect(updates("tournament_matches")[0].row).toMatchObject({ last_idempotency_key: "referee:k-1", last_reason: "ทีม B ไม่มา" });
   });
   it("key ซ้ำ → ผลเดิม ไม่ update · แมตช์จบแล้ว → ปฏิเสธ · NORMAL ต้องคะแนนถูก · REFEREE (staff) ตัดสินได้", async () => {
     setup({ me: "org", dupKey: true });
@@ -262,7 +263,7 @@ describe("readyCheckAction", () => {
     setup({ match: { status: "SCHEDULED" } });
     expect(await readyCheckAction(MID)).toMatchObject({ ok: true, message: expect.stringContaining("รออีกทีม") });
     const u1 = updates("tournament_matches")[0].row as Record<string, unknown>;
-    expect(u1.status).toBe("READY_CHECK"); expect(u1.check_in_a_at).toBeTruthy(); expect(u1.forfeit_deadline_at).toBeTruthy();
+    expect(u1.status).toBe("READY_CHECK"); expect(u1.check_in_a_at).toBeTruthy(); expect(u1.forfeit_deadline_at).toBeUndefined(); // deadline คำนวณฝั่ง DB
     setup({ me: "leaderB", leaderOf: ["B"], match: { status: "READY_CHECK", check_in_a_at: "2026-10-26T10:00:00Z", forfeit_deadline_at: "2099-01-01T00:00:00Z" } });
     expect(await readyCheckAction(MID)).toMatchObject({ ok: true, message: expect.stringContaining("เริ่มแข่ง") });
     expect((updates("tournament_matches")[0].row as Record<string, unknown>).status).toBe("LIVE");

@@ -38,6 +38,9 @@ ALTER TABLE public.tournament_matches ADD COLUMN IF NOT EXISTS confirmed_at time
 ALTER TABLE public.tournament_matches ADD COLUMN IF NOT EXISTS auto_confirm_deadline_at timestamptz;
 ALTER TABLE public.tournament_matches ADD COLUMN IF NOT EXISTS started_at timestamptz;
 ALTER TABLE public.tournament_matches ADD COLUMN IF NOT EXISTS ended_at timestamptz;
+-- metadata ที่ app ส่งมากับ UPDATE เดียวกัน → trigger คัดลอกลง match_state_transitions (ผู้ใช้เขียนตาราง transition ตรงไม่ได้)
+ALTER TABLE public.tournament_matches ADD COLUMN IF NOT EXISTS last_reason text;
+ALTER TABLE public.tournament_matches ADD COLUMN IF NOT EXISTS last_idempotency_key text;
 CREATE INDEX IF NOT EXISTS idx_tournament_matches_ready_deadline ON public.tournament_matches (forfeit_deadline_at) WHERE status = 'READY_CHECK';
 
 -- ---------------------------------------------------------------------------
@@ -85,6 +88,39 @@ CREATE TABLE IF NOT EXISTS public.match_reports (
     created_at timestamptz NOT NULL DEFAULT now(),
     CONSTRAINT uq_match_reports_team UNIQUE (match_id, reported_by_team)
 );
+-- หลักฐานทุก path ต้องอยู่ใน bucket evidence ที่ '{match_id}/{reporter}/…' และมีไฟล์จริง · คะแนนต้องตาม best_of · ผู้ชนะอยู่ในแมตช์
+CREATE OR REPLACE FUNCTION public.match_reports_guard_insert()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE m record; p text; need smallint;
+BEGIN
+  SELECT team_a_id, team_b_id, best_of, status INTO m FROM public.tournament_matches WHERE id = NEW.match_id;
+  IF m IS NULL THEN RAISE EXCEPTION 'MATCH_NOT_FOUND' USING ERRCODE = 'check_violation'; END IF;
+  IF NEW.reported_by_team NOT IN (m.team_a_id, m.team_b_id) OR NEW.winner_team_id NOT IN (m.team_a_id, m.team_b_id) THEN
+    RAISE EXCEPTION 'REPORT_TEAM_NOT_IN_MATCH' USING ERRCODE = 'check_violation';
+  END IF;
+  need := ceil(m.best_of / 2.0);
+  IF NOT ((NEW.winner_team_id = m.team_a_id AND NEW.score_a = need AND NEW.score_b < need)
+       OR (NEW.winner_team_id = m.team_b_id AND NEW.score_b = need AND NEW.score_a < need)) THEN
+    RAISE EXCEPTION 'REPORT_SCORE_INVALID' USING ERRCODE = 'check_violation';
+  END IF;
+  FOREACH p IN ARRAY NEW.evidence_paths LOOP
+    IF position(NEW.match_id::text || '/' || NEW.reported_by_user::text || '/' IN p) <> 1 THEN
+      RAISE EXCEPTION 'REPORT_EVIDENCE_PATH' USING ERRCODE = 'check_violation';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM storage.objects o WHERE o.bucket_id = 'evidence' AND o.name = p) THEN
+      RAISE EXCEPTION 'REPORT_EVIDENCE_MISSING' USING ERRCODE = 'check_violation';
+    END IF;
+  END LOOP;
+  RETURN NEW;
+END;
+$$;
+DROP TRIGGER IF EXISTS match_reports_guard_insert ON public.match_reports;
+CREATE TRIGGER match_reports_guard_insert
+    BEFORE INSERT ON public.match_reports
+    FOR EACH ROW EXECUTE FUNCTION public.match_reports_guard_insert();
+
 DROP TRIGGER IF EXISTS match_reports_append_only ON public.match_reports;
 CREATE TRIGGER match_reports_append_only
     BEFORE UPDATE OR DELETE ON public.match_reports
@@ -119,8 +155,9 @@ DECLARE
   privileged boolean;
   uid uuid := (SELECT auth.uid());
   allowed boolean := false;
-  t_auto boolean; t_auto_min integer; t_best smallint;
+  t_auto boolean; t_auto_min integer; t_ready_min integer; t_best smallint;
   rep_count integer; rep_winner uuid; rep_a smallint; rep_b smallint; rep_at timestamptz;
+  need smallint;
 BEGIN
   privileged := uid IS NULL OR public.is_admin() OR public.is_tournament_staff(OLD.tournament_id, ARRAY['REFEREE', 'STAFF']);
 
@@ -128,8 +165,8 @@ BEGIN
   IF NEW.tournament_id <> OLD.tournament_id OR NEW.stage <> OLD.stage OR NEW.round <> OLD.round OR NEW.position <> OLD.position THEN
     RAISE EXCEPTION 'MATCH_IMMUTABLE' USING ERRCODE = 'check_violation';
   END IF;
-  -- terminal แล้วเปลี่ยนไม่ได้
-  IF OLD.status IN ('COMPLETED', 'WALKOVER', 'BYE', 'CANCELLED') AND NEW.status <> OLD.status THEN
+  -- terminal แล้ว: ทุกคนแก้ไม่ได้ทุกคอลัมน์
+  IF OLD.status IN ('COMPLETED', 'WALKOVER', 'BYE', 'CANCELLED') THEN
     RAISE EXCEPTION 'MATCH_INVALID_TRANSITION: % -> %', OLD.status, NEW.status USING ERRCODE = 'check_violation';
   END IF;
 
@@ -152,56 +189,78 @@ BEGIN
 
   IF privileged THEN RETURN NEW; END IF;
 
-  -- ---------- กฎสำหรับหัวหน้าทีม ----------
+  -- ================= กฎสำหรับหัวหน้าทีม (ไม่ใช่ staff) =================
   IF NOT public.is_match_leader(OLD.id) THEN
     RAISE EXCEPTION 'MATCH_FORBIDDEN' USING ERRCODE = 'insufficient_privilege';
   END IF;
-  -- คอลัมน์ที่หัวหน้าทีมห้ามแตะ
+
+  -- (1) คอลัมน์ที่หัวหน้าทีมห้ามแตะเสมอ
   IF NEW.team_a_id IS DISTINCT FROM OLD.team_a_id OR NEW.team_b_id IS DISTINCT FROM OLD.team_b_id OR NEW.best_of <> OLD.best_of
-     OR NEW.scheduled_at IS DISTINCT FROM OLD.scheduled_at OR NEW.outcome IS DISTINCT FROM OLD.outcome AND NEW.status NOT IN ('COMPLETED', 'WALKOVER') THEN
+     OR NEW.scheduled_at IS DISTINCT FROM OLD.scheduled_at OR NEW.auto_confirm_deadline_at IS DISTINCT FROM OLD.auto_confirm_deadline_at
+     OR NEW.confirmed_at IS DISTINCT FROM OLD.confirmed_at OR NEW.started_at IS DISTINCT FROM OLD.started_at OR NEW.ended_at IS DISTINCT FROM OLD.ended_at
+     OR NEW.forfeit_deadline_at IS DISTINCT FROM OLD.forfeit_deadline_at THEN
     RAISE EXCEPTION 'MATCH_FORBIDDEN_COLUMN' USING ERRCODE = 'check_violation';
   END IF;
-  -- เช็กอินได้เฉพาะฝั่งตัวเอง และตั้งได้ครั้งเดียว
-  IF NEW.check_in_a_at IS DISTINCT FROM OLD.check_in_a_at AND (OLD.check_in_a_at IS NOT NULL OR NOT public.is_team_leader(OLD.team_a_id)) THEN
-    RAISE EXCEPTION 'MATCH_FORBIDDEN_COLUMN' USING ERRCODE = 'check_violation';
+  -- (2) เช็กอินได้เฉพาะฝั่งตัวเอง และตั้งได้ครั้งเดียว (ค่าเวลา trigger ตั้งเอง)
+  IF NEW.check_in_a_at IS DISTINCT FROM OLD.check_in_a_at THEN
+    IF OLD.check_in_a_at IS NOT NULL OR NOT public.is_team_leader(OLD.team_a_id) THEN RAISE EXCEPTION 'MATCH_FORBIDDEN_COLUMN' USING ERRCODE = 'check_violation'; END IF;
+    NEW.check_in_a_at := now();
   END IF;
-  IF NEW.check_in_b_at IS DISTINCT FROM OLD.check_in_b_at AND (OLD.check_in_b_at IS NOT NULL OR NOT public.is_team_leader(OLD.team_b_id)) THEN
-    RAISE EXCEPTION 'MATCH_FORBIDDEN_COLUMN' USING ERRCODE = 'check_violation';
+  IF NEW.check_in_b_at IS DISTINCT FROM OLD.check_in_b_at THEN
+    IF OLD.check_in_b_at IS NOT NULL OR NOT public.is_team_leader(OLD.team_b_id) THEN RAISE EXCEPTION 'MATCH_FORBIDDEN_COLUMN' USING ERRCODE = 'check_violation'; END IF;
+    NEW.check_in_b_at := now();
   END IF;
 
-  IF NEW.status = OLD.status THEN RETURN NEW; END IF;
+  -- (3) สถานะไม่เปลี่ยน: คอลัมน์ผลต้องไม่เปลี่ยน (แก้ได้แค่เช็กอิน + metadata)
+  IF NEW.status = OLD.status THEN
+    IF NEW.winner_team_id IS DISTINCT FROM OLD.winner_team_id OR NEW.score_a IS DISTINCT FROM OLD.score_a OR NEW.score_b IS DISTINCT FROM OLD.score_b
+       OR NEW.result_source IS DISTINCT FROM OLD.result_source OR NEW.outcome IS DISTINCT FROM OLD.outcome OR NEW.confirmed_by IS DISTINCT FROM OLD.confirmed_by THEN
+      RAISE EXCEPTION 'MATCH_FORBIDDEN_COLUMN' USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  -- (4) transition ที่หัวหน้าทีมทำได้ — คอลัมน์ผลเปลี่ยนได้เฉพาะใน COMPLETED/WALKOVER
+  IF NEW.status NOT IN ('COMPLETED', 'WALKOVER') AND (
+       NEW.winner_team_id IS DISTINCT FROM OLD.winner_team_id OR NEW.score_a IS DISTINCT FROM OLD.score_a OR NEW.score_b IS DISTINCT FROM OLD.score_b
+       OR NEW.result_source IS DISTINCT FROM OLD.result_source OR NEW.outcome IS DISTINCT FROM OLD.outcome OR NEW.confirmed_by IS DISTINCT FROM OLD.confirmed_by) THEN
+    RAISE EXCEPTION 'MATCH_FORBIDDEN_COLUMN' USING ERRCODE = 'check_violation';
+  END IF;
 
   IF OLD.status = 'SCHEDULED' AND NEW.status = 'READY_CHECK' THEN
-    IF NEW.forfeit_deadline_at IS NULL THEN RAISE EXCEPTION 'MATCH_READY_DEADLINE_REQUIRED' USING ERRCODE = 'check_violation'; END IF;
+    -- deadline คำนวณฝั่ง DB จาก ready_check_minutes ของทัวร์ (ไม่เชื่อค่าจาก client)
+    SELECT t.ready_check_minutes INTO t_ready_min FROM public.tournaments t WHERE t.id = OLD.tournament_id;
+    NEW.forfeit_deadline_at := now() + make_interval(mins => COALESCE(t_ready_min, 15));
     RETURN NEW;
   END IF;
   IF OLD.status = 'READY_CHECK' AND NEW.status = 'LIVE' THEN
     IF NEW.check_in_a_at IS NULL OR NEW.check_in_b_at IS NULL THEN RAISE EXCEPTION 'MATCH_NOT_BOTH_READY' USING ERRCODE = 'check_violation'; END IF;
+    NEW.started_at := now();
     RETURN NEW;
   END IF;
   IF OLD.status IN ('LIVE', 'PAUSED') AND NEW.status = 'AWAITING_RESULT' THEN RETURN NEW; END IF;
   IF OLD.status = 'READY_CHECK' AND NEW.status = 'WALKOVER' THEN
-    -- ทีมเดียวพร้อม + หมดเวลา → ทีมที่พร้อมชนะ (ทั้งสองไม่พร้อม = ผู้ตัดสินเท่านั้น)
     IF OLD.forfeit_deadline_at IS NULL OR now() < OLD.forfeit_deadline_at THEN RAISE EXCEPTION 'MATCH_READY_NOT_EXPIRED' USING ERRCODE = 'check_violation'; END IF;
     IF NOT ((OLD.check_in_a_at IS NOT NULL AND OLD.check_in_b_at IS NULL AND NEW.winner_team_id = OLD.team_a_id)
          OR (OLD.check_in_b_at IS NOT NULL AND OLD.check_in_a_at IS NULL AND NEW.winner_team_id = OLD.team_b_id)) THEN
       RAISE EXCEPTION 'MATCH_WALKOVER_NOT_APPLICABLE' USING ERRCODE = 'check_violation';
     END IF;
-    IF NEW.result_source <> 'WALKOVER' THEN RAISE EXCEPTION 'MATCH_RESULT_SOURCE' USING ERRCODE = 'check_violation'; END IF;
+    IF NEW.result_source <> 'WALKOVER' OR NEW.outcome IS DISTINCT FROM 'WALKOVER' OR NEW.score_a IS NOT NULL OR NEW.score_b IS NOT NULL THEN
+      RAISE EXCEPTION 'MATCH_RESULT_SOURCE' USING ERRCODE = 'check_violation';
+    END IF;
+    NEW.confirmed_by := NULL; NEW.confirmed_at := now(); NEW.ended_at := now();
     RETURN NEW;
   END IF;
   IF OLD.status = 'AWAITING_RESULT' AND NEW.status = 'COMPLETED' THEN
-    IF NEW.result_source <> 'PLAYER_REPORT' THEN RAISE EXCEPTION 'MATCH_RESULT_SOURCE' USING ERRCODE = 'check_violation'; END IF;
+    IF NEW.result_source <> 'PLAYER_REPORT' OR NEW.outcome IS DISTINCT FROM 'NORMAL' THEN RAISE EXCEPTION 'MATCH_RESULT_SOURCE' USING ERRCODE = 'check_violation'; END IF;
     SELECT t.auto_confirm, t.auto_confirm_minutes INTO t_auto, t_auto_min FROM public.tournaments t WHERE t.id = OLD.tournament_id;
-    t_best := OLD.best_of;
+    t_best := OLD.best_of; need := ceil(t_best / 2.0);
     SELECT count(*), min(winner_team_id), min(score_a), min(score_b), min(created_at) INTO rep_count, rep_winner, rep_a, rep_b, rep_at
-      FROM public.match_reports r WHERE r.match_id = OLD.id AND cardinality(r.evidence_paths) >= 1;
-    -- ต้องมีรายงานที่มีหลักฐาน และผลที่เขียนต้องตรงกับรายงาน
+      FROM public.match_reports r WHERE r.match_id = OLD.id;
     IF rep_count = 0 OR NEW.winner_team_id IS DISTINCT FROM rep_winner OR NEW.score_a IS DISTINCT FROM rep_a OR NEW.score_b IS DISTINCT FROM rep_b THEN
       RAISE EXCEPTION 'MATCH_REPORTS_NOT_CONFIRMED' USING ERRCODE = 'check_violation';
     END IF;
     IF rep_count = 2 THEN
-      -- สองฝั่งต้องตรงกันทุกค่า (min = max)
       IF EXISTS (SELECT 1 FROM public.match_reports r WHERE r.match_id = OLD.id
                  AND (r.winner_team_id <> rep_winner OR r.score_a <> rep_a OR r.score_b <> rep_b)) THEN
         RAISE EXCEPTION 'MATCH_REPORTS_MISMATCH' USING ERRCODE = 'check_violation';
@@ -209,12 +268,12 @@ BEGIN
     ELSIF NOT (COALESCE(t_auto, false) AND now() >= rep_at + make_interval(mins => t_auto_min)) THEN
       RAISE EXCEPTION 'MATCH_REPORTS_NOT_CONFIRMED' USING ERRCODE = 'check_violation';
     END IF;
-    -- คะแนนสมเหตุผลตาม best_of
-    IF NOT ((NEW.winner_team_id = OLD.team_a_id AND NEW.score_a = ceil(t_best / 2.0) AND NEW.score_b < ceil(t_best / 2.0))
-         OR (NEW.winner_team_id = OLD.team_b_id AND NEW.score_b = ceil(t_best / 2.0) AND NEW.score_a < ceil(t_best / 2.0))) THEN
+    IF NOT ((NEW.winner_team_id = OLD.team_a_id AND NEW.score_a = need AND NEW.score_b < need)
+         OR (NEW.winner_team_id = OLD.team_b_id AND NEW.score_b = need AND NEW.score_a < need)) THEN
       RAISE EXCEPTION 'MATCH_SCORE_INVALID' USING ERRCODE = 'check_violation';
     END IF;
     IF NEW.confirmed_by IS DISTINCT FROM uid THEN RAISE EXCEPTION 'MATCH_CONFIRMER_MISMATCH' USING ERRCODE = 'check_violation'; END IF;
+    NEW.confirmed_at := now(); NEW.ended_at := now();
     RETURN NEW;
   END IF;
   RAISE EXCEPTION 'MATCH_FORBIDDEN_TRANSITION: % -> %', OLD.status, NEW.status USING ERRCODE = 'check_violation';
@@ -224,6 +283,25 @@ DROP TRIGGER IF EXISTS tournament_matches_guard_update ON public.tournament_matc
 CREATE TRIGGER tournament_matches_guard_update
     BEFORE UPDATE ON public.tournament_matches
     FOR EACH ROW EXECUTE FUNCTION public.tournament_matches_guard_update();
+
+-- บันทึก transition อัตโนมัติจาก OLD/NEW (actor = auth.uid() · NULL = ระบบ/cron) · reason/key มาจาก last_reason/last_idempotency_key ใน UPDATE เดียวกัน
+-- key ซ้ำต่อแมตช์ → UNIQUE ปฏิเสธ → UPDATE ทั้งก้อนล้ม = idempotency บังคับที่ DB
+CREATE OR REPLACE FUNCTION public.tournament_matches_log_transition()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF NEW.status = OLD.status THEN RETURN NEW; END IF;
+  INSERT INTO public.match_state_transitions (match_id, from_status, to_status, actor_id, reason, idempotency_key)
+  VALUES (NEW.id, OLD.status, NEW.status, (SELECT auth.uid()), NEW.last_reason,
+          COALESCE(NEW.last_idempotency_key, OLD.status || '>' || NEW.status || ':' || to_char(clock_timestamp(), 'YYYYMMDDHH24MISSUS')));
+  RETURN NEW;
+END;
+$$;
+DROP TRIGGER IF EXISTS tournament_matches_log_transition ON public.tournament_matches;
+CREATE TRIGGER tournament_matches_log_transition
+    AFTER UPDATE ON public.tournament_matches
+    FOR EACH ROW EXECUTE FUNCTION public.tournament_matches_log_transition();
 
 -- ---------------------------------------------------------------------------
 -- 7. RLS
@@ -240,11 +318,7 @@ CREATE POLICY tournament_matches_leader_update ON public.tournament_matches FOR 
 DROP POLICY IF EXISTS match_state_transitions_read ON public.match_state_transitions;
 CREATE POLICY match_state_transitions_read ON public.match_state_transitions FOR SELECT TO authenticated USING (true);
 DROP POLICY IF EXISTS match_state_transitions_insert ON public.match_state_transitions;
-CREATE POLICY match_state_transitions_insert ON public.match_state_transitions FOR INSERT TO authenticated
-    WITH CHECK (actor_id = (SELECT auth.uid())
-                AND (public.is_match_leader(match_id) OR public.is_admin()
-                     OR EXISTS (SELECT 1 FROM public.tournament_matches m WHERE m.id = match_id
-                                AND public.is_tournament_staff(m.tournament_id, ARRAY['REFEREE', 'STAFF']))));
+-- ไม่มี INSERT policy: แถว transition เขียนโดย trigger tournament_matches_log_transition เท่านั้น (ปลอมไม่ได้)
 
 DROP POLICY IF EXISTS match_reports_read ON public.match_reports;
 CREATE POLICY match_reports_read ON public.match_reports FOR SELECT TO authenticated USING (true);
@@ -287,12 +361,12 @@ COMMIT;
 -- 1) ตาราง + RLS
 SELECT c.relname, c.relrowsecurity FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
 WHERE n.nspname = 'public' AND c.relname IN ('match_state_transitions','match_reports') ORDER BY c.relname;
--- 2) policy: tournament_matches +1 (leader_update) · transitions 2 · reports 2 · storage evidence_* 3
+-- 2) policy: tournament_matches +1 (leader_update) · transitions 1 (read) · reports 2 · storage evidence_* 3
 SELECT schemaname, tablename, policyname, cmd FROM pg_policies
 WHERE (schemaname = 'public' AND tablename IN ('tournament_matches','match_state_transitions','match_reports'))
    OR (schemaname = 'storage' AND policyname LIKE 'evidence_%') ORDER BY schemaname, tablename, policyname;
--- 3) trigger: tournament_matches_guard_update · *_append_only 2
-SELECT tgname, tgrelid::regclass FROM pg_trigger WHERE NOT tgisinternal AND tgname IN ('tournament_matches_guard_update','match_state_transitions_append_only','match_reports_append_only');
+-- 3) trigger: tournament_matches_guard_update · tournament_matches_log_transition · match_reports_guard_insert · *_append_only 2
+SELECT tgname, tgrelid::regclass FROM pg_trigger WHERE NOT tgisinternal AND tgname IN ('tournament_matches_guard_update','tournament_matches_log_transition','match_reports_guard_insert','match_state_transitions_append_only','match_reports_append_only');
 -- 4) คอลัมน์ใหม่
 SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = 'public'
   AND ((table_name = 'tournaments' AND column_name IN ('auto_confirm','auto_confirm_minutes','ready_check_minutes'))
@@ -306,10 +380,13 @@ SELECT id, public, file_size_limit FROM storage.buckets WHERE id = 'evidence';
 -- ----------------------------------------------------------------------------
 -- DROP POLICY IF EXISTS evidence_admin_delete ON storage.objects; DROP POLICY IF EXISTS evidence_read ON storage.objects; DROP POLICY IF EXISTS evidence_leader_insert ON storage.objects;
 -- DELETE FROM storage.objects WHERE bucket_id = 'evidence'; DELETE FROM storage.buckets WHERE id = 'evidence';
+-- DROP TRIGGER IF EXISTS tournament_matches_log_transition ON public.tournament_matches; DROP FUNCTION IF EXISTS public.tournament_matches_log_transition();
 -- DROP TRIGGER IF EXISTS tournament_matches_guard_update ON public.tournament_matches; DROP FUNCTION IF EXISTS public.tournament_matches_guard_update();
+-- DROP FUNCTION IF EXISTS public.match_reports_guard_insert();
 -- DROP POLICY IF EXISTS tournament_matches_leader_update ON public.tournament_matches;
 -- DROP TABLE IF EXISTS public.match_reports; DROP TABLE IF EXISTS public.match_state_transitions;
 -- DROP FUNCTION IF EXISTS public.is_match_leader(uuid); DROP FUNCTION IF EXISTS public.deny_update_delete();
 -- ALTER TABLE public.tournament_matches DROP COLUMN IF EXISTS score_a, DROP COLUMN IF EXISTS score_b, DROP COLUMN IF EXISTS outcome, DROP COLUMN IF EXISTS confirmed_by,
---   DROP COLUMN IF EXISTS confirmed_at, DROP COLUMN IF EXISTS auto_confirm_deadline_at, DROP COLUMN IF EXISTS started_at, DROP COLUMN IF EXISTS ended_at;
+--   DROP COLUMN IF EXISTS confirmed_at, DROP COLUMN IF EXISTS auto_confirm_deadline_at, DROP COLUMN IF EXISTS started_at, DROP COLUMN IF EXISTS ended_at,
+--   DROP COLUMN IF EXISTS last_reason, DROP COLUMN IF EXISTS last_idempotency_key;
 -- ALTER TABLE public.tournaments DROP COLUMN IF EXISTS auto_confirm, DROP COLUMN IF EXISTS auto_confirm_minutes, DROP COLUMN IF EXISTS ready_check_minutes;
