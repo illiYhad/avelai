@@ -187,3 +187,26 @@ describe("role helpers", () => {
     expect(adminRpcMessage({ message: "something else" }, "fallback")).toBe("fallback");
   });
 });
+
+// K-AV-FIX2.1: is_platform_organizer นับ SUPER_ADMIN + เช็กหมดอายุ
+describe("SQL 212 · is_platform_organizer", () => {
+  const code212 = readFileSync(join(root, "supabase/migrations/212_platform_organizer_super_admin.sql"), "utf8").replace(/--.*$/gm, "");
+  it("ห่อ BEGIN/COMMIT · ลายเซ็นเดิม", () => {
+    expect(code212.trim().startsWith("BEGIN;")).toBe(true);
+    expect(code212.trim().endsWith("COMMIT;")).toBe(true);
+    expect(code212).toContain("CREATE OR REPLACE FUNCTION public.is_platform_organizer()\nRETURNS boolean\nLANGUAGE sql STABLE SECURITY DEFINER SET search_path = ''");
+  });
+  it("นับ ORGANIZER/ADMIN/SUPER_ADMIN ที่ active และไม่หมดอายุ", () => {
+    expect(code212).toContain("role IN ('ORGANIZER', 'ADMIN', 'SUPER_ADMIN')");
+    expect(code212).toContain("revoked_at IS NULL");
+    expect(code212).toContain("(expires_at IS NULL OR expires_at > now())");
+  });
+  it("REVOKE จาก public แล้ว GRANT ให้ authenticated, service_role", () => {
+    expect(code212).toContain("REVOKE ALL ON FUNCTION public.is_platform_organizer() FROM public;");
+    expect(code212).toContain("GRANT EXECUTE ON FUNCTION public.is_platform_organizer() TO authenticated, service_role;");
+  });
+  it("ฝั่งเว็บ: SUPER_ADMIN อย่างเดียวผ่านเช็ก ORGANIZER || ADMIN ของหน้าผู้จัด", () => {
+    const roles = activeRoles([{ role: "SUPER_ADMIN", revoked_at: null, expires_at: null }]);
+    expect(roles.includes("ORGANIZER") || roles.includes("ADMIN")).toBe(true);
+  });
+});
