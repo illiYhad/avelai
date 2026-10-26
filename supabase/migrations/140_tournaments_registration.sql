@@ -232,6 +232,7 @@ CREATE TABLE IF NOT EXISTS public.payments (
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now(),
     CONSTRAINT uq_payments_idempotency UNIQUE (idempotency_key),
+    CONSTRAINT uq_payments_slip_path UNIQUE (slip_path),         -- K-AV-3F: สลิปไฟล์เดียวใช้ได้ครั้งเดียว (กันอ้างสลิปเดิมซ้ำหลายรายการ)
     CONSTRAINT chk_payments_target CHECK (
         (kind = 'REGISTRATION' AND registration_id IS NOT NULL AND pass_game IS NULL) OR
         (kind = 'PASS' AND registration_id IS NULL AND pass_game IS NOT NULL)),

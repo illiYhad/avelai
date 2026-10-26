@@ -25,6 +25,7 @@ describe("SQL 140 · trigger guard ที่ต้องมี (3F)", () => {
     expect(fn).toMatch(/\(storage\.foldername\(NEW\.slip_path\)\)\[1\] IS DISTINCT FROM NEW\.payer_user_id::text/);
     expect(fn).toMatch(/NOT EXISTS \(SELECT 1 FROM storage\.objects o WHERE o\.bucket_id = 'payment-slips' AND o\.name = NEW\.slip_path\)/);
     expect(sql140).toMatch(/CREATE TRIGGER payments_guard_insert\s+BEFORE INSERT ON public\.payments/);
+    expect(sql140).toContain("CONSTRAINT uq_payments_slip_path UNIQUE (slip_path)"); // สลิปเดิมอ้างซ้ำไม่ได้
   });
   it("B: passes_guard_insert — สลิป PASS VERIFIED มีผู้ยืนยัน ของผู้ใช้/เกมเดียวกัน · 28 วัน · ยอด = ยอดสลิป", () => {
     const fn = block(sql140, "CREATE OR REPLACE FUNCTION public.passes_guard_insert()", "DROP TRIGGER IF EXISTS passes_guard_insert");
