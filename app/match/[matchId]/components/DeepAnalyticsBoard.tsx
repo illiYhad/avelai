@@ -304,21 +304,21 @@ export default function DeepAnalyticsBoard({
                                     }}
                                 />
                             ) : (
-                                <span className="flex h-full w-full items-center justify-center text-[10px] text-neutral-500">???</span>
+                                <span className="flex h-full w-full items-center justify-center text-xs text-neutral-500">???</span>
                             )}
                         </div>
                         <div>
                             <div className="font-orbitron text-xs font-bold text-white flex items-center gap-2">
                                 <span className={isRadiant ? 'text-[#00D4FF]' : 'text-[#C9A84C]'}>{p.playerName}</span>
-                                <span className="text-neutral-300 font-semibold tracking-wide text-[11px]">— {heroDisplayName}</span>
+                                <span className="text-neutral-300 font-semibold tracking-wide text-xs">— {heroDisplayName}</span>
                                 <span
-                                    className="rounded-xs px-1.5 py-0.5 text-[9px] font-bold"
+                                    className="rounded-xs px-1.5 py-0.5 text-xs font-bold"
                                     style={{ color: posColor, border: `1px solid ${posColor}40`, background: `${posColor}15` }}
                                 >
                                     {p.role || 'Pos —'}
                                 </span>
                             </div>
-                            <div className="text-[10px] font-mono text-neutral-400">
+                            <div className="text-xs font-mono text-neutral-400">
                                 {isRadiant ? 'RADIANT' : 'DIRE'} LEVEL {p.level || 25}
                             </div>
                         </div>
@@ -361,7 +361,7 @@ export default function DeepAnalyticsBoard({
 
                 <div className="overflow-x-auto">
                     <div className="min-w-[700px] select-none">
-                        <div className="grid grid-cols-[130px_repeat(25,1fr)] gap-1 pb-1 text-center font-mono text-[9px] text-neutral-500">
+                        <div className="grid grid-cols-[130px_repeat(25,1fr)] gap-1 pb-1 text-center font-mono text-xs text-neutral-500">
                             <div className="text-left font-bold text-neutral-600">SKILL / LVL</div>
                             {levels.map((lvl) => (
                                 <div key={lvl} className={`font-semibold ${[6, 12, 18, 10, 15, 20, 25].includes(lvl) ? 'text-[#00D4FF]' : ''}`}>
@@ -379,7 +379,7 @@ export default function DeepAnalyticsBoard({
                                     >
                                         <div className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden border border-neutral-700 bg-neutral-900">
                                             {slot.isTalent ? (
-                                                <span className="text-[10px]">🌳</span>
+                                                <span className="text-xs">🌳</span>
                                             ) : slot.img ? (
                                                 <img
                                                     src={slot.img}
@@ -388,10 +388,10 @@ export default function DeepAnalyticsBoard({
                                                     onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                                                 />
                                             ) : (
-                                                <span className="text-[8px] font-bold text-neutral-400">{slot.slot}</span>
+                                                <span className="text-xs font-bold text-neutral-400">{slot.slot}</span>
                                             )}
                                         </div>
-                                        <span className="truncate text-[9px] font-bold text-neutral-300">
+                                        <span className="truncate text-xs font-bold text-neutral-300">
                                             {slot.name}
                                         </span>
                                     </div>
@@ -401,7 +401,7 @@ export default function DeepAnalyticsBoard({
                                         return (
                                             <div
                                                 key={lvl}
-                                                className={`flex h-7 items-center justify-center border text-[10px] font-bold transition-all ${isLearned
+                                                className={`flex h-7 items-center justify-center border text-xs font-bold transition-all ${isLearned
                                                     ? slot.isTalent
                                                         ? 'border-yellow-500/60 bg-yellow-500/20 text-yellow-400 shadow-[0_0_8px_rgba(234,179,8,0.2)]'
                                                         : sIdx === 3
@@ -445,7 +445,7 @@ export default function DeepAnalyticsBoard({
                                 </span>
                             </div>
 
-                            <div className="flex items-center rounded-xs bg-[#07070C] p-0.5 border border-neutral-800 text-[10px]">
+                            <div className="flex items-center rounded-xs bg-[#07070C] p-0.5 border border-neutral-800 text-xs">
                                 <button
                                     onClick={() => setGraphMode('advantage')}
                                     className={`px-2.5 py-1 rounded-xs transition-all cursor-pointer ${graphMode === 'advantage'
@@ -477,7 +477,7 @@ export default function DeepAnalyticsBoard({
                         </div>
 
                         {graphMode !== 'advantage' && (
-                            <div className="flex items-center justify-between mb-3 text-[10px]">
+                            <div className="flex items-center justify-between mb-3 text-xs">
                                 <span className="text-neutral-500">ROLE COLOR-CODED TRAJECTORY</span>
                                 <div className="flex gap-2">
                                     {(['all', 'radiant', 'dire'] as const).map((team) => (
@@ -501,7 +501,7 @@ export default function DeepAnalyticsBoard({
                         )}
 
                         {graphMode === 'advantage' && (
-                            <div className="h-72 w-full text-[10px]">
+                            <div className="h-72 w-full text-xs">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={advantageData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                         <defs>
@@ -542,7 +542,7 @@ export default function DeepAnalyticsBoard({
                         )}
 
                         {graphMode !== 'advantage' && (
-                            <div className="h-72 w-full text-[10px]">
+                            <div className="h-72 w-full text-xs">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <LineChart data={heroProgressionData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#22222E" vertical={false} />
@@ -575,7 +575,7 @@ export default function DeepAnalyticsBoard({
                         )}
                     </div>
 
-                    <div className="mt-3 flex flex-wrap items-center justify-between border-t border-neutral-800/80 pt-2 text-[9px]">
+                    <div className="mt-3 flex flex-wrap items-center justify-between border-t border-neutral-800/80 pt-2 text-xs">
                         <span className="text-neutral-500 font-mono">ROLE COLOR MATRIX:</span>
                         <div className="flex flex-wrap gap-2.5 font-bold">
                             {Object.entries(POS_COLORS).map(([role, color]) => (
@@ -603,7 +603,7 @@ export default function DeepAnalyticsBoard({
                     <h3 className="font-orbitron text-xs font-bold uppercase tracking-wider text-[#00D4FF]">
                         🧬 ABILITY & SKILL BUILDS (LEVEL 1–25)
                     </h3>
-                    <span className="text-[10px] text-neutral-500 font-mono">TIMELINE UPGRADE SEQUENCE</span>
+                    <span className="text-xs text-neutral-500 font-mono">TIMELINE UPGRADE SEQUENCE</span>
                 </div>
 
                 <div className="space-y-6">

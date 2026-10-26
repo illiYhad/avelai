@@ -78,7 +78,7 @@ export default async function DotaMatchPage({ params }: { params: Promise<{ matc
                                   return url ? (
                                     <img key={j} src={url} alt={`item ${it}`} width={30} height={22} className="h-[22px] w-[30px] rounded" />
                                   ) : (
-                                    <span key={j} className="inline-block h-[22px] w-[30px] rounded border border-white/10 text-center text-[10px] leading-[22px] text-white/40">
+                                    <span key={j} className="inline-block h-[22px] w-[30px] rounded border border-white/10 text-center text-xs leading-[22px] text-white/60">
                                       {it ?? ""}
                                     </span>
                                   );

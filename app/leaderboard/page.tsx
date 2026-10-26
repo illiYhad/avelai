@@ -106,7 +106,7 @@ export default function LeaderboardPage() {
         {formArray.map((result, i) => (
           <div
             key={i}
-            className="w-5 h-6 flex items-center justify-center text-[10px] font-bold transition-all"
+            className="w-5 h-6 flex items-center justify-center text-xs font-bold transition-all"
           >
             {result}
           </div>
@@ -135,7 +135,7 @@ export default function LeaderboardPage() {
                         </h2>
                         <span className="text-lg font-medium text-yellow-500/80 self-end mb-1">THB</span>
                     </div>
-                    <p className="text-[10px] text-gray-500 tracking-widest mt-2">75% COMMUNITY RETURN &middot; AUTO SEEDED</p>
+                    <p className="text-xs text-gray-500 tracking-widest mt-2">75% COMMUNITY RETURN &middot; AUTO SEEDED</p>
                 </div>
             </div>
 
@@ -161,7 +161,7 @@ export default function LeaderboardPage() {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[700px]">
                         <thead>
-                            <tr className="border-b border-cyan-500/20 text-cyan-400/80 text-[11px] uppercase tracking-[0.2em] font-semibold bg-cyan-950/20">
+                            <tr className="border-b border-cyan-500/20 text-cyan-400/80 text-xs uppercase tracking-[0.2em] font-semibold bg-cyan-950/20">
                                 <th className="py-4 px-6 text-center w-[80px]">Rank</th>
                                 <th className="py-4 px-6">Player</th>
                                 <th className="py-4 px-6 text-center w-[120px]">Elo</th>
@@ -209,7 +209,7 @@ export default function LeaderboardPage() {
                                                         {player.avatar_url ? (
                                                             <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
                                                         ) : (
-                                                            <span className="text-[10px] text-cyan-400 font-bold uppercase">
+                                                            <span className="text-xs text-cyan-400 font-bold uppercase">
                                                                 {player.display_name?.slice(0, 2) || 'AV'}
                                                             </span>
                                                         )}
@@ -220,7 +220,7 @@ export default function LeaderboardPage() {
                                                             {player.display_name || 'UNKNOWN AGENT'}
                                                         </a>
                                                         {player.preferred_position && (
-                                                            <span className="ml-2 px-1.5 py-0.5 text-[8px] border border-cyan-500/40 text-cyan-400 bg-cyan-950/30 uppercase tracking-widest rounded-sm">
+                                                            <span className="ml-2 px-1.5 py-0.5 text-xs border border-cyan-500/40 text-cyan-400 bg-cyan-950/30 uppercase tracking-widest rounded-sm">
                                                                 {player.preferred_position}
                                                             </span>
                                                         )}

@@ -159,7 +159,7 @@ const IntegrityCard: React.FC<IntegrityCardProps> = ({ displayName, avatarUrl, r
     if (rarity === 'NONE') {
         return (
             <div className="relative w-full max-w-50 h-80 rounded-xl border border-dashed border-gray-700 bg-[#0A0A0F]/80 p-4 flex flex-col justify-between items-center text-center">
-                <div className="text-[10px] font-mono font-bold px-2 py-0.5 rounded border" style={{ borderColor: `${roleColor}55`, color: roleColor, backgroundColor: `${roleColor}15` }}>
+                <div className="text-xs font-mono font-bold px-2 py-0.5 rounded border" style={{ borderColor: `${roleColor}55`, color: roleColor, backgroundColor: `${roleColor}15` }}>
                     {ROLE_NAMES[position]}
                 </div>
                 <div className="flex flex-col items-center">
@@ -169,7 +169,7 @@ const IntegrityCard: React.FC<IntegrityCardProps> = ({ displayName, avatarUrl, r
                     <span className="text-xs font-mono font-bold text-gray-300">{displayName}</span>
                 </div>
                 <div className="w-full pt-2 border-t border-gray-800">
-                    {isCurrentUser ? <button className="w-full py-1.5 bg-amber-500 text-black text-[10px] font-bold rounded">GET CARD</button> : <span className="text-[10px] text-gray-600">UNPROTECTED</span>}
+                    {isCurrentUser ? <button className="w-full py-1.5 bg-amber-500 text-black text-xs font-bold rounded">GET CARD</button> : <span className="text-xs text-gray-600">UNPROTECTED</span>}
                 </div>
             </div>
         );
@@ -177,8 +177,8 @@ const IntegrityCard: React.FC<IntegrityCardProps> = ({ displayName, avatarUrl, r
     return (
         <div className={`relative w-full max-w-50 h-80 rounded-xl bg-[#0A0A0F] p-3 flex flex-col justify-between border ${rarity === 'LEGENDARY' ? 'border-cyan-400 shadow-[0_0_15px_rgba(0,212,255,0.4)]' : rarity === 'EPIC' ? 'border-amber-400' : 'border-gray-500'}`}>
             <div className="relative z-10 flex items-center justify-between">
-                <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border" style={{ borderColor: `${roleColor}88`, color: roleColor }}>{ROLE_NAMES[position]}</span>
-                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded ${rarity === 'LEGENDARY' ? 'bg-cyan-400 text-black' : 'bg-gray-400 text-black'}`}>{rarity}</span>
+                <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded border" style={{ borderColor: `${roleColor}88`, color: roleColor }}>{ROLE_NAMES[position]}</span>
+                <span className={`text-xs font-black px-1.5 py-0.5 rounded ${rarity === 'LEGENDARY' ? 'bg-cyan-400 text-black' : 'bg-gray-400 text-black'}`}>{rarity}</span>
             </div>
             <div className="relative z-10 w-full h-35 my-1.5 rounded-lg border border-gray-800 bg-gray-900 flex flex-col items-center justify-center">
                 <div className="w-14 h-14 rounded-full border-2 mb-1 flex items-center justify-center text-white overflow-hidden" style={{ borderColor: teamBorder }}>
@@ -188,9 +188,9 @@ const IntegrityCard: React.FC<IntegrityCardProps> = ({ displayName, avatarUrl, r
             <div className="relative z-10 pt-1.5 border-t border-gray-800 font-mono">
                 <div className="flex justify-between mb-1">
                     <span className="text-xs font-bold text-white truncate">{displayName}</span>
-                    <span className="text-[10px] text-emerald-400">{winRate}%</span>
+                    <span className="text-xs text-emerald-400">{winRate}%</span>
                 </div>
-                <div className="flex justify-between text-[9px] text-gray-400">
+                <div className="flex justify-between text-xs text-gray-400">
                     <span>KARMA</span>
                     <span className="text-cyan-400">{karmaScore}</span>
                 </div>
@@ -204,14 +204,14 @@ const BracketVisualizer: React.FC<{ bracketData: MonthlyDoubleEliminationBracket
         <div className="w-full bg-[#0D1117] border border-cyan-500/30 rounded-xl p-8 overflow-x-auto min-h-100 font-mono flex gap-12">
             {bracketData.winnersTree.rounds.map((round) => (
                 <div key={round.roundId} className="flex flex-col justify-around gap-6">
-                    <h4 className="text-center text-amber-400 text-[10px] font-bold">ROUND {round.roundNumber}</h4>
+                    <h4 className="text-center text-amber-400 text-xs font-bold">ROUND {round.roundNumber}</h4>
                     {round.matches.map((match) => {
                         const isClickable = isAdminMode ? true : match.status !== 'waiting';
                         return (
                             <div 
                                 key={match.matchId} 
                                 onClick={() => isClickable && onMatchClick?.(match.matchId)}
-                                className={`w-48 rounded-lg border p-2 text-[10px] transition-all ${match.status === 'ready' ? 'border-cyan-400 bg-cyan-950/20' : 'border-gray-700 bg-gray-900/50'} ${isClickable ? 'cursor-pointer hover:border-cyan-300' : 'cursor-not-allowed opacity-60'}`}
+                                className={`w-48 rounded-lg border p-2 text-xs transition-all ${match.status === 'ready' ? 'border-cyan-400 bg-cyan-950/20' : 'border-gray-700 bg-gray-900/50'} ${isClickable ? 'cursor-pointer hover:border-cyan-300' : 'cursor-not-allowed opacity-60'}`}
                             >
                                 <div className="flex justify-between pb-1">
                                     <span className={match.status === 'ready' ? 'text-white' : 'text-gray-500'}>{match.player1Id || 'TBD'}</span>
@@ -393,7 +393,7 @@ export default function MonthlyTournamentPage() {
                                     <div className="text-center mb-3">
                                         <div className="text-3xl mb-2">{item.icon}</div>
                                         <h3 className="text-sm font-bold text-white">{item.name}</h3>
-                                        <span className="text-[9px] text-gray-400 tracking-widest">[{item.rarity}]</span>
+                                        <span className="text-xs text-gray-400 tracking-widest">[{item.rarity}]</span>
                                     </div>
                                     <button className="mt-4 w-full py-2 bg-amber-500 text-black text-xs font-bold rounded hover:bg-amber-400 cursor-pointer">
                                         REDEEM ({item.costRewardPoints} PTS)
@@ -428,7 +428,7 @@ export default function MonthlyTournamentPage() {
                                         <td className="py-3.5 px-4 font-bold text-cyan-400">{p.circuitPoints} CP</td>
                                         <td className="py-3.5 px-4 text-emerald-400">{p.winRate}%</td>
                                         <td className="py-3.5 px-4 text-center">
-                                            <span className="text-[11px] px-2.5 py-1 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/40">
+                                            <span className="text-xs px-2.5 py-1 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/40">
                                                 QUALIFIED
                                             </span>
                                         </td>

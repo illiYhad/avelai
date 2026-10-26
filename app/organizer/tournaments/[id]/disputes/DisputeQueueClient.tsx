@@ -35,7 +35,7 @@ export function ResolveForm({ disputeId, teamA, teamB, bestOf, review, resolve }
         ) : <label className="flex items-center gap-1 text-xs text-white/70"><input type="checkbox" checked={falseDispute} onChange={(e) => setFalse(e.target.checked)} /> ข้อพิพาทเท็จ (Karma −10 ให้ T7)</label>}
       </div>
       <input value={resolution} onChange={(e) => setResolution(e.target.value)} placeholder="คำชี้ขาด (บังคับ ≥5 ตัวอักษร)" className={input} />
-      <button type="button" disabled={pending || resolution.trim().length < 5} onClick={() => start(async () => setState(await resolve(disputeId, { idempotencyKey: key, kind, winnerTeamId: winner, scoreA, scoreB, resolution, falseDispute })))} className="w-fit rounded bg-gold px-3 py-1.5 text-sm font-semibold text-void disabled:opacity-40">ชี้ขาด</button>
+      <button type="button" disabled={pending || resolution.trim().length < 5} onClick={() => start(async () => setState(await resolve(disputeId, { idempotencyKey: key, kind, winnerTeamId: winner, scoreA, scoreB, resolution, falseDispute })))} className="w-fit rounded btn-primary px-3 py-1.5 text-sm disabled:opacity-40">ชี้ขาด</button>
       <Msg state={state} />
       {state?.warning ? <p className="text-sm text-amber-300">{state.warning}</p> : null}
       {state?.karmaDelta !== undefined ? <p className="text-xs text-white/60">Karma delta (ส่งต่อ T7): {state.karmaDelta}</p> : null}

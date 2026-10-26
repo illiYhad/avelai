@@ -36,19 +36,19 @@ export default async function BracketPage({ params }: { params: Promise<{ id: st
               <div key={r.round} className="flex min-w-[220px] flex-col gap-2">
                 <p className="text-xs text-white/50">รอบ {r.round}</p>
                 {r.slots.map((s) => (
-                  <div key={s.key} className={`rounded border px-3 py-2 text-xs ${s.status === "VOID" ? "border-white/5 text-white/30" : "border-white/15"}`}>
-                    {s.isGrandFinalReset ? <p className="mb-1 text-[10px] text-white/50">นัดตัดสิน (ถ้าสายล่างชนะ)</p> : null}
+                  <div key={s.key} className={`rounded border px-3 py-2 text-xs ${s.status === "VOID" ? "border-white/5 text-white/60" : "border-white/15"}`}>
+                    {s.isGrandFinalReset ? <p className="mb-1 text-xs text-white/50">นัดตัดสิน (ถ้าสายล่างชนะ)</p> : null}
                     {(["A", "B"] as const).map((side) => {
                       const team = side === "A" ? s.teamA : s.teamB;
                       const won = s.winnerId && team === s.winnerId;
                       return (
-                        <p key={side} className={`flex justify-between gap-2 py-0.5 ${won ? "text-cyan" : team ? "text-white" : "text-white/40"}`}>
+                        <p key={side} className={`flex justify-between gap-2 py-0.5 ${won ? "text-cyan" : team ? "text-white" : "text-white/60"}`}>
                           <span className="truncate">{s.status === "VOID" ? "–" : teamLabel(names, team)}</span>
                           {won ? <span>✓</span> : null}
                         </p>
                       );
                     })}
-                    <p className="mt-1 text-[10px] text-white/40">{s.status === "BYE" ? "ผ่านอัตโนมัติ" : s.status === "READY" ? "รอแข่ง" : s.status === "DONE" ? "จบแล้ว" : s.status === "VOID" ? "ไม่ใช้" : "รอผล"}</p>
+                    <p className="mt-1 text-xs text-white/60">{s.status === "BYE" ? "ผ่านอัตโนมัติ" : s.status === "READY" ? "รอแข่ง" : s.status === "DONE" ? "จบแล้ว" : s.status === "VOID" ? "ไม่ใช้" : "รอผล"}</p>
                   </div>
                 ))}
               </div>

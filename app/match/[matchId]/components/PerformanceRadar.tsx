@@ -179,17 +179,17 @@ export default function PerformanceRadar({
                         {heroImg ? (
                             <img src={heroImg} alt={heroName} className="h-full w-full object-cover" />
                         ) : (
-                            <span className="flex h-full w-full items-center justify-center text-[7px]">???</span>
+                            <span className="flex h-full w-full items-center justify-center text-xs">???</span>
                         )}
                     </div>
                     <div className="flex flex-col truncate">
                         <span className="truncate font-bold leading-tight">{p.playerName}</span>
-                        <span className="truncate text-[9px] font-normal text-neutral-400">{heroName}</span>
+                        <span className="truncate text-xs font-normal text-neutral-400">{heroName}</span>
                     </div>
                 </div>
 
                 <span
-                    className="shrink-0 rounded-xs px-1.5 py-0.5 text-[8px] font-bold"
+                    className="shrink-0 rounded-xs px-1.5 py-0.5 text-xs font-bold"
                     style={{ color: posColor, border: `1px solid ${posColor}60`, background: `${posColor}15` }}
                 >
                     {p.role}
@@ -211,7 +211,7 @@ export default function PerformanceRadar({
 
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs font-mono">
-                        <thead className="border-b border-neutral-800/80 bg-[#0D0D14] text-[10px] text-neutral-400 font-orbitron">
+                        <thead className="border-b border-neutral-800/80 bg-[#0D0D14] text-xs text-neutral-400 font-orbitron">
                             <tr>
                                 <th className="px-4 py-2.5">HERO / PLAYER</th>
                                 <th className="px-4 py-2.5 text-center">FIGHT PART %</th>
@@ -222,7 +222,7 @@ export default function PerformanceRadar({
                                 <th className="px-4 py-2.5 text-right">KP EFFICIENCY</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-neutral-800/40 text-[11px]">
+                        <tbody className="divide-y divide-neutral-800/40 text-xs">
                             {teamPlayers.map((p, idx) => {
                                 const teamKills = isRadiant ? (radiantScore || 1) : (direScore || 1);
                                 const fightPart = Math.min(100, (((p.kills + p.assists) / teamKills) * 100) || 0).toFixed(1);
@@ -239,20 +239,20 @@ export default function PerformanceRadar({
                                                 {heroImg ? (
                                                     <img src={heroImg} alt={heroName} className="h-full w-full object-cover" />
                                                 ) : (
-                                                    <span className="flex h-full w-full items-center justify-center text-[9px] text-neutral-500">???</span>
+                                                    <span className="flex h-full w-full items-center justify-center text-xs text-neutral-500">???</span>
                                                 )}
                                             </div>
                                             <div className="flex flex-col">
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-bold text-white tracking-wide">{p.playerName}</span>
                                                     <span
-                                                        className="rounded-xs px-1 py-0.2 text-[8px] font-bold"
+                                                        className="rounded-xs px-1 py-0.2 text-xs font-bold"
                                                         style={{ color: posColor, border: `1px solid ${posColor}40`, background: `${posColor}15` }}
                                                     >
                                                         {p.role}
                                                     </span>
                                                 </div>
-                                                <span className="text-[10px] text-neutral-400 font-sans">{heroName}</span>
+                                                <span className="text-xs text-neutral-400 font-sans">{heroName}</span>
                                             </div>
                                         </td>
                                         <td className="px-4 py-2 text-center text-white">{fightPart}%</td>
@@ -287,7 +287,7 @@ export default function PerformanceRadar({
                     <h3 className="font-orbitron text-xs font-bold uppercase tracking-wider text-[#00D4FF]">
                         ⚙️ TACTICAL RADAR INTEL (CLICK TO COMPARE)
                     </h3>
-                    <span className="text-[10px] text-neutral-500 font-mono">
+                    <span className="text-xs text-neutral-500 font-mono">
                         SELECTED: <span className="text-white font-bold">{selectedSlots.length}</span>/{sortedPlayers.length} PLAYERS
                     </span>
                 </div>
@@ -295,9 +295,9 @@ export default function PerformanceRadar({
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
                     {/* LEFT COLUMN: RADIANT SQUAD (Pos 1-5) */}
                     <div className="lg:col-span-3 space-y-2">
-                        <div className="border-b border-[#00D4FF]/30 pb-1 text-[11px] font-orbitron font-bold text-[#00D4FF] flex items-center justify-between">
+                        <div className="border-b border-[#00D4FF]/30 pb-1 text-xs font-orbitron font-bold text-[#00D4FF] flex items-center justify-between">
                             <span>THE RADIANT</span>
-                            <span className="text-[9px] text-[#00D4FF]/70 font-mono">SOLID LINE</span>
+                            <span className="text-xs text-[#00D4FF]/70 font-mono">SOLID LINE</span>
                         </div>
                         <div className="space-y-1.5">
                             {radiantPlayers.map((p) => renderVerticalPlayerCard(p))}
@@ -343,7 +343,7 @@ export default function PerformanceRadar({
                         </div>
 
                         {/* Radar Legend Footer */}
-                        <div className="mt-2 flex flex-wrap items-center justify-center gap-4 text-[9px] text-neutral-400 font-mono">
+                        <div className="mt-2 flex flex-wrap items-center justify-center gap-4 text-xs text-neutral-400 font-mono">
                             <span className="flex items-center gap-1.5">
                                 <span className="inline-block w-4 h-0.5 bg-[#00D4FF]"></span>
                                 RADIANT: Solid Line
@@ -357,9 +357,9 @@ export default function PerformanceRadar({
 
                     {/* RIGHT COLUMN: DIRE SQUAD (Pos 1-5) */}
                     <div className="lg:col-span-3 space-y-2">
-                        <div className="border-b border-[#C9A84C]/30 pb-1 text-[11px] font-orbitron font-bold text-[#C9A84C] flex items-center justify-between">
+                        <div className="border-b border-[#C9A84C]/30 pb-1 text-xs font-orbitron font-bold text-[#C9A84C] flex items-center justify-between">
                             <span>THE DIRE</span>
-                            <span className="text-[9px] text-[#C9A84C]/70 font-mono">DASHED LINE</span>
+                            <span className="text-xs text-[#C9A84C]/70 font-mono">DASHED LINE</span>
                         </div>
                         <div className="space-y-1.5">
                             {direPlayers.map((p) => renderVerticalPlayerCard(p))}

@@ -66,7 +66,7 @@ export default function AdvantageGraph({ goldAdv = [], xpAdv = [] }: AdvantageGr
                         <button
                             key={mode}
                             onClick={() => setViewMode(mode)}
-                            className={`px-3 py-1 text-[10px] font-orbitron font-bold uppercase transition-all cursor-pointer ${viewMode === mode
+                            className={`px-3 py-1 text-xs font-orbitron font-bold uppercase transition-all cursor-pointer ${viewMode === mode
                                     ? 'bg-[#00D4FF] text-black font-bold'
                                     : 'text-neutral-400 hover:text-white'
                                 }`}

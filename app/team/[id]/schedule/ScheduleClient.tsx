@@ -124,7 +124,7 @@ export function ScheduleClient({ teamId, myUserId, isLeader, sessions, stats }: 
                         type="button"
                         disabled={isPending}
                         onClick={() => runAction(() => rsvpAction(teamId, s.id, true))}
-                        className={`rounded px-3 py-1 text-[10px] font-bold border ${mine.rsvp === "GOING" ? "bg-emerald-500/20 border-emerald-400 text-emerald-300" : "border-white/20 text-neutral-400"}`}
+                        className={`rounded px-3 py-1 text-xs font-bold border ${mine.rsvp === "GOING" ? "bg-emerald-500/20 border-emerald-400 text-emerald-300" : "border-white/20 text-neutral-400"}`}
                       >
                         มา
                       </button>
@@ -132,7 +132,7 @@ export function ScheduleClient({ teamId, myUserId, isLeader, sessions, stats }: 
                         type="button"
                         disabled={isPending}
                         onClick={() => runAction(() => rsvpAction(teamId, s.id, false))}
-                        className={`rounded px-3 py-1 text-[10px] font-bold border ${mine.rsvp === "NOT_GOING" ? "bg-rose-500/20 border-rose-400 text-rose-300" : "border-white/20 text-neutral-400"}`}
+                        className={`rounded px-3 py-1 text-xs font-bold border ${mine.rsvp === "NOT_GOING" ? "bg-rose-500/20 border-rose-400 text-rose-300" : "border-white/20 text-neutral-400"}`}
                       >
                         ไม่มา
                       </button>
@@ -155,7 +155,7 @@ export function ScheduleClient({ teamId, myUserId, isLeader, sessions, stats }: 
                             type="button"
                             disabled={isPending}
                             onClick={() => runAction(() => checkAttendanceAction(teamId, s.id, a.user_id, true))}
-                            className={`rounded px-2 py-0.5 text-[10px] border ${a.attended === true ? "bg-emerald-500/20 border-emerald-400 text-emerald-300" : "border-white/20 text-neutral-500"}`}
+                            className={`rounded px-2 py-0.5 text-xs border ${a.attended === true ? "bg-emerald-500/20 border-emerald-400 text-emerald-300" : "border-white/20 text-neutral-500"}`}
                           >
                             ✓ มาจริง
                           </button>
@@ -163,13 +163,13 @@ export function ScheduleClient({ teamId, myUserId, isLeader, sessions, stats }: 
                             type="button"
                             disabled={isPending}
                             onClick={() => runAction(() => checkAttendanceAction(teamId, s.id, a.user_id, false))}
-                            className={`rounded px-2 py-0.5 text-[10px] border ${a.attended === false ? "bg-rose-500/20 border-rose-400 text-rose-300" : "border-white/20 text-neutral-500"}`}
+                            className={`rounded px-2 py-0.5 text-xs border ${a.attended === false ? "bg-rose-500/20 border-rose-400 text-rose-300" : "border-white/20 text-neutral-500"}`}
                           >
                             ✗ ขาด
                           </button>
                         </span>
                       ) : (
-                        <span className="shrink-0 text-[10px] font-mono text-neutral-500">
+                        <span className="shrink-0 text-xs font-mono text-neutral-500">
                           {a.attended === true ? "✓ มาจริง" : a.attended === false ? "✗ ขาด" : "—"}
                         </span>
                       )}
@@ -187,7 +187,7 @@ export function ScheduleClient({ teamId, myUserId, isLeader, sessions, stats }: 
         <h2 className="font-mono text-sm font-bold tracking-wider text-neutral-300 uppercase mb-3">
           สรุป % เข้าซ้อมรายคน
         </h2>
-        <p className="text-[11px] text-neutral-500 mb-2">นับเฉพาะนัดที่หัวหน้าเช็กชื่อแล้ว (ตัวเลขในวงเล็บ = มาจริง/ถูกเช็กชื่อ) · นัดที่ยังไม่เช็กชื่อไม่นับ</p>
+        <p className="text-xs text-neutral-500 mb-2">นับเฉพาะนัดที่หัวหน้าเช็กชื่อแล้ว (ตัวเลขในวงเล็บ = มาจริง/ถูกเช็กชื่อ) · นัดที่ยังไม่เช็กชื่อไม่นับ</p>
         <ul className="flex flex-col gap-1">
           {stats.map((s) => (
             <li key={s.userId} className="flex items-center gap-3 text-xs">

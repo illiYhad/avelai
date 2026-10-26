@@ -94,7 +94,7 @@ export function ScoutClient({ teamId, isLeader, privateBeta, prospects }: Props)
               <div className="min-w-0">
                 <p className="text-sm font-bold">
                   {p.nickname}
-                  {p.position && <span className="ml-2 rounded bg-[#00D4FF]/10 px-1.5 py-0.5 text-[10px] font-mono text-[#00D4FF]">{p.position}</span>}
+                  {p.position && <span className="ml-2 rounded bg-[#00D4FF]/10 px-1.5 py-0.5 text-xs font-mono text-[#00D4FF]">{p.position}</span>}
                 </p>
                 <p className="text-xs text-neutral-400 mt-0.5">
                   {p.current_team ? `ทีม: ${p.current_team}` : "ไม่มีทีม/ไม่ทราบ"} · <span className="text-[#C9A84C]">{"★".repeat(p.stars)}</span>
@@ -119,7 +119,7 @@ export function ScoutClient({ teamId, isLeader, privateBeta, prospects }: Props)
                           if (!("error" in res)) router.refresh();
                         })
                       }
-                      className="rounded border border-[#00D4FF]/60 px-3 py-1 text-[10px] font-bold text-[#00D4FF] hover:bg-[#00D4FF]/10 disabled:opacity-50"
+                      className="rounded border border-[#00D4FF]/60 px-3 py-1 text-xs font-bold text-[#00D4FF] hover:bg-[#00D4FF]/10 disabled:opacity-50"
                     >
                       ⟳ ดึงข้อมูลจาก Liquipedia
                     </button>
@@ -141,7 +141,7 @@ export function ScoutClient({ teamId, isLeader, privateBeta, prospects }: Props)
 
             {p.liquipedia_cache?.found && (
               <div className="mt-3 rounded border border-white/10 bg-[#0A0A0F] p-3 text-xs">
-                <p className="font-mono text-[10px] text-neutral-500 uppercase mb-1">
+                <p className="font-mono text-xs text-neutral-500 uppercase mb-1">
                   Liquipedia · ดึงเมื่อ {p.liquipedia_fetched_at ? new Date(p.liquipedia_fetched_at).toLocaleString("th-TH") : "-"}
                 </p>
                 <p className="text-neutral-300 whitespace-pre-wrap">{p.liquipedia_cache.extract}</p>

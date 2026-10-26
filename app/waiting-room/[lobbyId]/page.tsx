@@ -174,12 +174,12 @@ export default function WaitingRoomPage({ params }: PageProps) {
           
           <div className="flex items-center gap-4 bg-slate-950 border border-[#C9A84C]/40 px-5 py-2.5 rounded-xl shadow-[0_0_20px_rgba(201,168,76,0.15)]">
             <div className="text-right">
-              <div className="text-[9px] text-zinc-500 uppercase tracking-widest">LOBBY ID</div>
+              <div className="text-xs text-zinc-500 uppercase tracking-widest">LOBBY ID</div>
               <div className="text-[#C9A84C] font-black text-base tracking-widest">{lobbyId}</div>
             </div>
             <div className="h-7 w-px bg-slate-800" />
             <div className="text-left">
-              <div className="text-[9px] text-zinc-500 uppercase tracking-widest">PROTOCOL</div>
+              <div className="text-xs text-zinc-500 uppercase tracking-widest">PROTOCOL</div>
               <div className="text-emerald-400 font-bold text-xs tracking-wider uppercase">ALL CARDS READY</div>
             </div>
           </div>

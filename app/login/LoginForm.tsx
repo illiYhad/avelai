@@ -34,7 +34,7 @@ export default function LoginForm({ next }: { next: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="rounded bg-gold px-4 py-2 font-semibold text-void disabled:opacity-50"
+        className="rounded btn-primary px-4 py-2 disabled:opacity-50"
       >
         {pending ? "กำลังส่ง…" : "ส่งลิงก์เข้าสู่ระบบ"}
       </button>

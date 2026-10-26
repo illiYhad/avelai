@@ -54,7 +54,7 @@ export default function KPDistributionChart({ players = [] }: KPDistributionChar
                 <h3 className="font-orbitron text-xs font-bold uppercase tracking-wider text-[#00D4FF]">
                     📊 MATCH KP DISTRIBUTION (% SHARE)
                 </h3>
-                <span className="text-[10px] text-neutral-400">
+                <span className="text-xs text-neutral-400">
                     TOTAL KP POOL: {totalMatchKp.toFixed(1)}
                 </span>
             </div>

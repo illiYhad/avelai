@@ -126,7 +126,7 @@ export default function MatchHistoryPage() {
                 <div className="flex justify-between items-center border-b border-gray-800 pb-2 mb-3">
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-400 font-bold">{m.id}</span>
-                    <span className="text-[10px] bg-[#00D4FF]/10 text-[#00D4FF] border border-[#00D4FF]/30 px-1.5 py-0.5 rounded uppercase font-bold">
+                    <span className="text-xs bg-[#00D4FF]/10 text-[#00D4FF] border border-[#00D4FF]/30 px-1.5 py-0.5 rounded uppercase font-bold">
                       {m.heroRole}
                     </span>
                   </div>
@@ -141,14 +141,14 @@ export default function MatchHistoryPage() {
                     <div className="text-xs text-gray-400">
                       Operator: <span className="text-[#00D4FF] font-bold">{m.player}</span>
                     </div>
-                    <div className="text-[11px] text-gray-500 mt-1">
+                    <div className="text-xs text-gray-500 mt-1">
                       ⏱ {m.duration} • {m.date}
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-gray-400">K/D/A</div>
                     <div className="text-sm font-black text-white">{m.kda}</div>
-                    <div className="text-[11px] text-[#C9A84C] font-bold mt-0.5">{m.score}</div>
+                    <div className="text-xs text-[#C9A84C] font-bold mt-0.5">{m.score}</div>
                   </div>
                 </div>
               </div>
@@ -174,7 +174,7 @@ export default function MatchHistoryPage() {
                     <td className="p-3.5 text-gray-400 font-bold">{m.id}</td>
                     <td className="p-3.5 text-[#00D4FF] font-bold">{m.player}</td>
                     <td className="p-3.5 text-white font-bold">
-                      {m.hero} <span className="text-[10px] text-gray-400 font-normal font-mono">({m.heroRole})</span>
+                      {m.hero} <span className="text-xs text-gray-400 font-normal font-mono">({m.heroRole})</span>
                     </td>
                     <td className={`p-3.5 font-black ${m.result === 'WIN' ? 'text-green-400' : 'text-red-400'}`}>
                       {m.result}

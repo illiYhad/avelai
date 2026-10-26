@@ -39,7 +39,7 @@ export default function ProfileForm({
       <button
         type="submit"
         disabled={pending}
-        className="rounded bg-gold px-4 py-2 font-semibold text-void disabled:opacity-50"
+        className="rounded btn-primary px-4 py-2 disabled:opacity-50"
       >
         {pending ? "กำลังบันทึก…" : "บันทึก"}
       </button>

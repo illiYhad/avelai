@@ -32,7 +32,7 @@ export default async function AdminRolesPage({
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col gap-6 px-6 py-10">
-      <h1 className="font-display text-2xl tracking-[0.15em] text-gold">
+      <h1 className="font-display text-2xl text-gold">
         จัดการสิทธิ์ (ADMIN)
       </h1>
 
@@ -43,7 +43,7 @@ export default async function AdminRolesPage({
           placeholder="ค้นด้วย username"
           className="flex-1 rounded border border-white/20 bg-transparent px-3 py-2 text-white outline-none focus:border-gold"
         />
-        <button className="rounded bg-gold px-4 py-2 font-semibold text-void">
+        <button className="rounded btn-primary px-4 py-2">
           ค้นหา
         </button>
       </form>

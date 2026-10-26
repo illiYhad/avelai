@@ -58,7 +58,7 @@ export default async function AdminTeamMatchesPage() {
                     {a.name} {a.tag && `[${a.tag}]`} <span className="text-neutral-500">vs</span> {b.name} {b.tag && `[${b.tag}]`}
                   </p>
                   <span
-                    className={`rounded px-2 py-1 text-[10px] font-mono font-bold ${
+                    className={`rounded px-2 py-1 text-xs font-mono font-bold ${
                       m.status === "DISPUTED" ? "bg-rose-500/15 text-rose-300" : "bg-yellow-500/15 text-yellow-300"
                     }`}
                   >

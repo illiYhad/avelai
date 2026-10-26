@@ -201,18 +201,18 @@ export default function DailyArenaPage() {
                                     <span>EVE // OPERATOR</span>
                                     <span className="w-2 h-2 rounded-full bg-[#00D4FF] animate-pulse" />
                                 </div>
-                                <div className="text-[11px] text-[#C9A84C] font-semibold mt-0.5">
+                                <div className="text-xs text-[#C9A84C] font-semibold mt-0.5">
                                     GENESIS PILOT SYNC: 100%
                                 </div>
 
                                 <div className="flex items-center justify-end gap-1.5 mt-2">
-                                    <span className="px-2 py-0.5 text-[9px] rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold">
+                                    <span className="px-2 py-0.5 text-xs rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold">
                                         KP BOOST
                                     </span>
-                                    <span className="px-2 py-0.5 text-[9px] rounded bg-[#00D4FF]/10 border border-[#00D4FF]/30 text-[#00D4FF] font-bold">
+                                    <span className="px-2 py-0.5 text-xs rounded bg-[#00D4FF]/10 border border-[#00D4FF]/30 text-[#00D4FF] font-bold">
                                         TIER 1
                                     </span>
-                                    <span className="px-2 py-0.5 text-[9px] rounded bg-purple-500/10 border border-purple-500/30 text-purple-400 font-bold">
+                                    <span className="px-2 py-0.5 text-xs rounded bg-purple-500/10 border border-purple-500/30 text-purple-400 font-bold">
                                         SSR
                                     </span>
                                 </div>
@@ -230,7 +230,7 @@ export default function DailyArenaPage() {
                                         className="w-full h-full object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
                                     />
                                 </div>
-                                <span className="absolute -bottom-2 -right-1.5 text-[9px] font-mono px-2 py-0.5 rounded-md bg-slate-900 border border-[#C9A84C] text-[#C9A84C] font-black tracking-wider shadow-lg">
+                                <span className="absolute -bottom-2 -right-1.5 text-xs font-mono px-2 py-0.5 rounded-md bg-slate-900 border border-[#C9A84C] text-[#C9A84C] font-black tracking-wider shadow-lg">
                                     GENESIS
                                 </span>
                             </div>
@@ -238,15 +238,15 @@ export default function DailyArenaPage() {
                             {/* Stats Overview 3 ช่อง */}
                             <div className="grid grid-cols-3 gap-2.5 font-mono">
                                 <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-center min-w-19.5">
-                                    <span className="text-[10px] text-slate-400 block font-semibold">TICKETS</span>
+                                    <span className="text-xs text-slate-400 block font-semibold">TICKETS</span>
                                     <span className="text-xl font-black text-[#00D4FF]">{dailyTickets}</span>
                                 </div>
                                 <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-center min-w-19.5">
-                                    <span className="text-[10px] text-slate-400 block font-semibold">MATCHES</span>
+                                    <span className="text-xs text-slate-400 block font-semibold">MATCHES</span>
                                     <span className="text-xl font-black text-slate-200">{matchesPlayedToday}/5</span>
                                 </div>
                                 <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-center min-w-19.5">
-                                    <span className="text-[10px] text-slate-400 block font-semibold">BEST SCORE</span>
+                                    <span className="text-xs text-slate-400 block font-semibold">BEST SCORE</span>
                                     <span className="text-xl font-black text-[#C9A84C]">{bestScoreToday.toFixed(2)}</span>
                                 </div>
                             </div>
@@ -285,7 +285,7 @@ export default function DailyArenaPage() {
                                                     }`}
                                             >
                                                 <div className="font-bold">{pos.label}</div>
-                                                <div className="text-[10px] opacity-75">{pos.name}</div>
+                                                <div className="text-xs opacity-75">{pos.name}</div>
                                             </button>
                                         ))}
                                     </div>
@@ -310,7 +310,7 @@ export default function DailyArenaPage() {
                                                     }`}
                                             >
                                                 <div className="font-bold">{pos.label}</div>
-                                                <div className="text-[10px] opacity-75">{pos.name}</div>
+                                                <div className="text-xs opacity-75">{pos.name}</div>
                                             </button>
                                         ))}
                                     </div>
@@ -373,7 +373,7 @@ export default function DailyArenaPage() {
                             <h2 className="text-base font-bold font-['Orbitron'] text-slate-200">
                                 DAILY LEADERBOARD
                             </h2>
-                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 animate-pulse">
+                            <span className="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 animate-pulse">
                                 LIVE
                             </span>
                         </div>
@@ -406,7 +406,7 @@ export default function DailyArenaPage() {
                                         </div>
                                         <div className="text-right">
                                             <div className="font-bold text-slate-100">{player.score.toFixed(2)} pts</div>
-                                            <div className="text-[10px] text-slate-500">+{player.reward_points} RP</div>
+                                            <div className="text-xs text-slate-500">+{player.reward_points} RP</div>
                                         </div>
                                     </div>
                                 ))}

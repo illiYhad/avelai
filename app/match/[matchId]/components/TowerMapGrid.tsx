@@ -111,12 +111,12 @@ export default function TowerMapGrid({
                         <h3 className="font-orbitron text-xs font-bold uppercase tracking-wider text-[#00D4FF]">
                             🗺️ TACTICAL MAP TIMELINE
                         </h3>
-                        <span className="rounded-xs bg-neutral-900 border border-neutral-800 px-1.5 py-0.5 text-[9px] text-yellow-400">
+                        <span className="rounded-xs bg-neutral-900 border border-neutral-800 px-1.5 py-0.5 text-xs text-yellow-400">
                             {currentMinute < 10 ? `0${currentMinute}:00` : `${currentMinute}:00`}
                         </span>
                     </div>
 
-                    <div className="flex items-center gap-3 text-[10px]">
+                    <div className="flex items-center gap-3 text-xs">
                         <span className="flex items-center gap-1 font-bold text-[#39FF6A]">
                             <span className="inline-block h-2 w-2 bg-[#39FF6A] shadow-[0_0_6px_#39FF6A]"></span>
                             RAD: {radiantStanding}/17
@@ -191,7 +191,7 @@ export default function TowerMapGrid({
 
             {/* ── TIMELINE SCRUBBER CONTROLLER ── */}
             <div className="mt-4 pt-3 border-t border-neutral-800/80 space-y-2">
-                <div className="flex items-center justify-between text-[10px]">
+                <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setIsPlaying(!isPlaying)}

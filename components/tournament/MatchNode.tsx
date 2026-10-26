@@ -36,7 +36,7 @@ export const MatchNode: React.FC<MatchNodeProps> = ({
       }`}
     >
       {/* Match ID Badge */}
-      <span className="absolute top-2 right-2 font-['Orbitron'] text-[8px] text-gray-500 uppercase tracking-wider">
+      <span className="absolute top-2 right-2 font-['Orbitron'] text-xs text-gray-500 uppercase tracking-wider">
         {match.matchId}
       </span>
 
@@ -44,7 +44,7 @@ export const MatchNode: React.FC<MatchNodeProps> = ({
         {/* Player 1 Row */}
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-2 overflow-hidden">
-            <span className="font-['JetBrains_Mono'] text-[10px] text-gray-400 bg-gray-800/80 px-1.5 py-0.5 rounded">
+            <span className="font-['JetBrains_Mono'] text-xs text-gray-400 bg-gray-800/80 px-1.5 py-0.5 rounded">
               #{match.seed1 ?? '?'}
             </span>
             <span className="truncate">{match.player1Id ?? 'TBD'}</span>
@@ -59,7 +59,7 @@ export const MatchNode: React.FC<MatchNodeProps> = ({
         {/* Player 2 Row */}
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-2 overflow-hidden">
-            <span className="font-['JetBrains_Mono'] text-[10px] text-gray-400 bg-gray-800/80 px-1.5 py-0.5 rounded">
+            <span className="font-['JetBrains_Mono'] text-xs text-gray-400 bg-gray-800/80 px-1.5 py-0.5 rounded">
               #{match.seed2 ?? '?'}
             </span>
             <span className="truncate">{match.player2Id ?? 'TBD'}</span>

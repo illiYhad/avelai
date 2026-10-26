@@ -38,7 +38,7 @@ export default async function MePage() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-6 px-6 py-10">
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl tracking-[0.15em] text-gold">โปรไฟล์</h1>
+        <h1 className="font-display text-2xl text-gold">โปรไฟล์</h1>
         <form action={signOutAction}>
           <button className="rounded border border-white/30 px-3 py-1.5 text-sm text-white/80">
             ออกจากระบบ

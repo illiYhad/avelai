@@ -50,7 +50,7 @@ export function RefereeResultForm({ matchId, teamA, teamB, bestOf, decide, setSt
         ) : null}
       </div>
       <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="เหตุผล (บังคับ)" className={input} />
-      <button type="button" disabled={pending || !reason.trim()} onClick={() => start(async () => setState(await decide(matchId, { idempotencyKey: key, outcome, winnerTeamId: winner, scoreA, scoreB, reason })))} className="w-fit rounded bg-gold px-3 py-1.5 text-sm font-semibold text-void disabled:opacity-40">
+      <button type="button" disabled={pending || !reason.trim()} onClick={() => start(async () => setState(await decide(matchId, { idempotencyKey: key, outcome, winnerTeamId: winner, scoreA, scoreB, reason })))} className="w-fit rounded btn-primary px-3 py-1.5 text-sm disabled:opacity-40">
         ชี้ขาดผล
       </button>
       <Msg state={state} />

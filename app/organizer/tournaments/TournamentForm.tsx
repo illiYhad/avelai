@@ -54,7 +54,7 @@ export function TournamentForm({ action, values = {}, submitLabel }: { action: (
       ) : null}
       <label className="flex flex-col text-xs text-white/70 sm:col-span-2">กติกา<textarea name="rules" rows={4} maxLength={5000} defaultValue={values.rules ?? ""} className={input} /></label>
       <div className="sm:col-span-2 flex flex-col gap-2">
-        <button type="submit" disabled={pending} className="w-fit rounded bg-gold px-4 py-2 text-sm font-semibold text-void disabled:opacity-50">{pending ? "กำลังบันทึก…" : submitLabel}</button>
+        <button type="submit" disabled={pending} className="w-fit rounded btn-primary px-4 py-2 text-sm disabled:opacity-50">{pending ? "กำลังบันทึก…" : submitLabel}</button>
         <Msg state={state} />
       </div>
     </form>

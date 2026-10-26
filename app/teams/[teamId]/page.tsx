@@ -71,7 +71,7 @@ export default async function TeamDetailPage({ params }: PageProps) {
           {isLeader && <LockRosterButton teamId={team.id} locked={team.is_roster_locked} />}
         </div>
 
-        {team.description && <p className="text-sm text-neutral-300 mb-6">{team.description}</p>}
+        {team.description && <p className="text-base text-neutral-300 mb-6">{team.description}</p>}
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-8">
           <Link href={`/team/${team.id}/schedule`} className="rounded-lg border border-white/10 bg-[#12121A] px-4 py-3 text-sm hover:border-[#00D4FF]/50">
@@ -103,7 +103,7 @@ export default async function TeamDetailPage({ params }: PageProps) {
                 <p className="text-xs text-neutral-500 font-mono truncate">@{m.user.username}</p>
               </div>
               <span
-                className={`shrink-0 rounded px-2 py-1 text-[10px] font-mono font-bold ${
+                className={`shrink-0 rounded px-2 py-1 text-xs font-mono font-bold ${
                   m.role === "OWNER" || m.role === "CAPTAIN"
                     ? "bg-[#C9A84C]/15 text-[#C9A84C]"
                     : "bg-white/5 text-neutral-300"

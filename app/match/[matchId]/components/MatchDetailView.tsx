@@ -97,8 +97,8 @@ export default function MatchDetailView({
                         )}
 
                         <div className="overflow-x-auto border border-[rgba(0,212,255,0.2)] bg-[#111118]">
-                            <table className="w-full text-left text-[11px] font-mono">
-                                <thead className="border-b border-neutral-800 bg-[#0A0A0F] font-orbitron text-[10px] text-[#00D4FF]">
+                            <table className="w-full text-left text-xs font-mono">
+                                <thead className="border-b border-neutral-800 bg-[#0A0A0F] font-orbitron text-xs text-[#00D4FF]">
                                     <tr>
                                         <th className="px-3 py-3 w-14">HERO</th>
                                         <th className="px-3 py-3">ROLE</th>
@@ -138,7 +138,7 @@ export default function MatchDetailView({
                                                                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                                             />
                                                         ) : (
-                                                            <span className="flex h-full w-full items-center justify-center text-[9px] text-neutral-500">
+                                                            <span className="flex h-full w-full items-center justify-center text-xs text-neutral-500">
                                                                 {p.heroName?.substring(0, 3).toUpperCase() || '???'}
                                                             </span>
                                                         )}
@@ -146,7 +146,7 @@ export default function MatchDetailView({
                                                 </td>
                                                 <td className="px-3 py-2.5">
                                                     <span
-                                                        className="rounded-sm px-1.5 py-0.5 text-[9px] font-bold"
+                                                        className="rounded-sm px-1.5 py-0.5 text-xs font-bold"
                                                         style={{ color: posColor, border: `1px solid ${posColor}40`, background: `${posColor}15` }}
                                                     >
                                                         {p.role ?? '—'}
@@ -165,7 +165,7 @@ export default function MatchDetailView({
                                                 <td className="px-3 py-2.5 text-center text-neutral-300">{p.towerKills ?? 0}</td>
                                                 <td className="px-3 py-2.5 text-right text-neutral-300">{p.baseKp?.toFixed(1)}</td>
                                                 <td className="px-3 py-2.5 text-center">
-                                                    <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${isWin ? 'bg-emerald-900/40 text-emerald-400' : 'bg-rose-900/40 text-rose-400'
+                                                    <span className={`rounded px-1.5 py-0.5 text-xs font-bold ${isWin ? 'bg-emerald-900/40 text-emerald-400' : 'bg-rose-900/40 text-rose-400'
                                                         }`}>
                                                         ×{p.resultMultiplier?.toFixed(1)}
                                                     </span>
@@ -175,7 +175,7 @@ export default function MatchDetailView({
                                                     {p.totalKp?.toFixed(1)}
                                                 </td>
                                                 <td className="px-3 py-2.5 text-center">
-                                                    <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${isWin ? 'bg-emerald-900/40 text-emerald-400' : 'bg-rose-900/40 text-rose-400'
+                                                    <span className={`rounded px-1.5 py-0.5 text-xs font-bold ${isWin ? 'bg-emerald-900/40 text-emerald-400' : 'bg-rose-900/40 text-rose-400'
                                                         }`}>
                                                         {isWin ? '+25' : '-10'}
                                                     </span>

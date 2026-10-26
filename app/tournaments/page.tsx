@@ -15,7 +15,7 @@ export default async function TournamentsPage() {
   const rows = (data ?? []) as Row[];
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-6 py-10">
-      <h1 className="font-display text-2xl tracking-[0.15em] text-gold">ทัวร์นาเมนต์</h1>
+      <h1 className="font-display text-2xl text-gold">ทัวร์นาเมนต์</h1>
       {!db ? <p className="text-sm text-white/60">ยังไม่ต่อฐานข้อมูล</p> : rows.length === 0 ? <p className="text-sm text-white/60">ยังไม่มีทัวร์ที่เปิดอยู่</p> : (
         <ul className="divide-y divide-white/10 rounded border border-white/15">
           {rows.map((t) => (

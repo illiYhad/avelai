@@ -130,17 +130,17 @@ export function CareerTimeline({ records }: CareerTimelineProps) {
                 <div className="flex items-center gap-3 bg-[#161B22] border border-gray-800 p-2.5 rounded-xl text-xs">
                     <div className="text-center px-2">
                         <div className="text-amber-400 font-black text-sm">2</div>
-                        <div className="text-[10px] text-gray-500">GOLD</div>
+                        <div className="text-xs text-gray-500">GOLD</div>
                     </div>
                     <div className="w-px h-6 bg-gray-800" />
                     <div className="text-center px-2">
                         <div className="text-slate-300 font-black text-sm">1</div>
-                        <div className="text-[10px] text-gray-500">SILVER</div>
+                        <div className="text-xs text-gray-500">SILVER</div>
                     </div>
                     <div className="w-px h-6 bg-gray-800" />
                     <div className="text-center px-2">
                         <div className="text-amber-600 font-black text-sm">1</div>
-                        <div className="text-[10px] text-gray-500">BRONZE</div>
+                        <div className="text-xs text-gray-500">BRONZE</div>
                     </div>
                 </div>
             </div>
@@ -162,7 +162,7 @@ export function CareerTimeline({ records }: CareerTimelineProps) {
                                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b border-gray-800/80 pb-3">
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <span className="text-[10px] px-2 py-0.5 rounded bg-black/60 border border-gray-700 text-gray-300 font-bold uppercase">
+                                            <span className="text-xs px-2 py-0.5 rounded bg-black/60 border border-gray-700 text-gray-300 font-bold uppercase">
                                                 {rec.tournamentType.replace('_', ' ')}
                                             </span>
                                             <span className={`text-xs font-black ${badge.text}`}>
@@ -183,22 +183,22 @@ export function CareerTimeline({ records }: CareerTimelineProps) {
                                 {/* Performance & Prize Breakdown */}
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 text-xs">
                                     <div className="bg-[#161B22]/80 p-2.5 rounded-lg border border-gray-800">
-                                        <div className="text-[10px] text-gray-500">PRIZE WON</div>
+                                        <div className="text-xs text-gray-500">PRIZE WON</div>
                                         <div className="font-bold text-emerald-400 mt-0.5 truncate">{rec.prizeWon || '-'}</div>
                                     </div>
 
                                     <div className="bg-[#161B22]/80 p-2.5 rounded-lg border border-gray-800">
-                                        <div className="text-[10px] text-gray-500">PERFORMANCE SCORE</div>
+                                        <div className="text-xs text-gray-500">PERFORMANCE SCORE</div>
                                         <div className="font-bold text-cyan-400 mt-0.5">{rec.performanceScore.toFixed(2)} KP</div>
                                     </div>
 
                                     <div className="bg-[#161B22]/80 p-2.5 rounded-lg border border-gray-800">
-                                        <div className="text-[10px] text-gray-500">AVG K / D / A</div>
+                                        <div className="text-xs text-gray-500">AVG K / D / A</div>
                                         <div className="font-bold text-gray-300 mt-0.5">{rec.kdaRatio}</div>
                                     </div>
 
                                     <div className="bg-[#161B22]/80 p-2.5 rounded-lg border border-gray-800">
-                                        <div className="text-[10px] text-gray-500">SIGNATURE HERO</div>
+                                        <div className="text-xs text-gray-500">SIGNATURE HERO</div>
                                         <div className="font-bold text-gray-200 mt-0.5">{rec.highlightHero}</div>
                                     </div>
                                 </div>

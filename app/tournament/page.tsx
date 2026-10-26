@@ -217,7 +217,7 @@ export default function TournamentHubPage() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <div className="text-[10px] text-slate-400 uppercase font-semibold font-mono">Prize Pot</div>
+                    <div className="text-xs text-slate-400 uppercase font-semibold font-mono">Prize Pot</div>
                     <div className="text-xl font-black text-amber-400 font-mono">฿{hubData.mercenaryArena.potThb.toFixed(2)}</div>
                   </div>
                 </div>
@@ -269,7 +269,7 @@ export default function TournamentHubPage() {
 
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono">
+                <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono">
                   TIER 1
                 </span>
                 <span className="text-xs text-amber-400 font-semibold font-mono">15% Pool</span>
@@ -298,7 +298,7 @@ export default function TournamentHubPage() {
               </div>
 
               {hubData.userProfile.isDailyLocked && (
-                <p className="text-[11px] text-amber-400/90 mt-3 leading-relaxed">
+                <p className="text-xs text-amber-400/90 mt-3 leading-relaxed">
                   ✓ ได้รับ Weekly Pass แล้ว ระบบซื้อตั๋วคืนอัตโนมัติ <strong>+{hubData.userProfile.refundedTokensCount} Tokens ({hubData.userProfile.refundedTokensCount * 9}฿)</strong> เข้า Wallet เรียบร้อย
                 </p>
               )}
@@ -311,7 +311,7 @@ export default function TournamentHubPage() {
                   className="w-full py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 text-amber-400 font-bold text-xs transition-all flex items-center justify-center gap-1.5 active:scale-[0.98] font-mono"
                 >
                   <span>🔒 QUALIFIED (LOCKED)</span>
-                  <span className="text-[10px] text-slate-400 font-normal">→ ไป Mercenary</span>
+                  <span className="text-xs text-slate-400 font-normal">→ ไป Mercenary</span>
                 </button>
               ) : (
                 <Link
@@ -328,7 +328,7 @@ export default function TournamentHubPage() {
           <div className="rounded-2xl border p-5 flex flex-col justify-between bg-slate-900 border-slate-800 hover:border-slate-700 shadow-lg">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 font-mono">
+                <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 font-mono">
                   TIER 2
                 </span>
                 <span className="text-xs text-amber-400 font-semibold font-mono">25% Pool</span>
@@ -369,7 +369,7 @@ export default function TournamentHubPage() {
           <div className="rounded-2xl border p-5 flex flex-col justify-between bg-slate-900 border-slate-800 hover:border-slate-700 shadow-lg">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30 font-mono">
+                <span className="text-xs font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30 font-mono">
                   TIER 3
                 </span>
                 <span className="text-xs text-amber-400 font-semibold font-mono">40% Pool</span>
@@ -410,7 +410,7 @@ export default function TournamentHubPage() {
           <div className="rounded-2xl border p-5 flex flex-col justify-between bg-slate-950/60 border-slate-800/60 opacity-60">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-950/40 text-purple-400 border border-purple-800/40 font-mono">
+                <span className="text-xs font-bold px-2 py-0.5 rounded bg-purple-950/40 text-purple-400 border border-purple-800/40 font-mono">
                   PHASE 4.3
                 </span>
                 <span className="text-xs text-amber-400 font-semibold font-mono">20% Grand Pool</span>

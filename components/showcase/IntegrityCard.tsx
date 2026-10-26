@@ -55,7 +55,7 @@ export const IntegrityCard: React.FC<IntegrityCardProps> = ({
     return (
       <div className="relative w-full max-w-52.5 h-85 rounded-xl border border-dashed border-gray-700/80 bg-[#0A0A0F]/80 p-4 flex flex-col justify-between items-center text-center backdrop-blur-sm group hover:border-gray-500 transition-colors">
         <div
-          className="text-[10px] font-mono font-bold px-2 py-0.5 rounded border"
+          className="text-xs font-mono font-bold px-2 py-0.5 rounded border"
           style={{ borderColor: `${roleColor}55`, color: roleColor, backgroundColor: `${roleColor}15` }}
         >
           {ROLE_NAMES[position]}
@@ -72,16 +72,16 @@ export const IntegrityCard: React.FC<IntegrityCardProps> = ({
           <span className="text-xs font-mono font-bold text-gray-300 truncate max-w-35">
             {displayName}
           </span>
-          <span className="text-[10px] text-gray-600 font-mono mt-0.5">UNPROTECTED</span>
+          <span className="text-xs text-gray-600 font-mono mt-0.5">UNPROTECTED</span>
         </div>
 
         <div className="w-full pt-2 border-t border-gray-800/80">
           {isCurrentUser ? (
-            <Link className="block w-full py-2 bg-linear-to-r from-[#00D4FF] to-[#C9A84C] text-[#0A0A0F] font-['Orbitron'] text-[10px] font-black rounded shadow-[0_0_15px_rgba(0,212,255,0.4)] hover:brightness-110 active:scale-95 transition-all text-center tracking-wider" href="/gacha">
+            <Link className="block w-full py-2 bg-linear-to-r from-[#00D4FF] to-[#C9A84C] text-[#0A0A0F] font-['Orbitron'] text-xs font-black rounded shadow-[0_0_15px_rgba(0,212,255,0.4)] hover:brightness-110 active:scale-95 transition-all text-center tracking-wider" href="/gacha">
               GET INTEGRITY CARD
             </Link>
           ) : (
-            <span className="text-[10px] font-mono text-gray-600 tracking-tighter">NO BADGE EQUIPPED</span>
+            <span className="text-xs font-mono text-gray-600 tracking-tighter">NO BADGE EQUIPPED</span>
           )}
         </div>
       </div>
@@ -133,12 +133,12 @@ export const IntegrityCard: React.FC<IntegrityCardProps> = ({
 
       <div className="relative z-10 flex items-center justify-between">
         <span
-          className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border"
+          className="text-xs font-mono font-bold px-1.5 py-0.5 rounded border"
           style={{ borderColor: `${roleColor}88`, color: roleColor, backgroundColor: `${roleColor}18` }}
         >
           {ROLE_NAMES[position]}
         </span>
-        <span className={`text-[8px] font-['Orbitron'] font-black px-1.5 py-0.5 rounded ${config.badgeBg}`}>
+        <span className={`text-xs font-['Orbitron'] font-black px-1.5 py-0.5 rounded ${config.badgeBg}`}>
           {config.badgeText}
         </span>
       </div>
@@ -164,7 +164,7 @@ export const IntegrityCard: React.FC<IntegrityCardProps> = ({
                 </span>
               )}
             </div>
-            <span className="text-[10px] font-mono text-gray-400">AVE GUARDIAN</span>
+            <span className="text-xs font-mono text-gray-400">AVE GUARDIAN</span>
           </div>
         )}
       </div>
@@ -174,12 +174,12 @@ export const IntegrityCard: React.FC<IntegrityCardProps> = ({
           <span className="text-xs font-bold text-white truncate max-w-27.5" title={displayName}>
             {displayName}
           </span>
-          <span className="text-[10px] text-[#39FF6A] font-bold">
+          <span className="text-xs text-[#39FF6A] font-bold">
             {winRate.toFixed(1)}% WR
           </span>
         </div>
 
-        <div className="flex items-center justify-between text-[9px] text-gray-400">
+        <div className="flex items-center justify-between text-xs text-gray-400">
           <span>KARMA INDEX</span>
           <span className="text-[#00D4FF] font-bold">{karmaScore} PTS</span>
         </div>

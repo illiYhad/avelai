@@ -136,7 +136,7 @@ export default function MatchResultPage({ params }: PageProps) {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-              <span className="text-[10px] font-bold text-emerald-400 tracking-widest uppercase">VICTORY SETTLED</span>
+              <span className="text-xs font-bold text-emerald-400 tracking-widest uppercase">VICTORY SETTLED</span>
             </div>
             <h1 className="font-['Orbitron'] text-2xl md:text-3xl font-black text-white tracking-wider">
               MATCH RESULT #{matchid}
@@ -147,7 +147,7 @@ export default function MatchResultPage({ params }: PageProps) {
           <div className="flex items-center gap-4 bg-slate-900 border border-slate-800 px-5 py-3 rounded-xl">
             <Clock className="w-5 h-5 text-[#C9A84C]" />
             <div>
-              <div className="text-[9px] text-zinc-500 uppercase font-bold">VOTING GATE</div>
+              <div className="text-xs text-zinc-500 uppercase font-bold">VOTING GATE</div>
               <div className={`text-base font-black tracking-widest ${countdown > 0 ? 'text-[#C9A84C] animate-pulse' : 'text-emerald-400'}`}>
                 {countdown > 0 ? `00:${countdown.toString().padStart(2, '0')}` : 'GATE OPEN'}
               </div>
@@ -171,10 +171,10 @@ export default function MatchResultPage({ params }: PageProps) {
               <div key={player.userId} className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl flex flex-col justify-between space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-bold text-white truncate max-w-30">{player.displayName}</span>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-[#00D4FF] font-bold">POS {player.position}</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-slate-800 text-[#00D4FF] font-bold">POS {player.position}</span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-1 text-[9px] bg-slate-950 p-2 rounded border border-slate-800">
+                <div className="grid grid-cols-2 gap-1 text-xs bg-slate-950 p-2 rounded border border-slate-800">
                   <span className="text-zinc-500">KDA / KP:</span>
                   <span className="text-right text-zinc-300 font-bold">{player.stats.kills}/{player.stats.deaths}/{player.stats.assists} ({player.stats.kp}%)</span>
                   <span className="text-zinc-500">VISION SCORE:</span>
@@ -231,10 +231,10 @@ export default function MatchResultPage({ params }: PageProps) {
               <div key={player.userId} className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-bold text-white truncate max-w-25">{player.displayName}</span>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-[#C9A84C] font-bold">POS {player.position}</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-slate-800 text-[#C9A84C] font-bold">POS {player.position}</span>
                 </div>
 
-                <div className="text-[8px] bg-slate-950 p-1.5 rounded border border-slate-800 space-y-0.5">
+                <div className="text-xs bg-slate-950 p-1.5 rounded border border-slate-800 space-y-0.5">
                   <div className="flex justify-between text-zinc-400">
                     <span>KDA:</span> <span className="text-white font-bold">{player.stats.kills}/{player.stats.deaths}/{player.stats.assists}</span>
                   </div>
@@ -256,7 +256,7 @@ export default function MatchResultPage({ params }: PageProps) {
                         key={score}
                         onClick={() => handleVoteChange('OPPONENT', player.userId, score)}
                         disabled={votingCompleted || (!isSelected && isTakenByOther)}
-                        className={`flex-1 py-1 text-[10px] font-black rounded border transition-all ${
+                        className={`flex-1 py-1 text-xs font-black rounded border transition-all ${
                           isSelected
                             ? 'bg-[#C9A84C] text-slate-950 border-[#C9A84C] shadow-[0_0_12px_rgba(201,168,76,0.5)] scale-105 z-10 cursor-pointer'
                             : isTakenByOther

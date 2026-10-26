@@ -254,19 +254,19 @@ export default function MatchHistoryPage() {
 
                                     <div className="grid grid-cols-3 gap-4 my-6 text-center">
                                         <div className="bg-black/50 p-3 rounded border border-gray-900">
-                                            <div className="text-[10px] text-gray-500 uppercase">Duration</div>
+                                            <div className="text-xs text-gray-500 uppercase">Duration</div>
                                             <div className="text-lg font-bold text-white mt-1">
                                                 {Math.floor(selectedMatch.duration / 60)}m {selectedMatch.duration % 60}s
                                             </div>
                                         </div>
                                         <div className="bg-black/50 p-3 rounded border border-gray-900">
-                                            <div className="text-[10px] text-gray-500 uppercase">Total KP Pool</div>
+                                            <div className="text-xs text-gray-500 uppercase">Total KP Pool</div>
                                             <div className="text-lg font-bold text-[#00D4FF] mt-1">
                                                 {selectedMatch.match_players?.reduce((acc, p) => acc + (p.base_kp || 0), 0)}
                                             </div>
                                         </div>
                                         <div className="bg-black/50 p-3 rounded border border-gray-900">
-                                            <div className="text-[10px] text-gray-500 uppercase">Avg Score</div>
+                                            <div className="text-xs text-gray-500 uppercase">Avg Score</div>
                                             <div className="text-lg font-bold text-[#C9A84C] mt-1">
                                                 {(
                                                     selectedMatch.match_players?.reduce((acc, p) => acc + (p.total_score || 0), 0) /
