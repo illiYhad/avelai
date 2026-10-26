@@ -36,6 +36,11 @@ export default function DotaAccountForm({
           ) : (
             <p className="text-sm text-white/60">ยังไม่ได้ผูกบัญชี</p>
           )}
+          {externalId ? (
+            <a href="/me/dota" className="text-sm text-cyan underline">
+              ดูการ์ดผู้เล่น Dota 2 →
+            </a>
+          ) : null}
           <form action={linkAction} className="flex flex-col gap-2">
             <label htmlFor="dota_id" className="text-sm text-white/80">
               Dota ID · SteamID64 · หรือลิงก์ Dotabuff / OpenDota

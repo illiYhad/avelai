@@ -2,6 +2,7 @@
 // เปิดสาธารณะ (ตั้งใจ): /leaderboard · /tournament* · /teams · /teams/[id] · /profile/[userId] · /dashboard (จดไว้ในใบตอบ)
 const PROTECTED: RegExp[] = [
   /^\/me$/,
+  /^\/me\/dota(\/.*)?$/, // K-AV-D2: การ์ด/แมตช์ Dota 2 ของตัวเอง
   /^\/profile$/,
   /^\/teams\/create$/,
   /^\/team\/[^/]+\/(schedule|budget|scout)$/,
