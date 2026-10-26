@@ -21,7 +21,7 @@ export const KARMA_DELTAS = {
 export type KarmaReason = keyof typeof KARMA_DELTAS | "KARMA_PENALTY" | "ADMIN_ADJUST";
 export type KarmaSource = "dispute" | "penalty" | "no_show" | "system";
 
-export type KarmaEvent = { delta: number; createdAt: string | Date };
+export type KarmaEvent = { delta: number; createdAt: string | Date; revoked?: boolean }; // revoked = โทษต้นทางถูก ADMIN ยกเลิก → ไม่นับ (SQL: penalties.revoked_at)
 export type KarmaState = { score: number; blockedUntil: Date | null };
 
 export function clampKarma(n: number): number {
@@ -30,7 +30,7 @@ export function clampKarma(n: number): number {
 
 /** คะแนน + วันปลดบล็อก (ถ้ามี) จากรายการเหตุการณ์ (เรียงตามเวลาเอง) */
 export function karmaState(events: KarmaEvent[], now: Date): KarmaState {
-  const sorted = [...events].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  const sorted = events.filter((e) => !e.revoked).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   let score = KARMA_START;
   let lastDrop: Date | null = null;
   for (const e of sorted) {

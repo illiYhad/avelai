@@ -101,7 +101,11 @@ DECLARE
   s integer := 100;
   last_drop timestamptz := NULL;
 BEGIN
-  FOR r IN SELECT delta, created_at FROM public.karma_events WHERE user_id = p_user_id ORDER BY created_at, id LOOP
+  -- โทษที่ ADMIN ยกเลิกแล้ว (penalties.revoked_at) ไม่นับ — ตารางยัง append-only ไม่ต้องเขียนแถวชดเชย
+  FOR r IN SELECT e.delta, e.created_at FROM public.karma_events e
+           LEFT JOIN public.penalties p ON e.source = 'penalty' AND p.id = e.ref_id
+           WHERE e.user_id = p_user_id AND (p.id IS NULL OR p.revoked_at IS NULL)
+           ORDER BY e.created_at, e.id LOOP
     s := LEAST(100, GREATEST(0, s + r.delta));
     IF r.delta < 0 AND s < 50 THEN last_drop := r.created_at; END IF;
   END LOOP;
@@ -122,6 +126,25 @@ AS $$
 $$;
 REVOKE ALL ON FUNCTION public.karma_states(uuid[]) FROM public;
 GRANT EXECUTE ON FUNCTION public.karma_states(uuid[]) TO authenticated, service_role;
+
+-- ยกเลิกโทษ (penalties.revoked_at ตั้ง) → คำนวณ player_stats.karma ของผู้ถูกลงโทษใหม่ (karma_state ข้ามโทษที่ยกเลิกแล้ว)
+CREATE OR REPLACE FUNCTION public.penalties_resync_karma()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF NEW.revoked_at IS NOT NULL AND OLD.revoked_at IS NULL THEN
+    UPDATE public.player_stats ps SET karma = k.score, updated_at = now()
+    FROM public.karma_events e, LATERAL public.karma_state(e.user_id) AS k
+    WHERE e.source = 'penalty' AND e.ref_id = NEW.id AND ps.user_id = e.user_id;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+DROP TRIGGER IF EXISTS penalties_resync_karma ON public.penalties;
+CREATE TRIGGER penalties_resync_karma
+    AFTER UPDATE OF revoked_at ON public.penalties
+    FOR EACH ROW EXECUTE FUNCTION public.penalties_resync_karma();
 
 -- player_stats.karma ตามหลังทุกเหตุการณ์ (ทุกแถวของผู้ใช้นั้น — karma ไม่แยกเกม)
 CREATE OR REPLACE FUNCTION public.karma_events_sync_stats()

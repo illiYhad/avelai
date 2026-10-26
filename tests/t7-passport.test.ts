@@ -100,6 +100,13 @@ describe("Karma (pure)", () => {
     const withRecover = karmaState([...ev, { delta: 2, createdAt: T(15) }], new Date(T(16)));
     expect(withRecover.blockedUntil?.toISOString()).toBe(T(17));
   });
+  it("โทษที่ ADMIN ยกเลิกแล้วไม่นับ (revoked) · SQL karma_state ข้าม penalties.revoked_at", () => {
+    expect(karmaScore([{ delta: -20, createdAt: T(1), revoked: true }, { delta: -5, createdAt: T(2) }])).toBe(95);
+    const sql = readFileSync(join(process.cwd(), "supabase/migrations/180_passport_elo_karma.sql"), "utf8");
+    expect(sql).toMatch(/LEFT JOIN public\.penalties p ON e\.source = 'penalty' AND p\.id = e\.ref_id/);
+    expect(sql).toMatch(/p\.revoked_at IS NULL/);
+    expect(sql).toMatch(/CREATE TRIGGER penalties_resync_karma\s+AFTER UPDATE OF revoked_at ON public\.penalties/);
+  });
   it("getRegistrationGate: มีคนไม่ผ่านคนเดียว = ปฏิเสธทั้งทีม พร้อมชื่อ", () => {
     const now = new Date(T(20));
     expect(getRegistrationGate([{ userId: "u1", username: "alice", score: 100, blockedUntil: null }, { userId: "u2", username: "bob", score: 65, blockedUntil: null }], "PAID", now)).toMatchObject({ allowed: false, reason: expect.stringContaining("bob") });
