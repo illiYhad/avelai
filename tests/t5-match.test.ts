@@ -15,12 +15,13 @@ describe("match state machine", () => {
       if (ok) allowed++;
       if (!ok) expect(transitionError(f, t)).toContain("422");
     }
-    expect(allowed).toBe(22);
+    expect(allowed).toBe(23); // +DISPUTED→AWAITING_RESULT (K-AV-6)
     for (const t of ["COMPLETED", "WALKOVER", "BYE", "CANCELLED"] as const) { expect(isTerminal(t)).toBe(true); expect(MATCH_TRANSITIONS[t]).toEqual([]); }
     expect(canTransition("SCHEDULED", "DISPUTED")).toBe(false);
     expect(canTransition("READY_CHECK", "DISPUTED")).toBe(false);
     expect(canTransition("SCHEDULED", "COMPLETED")).toBe(false);
     expect(canTransition("AWAITING_RESULT", "LIVE")).toBe(false);
+    expect(canTransition("DISPUTED", "AWAITING_RESULT")).toBe(true);
     expect(canTransition("PAUSED", "LIVE")).toBe(true);
   });
 });

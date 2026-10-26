@@ -67,6 +67,7 @@ export default async function MatchRoomPage({ params }: { params: Promise<{ id: 
             : <ReportForm action={submitReportAction.bind(null, id)} teamA={{ id: m.team_a_id!, label: label(m.team_a_id) }} teamB={{ id: m.team_b_id!, label: label(m.team_b_id) }} bestOf={m.best_of} />
           ) : null}
           {status === "DISPUTED" ? <p className="text-sm text-amber-300">แมตช์นี้มีข้อพิพาท — รอผู้ตัดสิน</p> : null}
+          {(status === "LIVE" || status === "PAUSED" || status === "AWAITING_RESULT") ? <Link href={`/matches/${id}/dispute`} className="text-xs text-amber-300 underline">เปิดข้อพิพาท (เมื่อผลไม่ถูกต้อง/มีปัญหาระหว่างแข่ง)</Link> : null}
         </section>
       ) : <p className="text-sm text-white/60">คุณไม่ใช่หัวหน้าทีมในแมตช์นี้ — ดูได้อย่างเดียว</p>}
 

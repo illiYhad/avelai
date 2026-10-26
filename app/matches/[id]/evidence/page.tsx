@@ -20,11 +20,16 @@ export default async function EvidenceBookPage({ params }: { params: Promise<{ i
   const { data: mRaw } = await db.from("tournament_matches").select(MATCH_COLS).eq("id", id).maybeSingle();
   if (!mRaw) notFound();
   const m = mRaw as MatchRow & { result_source: string | null; outcome: string | null; score_a: number | null; score_b: number | null; confirmed_by: string | null; confirmed_at: string | null };
-  const [{ data: reports }, { data: transitions }, { data: teams }] = await Promise.all([
+  const [{ data: reports }, { data: transitions }, { data: teams }, { data: disputes }, { data: penalties }] = await Promise.all([
     db.from("match_reports").select("id, reported_by_team, reported_by_user, winner_team_id, score_a, score_b, evidence_paths, note, created_at, users!reported_by_user(username)").eq("match_id", id).order("created_at"),
     db.from("match_state_transitions").select("from_status, to_status, actor_id, reason, created_at, users!actor_id(username)").eq("match_id", id).order("created_at"),
     db.from("teams").select("id, name, tag").in("id", [m.team_a_id, m.team_b_id].filter((x): x is string => !!x)),
+    // K-AV-6: ข้อพิพาท/โทษของแมตช์นี้ (RLS: คู่กรณี/staff/ADMIN เห็น · คนอื่นได้แถวว่าง)
+    db.from("disputes").select("id, opened_by_team, status, reason, resolution, resolved_at, created_at, users!opened_by_user(username)").eq("match_id", id).order("created_at"),
+    db.from("penalties").select("id, user_id, team_id, type, value, until, reason, revoked_at, created_at, dispute_id").eq("tournament_id", m.tournament_id).order("created_at"),
   ]);
+  const disputeIds = new Set((disputes ?? []).map((d) => d.id as string));
+  const matchPenalties = (penalties ?? []).filter((p) => p.dispute_id && disputeIds.has(p.dispute_id as string));
   const names = new Map(((teams ?? []) as TeamName[]).map((x) => [x.id, x]));
   const confirmer = m.confirmed_by ? (await db.from("users").select("username").eq("id", m.confirmed_by).maybeSingle()).data?.username ?? m.confirmed_by : null;
   const signed = new Map<string, string>();
@@ -62,6 +67,20 @@ export default async function EvidenceBookPage({ params }: { params: Promise<{ i
           </div>
         ))}
       </section>
+
+      {(disputes ?? []).length ? (
+        <section>
+          <h2 className="mb-2 text-sm font-semibold text-white/90">ข้อพิพาท (K-AV-6)</h2>
+          {(disputes ?? []).map((d) => (
+            <div key={d.id as string} className="mb-2 rounded border border-amber-300/30 p-3 text-sm">
+              <p><b>{teamLabel(names, d.opened_by_team as string)}</b> โดย {uname(d.users)} · {thai(d.created_at as string)} · <span className="text-amber-300">{d.status as string}</span></p>
+              <p className="text-white/80">{d.reason as string}</p>
+              {d.resolution ? <p className="mt-1 text-xs text-white/60">คำชี้ขาด ({thai(d.resolved_at as string | null)}): {d.resolution as string}</p> : null}
+            </div>
+          ))}
+          {matchPenalties.length ? <ul className="mt-2 text-xs text-white/70">{matchPenalties.map((p) => <li key={p.id as string}>โทษ {p.type as string}{p.value ? ` ${p.value}` : ""}{p.until ? ` ถึง ${thai(p.until as string)}` : ""} · {p.reason as string}{p.revoked_at ? " · (ยกเลิกแล้ว)" : ""}</li>)}</ul> : null}
+        </section>
+      ) : null}
 
       <section>
         <h2 className="mb-2 text-sm font-semibold text-white/90">ประวัติสถานะ (append-only)</h2>

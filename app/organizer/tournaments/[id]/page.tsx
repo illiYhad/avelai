@@ -65,6 +65,7 @@ export default async function ManageTournamentPage({ params }: { params: Promise
               : status === "SEEDING" ? <ActionButton action={generateBracketAction.bind(null, id)} label={`สร้างสาย ${t.format}`} confirmText="สร้างสายจากทีมที่เช็กอินแล้ว — ทำครั้งเดียว ทัวร์จะเริ่มแข่งทันที" className="rounded bg-gold px-3 py-1.5 text-sm font-semibold text-void" /> : null}
             <Link href={t.format === "SWISS" ? `/tournaments/${id}/swiss` : `/tournaments/${id}/bracket`} className="text-sm text-cyan underline">ดูสาย/ตาราง</Link>
             <Link href={`/organizer/tournaments/${id}/matches`} className="text-sm text-cyan underline">แมตช์ / ชี้ขาดผล</Link>
+            <Link href={`/organizer/tournaments/${id}/disputes`} className="text-sm text-cyan underline">ข้อพิพาท / โทษ</Link>
           </div>
         </section>
       ) : null}
