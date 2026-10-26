@@ -162,6 +162,21 @@ export async function issuePenaltyAction(input: { tournamentId: string; disputeI
   const pErr = validatePenalty({ type: input.type, until: input.until, value: input.value }, new Date());
   if (pErr) return fail(pErr);
   if (input.subjectUserId === g.ctx.userId) return fail("ลงโทษตัวเองไม่ได้");
+  // ขอบเขต (ตรงกับ trigger penalties_guard_insert): ไม่ใช่ ADMIN → ผู้ถูกลงโทษต้องผูกกับทัวร์นี้ · SUSPENSION ≤ 7 วัน
+  if (!isAdmin) {
+    if (input.type === "SUSPENSION" && new Date(input.until!).getTime() > Date.now() + 7 * 86_400_000) return fail("ผู้ตัดสินระงับได้ไม่เกิน 7 วัน — นานกว่านั้นต้องเป็น ADMIN");
+    const { data: regs } = await g.ctx.db.from("registrations").select("team_id").eq("tournament_id", input.tournamentId);
+    const teamIds = (regs ?? []).map((r) => r.team_id as string);
+    if (hasTeam && !teamIds.includes(input.subjectTeamId!)) return fail("ทีมนี้ไม่ได้สมัครทัวร์นี้ — ลงโทษนอกขอบเขตไม่ได้");
+    if (hasUser) {
+      const { data: mem } = teamIds.length ? await g.ctx.db.from("team_members").select("user_id").eq("user_id", input.subjectUserId!).eq("status", "ACTIVE").in("team_id", teamIds).limit(1) : { data: [] };
+      if (!mem?.length) return fail("ผู้ใช้นี้ไม่ได้อยู่ในทีมที่สมัครทัวร์นี้ — ลงโทษนอกขอบเขตไม่ได้");
+    }
+  }
+  if (input.disputeId && UUID.test(input.disputeId)) {
+    const d = await loadDispute(g.ctx, input.disputeId);
+    if (!d || d.tournament_id !== input.tournamentId) return fail("ข้อพิพาทที่อ้างไม่ใช่ของทัวร์นี้");
+  }
   const { data, error } = await g.ctx.db.from("penalties").insert({
     user_id: input.subjectUserId ?? null, team_id: input.subjectTeamId ?? null, type: input.type,
     value: input.type === "KARMA" ? input.value : null, until: input.type === "SUSPENSION" ? new Date(input.until!).toISOString() : null,

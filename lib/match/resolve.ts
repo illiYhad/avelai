@@ -8,7 +8,7 @@ import { resolveReadyCheck } from "@/lib/match/walkover";
 
 export type MatchRow = {
   id: string; tournament_id: string; stage: string; round: number; position: number; team_a_id: string | null; team_b_id: string | null;
-  best_of: number; status: string; check_in_a_at: string | null; check_in_b_at: string | null; forfeit_deadline_at: string | null; winner_team_id: string | null;
+  best_of: number; status: string; scheduled_at: string | null; check_in_a_at: string | null; check_in_b_at: string | null; forfeit_deadline_at: string | null; winner_team_id: string | null;
 };
 export const MATCH_COLS = "id, tournament_id, stage, round, position, team_a_id, team_b_id, best_of, status, scheduled_at, winner_team_id, result_source, outcome, score_a, score_b, forfeit_deadline_at, check_in_a_at, check_in_b_at, confirmed_by, confirmed_at, started_at, ended_at";
 

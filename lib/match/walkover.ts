@@ -23,6 +23,20 @@ export function resolveReadyCheck(m: ReadyCheckState, now: Date): WalkoverDecisi
   return { kind: "NONE", reason: "ทั้งสองทีมไม่พร้อม — รอผู้ตัดสินตัดสิน" };
 }
 
-export function readyDeadline(now: Date, readyCheckMinutes: number): Date {
-  return new Date(now.getTime() + readyCheckMinutes * 60_000);
+/** หัวหน้าทีมเริ่มเช็กความพร้อมได้ก่อนเวลานัดไม่เกินกี่นาที (ตรงกับ window_min ใน trigger 160) */
+export const READY_WINDOW_MINUTES = 30;
+
+/** เริ่มเช็กความพร้อมได้ไหม: ต้องมีเวลานัด และ now ≥ เวลานัด − 30 นาที · คืนข้อความไทยเมื่อไม่ได้ */
+export function canStartReadyCheck(scheduledAt: string | null, now: Date): string | null {
+  if (!scheduledAt) return "ผู้จัดยังไม่กำหนดเวลาแข่ง — เช็กความพร้อมยังเปิดไม่ได้";
+  const t = new Date(scheduledAt).getTime();
+  if (Number.isNaN(t)) return "เวลานัดไม่ถูกต้อง";
+  if (now.getTime() < t - READY_WINDOW_MINUTES * 60_000) return `เช็กความพร้อมเปิดก่อนเวลานัด ${READY_WINDOW_MINUTES} นาที`;
+  return null;
+}
+
+/** deadline = max(now, เวลานัด) + นาที (ตรงกับ trigger) */
+export function readyDeadline(now: Date, readyCheckMinutes: number, scheduledAt?: string | null): Date {
+  const base = scheduledAt ? Math.max(now.getTime(), new Date(scheduledAt).getTime()) : now.getTime();
+  return new Date(base + readyCheckMinutes * 60_000);
 }

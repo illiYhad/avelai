@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import { MATCH_STATUSES, MATCH_TRANSITIONS, canTransition, isTerminal, transitionError } from "@/lib/match/state";
 import { evaluateReports, validateScore, type Report } from "@/lib/match/report";
-import { readyDeadline, resolveReadyCheck } from "@/lib/match/walkover";
+import { canStartReadyCheck, readyDeadline, resolveReadyCheck } from "@/lib/match/walkover";
 
 describe("match state machine", () => {
   it("อนุญาตเฉพาะคู่ในตาราง · terminal ออกไม่ได้ · DISPUTED จาก LIVE/PAUSED/AWAITING_RESULT เท่านั้น · ข้ามขั้น = ข้อความ 422", () => {
@@ -76,7 +76,19 @@ describe("walkover (pure)", () => {
     expect(resolveReadyCheck({ ...base, status: "LIVE", checkInA: "x" }, after).kind).toBe("NONE");
     expect(resolveReadyCheck({ ...base, checkInA: "x", forfeitDeadlineAt: null }, after).kind).toBe("NONE");
   });
-  it("readyDeadline = now + นาที", () => { expect(readyDeadline(new Date("2026-10-26T10:00:00Z"), 15).toISOString()).toBe("2026-10-26T10:15:00.000Z"); });
+  it("readyDeadline = max(now, เวลานัด) + นาที", () => {
+    expect(readyDeadline(new Date("2026-10-26T10:00:00Z"), 15).toISOString()).toBe("2026-10-26T10:15:00.000Z");
+    expect(readyDeadline(new Date("2026-10-26T10:00:00Z"), 15, "2026-10-26T10:20:00Z").toISOString()).toBe("2026-10-26T10:35:00.000Z");
+    expect(readyDeadline(new Date("2026-10-26T10:30:00Z"), 15, "2026-10-26T10:20:00Z").toISOString()).toBe("2026-10-26T10:45:00.000Z");
+  });
+  it("หน้าต่างเริ่มเช็กความพร้อม: ไม่มีเวลานัด → ไม่ได้ · ก่อนเวลานัดเกิน 30 นาที → ไม่ได้ · ภายใน 30 นาที/หลังเวลานัด → ได้", () => {
+    const now = new Date("2026-10-26T10:00:00Z");
+    expect(canStartReadyCheck(null, now)).toContain("ยังไม่กำหนด");
+    expect(canStartReadyCheck("2026-10-26T11:00:00Z", now)).toContain("30 นาที");
+    expect(canStartReadyCheck("2026-10-26T10:30:00Z", now)).toBeNull();
+    expect(canStartReadyCheck("2026-10-26T09:00:00Z", now)).toBeNull();
+    expect(canStartReadyCheck("bad", now)).toContain("ไม่ถูกต้อง");
+  });
 });
 
 // ---------- cron ----------
@@ -133,10 +145,10 @@ vi.mock("@/lib/db/server", () => ({
   }),
 }));
 
-import { readyCheckAction, refereeResultAction, submitReportAction } from "@/app/matches/[id]/actions";
+import { readyCheckAction, refereeResultAction, setMatchScheduleAction, submitReportAction } from "@/app/matches/[id]/actions";
 
 const MID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
-const M: Record<string, string | number | null> = { id: MID, tournament_id: "t1", stage: "WB", round: 1, position: 1, team_a_id: "A", team_b_id: "B", best_of: 3, status: "AWAITING_RESULT", scheduled_at: null, winner_team_id: null, result_source: null, outcome: null, score_a: null, score_b: null, forfeit_deadline_at: null, check_in_a_at: null, check_in_b_at: null, confirmed_by: null, confirmed_at: null, started_at: null, ended_at: null };
+const M: Record<string, string | number | null> = { id: MID, tournament_id: "t1", stage: "WB", round: 1, position: 1, team_a_id: "A", team_b_id: "B", best_of: 3, status: "AWAITING_RESULT", scheduled_at: "2026-01-01T00:00:00Z", winner_team_id: null, result_source: null, outcome: null, score_a: null, score_b: null, forfeit_deadline_at: null, check_in_a_at: null, check_in_b_at: null, confirmed_by: null, confirmed_at: null, started_at: null, ended_at: null };
 const T = { id: "t1", organizer_id: "org", best_of: 3, auto_confirm: false, auto_confirm_minutes: 10, ready_check_minutes: 15, status: "RUNNING" };
 const jpeg = () => { const b = new Uint8Array(64); b.set([0xff, 0xd8, 0xff, 0xe0]); return new File([b.slice().buffer as ArrayBuffer], "proof.jpg", { type: "image/jpeg" }); };
 const form = (o: Record<string, string>, files: File[] = []) => { const f = new FormData(); for (const [k, v] of Object.entries(o)) f.set(k, v); for (const x of files) f.append("evidence", x); return f; };
@@ -273,6 +285,22 @@ describe("readyCheckAction", () => {
     setup({ match: { status: "READY_CHECK", check_in_a_at: "x", forfeit_deadline_at: "2099-01-01T00:00:00Z" } });
     expect(await readyCheckAction(MID)).toMatchObject({ ok: true, message: expect.stringContaining("กดพร้อมแล้ว") });
     expect(updates("tournament_matches")).toHaveLength(0);
+  });
+  it("ยังไม่กำหนดเวลานัด / ก่อนเวลานัดเกิน 30 นาที → เริ่มเช็กความพร้อมไม่ได้ (ไม่ update)", async () => {
+    setup({ match: { status: "SCHEDULED", scheduled_at: null } });
+    expect(await readyCheckAction(MID)).toMatchObject({ ok: false, message: expect.stringContaining("ยังไม่กำหนด") });
+    setup({ match: { status: "SCHEDULED", scheduled_at: "2099-01-01T00:00:00Z" } });
+    expect(await readyCheckAction(MID)).toMatchObject({ ok: false, message: expect.stringContaining("30 นาที") });
+    expect(updates("tournament_matches")).toHaveLength(0);
+  });
+  it("ผู้จัดตั้งเวลานัดได้ · ผู้เล่น/เวลาผิด → ปฏิเสธ", async () => {
+    setup({ me: "org", match: { status: "SCHEDULED" } });
+    expect(await setMatchScheduleAction(MID, "2026-12-01T10:00:00Z")).toMatchObject({ ok: true });
+    expect(updates("tournament_matches")[0].row).toMatchObject({ scheduled_at: "2026-12-01T10:00:00.000Z" });
+    setup({ me: "org" });
+    expect(await setMatchScheduleAction(MID, "bad")).toMatchObject({ ok: false });
+    setup({ me: "leaderA", match: { status: "SCHEDULED" } });
+    expect(await setMatchScheduleAction(MID, "2026-12-01T10:00:00Z")).toMatchObject({ ok: false });
   });
   it("หมดเวลาแล้วและอีกทีมไม่พร้อม → resolve walkover ก่อน แล้วแจ้งว่าเป็น walkover", async () => {
     setup({ me: "leaderB", leaderOf: ["B"], match: { status: "READY_CHECK", check_in_a_at: "x", forfeit_deadline_at: "2000-01-01T00:00:00Z" } });

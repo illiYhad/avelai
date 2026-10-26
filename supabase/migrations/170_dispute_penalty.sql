@@ -50,8 +50,14 @@ BEGIN
   IF NOT (uid IS NULL OR public.is_admin() OR public.is_tournament_staff(OLD.tournament_id, ARRAY['REFEREE'])) THEN
     RAISE EXCEPTION 'DISPUTE_FORBIDDEN' USING ERRCODE = 'insufficient_privilege';
   END IF;
-  IF OLD.status IN ('RESOLVED', 'REJECTED') AND NEW.status <> OLD.status THEN
-    RAISE EXCEPTION 'DISPUTE_ALREADY_CLOSED' USING ERRCODE = 'check_violation';
+  IF OLD.status IN ('RESOLVED', 'REJECTED') THEN
+    RAISE EXCEPTION 'DISPUTE_ALREADY_CLOSED' USING ERRCODE = 'check_violation';   -- ปิดแล้ว = แก้ไม่ได้ทุกคอลัมน์
+  END IF;
+  IF NEW.status = OLD.status THEN
+    IF NEW.resolved_by IS DISTINCT FROM OLD.resolved_by OR NEW.resolved_at IS DISTINCT FROM OLD.resolved_at OR NEW.resolution IS DISTINCT FROM OLD.resolution THEN
+      RAISE EXCEPTION 'DISPUTE_IMMUTABLE' USING ERRCODE = 'check_violation';     -- ตั้งผลได้เฉพาะพร้อมการปิด
+    END IF;
+    RETURN NEW;
   END IF;
   IF NEW.status <> OLD.status THEN
     IF NOT ((OLD.status = 'OPEN' AND NEW.status IN ('UNDER_REVIEW', 'RESOLVED', 'REJECTED'))
@@ -121,6 +127,34 @@ CREATE TABLE IF NOT EXISTS public.penalties (
 CREATE INDEX IF NOT EXISTS idx_penalties_user ON public.penalties (user_id, type) WHERE revoked_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_penalties_team ON public.penalties (team_id) WHERE revoked_at IS NULL;
 
+-- INSERT guard: ไม่ใช่ ADMIN → ผู้ถูกลงโทษต้องผูกกับทัวร์ที่อ้าง (ทีมสมัครทัวร์นั้น / ผู้ใช้เป็นสมาชิกทีมที่สมัคร) · dispute_id ต้องเป็นของทัวร์เดียวกัน · SUSPENSION ≤ 7 วัน
+CREATE OR REPLACE FUNCTION public.penalties_guard_insert()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF NEW.dispute_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM public.disputes d WHERE d.id = NEW.dispute_id AND d.tournament_id = NEW.tournament_id) THEN
+    RAISE EXCEPTION 'PENALTY_DISPUTE_SCOPE' USING ERRCODE = 'check_violation';
+  END IF;
+  IF (SELECT auth.uid()) IS NULL OR public.is_admin() THEN RETURN NEW; END IF;
+  IF NEW.tournament_id IS NULL THEN RAISE EXCEPTION 'PENALTY_TOURNAMENT_REQUIRED' USING ERRCODE = 'check_violation'; END IF;
+  IF NEW.team_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM public.registrations r WHERE r.tournament_id = NEW.tournament_id AND r.team_id = NEW.team_id) THEN
+    RAISE EXCEPTION 'PENALTY_SUBJECT_SCOPE' USING ERRCODE = 'check_violation';
+  END IF;
+  IF NEW.user_id IS NOT NULL AND NOT EXISTS (
+       SELECT 1 FROM public.team_members m JOIN public.registrations r ON r.team_id = m.team_id
+       WHERE r.tournament_id = NEW.tournament_id AND m.user_id = NEW.user_id AND m.status = 'ACTIVE') THEN
+    RAISE EXCEPTION 'PENALTY_SUBJECT_SCOPE' USING ERRCODE = 'check_violation';
+  END IF;
+  IF NEW.type = 'SUSPENSION' AND NEW.until > now() + interval '7 days' THEN
+    RAISE EXCEPTION 'PENALTY_SUSPENSION_TOO_LONG' USING ERRCODE = 'check_violation';   -- staff ระงับได้ไม่เกิน 7 วัน · นานกว่านั้น = ADMIN
+  END IF;
+  RETURN NEW;
+END;
+$$;
+DROP TRIGGER IF EXISTS penalties_guard_insert ON public.penalties;
+CREATE TRIGGER penalties_guard_insert BEFORE INSERT ON public.penalties FOR EACH ROW EXECUTE FUNCTION public.penalties_guard_insert();
+
 -- UPDATE ได้เฉพาะ ADMIN และเฉพาะตั้ง revoked_at/revoked_by (ครั้งเดียว) · DELETE ไม่ได้
 CREATE OR REPLACE FUNCTION public.penalties_guard_update()
 RETURNS trigger
@@ -154,8 +188,9 @@ AS $$
 DECLARE target uuid := COALESCE(NEW.user_id, OLD.user_id); latest timestamptz;
 BEGIN
   IF target IS NULL THEN RETURN NULL; END IF;
-  SELECT max(p.until) INTO latest FROM public.penalties p
-   WHERE p.user_id = target AND p.type = 'SUSPENSION' AND p.revoked_at IS NULL AND p.until > now();
+  -- BAN ที่ยังไม่ถูกยกเลิก = ระงับไม่มีกำหนด (ใช้ 9999-12-31 แทน 'infinity' เพราะฝั่งแอปแปลงเป็น Date ไม่ได้)
+  SELECT max(CASE WHEN p.type = 'BAN' THEN timestamptz '9999-12-31 00:00:00+00' ELSE p.until END) INTO latest FROM public.penalties p
+   WHERE p.user_id = target AND p.revoked_at IS NULL AND ((p.type = 'SUSPENSION' AND p.until > now()) OR p.type = 'BAN');
   UPDATE public.users SET suspended_until = latest WHERE id = target AND suspended_until IS DISTINCT FROM latest;
   RETURN NULL;
 END;
@@ -164,137 +199,9 @@ DROP TRIGGER IF EXISTS penalties_sync_suspension ON public.penalties;
 CREATE TRIGGER penalties_sync_suspension AFTER INSERT OR UPDATE ON public.penalties FOR EACH ROW EXECUTE FUNCTION public.penalties_sync_suspension();
 
 -- ---------------------------------------------------------------------------
--- 3. state machine แมตช์: ให้หัวหน้าทีมเปิด DISPUTED ได้ (เมื่อมี dispute OPEN ของทีมตัวเอง) และ staff คืน DISPUTED → AWAITING_RESULT ได้
---    = นิยามใหม่ของ tournament_matches_guard_update จาก 160 (superset · ส่วนอื่นเหมือนเดิมทุกบรรทัด)
+-- 3. state machine แมตช์: ไม่นิยามใหม่ — guard ใน 160 รองรับ DISPUTED ของหัวหน้าทีม (ตรวจ to_regclass('public.disputes'))
+--    และ DISPUTED → AWAITING_RESULT (staff) ไว้แล้ว · ตารางนี้สร้างขึ้นที่นี่ guard จึงเริ่มทำงานเต็มหลังรัน 170
 -- ---------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.tournament_matches_guard_update()
-RETURNS trigger
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
-AS $$
-DECLARE
-  privileged boolean;
-  uid uuid := (SELECT auth.uid());
-  allowed boolean := false;
-  t_auto boolean; t_auto_min integer; t_ready_min integer; t_best smallint;
-  rep_count integer; rep_winner uuid; rep_a smallint; rep_b smallint; rep_at timestamptz;
-  need smallint;
-BEGIN
-  privileged := uid IS NULL OR public.is_admin() OR public.is_tournament_staff(OLD.tournament_id, ARRAY['REFEREE', 'STAFF']);
-
-  IF NEW.tournament_id <> OLD.tournament_id OR NEW.stage <> OLD.stage OR NEW.round <> OLD.round OR NEW.position <> OLD.position THEN
-    RAISE EXCEPTION 'MATCH_IMMUTABLE' USING ERRCODE = 'check_violation';
-  END IF;
-  IF OLD.status IN ('COMPLETED', 'WALKOVER', 'BYE', 'CANCELLED') THEN
-    RAISE EXCEPTION 'MATCH_INVALID_TRANSITION: % -> %', OLD.status, NEW.status USING ERRCODE = 'check_violation';
-  END IF;
-
-  IF NEW.status <> OLD.status THEN
-    allowed :=
-         (OLD.status = 'SCHEDULED'       AND NEW.status IN ('READY_CHECK', 'LIVE', 'WALKOVER', 'CANCELLED'))
-      OR (OLD.status = 'READY_CHECK'     AND NEW.status IN ('LIVE', 'WALKOVER', 'CANCELLED'))
-      OR (OLD.status = 'LIVE'            AND NEW.status IN ('PAUSED', 'AWAITING_RESULT', 'DISPUTED', 'COMPLETED', 'CANCELLED'))
-      OR (OLD.status = 'PAUSED'          AND NEW.status IN ('LIVE', 'AWAITING_RESULT', 'DISPUTED', 'COMPLETED', 'CANCELLED'))
-      OR (OLD.status = 'AWAITING_RESULT' AND NEW.status IN ('COMPLETED', 'DISPUTED', 'CANCELLED'))
-      OR (OLD.status = 'DISPUTED'        AND NEW.status IN ('COMPLETED', 'AWAITING_RESULT', 'CANCELLED'));   -- K-AV-6: REJECT คืน AWAITING_RESULT
-    IF NOT allowed THEN
-      RAISE EXCEPTION 'MATCH_INVALID_TRANSITION: % -> %', OLD.status, NEW.status USING ERRCODE = 'check_violation';
-    END IF;
-    IF NEW.status IN ('COMPLETED', 'WALKOVER') AND (NEW.winner_team_id IS NULL OR NEW.result_source IS NULL) THEN
-      RAISE EXCEPTION 'MATCH_RESULT_INCOMPLETE' USING ERRCODE = 'check_violation';
-    END IF;
-  END IF;
-
-  IF privileged THEN RETURN NEW; END IF;
-
-  IF NOT public.is_match_leader(OLD.id) THEN
-    RAISE EXCEPTION 'MATCH_FORBIDDEN' USING ERRCODE = 'insufficient_privilege';
-  END IF;
-  IF NEW.team_a_id IS DISTINCT FROM OLD.team_a_id OR NEW.team_b_id IS DISTINCT FROM OLD.team_b_id OR NEW.best_of <> OLD.best_of
-     OR NEW.scheduled_at IS DISTINCT FROM OLD.scheduled_at OR NEW.auto_confirm_deadline_at IS DISTINCT FROM OLD.auto_confirm_deadline_at
-     OR NEW.confirmed_at IS DISTINCT FROM OLD.confirmed_at OR NEW.started_at IS DISTINCT FROM OLD.started_at OR NEW.ended_at IS DISTINCT FROM OLD.ended_at
-     OR NEW.forfeit_deadline_at IS DISTINCT FROM OLD.forfeit_deadline_at THEN
-    RAISE EXCEPTION 'MATCH_FORBIDDEN_COLUMN' USING ERRCODE = 'check_violation';
-  END IF;
-  IF NEW.check_in_a_at IS DISTINCT FROM OLD.check_in_a_at THEN
-    IF OLD.check_in_a_at IS NOT NULL OR NOT public.is_team_leader(OLD.team_a_id) THEN RAISE EXCEPTION 'MATCH_FORBIDDEN_COLUMN' USING ERRCODE = 'check_violation'; END IF;
-    NEW.check_in_a_at := now();
-  END IF;
-  IF NEW.check_in_b_at IS DISTINCT FROM OLD.check_in_b_at THEN
-    IF OLD.check_in_b_at IS NOT NULL OR NOT public.is_team_leader(OLD.team_b_id) THEN RAISE EXCEPTION 'MATCH_FORBIDDEN_COLUMN' USING ERRCODE = 'check_violation'; END IF;
-    NEW.check_in_b_at := now();
-  END IF;
-  IF NEW.status = OLD.status THEN
-    IF NEW.winner_team_id IS DISTINCT FROM OLD.winner_team_id OR NEW.score_a IS DISTINCT FROM OLD.score_a OR NEW.score_b IS DISTINCT FROM OLD.score_b
-       OR NEW.result_source IS DISTINCT FROM OLD.result_source OR NEW.outcome IS DISTINCT FROM OLD.outcome OR NEW.confirmed_by IS DISTINCT FROM OLD.confirmed_by THEN
-      RAISE EXCEPTION 'MATCH_FORBIDDEN_COLUMN' USING ERRCODE = 'check_violation';
-    END IF;
-    RETURN NEW;
-  END IF;
-  IF NEW.status NOT IN ('COMPLETED', 'WALKOVER') AND (
-       NEW.winner_team_id IS DISTINCT FROM OLD.winner_team_id OR NEW.score_a IS DISTINCT FROM OLD.score_a OR NEW.score_b IS DISTINCT FROM OLD.score_b
-       OR NEW.result_source IS DISTINCT FROM OLD.result_source OR NEW.outcome IS DISTINCT FROM OLD.outcome OR NEW.confirmed_by IS DISTINCT FROM OLD.confirmed_by) THEN
-    RAISE EXCEPTION 'MATCH_FORBIDDEN_COLUMN' USING ERRCODE = 'check_violation';
-  END IF;
-
-  IF OLD.status = 'SCHEDULED' AND NEW.status = 'READY_CHECK' THEN
-    SELECT t.ready_check_minutes INTO t_ready_min FROM public.tournaments t WHERE t.id = OLD.tournament_id;
-    NEW.forfeit_deadline_at := now() + make_interval(mins => COALESCE(t_ready_min, 15));
-    RETURN NEW;
-  END IF;
-  IF OLD.status = 'READY_CHECK' AND NEW.status = 'LIVE' THEN
-    IF NEW.check_in_a_at IS NULL OR NEW.check_in_b_at IS NULL THEN RAISE EXCEPTION 'MATCH_NOT_BOTH_READY' USING ERRCODE = 'check_violation'; END IF;
-    NEW.started_at := now();
-    RETURN NEW;
-  END IF;
-  IF OLD.status IN ('LIVE', 'PAUSED') AND NEW.status = 'AWAITING_RESULT' THEN RETURN NEW; END IF;
-  -- K-AV-6: หัวหน้าทีมเปิด DISPUTED ได้เมื่อทีมตัวเองมี dispute OPEN ของแมตช์นี้ (insert dispute ก่อน · trigger ตรวจแล้ว)
-  IF OLD.status IN ('LIVE', 'PAUSED', 'AWAITING_RESULT') AND NEW.status = 'DISPUTED' THEN
-    IF NOT EXISTS (SELECT 1 FROM public.disputes d WHERE d.match_id = OLD.id AND d.status = 'OPEN'
-                   AND d.opened_by_user = uid AND public.is_team_leader(d.opened_by_team)) THEN
-      RAISE EXCEPTION 'DISPUTE_NOT_FOUND' USING ERRCODE = 'check_violation';
-    END IF;
-    RETURN NEW;
-  END IF;
-  IF OLD.status = 'READY_CHECK' AND NEW.status = 'WALKOVER' THEN
-    IF OLD.forfeit_deadline_at IS NULL OR now() < OLD.forfeit_deadline_at THEN RAISE EXCEPTION 'MATCH_READY_NOT_EXPIRED' USING ERRCODE = 'check_violation'; END IF;
-    IF NOT ((OLD.check_in_a_at IS NOT NULL AND OLD.check_in_b_at IS NULL AND NEW.winner_team_id = OLD.team_a_id)
-         OR (OLD.check_in_b_at IS NOT NULL AND OLD.check_in_a_at IS NULL AND NEW.winner_team_id = OLD.team_b_id)) THEN
-      RAISE EXCEPTION 'MATCH_WALKOVER_NOT_APPLICABLE' USING ERRCODE = 'check_violation';
-    END IF;
-    IF NEW.result_source <> 'WALKOVER' OR NEW.outcome IS DISTINCT FROM 'WALKOVER' OR NEW.score_a IS NOT NULL OR NEW.score_b IS NOT NULL THEN
-      RAISE EXCEPTION 'MATCH_RESULT_SOURCE' USING ERRCODE = 'check_violation';
-    END IF;
-    NEW.confirmed_by := NULL; NEW.confirmed_at := now(); NEW.ended_at := now();
-    RETURN NEW;
-  END IF;
-  IF OLD.status = 'AWAITING_RESULT' AND NEW.status = 'COMPLETED' THEN
-    IF NEW.result_source <> 'PLAYER_REPORT' OR NEW.outcome IS DISTINCT FROM 'NORMAL' THEN RAISE EXCEPTION 'MATCH_RESULT_SOURCE' USING ERRCODE = 'check_violation'; END IF;
-    SELECT t.auto_confirm, t.auto_confirm_minutes INTO t_auto, t_auto_min FROM public.tournaments t WHERE t.id = OLD.tournament_id;
-    t_best := OLD.best_of; need := ceil(t_best / 2.0);
-    SELECT count(*), min(winner_team_id), min(score_a), min(score_b), min(created_at) INTO rep_count, rep_winner, rep_a, rep_b, rep_at
-      FROM public.match_reports r WHERE r.match_id = OLD.id;
-    IF rep_count = 0 OR NEW.winner_team_id IS DISTINCT FROM rep_winner OR NEW.score_a IS DISTINCT FROM rep_a OR NEW.score_b IS DISTINCT FROM rep_b THEN
-      RAISE EXCEPTION 'MATCH_REPORTS_NOT_CONFIRMED' USING ERRCODE = 'check_violation';
-    END IF;
-    IF rep_count = 2 THEN
-      IF EXISTS (SELECT 1 FROM public.match_reports r WHERE r.match_id = OLD.id
-                 AND (r.winner_team_id <> rep_winner OR r.score_a <> rep_a OR r.score_b <> rep_b)) THEN
-        RAISE EXCEPTION 'MATCH_REPORTS_MISMATCH' USING ERRCODE = 'check_violation';
-      END IF;
-    ELSIF NOT (COALESCE(t_auto, false) AND now() >= rep_at + make_interval(mins => t_auto_min)) THEN
-      RAISE EXCEPTION 'MATCH_REPORTS_NOT_CONFIRMED' USING ERRCODE = 'check_violation';
-    END IF;
-    IF NOT ((NEW.winner_team_id = OLD.team_a_id AND NEW.score_a = need AND NEW.score_b < need)
-         OR (NEW.winner_team_id = OLD.team_b_id AND NEW.score_b = need AND NEW.score_a < need)) THEN
-      RAISE EXCEPTION 'MATCH_SCORE_INVALID' USING ERRCODE = 'check_violation';
-    END IF;
-    IF NEW.confirmed_by IS DISTINCT FROM uid THEN RAISE EXCEPTION 'MATCH_CONFIRMER_MISMATCH' USING ERRCODE = 'check_violation'; END IF;
-    NEW.confirmed_at := now(); NEW.ended_at := now();
-    RETURN NEW;
-  END IF;
-  RAISE EXCEPTION 'MATCH_FORBIDDEN_TRANSITION: % -> %', OLD.status, NEW.status USING ERRCODE = 'check_violation';
-END;
-$$;
 
 -- ---------------------------------------------------------------------------
 -- 4. RLS
@@ -336,13 +243,13 @@ SELECT c.relname, c.relrowsecurity FROM pg_class c JOIN pg_namespace n ON n.oid 
 WHERE n.nspname = 'public' AND c.relname IN ('disputes','penalties') ORDER BY c.relname;
 -- policy: disputes 3 · penalties 3
 SELECT tablename, policyname, cmd FROM pg_policies WHERE schemaname = 'public' AND tablename IN ('disputes','penalties') ORDER BY tablename, policyname;
--- trigger: disputes 4 (guard_insert · guard_update · no_delete · updated_at) · penalties 3 (guard_update · no_delete · sync_suspension) · tournament_matches_guard_update ยังอยู่ (นิยามใหม่)
+-- trigger: disputes 4 (guard_insert · guard_update · no_delete · updated_at) · penalties 4 (guard_insert · guard_update · no_delete · sync_suspension)
 SELECT tgname, tgrelid::regclass FROM pg_trigger WHERE NOT tgisinternal AND tgrelid IN ('public.disputes'::regclass, 'public.penalties'::regclass) ORDER BY tgrelid, tgname;
 SELECT indexname FROM pg_indexes WHERE schemaname = 'public' AND tablename IN ('disputes','penalties') ORDER BY indexname;
 
 -- ----------------------------------------------------------------------------
--- ย้อนกลับ (ROLLBACK_170 · ห้ามรันถ้าไม่ตั้งใจ · ลบข้อพิพาท/โทษทั้งหมด · state machine กลับไปแบบ 160 ต้องรันนิยามใน 160 ซ้ำ)
+-- ย้อนกลับ (ROLLBACK_170 · ห้ามรันถ้าไม่ตั้งใจ · ลบข้อพิพาท/โทษทั้งหมด)
 -- ----------------------------------------------------------------------------
 -- DROP TABLE IF EXISTS public.penalties; DROP TABLE IF EXISTS public.disputes;
--- DROP FUNCTION IF EXISTS public.penalties_sync_suspension(); DROP FUNCTION IF EXISTS public.penalties_guard_update();
+-- DROP FUNCTION IF EXISTS public.penalties_sync_suspension(); DROP FUNCTION IF EXISTS public.penalties_guard_update(); DROP FUNCTION IF EXISTS public.penalties_guard_insert();
 -- DROP FUNCTION IF EXISTS public.disputes_guard_insert(); DROP FUNCTION IF EXISTS public.disputes_guard_update();

@@ -82,7 +82,7 @@ const M: Record<string, unknown> = { id: MID, tournament_id: TID, stage: "WB", r
 const NONE = { ok: false, message: "" };
 const form = (reason: string) => { const f = new FormData(); f.set("reason", reason); return f; };
 
-function setup(o: { me?: string; match?: Record<string, unknown>; leaderOf?: string[]; existingOpen?: boolean; staffRole?: string | null; organizer?: boolean; admin?: boolean; dispute?: Record<string, unknown> | null; dupKey?: boolean; slotsError?: boolean } = {}) {
+function setup(o: { me?: string; match?: Record<string, unknown>; leaderOf?: string[]; existingOpen?: boolean; staffRole?: string | null; organizer?: boolean; admin?: boolean; dispute?: Record<string, unknown> | null; dupKey?: boolean; slotsError?: boolean; registered?: string[]; subjectInScope?: boolean } = {}) {
   h.user = { id: o.me ?? "leaderA" }; h.calls = []; h.uploads = []; audit.calls = [];
   const m = { ...M, ...o.match };
   h.resolve = (c) => {
@@ -99,6 +99,8 @@ function setup(o: { me?: string; match?: Record<string, unknown>; leaderOf?: str
     if (c.table === "match_state_transitions") return { data: o.dupKey ? { to_status: "COMPLETED" } : null, error: null };
     if (c.table === "tournament_bracket_slots") return o.slotsError ? { data: null, error: { message: "boom" } } : { data: [], error: null };
     if (c.table === "penalties" && c.op === "insert") return { data: { id: "p1" }, error: null };
+    if (c.table === "registrations") return { data: (o.registered ?? ["A", "B"]).map((id) => ({ team_id: id })), error: null };
+    if (c.table === "team_members" && "user_id" in c.filters) return { data: o.subjectInScope === false ? [] : [{ user_id: c.filters.user_id }], error: null };
     if (c.table === "penalties" && c.op === "update") return { data: [{ id: "p1" }], error: null };
     return { data: null, error: null };
   };
@@ -190,12 +192,25 @@ describe("issuePenaltyAction / revokePenaltyAction", () => {
     expect(h.calls.find((c) => c.table === "penalties" && c.op === "insert")?.row).toMatchObject({ type: "WARNING", issued_by: "ref", tournament_id: TID, user_id: base.subjectUserId, team_id: null });
     setup({ me: "ref", staffRole: "REFEREE" });
     expect(await issuePenaltyAction({ ...base, type: "SUSPENSION" })).toMatchObject({ ok: false });
-    expect(await issuePenaltyAction({ ...base, type: "SUSPENSION", until: "2099-01-01T00:00:00Z" })).toMatchObject({ ok: true, karmaDelta: -20 });
+    expect(await issuePenaltyAction({ ...base, type: "SUSPENSION", until: new Date(Date.now() + 3 * 86_400_000).toISOString() })).toMatchObject({ ok: true, karmaDelta: -20 });
     expect(await issuePenaltyAction({ ...base, type: "BAN" })).toMatchObject({ ok: false, message: expect.stringContaining("ADMIN") });
     expect(await issuePenaltyAction({ ...base, subjectUserId: "ref" })).toMatchObject({ ok: false });
     expect(await issuePenaltyAction({ ...base, subjectTeamId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee" })).toMatchObject({ ok: false });
     setup({ me: "adm", admin: true });
     expect(await issuePenaltyAction({ ...base, type: "BAN" })).toMatchObject({ ok: true });
+  });
+  it("ขอบเขต: REFEREE ลงโทษผู้ใช้/ทีมนอกทัวร์ไม่ได้ · SUSPENSION > 7 วันโดย REFEREE ไม่ได้ (ADMIN ได้) · dispute ต่างทัวร์ไม่ได้", async () => {
+    setup({ me: "ref", staffRole: "REFEREE", subjectInScope: false });
+    expect(await issuePenaltyAction(base)).toMatchObject({ ok: false, message: expect.stringContaining("ขอบเขต") });
+    setup({ me: "ref", staffRole: "REFEREE", registered: ["X"] });
+    expect(await issuePenaltyAction({ tournamentId: TID, subjectTeamId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee", type: "WARNING", reason: "ทีมมาสาย" })).toMatchObject({ ok: false });
+    setup({ me: "ref", staffRole: "REFEREE" });
+    expect(await issuePenaltyAction({ ...base, type: "SUSPENSION", until: "2099-01-01T00:00:00Z" })).toMatchObject({ ok: false, message: expect.stringContaining("7 วัน") });
+    setup({ me: "adm", admin: true });
+    expect(await issuePenaltyAction({ ...base, type: "SUSPENSION", until: "2099-01-01T00:00:00Z" })).toMatchObject({ ok: true });
+    setup({ me: "ref", staffRole: "REFEREE", dispute: { id: DID, match_id: MID, tournament_id: "other", opened_by_team: "A", opened_by_user: "x", status: "OPEN" } });
+    expect(await issuePenaltyAction({ ...base, disputeId: DID })).toMatchObject({ ok: false, message: expect.stringContaining("ทัวร์นี้") });
+    expect(h.calls.filter((c) => c.table === "penalties" && c.op === "insert")).toHaveLength(1);
   });
   it("ยกเลิกโทษ: ไม่ใช่ ADMIN → ปฏิเสธ · ADMIN → ตั้ง revoked_at · ยกเลิกซ้ำ → ผลเดิม", async () => {
     setup({ me: "ref", staffRole: "REFEREE" });

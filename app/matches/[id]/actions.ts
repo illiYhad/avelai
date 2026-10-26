@@ -9,7 +9,7 @@ import { advanceBracketAfterMatch } from "@/lib/match/bracket-advance";
 import { evaluateReports, validateScore, type Report } from "@/lib/match/report";
 import { MATCH_COLS, resolveWalkoverIfExpired, type MatchRow } from "@/lib/match/resolve";
 import { OUTCOMES, canTransition, isMatchStatus, isTerminal, transitionError, type MatchStatus, type Outcome } from "@/lib/match/state";
-import { readyDeadline } from "@/lib/match/walkover";
+import { canStartReadyCheck, readyDeadline } from "@/lib/match/walkover";
 import { dbMessage, leaderTeams, requireActiveUser, tournamentStaffLevel, type Ctx } from "@/lib/tournament/access";
 
 export type MatchActionState = { ok: boolean; message: string; warning?: string };
@@ -65,8 +65,11 @@ export async function readyCheckAction(matchId: string): Promise<MatchActionStat
   const patch: Record<string, unknown> = { [myCol]: now.toISOString() };
   let err: string | null;
   if (m.status === "SCHEDULED") {
-    // forfeit_deadline_at คำนวณฝั่ง DB (trigger) จาก ready_check_minutes — ค่าที่แสดงใน UI = readyDeadline() ประมาณเดียวกัน
-    err = await transition(g.ctx, m, "READY_CHECK", patch, `ready:${side}:${g.ctx.userId}`, `ทีม ${side} กดพร้อม — เริ่มนับถอยหลัง ${t.ready_check_minutes} นาที (ครบประมาณ ${readyDeadline(now, t.ready_check_minutes).toISOString()})`);
+    // หน้าต่างเริ่มเช็กความพร้อม (ตรงกับ trigger): ต้องมีเวลานัด และไม่ก่อนเวลานัดเกิน 30 นาที
+    const winErr = canStartReadyCheck(m.scheduled_at, now);
+    if (winErr) return fail(winErr);
+    // forfeit_deadline_at และ key/เหตุผลสำหรับหัวหน้าทีม trigger ตั้งเอง — ค่าที่ส่งเป็นแค่ข้อมูลแสดงผล
+    err = await transition(g.ctx, m, "READY_CHECK", patch, `ready:${side}:${g.ctx.userId}`, `ทีม ${side} กดพร้อม — เริ่มนับถอยหลัง ${t.ready_check_minutes} นาที (ครบประมาณ ${readyDeadline(now, t.ready_check_minutes, m.scheduled_at).toISOString()})`);
   } else if (otherIn) {
     err = await transition(g.ctx, m, "LIVE", patch, `ready:${side}:${g.ctx.userId}`, "ทั้งสองทีมพร้อม — เริ่มแข่ง");
   } else {
@@ -177,6 +180,23 @@ export async function refereeResultAction(matchId: string, input: { idempotencyK
   const adv = await advanceBracketAfterMatch(g.ctx.db, { ...m, winner_team_id: input.winnerTeamId }, g.ctx.userId);
   revalidatePath(`/matches/${matchId}`); revalidatePath(`/organizer/tournaments/${t.id}/matches`);
   return { ok: true, message: `ชี้ขาดผลแล้ว (${outcome})`, warning: adv.advanced ? undefined : adv.message };
+}
+
+/** ผู้จัด/staff กำหนดเวลานัดแข่ง (จำเป็นก่อนหัวหน้าทีมจะเริ่มเช็กความพร้อม) */
+export async function setMatchScheduleAction(matchId: string, scheduledAtIso: string): Promise<MatchActionState> {
+  const g = await requireActiveUser();
+  if (!g.ok) return fail(g.message);
+  const when = new Date(scheduledAtIso);
+  if (Number.isNaN(when.getTime())) return fail("เวลานัดไม่ถูกต้อง");
+  const row = await load(g.ctx, matchId);
+  if (!row) return fail("ไม่พบแมตช์");
+  if ((await tournamentStaffLevel(g.ctx.db, g.ctx.userId, row.t)) === "NONE") return fail("เฉพาะผู้ตัดสิน/ผู้จัด/ADMIN ของทัวร์นี้เท่านั้น");
+  if (isMatchStatus(row.m.status) && isTerminal(row.m.status)) return fail("แมตช์นี้จบแล้ว");
+  const { error } = await g.ctx.db.from("tournament_matches").update({ scheduled_at: when.toISOString() }).eq("id", matchId);
+  if (error) return fail(dbMessage(error, "บันทึกเวลานัดไม่สำเร็จ"));
+  await logAudit({ action: "MATCH_SCHEDULE", table_name: "tournament_matches", record_id: matchId, payload: { scheduled_at: when.toISOString() }, performed_by: g.ctx.userId });
+  revalidatePath(`/matches/${matchId}`); revalidatePath(`/organizer/tournaments/${row.t.id}/matches`);
+  return { ok: true, message: `กำหนดเวลานัด ${when.toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })} แล้ว` };
 }
 
 /** ผู้ตัดสินเปลี่ยนสถานะทั่วไป (เริ่ม/พัก/ยกเลิก) */

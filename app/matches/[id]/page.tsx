@@ -58,7 +58,7 @@ export default async function MatchRoomPage({ params }: { params: Promise<{ id: 
           {(status === "SCHEDULED" || status === "READY_CHECK") ? (
             <div className="flex flex-wrap items-center gap-3">
               <ReadyButton action={readyCheckAction.bind(null, id)} label={(side === "A" ? m.check_in_a_at : m.check_in_b_at) ? "กดพร้อมแล้ว ✓" : "ทีมเราพร้อมแล้ว"} />
-              {status === "READY_CHECK" && m.forfeit_deadline_at ? <span className="text-sm text-amber-300">เหลือเวลา <Countdown deadline={m.forfeit_deadline_at} /> — ทีมที่ไม่กดพร้อมจะแพ้ walkover</span> : <span className="text-xs text-white/50">ทีมแรกที่กดจะเริ่มนับถอยหลัง {t?.ready_check_minutes ?? 15} นาที</span>}
+              {status === "READY_CHECK" && m.forfeit_deadline_at ? <span className="text-sm text-amber-300">เหลือเวลา <Countdown deadline={m.forfeit_deadline_at} /> — ทีมที่ไม่กดพร้อมจะแพ้ walkover</span> : <span className="text-xs text-white/50">{m.scheduled_at ? `เวลานัด ${new Date(m.scheduled_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })} · กดพร้อมได้ 30 นาทีก่อนเวลานัด · ทีมแรกที่กดจะเริ่มนับถอยหลัง ${t?.ready_check_minutes ?? 15} นาที` : "ผู้จัดยังไม่กำหนดเวลาแข่ง"}</span>}
             </div>
           ) : null}
           {(status === "LIVE" || status === "PAUSED") ? <ReadyButton action={declareFinishedAction.bind(null, id)} label="จบเกมแล้ว — ไปส่งผล" /> : null}

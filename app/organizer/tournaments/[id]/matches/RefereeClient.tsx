@@ -7,11 +7,14 @@ import type { MatchActionState } from "@/app/matches/[id]/actions";
 const input = "rounded border border-white/20 bg-[#12121A] px-2 py-1 text-sm text-white";
 
 /** ฟอร์มชี้ขาดผล — Idempotency-Key สร้างตอน mount (ส่งซ้ำ = คำขอเดิม) */
-export function RefereeResultForm({ matchId, teamA, teamB, bestOf, decide, setStatus }: {
+export function RefereeResultForm({ matchId, teamA, teamB, bestOf, decide, setStatus, setSchedule, scheduledAt }: {
   matchId: string; teamA: { id: string; label: string }; teamB: { id: string; label: string }; bestOf: number;
   decide: (matchId: string, input: { idempotencyKey: string; outcome: string; winnerTeamId: string; scoreA?: number; scoreB?: number; reason: string }) => Promise<MatchActionState>;
   setStatus: (matchId: string, to: string, reason: string) => Promise<MatchActionState>;
+  setSchedule: (matchId: string, iso: string) => Promise<MatchActionState>;
+  scheduledAt: string | null;
 }) {
+  const [when, setWhen] = useState(scheduledAt ? new Date(new Date(scheduledAt).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "");
   const [key] = useState(() => crypto.randomUUID());
   const [outcome, setOutcome] = useState("NORMAL");
   const [winner, setWinner] = useState(teamA.id);
@@ -22,6 +25,11 @@ export function RefereeResultForm({ matchId, teamA, teamB, bestOf, decide, setSt
   const [pending, start] = useTransition();
   return (
     <div className="flex flex-col gap-2 text-sm">
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="text-xs text-white/70">เวลานัด (หัวหน้าทีมเริ่มเช็กความพร้อมได้ 30 นาทีก่อนเวลานี้)</label>
+        <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} className={input} />
+        <button type="button" disabled={pending || !when} onClick={() => start(async () => setState(await setSchedule(matchId, new Date(when).toISOString())))} className="rounded border border-white/30 px-2 py-1 text-xs text-white/80 disabled:opacity-40">บันทึกเวลานัด</button>
+      </div>
       <div className="flex flex-wrap gap-2">
         {["LIVE", "PAUSED", "AWAITING_RESULT", "CANCELLED"].map((s) => (
           <button key={s} type="button" disabled={pending} onClick={() => start(async () => setState(await setStatus(matchId, s, reason)))} className="rounded border border-white/30 px-2 py-1 text-xs text-white/80">→ {s}</button>

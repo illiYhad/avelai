@@ -144,7 +144,8 @@ $$;
 -- ---------------------------------------------------------------------------
 -- 6. trigger state machine + ยามคอลัมน์ของ tournament_matches
 --    privileged = ADMIN · staff ของทัวร์ · service role (auth.uid() IS NULL เช่น cron)
---    หัวหน้าทีมทำได้เฉพาะ: เช็กอินฝั่งตัวเอง · SCHEDULED→READY_CHECK · READY_CHECK→LIVE (ครบสองฝั่ง) · LIVE/PAUSED→AWAITING_RESULT
+--    หัวหน้าทีมทำได้เฉพาะ: เช็กอินฝั่งตัวเอง (ในช่วง READY_CHECK ก่อนหมดเวลา) · SCHEDULED→READY_CHECK (ในหน้าต่าง 30 นาทีก่อนเวลานัด) · READY_CHECK→LIVE (ครบสองฝั่ง) · LIVE/PAUSED→AWAITING_RESULT · →DISPUTED (มี dispute OPEN ของตน · T6)
+--    key/เหตุผลของ transition สำหรับหัวหน้าทีม trigger สร้างเอง ('leader:from>to:uid') — ไม่เชื่อ client · ค่าที่ไม่ได้ส่งใหม่ถูกล้างทุกครั้ง
 --      · AWAITING_RESULT→COMPLETED เมื่อรายงานสองฝั่งตรงกัน (หรือ auto_confirm ครบเวลา) · READY_CHECK→WALKOVER เมื่อทีมเดียวพร้อม+หมดเวลา
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.tournament_matches_guard_update()
@@ -158,14 +159,18 @@ DECLARE
   t_auto boolean; t_auto_min integer; t_ready_min integer; t_best smallint;
   rep_count integer; rep_winner uuid; rep_a smallint; rep_b smallint; rep_at timestamptz;
   need smallint;
+  window_min constant integer := 30;   -- หัวหน้าทีมเริ่มเช็กความพร้อมได้ก่อนเวลานัดไม่เกิน 30 นาที
 BEGIN
   privileged := uid IS NULL OR public.is_admin() OR public.is_tournament_staff(OLD.tournament_id, ARRAY['REFEREE', 'STAFF']);
 
-  -- โครงสร้างแมตช์ห้ามแก้ (ทุกคน)
+  -- metadata ของ transition: ค่าที่ไม่ได้ส่งใหม่ (= ของเดิม) ถือว่าไม่มี → ล้าง กัน key/เหตุผลเก่าถูกใช้ซ้ำ
+  IF NEW.last_idempotency_key IS NOT DISTINCT FROM OLD.last_idempotency_key THEN NEW.last_idempotency_key := NULL; END IF;
+  IF NEW.last_reason IS NOT DISTINCT FROM OLD.last_reason THEN NEW.last_reason := NULL; END IF;
+
+  -- โครงสร้างแมตช์ห้ามแก้ (ทุกคน) · terminal แล้วแก้ไม่ได้ทุกคอลัมน์
   IF NEW.tournament_id <> OLD.tournament_id OR NEW.stage <> OLD.stage OR NEW.round <> OLD.round OR NEW.position <> OLD.position THEN
     RAISE EXCEPTION 'MATCH_IMMUTABLE' USING ERRCODE = 'check_violation';
   END IF;
-  -- terminal แล้ว: ทุกคนแก้ไม่ได้ทุกคอลัมน์
   IF OLD.status IN ('COMPLETED', 'WALKOVER', 'BYE', 'CANCELLED') THEN
     RAISE EXCEPTION 'MATCH_INVALID_TRANSITION: % -> %', OLD.status, NEW.status USING ERRCODE = 'check_violation';
   END IF;
@@ -177,21 +182,31 @@ BEGIN
       OR (OLD.status = 'LIVE'            AND NEW.status IN ('PAUSED', 'AWAITING_RESULT', 'DISPUTED', 'COMPLETED', 'CANCELLED'))
       OR (OLD.status = 'PAUSED'          AND NEW.status IN ('LIVE', 'AWAITING_RESULT', 'DISPUTED', 'COMPLETED', 'CANCELLED'))
       OR (OLD.status = 'AWAITING_RESULT' AND NEW.status IN ('COMPLETED', 'DISPUTED', 'CANCELLED'))
-      OR (OLD.status = 'DISPUTED'        AND NEW.status IN ('COMPLETED', 'CANCELLED'));
+      OR (OLD.status = 'DISPUTED'        AND NEW.status IN ('COMPLETED', 'AWAITING_RESULT', 'CANCELLED'));   -- AWAITING_RESULT = ข้อพิพาทไม่มีมูล (staff · T6)
     IF NOT allowed THEN
       RAISE EXCEPTION 'MATCH_INVALID_TRANSITION: % -> %', OLD.status, NEW.status USING ERRCODE = 'check_violation';
     END IF;
-    -- ผลต้องมีผู้ชนะ + ที่มา เสมอ
     IF NEW.status IN ('COMPLETED', 'WALKOVER') AND (NEW.winner_team_id IS NULL OR NEW.result_source IS NULL) THEN
       RAISE EXCEPTION 'MATCH_RESULT_INCOMPLETE' USING ERRCODE = 'check_violation';
+    END IF;
+    -- key ที่ขึ้นต้น leader: สงวนให้ trigger สร้างเองเท่านั้น
+    IF NEW.last_idempotency_key LIKE 'leader:%' THEN
+      RAISE EXCEPTION 'MATCH_KEY_RESERVED' USING ERRCODE = 'check_violation';
     END IF;
   END IF;
 
   IF privileged THEN RETURN NEW; END IF;
 
-  -- ================= กฎสำหรับหัวหน้าทีม (ไม่ใช่ staff) =================
+  -- ================= กฎสำหรับหัวหน้าทีม =================
   IF NOT public.is_match_leader(OLD.id) THEN
     RAISE EXCEPTION 'MATCH_FORBIDDEN' USING ERRCODE = 'insufficient_privilege';
+  END IF;
+  -- key/เหตุผล: ไม่เชื่อ client — trigger สร้างจาก from>to + ผู้ทำ (ชนกับ key ของผู้ตัดสินไม่ได้ · ใช้ซ้ำไม่ได้เพราะสถานะเปลี่ยนไปแล้ว)
+  IF NEW.status <> OLD.status THEN
+    NEW.last_idempotency_key := 'leader:' || OLD.status || '>' || NEW.status || ':' || uid::text;
+    NEW.last_reason := 'หัวหน้าทีมเปลี่ยนสถานะ ' || OLD.status || ' → ' || NEW.status;
+  ELSE
+    NEW.last_idempotency_key := NULL; NEW.last_reason := NULL;
   END IF;
 
   -- (1) คอลัมน์ที่หัวหน้าทีมห้ามแตะเสมอ
@@ -201,17 +216,24 @@ BEGIN
      OR NEW.forfeit_deadline_at IS DISTINCT FROM OLD.forfeit_deadline_at THEN
     RAISE EXCEPTION 'MATCH_FORBIDDEN_COLUMN' USING ERRCODE = 'check_violation';
   END IF;
-  -- (2) เช็กอินได้เฉพาะฝั่งตัวเอง และตั้งได้ครั้งเดียว (ค่าเวลา trigger ตั้งเอง)
+  -- (2) เช็กอิน: ฝั่งตัวเอง · ครั้งเดียว · เฉพาะช่วง READY_CHECK ก่อนหมดเวลา หรือมาพร้อมการเริ่ม SCHEDULED→READY_CHECK · เวลา trigger ตั้งเอง
   IF NEW.check_in_a_at IS DISTINCT FROM OLD.check_in_a_at THEN
-    IF OLD.check_in_a_at IS NOT NULL OR NOT public.is_team_leader(OLD.team_a_id) THEN RAISE EXCEPTION 'MATCH_FORBIDDEN_COLUMN' USING ERRCODE = 'check_violation'; END IF;
+    IF OLD.check_in_a_at IS NOT NULL OR NOT public.is_team_leader(OLD.team_a_id)
+       OR NOT ((OLD.status = 'READY_CHECK' AND OLD.forfeit_deadline_at IS NOT NULL AND now() < OLD.forfeit_deadline_at)
+            OR (OLD.status = 'SCHEDULED' AND NEW.status = 'READY_CHECK')) THEN
+      RAISE EXCEPTION 'MATCH_CHECKIN_NOT_ALLOWED' USING ERRCODE = 'check_violation';
+    END IF;
     NEW.check_in_a_at := now();
   END IF;
   IF NEW.check_in_b_at IS DISTINCT FROM OLD.check_in_b_at THEN
-    IF OLD.check_in_b_at IS NOT NULL OR NOT public.is_team_leader(OLD.team_b_id) THEN RAISE EXCEPTION 'MATCH_FORBIDDEN_COLUMN' USING ERRCODE = 'check_violation'; END IF;
+    IF OLD.check_in_b_at IS NOT NULL OR NOT public.is_team_leader(OLD.team_b_id)
+       OR NOT ((OLD.status = 'READY_CHECK' AND OLD.forfeit_deadline_at IS NOT NULL AND now() < OLD.forfeit_deadline_at)
+            OR (OLD.status = 'SCHEDULED' AND NEW.status = 'READY_CHECK')) THEN
+      RAISE EXCEPTION 'MATCH_CHECKIN_NOT_ALLOWED' USING ERRCODE = 'check_violation';
+    END IF;
     NEW.check_in_b_at := now();
   END IF;
-
-  -- (3) สถานะไม่เปลี่ยน: คอลัมน์ผลต้องไม่เปลี่ยน (แก้ได้แค่เช็กอิน + metadata)
+  -- (3) สถานะไม่เปลี่ยน: คอลัมน์ผลต้องไม่เปลี่ยน
   IF NEW.status = OLD.status THEN
     IF NEW.winner_team_id IS DISTINCT FROM OLD.winner_team_id OR NEW.score_a IS DISTINCT FROM OLD.score_a OR NEW.score_b IS DISTINCT FROM OLD.score_b
        OR NEW.result_source IS DISTINCT FROM OLD.result_source OR NEW.outcome IS DISTINCT FROM OLD.outcome OR NEW.confirmed_by IS DISTINCT FROM OLD.confirmed_by THEN
@@ -219,8 +241,7 @@ BEGIN
     END IF;
     RETURN NEW;
   END IF;
-
-  -- (4) transition ที่หัวหน้าทีมทำได้ — คอลัมน์ผลเปลี่ยนได้เฉพาะใน COMPLETED/WALKOVER
+  -- (4) transition ที่ไม่ใช่การจบ: คอลัมน์ผลต้องไม่เปลี่ยน
   IF NEW.status NOT IN ('COMPLETED', 'WALKOVER') AND (
        NEW.winner_team_id IS DISTINCT FROM OLD.winner_team_id OR NEW.score_a IS DISTINCT FROM OLD.score_a OR NEW.score_b IS DISTINCT FROM OLD.score_b
        OR NEW.result_source IS DISTINCT FROM OLD.result_source OR NEW.outcome IS DISTINCT FROM OLD.outcome OR NEW.confirmed_by IS DISTINCT FROM OLD.confirmed_by) THEN
@@ -228,9 +249,13 @@ BEGIN
   END IF;
 
   IF OLD.status = 'SCHEDULED' AND NEW.status = 'READY_CHECK' THEN
-    -- deadline คำนวณฝั่ง DB จาก ready_check_minutes ของทัวร์ (ไม่เชื่อค่าจาก client)
+    -- เริ่มได้เมื่อผู้จัดกำหนดเวลานัดแล้ว และถึงหน้าต่าง (ก่อนเวลานัด ≤ 30 นาที) · ต้องเช็กอินฝั่งตัวเองพร้อมกัน · deadline นับจาก max(now, เวลานัด)
+    IF OLD.scheduled_at IS NULL OR now() < OLD.scheduled_at - make_interval(mins => window_min) THEN
+      RAISE EXCEPTION 'MATCH_READY_WINDOW' USING ERRCODE = 'check_violation';
+    END IF;
+    IF NEW.check_in_a_at IS NULL AND NEW.check_in_b_at IS NULL THEN RAISE EXCEPTION 'MATCH_READY_NEEDS_CHECKIN' USING ERRCODE = 'check_violation'; END IF;
     SELECT t.ready_check_minutes INTO t_ready_min FROM public.tournaments t WHERE t.id = OLD.tournament_id;
-    NEW.forfeit_deadline_at := now() + make_interval(mins => COALESCE(t_ready_min, 15));
+    NEW.forfeit_deadline_at := GREATEST(now(), OLD.scheduled_at) + make_interval(mins => COALESCE(t_ready_min, 15));
     RETURN NEW;
   END IF;
   IF OLD.status = 'READY_CHECK' AND NEW.status = 'LIVE' THEN
@@ -239,6 +264,15 @@ BEGIN
     RETURN NEW;
   END IF;
   IF OLD.status IN ('LIVE', 'PAUSED') AND NEW.status = 'AWAITING_RESULT' THEN RETURN NEW; END IF;
+  -- T6 (170): หัวหน้าทีมเปิด DISPUTED ได้เมื่อทีมตัวเองมี dispute OPEN ของแมตช์นี้ (ตาราง disputes มาใน 170 → ตรวจว่ามีก่อน)
+  IF OLD.status IN ('LIVE', 'PAUSED', 'AWAITING_RESULT') AND NEW.status = 'DISPUTED' THEN
+    IF to_regclass('public.disputes') IS NULL THEN RAISE EXCEPTION 'DISPUTE_NOT_AVAILABLE' USING ERRCODE = 'check_violation'; END IF;
+    IF NOT EXISTS (SELECT 1 FROM public.disputes d WHERE d.match_id = OLD.id AND d.status = 'OPEN'
+                   AND d.opened_by_user = uid AND public.is_team_leader(d.opened_by_team)) THEN
+      RAISE EXCEPTION 'DISPUTE_NOT_FOUND' USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+  END IF;
   IF OLD.status = 'READY_CHECK' AND NEW.status = 'WALKOVER' THEN
     IF OLD.forfeit_deadline_at IS NULL OR now() < OLD.forfeit_deadline_at THEN RAISE EXCEPTION 'MATCH_READY_NOT_EXPIRED' USING ERRCODE = 'check_violation'; END IF;
     IF NOT ((OLD.check_in_a_at IS NOT NULL AND OLD.check_in_b_at IS NULL AND NEW.winner_team_id = OLD.team_a_id)

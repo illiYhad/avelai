@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth/roles";
-import { refereeResultAction, refereeStatusAction } from "@/app/matches/[id]/actions";
+import { refereeResultAction, refereeStatusAction, setMatchScheduleAction } from "@/app/matches/[id]/actions";
 import { MATCH_LABEL, isTerminal, type MatchStatus } from "@/lib/match/state";
 import { MATCH_COLS, type MatchRow } from "@/lib/match/resolve";
 import { TOURNAMENT_COLS, tournamentStaffLevel, type TournamentRow } from "@/lib/tournament/access";
@@ -40,7 +40,7 @@ export default async function RefereeMatchesPage({ params }: { params: Promise<{
             </p>
             {!isTerminal(status) && m.team_a_id && m.team_b_id ? (
               <div className="mt-3">
-                <RefereeResultForm matchId={m.id} teamA={{ id: m.team_a_id, label: teamLabel(names, m.team_a_id) }} teamB={{ id: m.team_b_id, label: teamLabel(names, m.team_b_id) }} bestOf={m.best_of} decide={refereeResultAction} setStatus={refereeStatusAction} />
+                <RefereeResultForm matchId={m.id} teamA={{ id: m.team_a_id, label: teamLabel(names, m.team_a_id) }} teamB={{ id: m.team_b_id, label: teamLabel(names, m.team_b_id) }} bestOf={m.best_of} decide={refereeResultAction} setStatus={refereeStatusAction} setSchedule={setMatchScheduleAction} scheduledAt={m.scheduled_at} />
               </div>
             ) : null}
           </section>
