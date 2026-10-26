@@ -84,11 +84,13 @@ RETURNS trigger
 LANGUAGE plpgsql SET search_path = ''
 AS $$
 BEGIN
-  IF NEW.status = OLD.status THEN RETURN NEW; END IF;
-  IF NEW.status = 'REGISTRATION' AND NEW.entry_type = 'PAID'
+  -- ทัวร์ PAID ที่พ้นร่างแล้วต้องมี PromptPay เสมอ (ตรวจทั้ง INSERT และทุก UPDATE ของ status/entry_type)
+  IF NEW.entry_type = 'PAID' AND NEW.status <> 'DRAFT'
      AND NOT EXISTS (SELECT 1 FROM public.tournament_promptpay p WHERE p.tournament_id = NEW.id) THEN
     RAISE EXCEPTION 'TOURNAMENT_PAID_NEEDS_PROMPTPAY' USING ERRCODE = 'check_violation';
   END IF;
+  IF TG_OP = 'INSERT' THEN RETURN NEW; END IF;
+  IF NEW.status = OLD.status THEN RETURN NEW; END IF;
   IF (OLD.status = 'DRAFT'        AND NEW.status IN ('REGISTRATION', 'CANCELLED'))
   OR (OLD.status = 'REGISTRATION' AND NEW.status IN ('CHECK_IN', 'CANCELLED'))
   OR (OLD.status = 'CHECK_IN'     AND NEW.status IN ('SEEDING', 'CANCELLED'))
@@ -101,8 +103,26 @@ END;
 $$;
 DROP TRIGGER IF EXISTS tournaments_status_guard ON public.tournaments;
 CREATE TRIGGER tournaments_status_guard
-    BEFORE UPDATE OF status ON public.tournaments
+    BEFORE INSERT OR UPDATE OF status, entry_type ON public.tournaments
     FOR EACH ROW EXECUTE FUNCTION public.tournaments_guard_status();
+
+-- ลบ PromptPay ไม่ได้ขณะทัวร์ PAID ยังเปิด (พ้นร่างและยังไม่จบ/ยกเลิก)
+CREATE OR REPLACE FUNCTION public.tournament_promptpay_guard_delete()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM public.tournaments t WHERE t.id = OLD.tournament_id
+             AND t.entry_type = 'PAID' AND t.status NOT IN ('DRAFT', 'COMPLETED', 'CANCELLED')) THEN
+    RAISE EXCEPTION 'TOURNAMENT_PAID_NEEDS_PROMPTPAY' USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN OLD;
+END;
+$$;
+DROP TRIGGER IF EXISTS tournament_promptpay_guard_delete ON public.tournament_promptpay;
+CREATE TRIGGER tournament_promptpay_guard_delete
+    BEFORE DELETE ON public.tournament_promptpay
+    FOR EACH ROW EXECUTE FUNCTION public.tournament_promptpay_guard_delete();
 
 -- ---------------------------------------------------------------------------
 -- 3. tournament_staff · helper สิทธิ์ทัวร์
@@ -369,9 +389,15 @@ BEGIN
      OR NEW.idempotency_key <> OLD.idempotency_key OR NEW.created_at <> OLD.created_at THEN
     RAISE EXCEPTION 'PAYMENT_IMMUTABLE' USING ERRCODE = 'check_violation';
   END IF;
-  IF NEW.status = OLD.status THEN RETURN NEW; END IF;
   IF OLD.status <> 'PENDING' THEN
-    RAISE EXCEPTION 'PAYMENT_ALREADY_DECIDED' USING ERRCODE = 'check_violation';
+    RAISE EXCEPTION 'PAYMENT_ALREADY_DECIDED' USING ERRCODE = 'check_violation'; -- แถวที่ตัดสินแล้ว = แก้ไม่ได้ทุกคอลัมน์
+  END IF;
+  IF NEW.status = OLD.status THEN
+    IF NEW.verified_by IS DISTINCT FROM OLD.verified_by OR NEW.verified_at IS DISTINCT FROM OLD.verified_at
+       OR NEW.reject_reason IS DISTINCT FROM OLD.reject_reason THEN
+      RAISE EXCEPTION 'PAYMENT_IMMUTABLE' USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
   END IF;
   IF NEW.verified_by IS DISTINCT FROM (SELECT auth.uid()) OR NEW.verified_at IS NULL THEN
     RAISE EXCEPTION 'PAYMENT_VERIFIER_MISMATCH' USING ERRCODE = 'check_violation';
@@ -440,7 +466,7 @@ WHERE (schemaname = 'public' AND tablename IN ('tournaments','tournament_promptp
    OR (schemaname = 'storage' AND policyname LIKE 'payment_slips_%')
 ORDER BY schemaname, tablename, policyname;
 -- 3) trigger: tournaments_status_guard · registrations_guard_update · payments_guard_update + set_*_updated_at 4 ตัว
-SELECT tgname, tgrelid::regclass FROM pg_trigger WHERE NOT tgisinternal AND tgname IN ('tournaments_status_guard','registrations_guard_update','payments_guard_update','set_tournaments_updated_at','set_registrations_updated_at','set_payments_updated_at','set_tournament_promptpay_updated_at');
+SELECT tgname, tgrelid::regclass FROM pg_trigger WHERE NOT tgisinternal AND tgname IN ('tournaments_status_guard','registrations_guard_update','payments_guard_update','tournament_promptpay_guard_delete','set_tournaments_updated_at','set_registrations_updated_at','set_payments_updated_at','set_tournament_promptpay_updated_at');
 -- 4) index/unique
 SELECT indexname FROM pg_indexes WHERE schemaname = 'public' AND tablename IN ('tournaments','registrations','payments','passes','tournament_rosters','tournament_staff') ORDER BY indexname;
 -- 5) bucket
@@ -463,6 +489,7 @@ SELECT column_name FROM information_schema.columns WHERE table_schema = 'public'
 -- DROP TABLE IF EXISTS public.tournament_promptpay;
 -- DROP TABLE IF EXISTS public.tournaments;
 -- DROP FUNCTION IF EXISTS public.payments_guard_update();
+-- DROP FUNCTION IF EXISTS public.tournament_promptpay_guard_delete();
 -- DROP FUNCTION IF EXISTS public.registrations_guard_update();
 -- DROP FUNCTION IF EXISTS public.is_tournament_staff(uuid, text[]);
 -- DROP FUNCTION IF EXISTS public.is_tournament_organizer(uuid);

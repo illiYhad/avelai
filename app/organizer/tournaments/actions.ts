@@ -88,12 +88,13 @@ export async function updateTournamentAction(tournamentId: string, _prev: OrgSta
   const p = await parseTournamentForm(formData);
   if (!p.ok) return fail(p.message);
   const { promptpay_id, ...row } = p.v;
-  const { error } = await g.ctx.db.from("tournaments").update(row).eq("id", tournamentId);
-  if (error) return fail(dbMessage(error, "บันทึกไม่สำเร็จ"));
+  // PromptPay ก่อนแถวทัวร์ — trigger บังคับว่าทัวร์ PAID ที่พ้นร่างต้องมี PromptPay อยู่แล้ว
   if (promptpay_id) {
     const { error: ppErr } = await g.ctx.db.from("tournament_promptpay").upsert({ tournament_id: tournamentId, promptpay_id }, { onConflict: "tournament_id" });
-    if (ppErr) return fail("บันทึกแล้วแต่ PromptPay ไม่สำเร็จ");
+    if (ppErr) return fail("บันทึก PromptPay ไม่สำเร็จ");
   }
+  const { error } = await g.ctx.db.from("tournaments").update(row).eq("id", tournamentId);
+  if (error) return fail(dbMessage(error, "บันทึกไม่สำเร็จ"));
   await logAudit({ action: "TOURNAMENT_UPDATE", table_name: "tournaments", record_id: tournamentId, payload: { name: p.v.name }, performed_by: g.ctx.userId });
   revalidatePath(`/organizer/tournaments/${tournamentId}`);
   return { ok: true, message: "บันทึกแล้ว" };
