@@ -2,7 +2,7 @@
 
 // ยกจาก Zodiac actions/team.ts (เทสแล้ว) ปรับเข้ากับ AVELAi:
 // - players/athlete_id/slug → public.users + username
-// - ไม่มีตาราง games → game คงที่ 'MLBB'
+// - ไม่มีตาราง games → เกมจาก allowlist lib/games.ts (K-AV-D1: MLBB · DOTA2)
 // - ไม่อัปโหลดโลโก้เข้า storage (ยังไม่มี bucket ในโปรเจกต์ใหม่) — รับเป็น URL
 // - audit_logs ใช้สคีมา 001 ผ่าน lib/audit.ts
 // - notifications ของ Zodiac ไม่มีใน AVELAi → ตัดออก (ระบุในใบตอบ)
@@ -14,6 +14,7 @@ import { checkRosterEligibility } from "@/lib/team/rosterEligibility";
 import { logAudit } from "@/lib/audit";
 import { failWith } from "@/lib/server-errors";
 import { isUserSuspended, SUSPENDED_RESULT } from "@/lib/auth/suspension";
+import { DEFAULT_GAME, GAMES, isGameCode, teamGame } from "@/lib/games";
 
 export type ActionResult =
   | { success: true; teamId?: string }
@@ -44,6 +45,12 @@ export async function createTeamAction(formData: FormData): Promise<ActionResult
   if (logoUrl && !/^https:\/\//.test(logoUrl)) {
     return { error: { code: "INVALID_LOGO_URL", message: "ลิงก์โลโก้ต้องขึ้นต้นด้วย https://" } };
   }
+  // K-AV-D1: เกมตรวจกับ allowlist ฝั่ง server · ไม่ส่งมา = MLBB (เข้ากันกับฟอร์ม/ทีมเดิม) · ส่งค่าที่ไม่รู้จัก = ปฏิเสธ
+  const rawGame = (formData.get("game") as string | null)?.trim();
+  if (rawGame && !isGameCode(rawGame)) {
+    return { error: { code: "INVALID_GAME", message: "เกมที่เลือกไม่รองรับ" } };
+  }
+  const game = rawGame && isGameCode(rawGame) ? rawGame : DEFAULT_GAME;
 
   const session = await getCurrentUserId();
   if (!session) return { error: { code: "UNAUTHENTICATED", message: "กรุณาเข้าสู่ระบบก่อนสร้างทีม" } };
@@ -53,7 +60,7 @@ export async function createTeamAction(formData: FormData): Promise<ActionResult
     .from("teams")
     .select("id")
     .eq("owner_id", session.userId)
-    .eq("game", "MLBB")
+    .eq("game", game)
     .is("deleted_at", null)
     .maybeSingle();
 
@@ -77,7 +84,7 @@ export async function createTeamAction(formData: FormData): Promise<ActionResult
       slug,
       description,
       logo_url: logoUrl,
-      game: "MLBB",
+      game,
       owner_id: session.userId,
       captain_id: session.userId,
     })
@@ -130,7 +137,7 @@ export async function invitePlayerAction(teamId: string, formData: FormData): Pr
 
   const { data: team } = await session.db
     .from("teams")
-    .select("id, owner_id, captain_id, is_roster_locked")
+    .select("id, owner_id, captain_id, is_roster_locked, game")
     .eq("id", teamId)
     .single();
 
@@ -152,7 +159,8 @@ export async function invitePlayerAction(teamId: string, formData: FormData): Pr
     return { error: { code: "PLAYER_NOT_FOUND", message: `ไม่พบผู้เล่น "${identifier}"` } };
   }
 
-  // 1 คน = 1 ทีมต่อเกม (ตรรกะเดิมของ Zodiac)
+  // 1 คน = 1 ทีมต่อเกม (ตรรกะเดิมของ Zodiac) · K-AV-D1: เกม = เกมของทีมที่เชิญ (อ่านจาก DB ไม่รับจาก client)
+  const inviteGame = teamGame(team.game);
   const { data: activeMemberships } = await session.db
     .from("team_members")
     .select("team_id, teams!inner(game)")
@@ -161,7 +169,7 @@ export async function invitePlayerAction(teamId: string, formData: FormData): Pr
 
   const alreadyRostered = (activeMemberships ?? []).some((m) => {
     const joined = Array.isArray(m.teams) ? m.teams[0] : m.teams;
-    return (joined as { game?: string } | null)?.game === "MLBB";
+    return teamGame((joined as { game?: string } | null)?.game) === inviteGame;
   });
 
   if (alreadyRostered) {
@@ -207,7 +215,7 @@ export async function lockRosterAction(teamId: string): Promise<ActionResult> {
 
   const { data: team } = await session.db
     .from("teams")
-    .select("id, owner_id, captain_id, is_roster_locked")
+    .select("id, owner_id, captain_id, is_roster_locked, game")
     .eq("id", teamId)
     .single();
 
@@ -217,7 +225,7 @@ export async function lockRosterAction(teamId: string): Promise<ActionResult> {
   }
   if (team.is_roster_locked) return { success: true }; // idempotent เหมือน Zodiac
 
-  const eligibility = await checkRosterEligibility(session.db, teamId);
+  const eligibility = await checkRosterEligibility(session.db, teamId, GAMES[teamGame(team.game)].teamSize);
   if (!eligibility.isComplete) {
     return {
       error: {

@@ -1,6 +1,7 @@
 // สเกาต์ผู้เล่น (K-AV-R เฟส 3 ข้อ 13) — รายชื่อจับตา + ดึงข้อมูล Liquipedia (Private Beta)
 import { notFound } from "next/navigation";
 import { getServerDb } from "@/lib/db/server";
+import { gameLabel, teamGame } from "@/lib/games";
 import { isActiveTeamMember } from "@/lib/team/access";
 import { TeamRestricted } from "../TeamRestricted";
 import { ScoutClient, type ProspectView } from "./ScoutClient";
@@ -31,11 +32,28 @@ export default async function TeamScoutPage({ params }: PageProps) {
 
   const { data: team } = await db
     .from("teams")
-    .select("id, name, tag, owner_id, captain_id, private_beta")
+    .select("id, name, tag, owner_id, captain_id, private_beta, game")
     .eq("id", teamId)
     .maybeSingle();
 
   if (!team) notFound();
+
+  // K-AV-D1: สเกาต์ผูกกับ Liquipedia ของ Mobile Legends — ทีมเกมอื่นแสดงข้อความแทน ไม่ดึงรายชื่อ/ไม่เรียก API
+  if (teamGame(team.game) !== "MLBB") {
+    return (
+      <main className="min-h-screen bg-[#0A0A0F] px-4 pt-20 pb-10 text-white">
+        <div className="mx-auto w-full max-w-2xl">
+          <p className="text-[#00D4FF] font-mono text-xs tracking-widest mb-2">SCOUTING</p>
+          <h1 className="text-2xl font-bold mb-4">
+            สเกาต์ — {team.name} <span className="text-[#00D4FF]">[{team.tag}]</span>
+          </h1>
+          <p className="rounded border border-white/10 bg-[#12121A] px-4 py-3 text-sm text-neutral-300">
+            สเกาต์เกมนี้ยังไม่เปิดใช้ ({gameLabel(team.game)})
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   const [{ data: prospects }] = await Promise.all([
     db

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getServerDb } from "@/lib/db/server";
+import { gameLabel } from "@/lib/games";
 import { InvitePlayerModal } from "@/components/team/InvitePlayerModal";
 import { LockRosterButton } from "@/components/team/LockRosterButton";
 
@@ -26,7 +27,7 @@ export default async function TeamDetailPage({ params }: PageProps) {
 
   const { data: team } = await db
     .from("teams")
-    .select("id, name, tag, logo_url, description, owner_id, captain_id, is_roster_locked, wins, losses")
+    .select("id, name, tag, logo_url, description, owner_id, captain_id, is_roster_locked, wins, losses, game")
     .eq("id", teamId)
     .maybeSingle();
 
@@ -59,7 +60,7 @@ export default async function TeamDetailPage({ params }: PageProps) {
       <div className="mx-auto w-full max-w-2xl">
         <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
           <div className="min-w-0">
-            <p className="text-[#00D4FF] font-mono text-xs tracking-widest mb-1">MLBB TEAM</p>
+            <p className="text-[#00D4FF] font-mono text-xs tracking-widest mb-1">{gameLabel(team.game).toUpperCase()} TEAM</p>
             <h1 className="text-2xl font-bold truncate">
               {team.name} <span className="text-[#00D4FF]">[{team.tag}]</span>
             </h1>

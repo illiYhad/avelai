@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 // ยกจาก Zodiac lib/team/rosterEligibility.ts ปรับเข้ากับ AVELAi:
-// - ไม่มีตาราง games / game_accounts → จำนวนขั้นต่ำคงที่ 5 คน (MLBB)
+// - จำนวนขั้นต่ำตามเกมของทีม: ผู้เรียกส่ง GAMES[เกม].teamSize (lib/games.ts · K-AV-D1) · ไม่ส่ง = 5 (MLBB เดิม)
 // - ไม่มีขั้นยืนยันบัญชีเกม (MLBB ยังไม่มี API ทางการ — กรอกมือ)
 export const MLBB_TEAM_SIZE = 5;
 

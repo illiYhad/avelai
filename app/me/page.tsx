@@ -2,6 +2,7 @@
 import { requireUser, activeRoles, isSuspended } from "@/lib/auth/roles";
 import { signOutAction } from "@/app/auth/actions";
 import ProfileForm from "./ProfileForm";
+import DotaAccountForm from "./DotaAccountForm";
 
 export const metadata = { title: "โปรไฟล์ — AVELAi" };
 // หน้า session ต้องไม่ถูก prerender เป็น static (ตอน build ไม่มี env จะหลุดเป็น static ได้)
@@ -18,14 +19,17 @@ function thaiTime(iso: string): string {
 export default async function MePage() {
   const { db, user } = await requireUser("/me");
 
-  const [{ data: profile }, { data: roleRows }] = await Promise.all([
+  const [{ data: profile }, { data: roleRows }, dotaRes] = await Promise.all([
     db
       .from("users")
       .select("username, avatar_url, suspended_until")
       .eq("id", user.id)
       .single(),
     db.from("user_roles").select("role, revoked_at").eq("user_id", user.id),
+    // K-AV-D1: ตาราง game_accounts มาจาก SQL 130 · ยังไม่รัน = error → แสดง "ยังเปิดใช้ไม่ได้"
+    db.from("game_accounts").select("external_id, status").eq("user_id", user.id).eq("game", "DOTA2").maybeSingle(),
   ]);
+  const dota = dotaRes.data as { external_id: string; status: string } | null;
 
   const roles = activeRoles(roleRows ?? []);
   const suspended = profile ? isSuspended(profile) : false;
@@ -72,6 +76,12 @@ export default async function MePage() {
       <ProfileForm
         username={profile?.username ?? ""}
         avatarUrl={profile?.avatar_url ?? ""}
+      />
+
+      <DotaAccountForm
+        externalId={dota?.external_id ?? null}
+        verified={dota?.status === "VERIFIED"}
+        unavailable={Boolean(dotaRes.error)}
       />
     </main>
   );
