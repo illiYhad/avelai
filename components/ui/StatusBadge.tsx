@@ -9,6 +9,7 @@ export const STATUS_BADGES = {
   AWAITING_RESULT: { label: "รอผลแข่ง", tone: "bg-violet-400/15 text-violet-200" },
   DISPUTED: { label: "มีข้อโต้แย้ง", tone: "bg-orange-400/15 text-orange-200" },
   LOCKED: { label: "ล็อกแล้ว", tone: "bg-gold/15 text-gold" },
+  CANCELLED: { label: "ยกเลิกแล้ว", tone: "bg-red-400/15 text-red-200" },
 } as const;
 
 export type BadgeStatus = keyof typeof STATUS_BADGES;

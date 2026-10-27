@@ -4,11 +4,16 @@ import { requireUser } from "@/lib/auth/roles";
 import { buildPromptPayPayload } from "@/lib/payments/promptpay";
 import { promptPayQrSvg } from "@/lib/payments/qr-svg";
 import { TOURNAMENT_COLS, leaderTeams, tournamentPromptPay, type TournamentRow } from "@/lib/tournament/access";
-import { REG_LABEL, STATUS_LABEL, type RegistrationStatus, type TournamentStatus } from "@/lib/tournament/state";
+import { REG_LABEL, type RegistrationStatus, type TournamentStatus } from "@/lib/tournament/state";
 import { ActionButton } from "@/components/tournaments/ui";
 import { checkInAction, registerTeamAction, uploadSlipAction } from "./actions";
 import { RegisterForm, SlipForm } from "./RegisterClient";
 import { routes } from "@/lib/routes";
+import PageHeader from "@/components/ui/PageHeader";
+import Surface from "@/components/ui/Surface";
+import StatusBadge from "@/components/ui/StatusBadge";
+import Steps from "@/components/ui/Steps";
+import { tournamentBadge } from "@/lib/tournament/badge";
 import { gameFromSlug, slugOf } from "@/lib/games";
 
 // K-AV-3: หน้าสมัคร/ชำระ/เช็กอิน ของหัวหน้าทีม — ต้องล็อกอิน (protected-paths + requireUser)
@@ -41,13 +46,17 @@ export default async function RegisterPage({ params }: { params: Promise<{ game:
   const qr = payload ? await promptPayQrSvg(payload) : null;
   const status = t.status as TournamentStatus;
 
+  // ขั้นปัจจุบัน (แสดงผลอย่างเดียว): ยังไม่สมัคร=0 · รอชำระ/สลิป=1 · สมัครแล้ว=2
+  const step = regs.length === 0 ? 0 : regs.some((r) => r.status === "PENDING_PAYMENT") && t.entry_type === "PAID" ? 1 : 2;
+
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col gap-6 px-6 py-10">
-      <div>
-        <p className="text-xs tracking-widest text-cyan">{STATUS_LABEL[status] ?? t.status}</p>
-        <h1 className="text-2xl font-bold text-white">{t.name}</h1>
-        <Link href={routes.tournament(slug, id)} className="text-xs text-white/60 underline">รายละเอียดทัวร์</Link>
-      </div>
+    <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8 sm:px-6">
+      <PageHeader
+        eyebrow="// REGISTER"
+        title={t.name}
+        subtitle={<span className="flex flex-wrap items-center gap-3"><StatusBadge status={tournamentBadge(status)} /><Link href={routes.tournament(slug, id)} className="text-sm text-cyan underline">รายละเอียดทัวร์</Link></span>}
+      />
+      <Steps labels={["เลือกทีม", "ค่าสมัคร", "ยืนยัน"]} current={step} />
 
       {regs.map((r) => {
         const team = Array.isArray(r.teams) ? r.teams[0] : r.teams;
@@ -55,32 +64,35 @@ export default async function RegisterPage({ params }: { params: Promise<{ game:
         const latest = myPays[0];
         const verified = myPays.find((p) => p.status === "VERIFIED");
         return (
-          <section key={r.id} className="flex flex-col gap-3 rounded border border-white/15 p-4">
-            <p className="text-sm"><b>{team?.name} [{team?.tag}]</b> · <span className="text-cyan">{REG_LABEL[r.status as RegistrationStatus] ?? r.status}</span></p>
+          <Surface key={r.id} as="section" glow={r.status === "CONFIRMED" || r.status === "CHECKED_IN" ? "gold" : "none"} className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-base font-bold text-ink">{team?.name} <span className="font-mono text-cyan">[{team?.tag}]</span></p>
+              {r.status === "PENDING_PAYMENT" ? <StatusBadge status="PENDING_PAYMENT" /> : <span className="text-sm text-cyan">{REG_LABEL[r.status as RegistrationStatus] ?? r.status}</span>}
+            </div>
             {r.status === "PENDING_PAYMENT" && t.entry_type === "PAID" ? (
               <>
-                {latest?.status === "PENDING" ? <p className="text-sm text-white/70">ส่งสลิปแล้ว รอผู้จัดยืนยัน</p> : null}
-                {latest?.status === "REJECTED" ? <p className="text-sm text-red-300">สลิปล่าสุดถูกปฏิเสธ: {latest.reject_reason} — ส่งใหม่ได้</p> : null}
+                {latest?.status === "PENDING" ? <p className="text-base text-ink-muted">ส่งสลิปแล้ว รอผู้จัดยืนยัน</p> : null}
+                {latest?.status === "REJECTED" ? <p className="text-base text-red-300">สลิปล่าสุดถูกปฏิเสธ: {latest.reject_reason} — ส่งใหม่ได้</p> : null}
                 {latest?.status !== "PENDING" ? (
                   <>
-                    <p className="text-sm text-white/80">โอน <b className="font-numeric">{amount.toLocaleString("th-TH", { minimumFractionDigits: 2 })} บาท</b> ไป PromptPay ของผู้จัด <span className="font-numeric">{promptpay ?? "–"}</span> (เงินไม่ผ่านระบบ AVELAi)</p>
-                    {qr ? <div className="w-60 rounded bg-white p-2" dangerouslySetInnerHTML={{ __html: qr }} /> : <p className="text-sm text-red-300">สร้าง QR ไม่ได้ — PromptPay ID ของผู้จัดไม่ถูกต้อง ติดต่อผู้จัด</p>}
+                    <p className="text-base text-ink">โอน <b className="font-mono tabular-nums">{amount.toLocaleString("th-TH", { minimumFractionDigits: 2 })} บาท</b> ไป PromptPay ของผู้จัด <span className="font-mono">{promptpay ?? "–"}</span> (เงินไม่ผ่านระบบ AVELAi)</p>
+                    {qr ? <div className="w-60 rounded bg-white p-2" dangerouslySetInnerHTML={{ __html: qr }} /> : <p className="text-base text-red-300">สร้าง QR ไม่ได้ — PromptPay ID ของผู้จัดไม่ถูกต้อง ติดต่อผู้จัด</p>}
                     <SlipForm action={uploadSlipAction.bind(null, id)} registrationId={r.id} token={crypto.randomUUID()} />
                   </>
                 ) : null}
               </>
             ) : null}
             {verified ? <Link href={routes.tournamentReceipt(slug, id, verified.id)} className="text-sm text-cyan underline">ใบยืนยันการชำระ</Link> : null}
-            {status === "CHECK_IN" && r.status === "CONFIRMED" ? <ActionButton action={checkInAction.bind(null, id, r.id)} label="เช็กอิน" className="w-fit rounded btn-primary px-4 py-2 text-sm" /> : null}
-          </section>
+            {status === "CHECK_IN" && r.status === "CONFIRMED" ? <ActionButton action={checkInAction.bind(null, id, r.id)} label="เช็กอิน" className="btn-primary min-h-12 w-full rounded px-4 text-sm sm:w-fit" /> : null}
+          </Surface>
         );
       })}
 
       {status === "REGISTRATION" ? (
-        unregistered.length ? <section className="rounded border border-white/15 p-4"><RegisterForm action={registerTeamAction.bind(null, id)} teams={unregistered} /></section>
-        : teams.length === 0 ? <p className="text-sm text-white/60">คุณยังไม่ได้เป็นหัวหน้าทีมที่เล่นเกมนี้ — <Link href={routes.teams(slug)} className="underline">ไปหน้าทีม</Link></p>
+        unregistered.length ? <Surface as="section"><RegisterForm action={registerTeamAction.bind(null, id)} teams={unregistered} /></Surface>
+        : teams.length === 0 ? <p className="text-base text-ink-muted">คุณยังไม่ได้เป็นหัวหน้าทีมที่เล่นเกมนี้ — <Link href={routes.teams(slug)} className="text-cyan underline">ไปหน้าทีม</Link></p>
         : null
-      ) : regs.length === 0 ? <p className="text-sm text-white/60">ทัวร์นี้ไม่ได้เปิดรับสมัครอยู่</p> : null}
+      ) : regs.length === 0 ? <p className="text-base text-ink-muted">ทัวร์นี้ไม่ได้เปิดรับสมัครอยู่</p> : null}
     </main>
   );
 }

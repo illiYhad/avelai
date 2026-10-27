@@ -4,6 +4,9 @@ import { getServerDb } from "@/lib/db/server";
 import { championOf, rowToSlot, type SlotRow } from "@/lib/tournament/engine";
 import { BRACKET_LABEL, groupRounds, teamLabel, type TeamName } from "@/lib/tournament/engine/view";
 import { routes } from "@/lib/routes";
+import PageHeader from "@/components/ui/PageHeader";
+import EmptyState from "@/components/ui/EmptyState";
+import BracketBoard, { type BoardGroup } from "./BracketBoard";
 import { gameFromSlug, slugOf } from "@/lib/games";
 
 // K-AV-4: สาย SE/DE อ่านอย่างเดียว · responsive (เลื่อนแนวนอนบนมือถือ) · ทีมยังไม่รู้ = "รอผล"
@@ -15,7 +18,7 @@ export default async function BracketPage({ params }: { params: Promise<{ game: 
   if (!code) notFound();
   const slug = slugOf(code);
   const db = await getServerDb();
-  if (!db) return <main className="px-6 py-10 text-sm text-white/60">ยังไม่ต่อฐานข้อมูล</main>;
+  if (!db) return <main className="px-6 py-10 text-base text-ink-muted">ยังไม่ต่อฐานข้อมูล</main>;
   const { data: t } = await db.from("tournaments").select("id, name, format, status").eq("id", id).maybeSingle();
   if (!t) notFound();
   const { data: auth } = await db.auth.getUser();
@@ -25,42 +28,32 @@ export default async function BracketPage({ params }: { params: Promise<{ game: 
   const { data: teams } = teamIds.length ? await db.from("teams").select("id, name, tag").in("id", teamIds) : { data: [] };
   const names = new Map(((teams ?? []) as TeamName[]).map((x) => [x.id, x]));
   const champion = championOf(slots);
+  const statusText = (st: string) => (st === "BYE" ? "ผ่านอัตโนมัติ" : st === "READY" ? "รอแข่ง" : st === "DONE" ? "จบแล้ว" : st === "VOID" ? "ไม่ใช้" : "รอผล");
+  const groups: BoardGroup[] = groupRounds(slots).map((g) => ({
+    bracket: g.bracket,
+    label: BRACKET_LABEL[g.bracket],
+    rounds: g.rounds.map((r) => ({
+      round: r.round,
+      slots: r.slots.map((s) => ({
+        key: s.key,
+        a: { label: teamLabel(names, s.teamA), won: Boolean(s.winnerId && s.teamA === s.winnerId) },
+        b: { label: teamLabel(names, s.teamB), won: Boolean(s.winnerId && s.teamB === s.winnerId) },
+        statusText: statusText(s.status),
+        void: s.status === "VOID",
+        reset: s.isGrandFinalReset,
+      })),
+    })),
+  }));
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-6 px-4 py-10">
-      <div>
-        <h1 className="text-2xl font-bold text-white">{t.name} · สาย {t.format}</h1>
-        <Link href={routes.tournament(slug, id)} className="text-xs text-white/60 underline">รายละเอียดทัวร์</Link>
-        {champion ? <p className="mt-1 text-sm text-gold">🏆 แชมป์: {teamLabel(names, champion)}</p> : null}
-      </div>
-      {!auth.user ? <p className="text-sm text-white/60">เข้าสู่ระบบเพื่อดูสาย</p> : slots.length === 0 ? <p className="text-sm text-white/60">ยังไม่ได้สร้างสาย</p> : groupRounds(slots).map((g) => (
-        <section key={g.bracket}>
-          <h2 className="mb-2 text-sm font-semibold text-white/90">{BRACKET_LABEL[g.bracket]}</h2>
-          <div className="flex gap-4 overflow-x-auto pb-2">
-            {g.rounds.map((r) => (
-              <div key={r.round} className="flex min-w-[220px] flex-col gap-2">
-                <p className="text-xs text-white/50">รอบ {r.round}</p>
-                {r.slots.map((s) => (
-                  <div key={s.key} className={`rounded border px-3 py-2 text-xs ${s.status === "VOID" ? "border-white/5 text-white/60" : "border-white/15"}`}>
-                    {s.isGrandFinalReset ? <p className="mb-1 text-xs text-white/50">นัดตัดสิน (ถ้าสายล่างชนะ)</p> : null}
-                    {(["A", "B"] as const).map((side) => {
-                      const team = side === "A" ? s.teamA : s.teamB;
-                      const won = s.winnerId && team === s.winnerId;
-                      return (
-                        <p key={side} className={`flex justify-between gap-2 py-0.5 ${won ? "text-cyan" : team ? "text-white" : "text-white/60"}`}>
-                          <span className="truncate">{s.status === "VOID" ? "–" : teamLabel(names, team)}</span>
-                          {won ? <span>✓</span> : null}
-                        </p>
-                      );
-                    })}
-                    <p className="mt-1 text-xs text-white/60">{s.status === "BYE" ? "ผ่านอัตโนมัติ" : s.status === "READY" ? "รอแข่ง" : s.status === "DONE" ? "จบแล้ว" : s.status === "VOID" ? "ไม่ใช้" : "รอผล"}</p>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </section>
-      ))}
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
+      <PageHeader
+        eyebrow={`// BRACKET ${t.format}`}
+        title={t.name}
+        subtitle={champion ? <span className="text-gold">🏆 แชมป์: {teamLabel(names, champion)}</span> : undefined}
+        aside={<Link href={routes.tournament(slug, id)} className="btn-ghost flex min-h-11 items-center rounded px-4 text-sm">รายละเอียดทัวร์</Link>}
+      />
+      {!auth.user ? <EmptyState message="เข้าสู่ระบบเพื่อดูสาย" actionLabel="เข้าสู่ระบบ" actionHref="/login" /> : slots.length === 0 ? <EmptyState message="ยังไม่ได้สร้างสาย" /> : <BracketBoard groups={groups} />}
     </main>
   );
 }

@@ -63,6 +63,7 @@ describe("game path helpers", () => {
     expect(isGameLocked("/dota2/teams/t1/schedule")).toBe(true);
     expect(isGameLocked("/mlbb/passport/pao")).toBe(true);
     expect(isGameLocked("/mlbb/tournaments")).toBe(false);
+    expect(isGameLocked("/mlbb/teams/create")).toBe(false);
     expect(isGameLocked("/me")).toBe(false);
   });
   it("อ่านเกมจาก segment แรก", () => {
@@ -78,7 +79,7 @@ describe("game path helpers", () => {
 });
 
 describe("StatusBadge", () => {
-  const ALL: BadgeStatus[] = ["OPEN", "SCHEDULED", "LIVE", "COMPLETED", "PENDING_PAYMENT", "READY_CHECK", "AWAITING_RESULT", "DISPUTED", "LOCKED"];
+  const ALL: BadgeStatus[] = ["OPEN", "SCHEDULED", "LIVE", "COMPLETED", "PENDING_PAYMENT", "READY_CHECK", "AWAITING_RESULT", "DISPUTED", "LOCKED", "CANCELLED"];
   it("ทุกสถานะ render ได้เป็นข้อความไทย ไม่ใช่ชื่อสถานะอังกฤษดิบ", () => {
     expect(Object.keys(STATUS_BADGES).sort()).toEqual([...ALL].sort());
     for (const s of ALL) {
@@ -86,5 +87,17 @@ describe("StatusBadge", () => {
       expect(html).not.toContain(s);
       expect(html).toMatch(/[฀-๿]/);
     }
+  });
+});
+
+import { tournamentBadge } from "@/lib/tournament/badge";
+import { TOURNAMENT_STATUSES } from "@/lib/tournament/state";
+
+describe("tournamentBadge (Phase B)", () => {
+  it("ทุกสถานะทัวร์ map ไปป้ายที่มีจริง · ค่าแปลกไม่ล้ม", () => {
+    for (const s of TOURNAMENT_STATUSES) expect(Object.keys(STATUS_BADGES)).toContain(tournamentBadge(s));
+    expect(tournamentBadge("REGISTRATION")).toBe("OPEN");
+    expect(tournamentBadge("RUNNING")).toBe("LIVE");
+    expect(tournamentBadge("???")).toBe("SCHEDULED");
   });
 });
