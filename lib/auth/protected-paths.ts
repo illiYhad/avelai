@@ -14,6 +14,14 @@ const PROTECTED: RegExp[] = [
   /^\/matches\/[^/]+(\/.*)?$/, // K-AV-5: ห้องแมตช์ + สมุดหลักฐาน
   /^\/passport(\/.*)?$/, // K-AV-7: Passport (สาธารณะสำหรับผู้ล็อกอิน)
   /^\/admin\/passport$/, // K-AV-7: ADMIN รันซ้ำ passport
+  // K-AV-UX2B: ชุดเดียวกันใต้ /(mlbb|dota2) (ของเดิมคงไว้ — ลิงก์เก่าถูก redirect ก่อนถึง middleware)
+  /^\/(mlbb|dota2)\/teams\/create$/,
+  /^\/(mlbb|dota2)\/teams\/[^/]+\/(schedule|budget|scout)$/,
+  /^\/(mlbb|dota2)\/tournaments\/[^/]+\/(register|receipt(\/.*)?)$/,
+  /^\/(mlbb|dota2)\/organizer(\/.*)?$/,
+  /^\/(mlbb|dota2)\/pass(\/.*)?$/,
+  /^\/(mlbb|dota2)\/matches\/[^/]+(\/.*)?$/,
+  /^\/(mlbb|dota2)\/passport(\/.*)?$/,
 ];
 
 export function needsLogin(pathname: string): boolean {

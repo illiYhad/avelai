@@ -25,3 +25,19 @@ export function gameLabel(code: string | null | undefined): string {
 export function teamGame(code: string | null | undefined): GameCode {
   return isGameCode(code) ? code : DEFAULT_GAME;
 }
+
+// K-AV-UX2B: slug ในเส้นทาง /[game]/… — ตัวพิมพ์เล็กเท่านั้น (ไม่ lowercase ให้ · ไม่เดา)
+export const GAME_SLUGS = { mlbb: "MLBB", dota2: "DOTA2" } as const satisfies Record<string, GameCode>;
+export type GameSlug = keyof typeof GAME_SLUGS;
+export const DEFAULT_SLUG: GameSlug = "mlbb";
+
+/** 'mlbb' → 'MLBB' · อื่น ๆ (รวม 'MLBB') → null */
+export function gameFromSlug(slug: string | undefined): GameCode | null {
+  if (!slug || !Object.prototype.hasOwnProperty.call(GAME_SLUGS, slug)) return null;
+  return GAME_SLUGS[slug as GameSlug];
+}
+
+/** 'MLBB' → 'mlbb' */
+export function slugOf(code: GameCode): GameSlug {
+  return code === "DOTA2" ? "dota2" : "mlbb";
+}

@@ -66,7 +66,7 @@ vi.mock("@/lib/db/admin", () => ({
   }),
 }));
 
-import { createSessionAction, checkAttendanceAction } from "@/app/team/[id]/schedule/actions";
+import { createSessionAction, checkAttendanceAction } from "@/app/[game]/teams/[teamId]/schedule/actions";
 
 function form(start: string, end?: string) {
   const f = new FormData();

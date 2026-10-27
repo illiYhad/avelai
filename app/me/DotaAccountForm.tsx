@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { linkDotaAccountAction, unlinkDotaAccountAction, type DotaLinkState } from "./dota-actions";
 
 const initialState: DotaLinkState = { ok: false, message: "" };
@@ -37,9 +38,9 @@ export default function DotaAccountForm({
             <p className="text-sm text-white/60">ยังไม่ได้ผูกบัญชี</p>
           )}
           {externalId ? (
-            <a href="/me/dota" className="text-sm text-cyan underline">
+            <Link href="/me/dota" className="text-sm text-cyan underline">
               ดูการ์ดผู้เล่น Dota 2 →
-            </a>
+            </Link>
           ) : null}
           <form action={linkAction} className="flex flex-col gap-2">
             <label htmlFor="dota_id" className="text-sm text-white/80">

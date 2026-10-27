@@ -51,8 +51,8 @@ import { buildPromptPayPayload, crc16ccitt, parsePromptPayId, verifyPromptPayPay
 import { PASS_PRICE_THB, hasActivePass, passEndsAt, weeklyPrizePool } from "@/lib/passes";
 import { MAX_SLIP_BYTES, detectImageMime, validateSlip } from "@/lib/payments/slip";
 import { getRegistrationGate } from "@/lib/tournament/gate";
-import { parseTournamentForm, reviewRegistrationPaymentAction, setTournamentStatusAction } from "@/app/organizer/tournaments/actions";
-import { registerTeamAction, uploadSlipAction } from "@/app/tournaments/[id]/register/actions";
+import { parseTournamentForm, reviewRegistrationPaymentAction, setTournamentStatusAction } from "@/app/[game]/organizer/tournaments/actions";
+import { registerTeamAction, uploadSlipAction } from "@/app/[game]/tournaments/[id]/register/actions";
 import { reviewPassPaymentAction } from "@/app/admin/payments/actions";
 import type { TournamentRow } from "@/lib/tournament/access";
 

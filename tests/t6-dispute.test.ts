@@ -75,7 +75,7 @@ vi.mock("@/lib/db/server", () => ({
   }),
 }));
 
-import { issuePenaltyAction, openDisputeAction, resolveDisputeAction, revokePenaltyAction } from "@/app/matches/[id]/dispute/actions";
+import { issuePenaltyAction, openDisputeAction, resolveDisputeAction, revokePenaltyAction } from "@/app/[game]/matches/[id]/dispute/actions";
 
 const MID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", DID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", TID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 const M: Record<string, unknown> = { id: MID, tournament_id: TID, stage: "WB", round: 1, position: 1, team_a_id: "A", team_b_id: "B", best_of: 3, status: "AWAITING_RESULT", winner_team_id: null, forfeit_deadline_at: null, check_in_a_at: null, check_in_b_at: null };

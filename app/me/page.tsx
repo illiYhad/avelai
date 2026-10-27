@@ -4,6 +4,7 @@ import { requireUser, activeRoles, isSuspended } from "@/lib/auth/roles";
 import { signOutAction } from "@/app/auth/actions";
 import ProfileForm from "./ProfileForm";
 import DotaAccountForm from "./DotaAccountForm";
+import { routes } from "@/lib/routes";
 
 export const metadata = { title: "โปรไฟล์ — AVELAi" };
 // หน้า session ต้องไม่ถูก prerender เป็น static (ตอน build ไม่มี env จะหลุดเป็น static ได้)
@@ -71,7 +72,7 @@ export default async function MePage() {
           <p className="text-sm text-white/60">
             role: {roles.length > 0 ? roles.join(" · ") : "ยังไม่มี"}
           </p>
-          {profile?.username ? <Link href={`/passport/${encodeURIComponent(profile.username)}`} className="text-xs text-cyan underline">Passport ของฉัน (ELO · Karma · สถิติ)</Link> : null}
+          {profile?.username ? <p className="text-xs">Passport ของฉัน (ELO · Karma · สถิติ): <Link href={routes.passport("mlbb", profile.username)} className="text-cyan underline">MLBB</Link> · <Link href={routes.passport("dota2", profile.username)} className="text-cyan underline">Dota 2</Link></p> : null}
         </div>
       </section>
 

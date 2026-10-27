@@ -63,8 +63,8 @@ vi.mock("@/lib/db/admin", () => ({
 
 import { GAMES, gameLabel, isGameCode, teamGame } from "@/lib/games";
 import { parseDotaAccountId } from "@/lib/games-dota-id";
-import { createTeamAction, invitePlayerAction, lockRosterAction } from "@/app/teams/actions";
-import { fetchLiquipediaAction } from "@/app/team/[id]/scout/actions";
+import { createTeamAction, invitePlayerAction, lockRosterAction } from "@/app/[game]/teams/actions";
+import { fetchLiquipediaAction } from "@/app/[game]/teams/[teamId]/scout/actions";
 import { linkDotaAccountAction, unlinkDotaAccountAction } from "@/app/me/dota-actions";
 
 const NO_STATE = { ok: false, message: "" };

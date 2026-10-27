@@ -14,9 +14,9 @@ vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 vi.mock("next/navigation", () => ({ notFound: () => { throw new Error("notFound"); } }));
 vi.mock("@/lib/audit", () => ({ logAudit: async () => {} }));
 vi.mock("@/lib/db/admin", () => ({ getAdminDb: () => { h.adminCalls++; return null; } }));
-vi.mock("@/app/team/[id]/schedule/ScheduleClient", () => ({ ScheduleClient: () => null }));
-vi.mock("@/app/team/[id]/scout/ScoutClient", () => ({ ScoutClient: () => null }));
-vi.mock("@/app/team/[id]/TeamRestricted", () => ({ TeamRestricted: () => null }));
+vi.mock("@/app/[game]/teams/[teamId]/schedule/ScheduleClient", () => ({ ScheduleClient: () => null }));
+vi.mock("@/app/[game]/teams/[teamId]/scout/ScoutClient", () => ({ ScoutClient: () => null }));
+vi.mock("@/app/[game]/teams/[teamId]/TeamRestricted", () => ({ TeamRestricted: () => null }));
 
 function single(table: string) {
   if (table === "team_members") return h.isMember ? { user_id: "u1", role: "OWNER" } : null;
@@ -41,12 +41,12 @@ vi.mock("@/lib/db/server", () => ({
   }),
 }));
 
-import TeamSchedulePage from "@/app/team/[id]/schedule/page";
-import TeamScoutPage from "@/app/team/[id]/scout/page";
-import { rsvpAction, createSessionAction, checkAttendanceAction } from "@/app/team/[id]/schedule/actions";
-import { addProspectAction, deleteProspectAction, fetchLiquipediaAction } from "@/app/team/[id]/scout/actions";
+import TeamSchedulePage from "@/app/[game]/teams/[teamId]/schedule/page";
+import TeamScoutPage from "@/app/[game]/teams/[teamId]/scout/page";
+import { rsvpAction, createSessionAction, checkAttendanceAction } from "@/app/[game]/teams/[teamId]/schedule/actions";
+import { addProspectAction, deleteProspectAction, fetchLiquipediaAction } from "@/app/[game]/teams/[teamId]/scout/actions";
 
-const params = { params: Promise.resolve({ id: "t1" }) };
+const params = { params: Promise.resolve({ game: "mlbb", teamId: "t1" }) };
 const TEAM_DATA = ["teams", "practice_sessions", "practice_attendance", "scout_prospects", "team_budget_items"];
 const touchedTeamData = () => h.tables.filter((t) => TEAM_DATA.includes(t));
 

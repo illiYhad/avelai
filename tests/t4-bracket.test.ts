@@ -328,7 +328,7 @@ vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 vi.mock("@/lib/audit", () => ({ logAudit: async () => {} }));
 vi.mock("@/lib/db/server", () => ({ getServerDb: async () => ({ auth: { getUser: async () => ({ data: { user: h.user } }) }, from: (t: string) => builder(t) }) }));
 
-import { generateBracketAction, generateSwissRoundAction } from "@/app/organizer/tournaments/bracket-actions";
+import { generateBracketAction, generateSwissRoundAction } from "@/app/[game]/organizer/tournaments/bracket-actions";
 
 const T = { id: "t1", organizer_id: "org", name: "Cup", game: "MLBB", format: "SE", team_size: 5, best_of: 1, status: "SEEDING", seed_value: null, swiss_rounds: null };
 
