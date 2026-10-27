@@ -29,7 +29,7 @@ vi.mock("@/lib/db/admin", () => ({
 
 import {
   buildStartUrl, parseClaimedId, toDotaAccountId, checkReturnParams, verifyAssertion, processSteamReturn, resolveSiteUrl,
-  STEAM_OPENID_ENDPOINT,
+  singleValued, nonceFresh, readStateCookie, stateCookieValue, returnToWithState, STATE_COOKIE, STEAM_OPENID_ENDPOINT,
 } from "@/lib/game-accounts/steam";
 import { parseMlbb } from "@/lib/game-accounts/mlbb";
 import { needsLogin } from "@/lib/auth/protected-paths";
@@ -39,6 +39,11 @@ import { linkMlbb } from "@/app/me/mlbb-actions";
 
 const SITE = "https://avelai.example";
 const STEAM64 = "76561197960287930"; // → account_id 22202
+const OTHER64 = "76561197960287931";
+const STATE = "0123456789abcdef0123456789abcdef";
+const UID = "11111111-2222-3333-4444-555555555555";
+const OTHER_UID = "99999999-2222-3333-4444-555555555555";
+const nowNonce = () => new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
 const goodParams = (over: Record<string, string> = {}) =>
   new URLSearchParams({
     "openid.ns": "http://specs.openid.net/auth/2.0",
@@ -46,16 +51,18 @@ const goodParams = (over: Record<string, string> = {}) =>
     "openid.op_endpoint": STEAM_OPENID_ENDPOINT,
     "openid.claimed_id": `https://steamcommunity.com/openid/id/${STEAM64}`,
     "openid.identity": `https://steamcommunity.com/openid/id/${STEAM64}`,
-    "openid.return_to": `${SITE}/link/steam/return`,
-    "openid.response_nonce": "2026-10-27T00:00:00Zabc",
+    "openid.return_to": returnToWithState(SITE, STATE),
+    "openid.response_nonce": `${nowNonce()}abc`,
     "openid.signed": "signed,op_endpoint,claimed_id,identity,return_to,response_nonce,assoc_handle",
     "openid.sig": "x",
     ...over,
   });
+const map = (p: URLSearchParams) => singleValued(p)!;
+const cookieHeader = (uid = UID, state = STATE) => `other=1; ${STATE_COOKIE}=${stateCookieValue(state, uid)}`;
 const steamSays = (text: string, ok = true) => (async () => ({ ok, text: async () => text })) as unknown as typeof fetch;
 
 beforeEach(() => {
-  h.user = { id: "session-user" }; h.suspended = false; h.rpcCalls = []; h.rpcError = null; h.admin = true; h.upserts = []; h.upsertError = null;
+  h.user = { id: UID }; h.suspended = false; h.rpcCalls = []; h.rpcError = null; h.admin = true; h.upserts = []; h.upsertError = null;
   vi.stubEnv("SITE_URL", SITE);
 });
 
@@ -73,31 +80,59 @@ describe("steam.ts (pure)", () => {
     expect(parseClaimedId("https://steamcommunity.com/openid/id/123")).toBeNull();
     expect(parseClaimedId(null)).toBeNull();
   });
-  it("start URL: SITE_URL เป็น return_to/realm · identifier_select", () => {
-    const u = new URL(buildStartUrl(SITE));
+  it("start URL: SITE_URL + state เป็น return_to · realm · identifier_select", () => {
+    const u = new URL(buildStartUrl(SITE, STATE));
     expect(u.origin + u.pathname).toBe(STEAM_OPENID_ENDPOINT);
     expect(u.searchParams.get("openid.mode")).toBe("checkid_setup");
-    expect(u.searchParams.get("openid.return_to")).toBe(`${SITE}/link/steam/return`);
+    expect(u.searchParams.get("openid.return_to")).toBe(`${SITE}/link/steam/return?state=${STATE}`);
     expect(u.searchParams.get("openid.realm")).toBe(SITE);
     expect(u.searchParams.get("openid.claimed_id")).toMatch(/identifier_select$/);
   });
-  it("checkReturnParams: return_to / op_endpoint / mode / signed ผิด → false", () => {
-    expect(checkReturnParams(goodParams(), SITE)).toBe(true);
-    expect(checkReturnParams(goodParams({ "openid.return_to": "https://evil.com/link/steam/return" }), SITE)).toBe(false);
-    expect(checkReturnParams(goodParams({ "openid.op_endpoint": "https://evil.com/openid/login" }), SITE)).toBe(false);
-    expect(checkReturnParams(goodParams({ "openid.mode": "cancel" }), SITE)).toBe(false);
-    expect(checkReturnParams(goodParams({ "openid.signed": "signed,op_endpoint,return_to" }), SITE)).toBe(false); // claimed_id ไม่ถูกเซ็น
+  it("checkReturnParams: return_to / state / op_endpoint / mode / identity / signed ผิด → false", () => {
+    expect(checkReturnParams(map(goodParams()), SITE, STATE)).toBe(true);
+    expect(checkReturnParams(map(goodParams()), SITE, null)).toBe(false); // ไม่มี state ใน cookie
+    expect(checkReturnParams(map(goodParams()), SITE, "f".repeat(32))).toBe(false); // state ไม่ตรง
+    expect(checkReturnParams(map(goodParams({ "openid.return_to": `https://evil.com/link/steam/return?state=${STATE}` })), SITE, STATE)).toBe(false);
+    expect(checkReturnParams(map(goodParams({ "openid.return_to": `${SITE}/link/steam/return` })), SITE, STATE)).toBe(false); // ไม่มี state
+    expect(checkReturnParams(map(goodParams({ "openid.op_endpoint": "https://evil.com/openid/login" })), SITE, STATE)).toBe(false);
+    expect(checkReturnParams(map(goodParams({ "openid.mode": "cancel" })), SITE, STATE)).toBe(false);
+    expect(checkReturnParams(map(goodParams({ "openid.signed": "signed,op_endpoint,return_to" })), SITE, STATE)).toBe(false); // claimed_id ไม่ถูกเซ็น
+    expect(checkReturnParams(map(goodParams({ "openid.identity": `https://steamcommunity.com/openid/id/${OTHER64}` })), SITE, STATE)).toBe(false); // identity ≠ claimed_id
+  });
+  it("พารามิเตอร์ openid.* ซ้ำ → singleValued = null (กัน parser differential)", () => {
+    const dup = goodParams();
+    dup.append("openid.claimed_id", `https://steamcommunity.com/openid/id/${OTHER64}`);
+    expect(singleValued(dup)).toBeNull();
+    expect(singleValued(goodParams())).not.toBeNull();
+    // พารามิเตอร์ที่ไม่ใช่ openid.* ซ้ำได้ (ไม่เกี่ยวกับการเซ็น)
+    const extra = goodParams(); extra.append("x", "1"); extra.append("x", "2");
+    expect(singleValued(extra)).not.toBeNull();
+  });
+  it("nonce เก่า/อนาคตไกล/รูปแบบผิด → ไม่สด", () => {
+    const now = new Date("2026-10-27T10:00:00Z");
+    expect(nonceFresh("2026-10-27T09:58:00Zabc", now)).toBe(true);
+    expect(nonceFresh("2026-10-27T09:50:00Zabc", now)).toBe(false);
+    expect(nonceFresh("2026-10-27T10:20:00Zabc", now)).toBe(false);
+    expect(nonceFresh("garbage", now)).toBe(false);
+    expect(nonceFresh(undefined, now)).toBe(false);
+  });
+  it("readStateCookie: ต้องเป็นของ user นี้ · รูปแบบผิด/ของคนอื่น = null", () => {
+    expect(readStateCookie(cookieHeader(), UID)).toBe(STATE);
+    expect(readStateCookie(cookieHeader(OTHER_UID), UID)).toBeNull();
+    expect(readStateCookie(`${STATE_COOKIE}=nonsense`, UID)).toBeNull();
+    expect(readStateCookie("a=b", UID)).toBeNull();
+    expect(readStateCookie(null, UID)).toBeNull();
   });
   it("verifyAssertion: ไม่มี is_valid:true → ปฏิเสธ · ส่งเฉพาะ openid.* · mode = check_authentication", async () => {
-    expect(await verifyAssertion(goodParams(), steamSays("ns:x\nis_valid:false\n"))).toBe(false);
-    expect(await verifyAssertion(goodParams(), steamSays("is_valid:true\n", false))).toBe(false);
-    expect(await verifyAssertion(goodParams(), (async () => { throw new Error("net"); }) as unknown as typeof fetch)).toBe(false);
+    expect(await verifyAssertion(map(goodParams()), steamSays("ns:x\nis_valid:false\n"))).toBe(false);
+    expect(await verifyAssertion(map(goodParams()), steamSays("is_valid:true\n", false))).toBe(false);
+    expect(await verifyAssertion(map(goodParams()), (async () => { throw new Error("net"); }) as unknown as typeof fetch)).toBe(false);
     let sent = "";
     const spy = (async (_u: string, init: RequestInit) => { sent = String(init.body); return { ok: true, text: async () => "ns:x\nis_valid:true\n" }; }) as unknown as typeof fetch;
-    expect(await verifyAssertion(goodParams({ evil: "1" }), spy)).toBe(true);
+    expect(await verifyAssertion(map(goodParams({ evil: "1" })), spy)).toBe(true);
     const body = new URLSearchParams(sent);
     expect(body.get("openid.mode")).toBe("check_authentication");
-    expect(body.has("evil")).toBe(false);
+    expect(body.has("evil")).toBe(false); // singleValued เก็บเฉพาะ openid.*
   });
   it("SITE_URL ก่อนเสมอ · production ไม่มี = null", () => {
     expect(resolveSiteUrl({ SITE_URL: "https://a.example/" }, "https://x/y")).toBe("https://a.example");
@@ -106,10 +141,16 @@ describe("steam.ts (pure)", () => {
   });
   it("processSteamReturn: สำเร็จ → rpc ด้วย uid ที่ส่งมา + account_id · ระงับ/ไม่มี admin/ซ้ำ → error code", async () => {
     const rpc = async (fn: string, args: Record<string, unknown>) => { h.rpcCalls.push({ fn, args }); return { error: h.rpcError }; };
-    const base = { params: goodParams(), siteUrl: SITE, userId: "u1", suspended: false, admin: { rpc }, fetchFn: steamSays("is_valid:true") };
+    const base = { params: goodParams(), siteUrl: SITE, userId: "u1", suspended: false, admin: { rpc }, expectedState: STATE, fetchFn: steamSays("is_valid:true") };
     expect(await processSteamReturn(base)).toBe("/me?linked=steam");
     expect(h.rpcCalls).toEqual([{ fn: "link_steam_verified", args: { p_user_id: "u1", p_account_id: "22202" } }]);
     expect(await processSteamReturn({ ...base, suspended: true })).toBe("/me?link_error=suspended");
+    h.rpcCalls = [];
+    expect(await processSteamReturn({ ...base, expectedState: null })).toBe("/me?link_error=invalid"); // ไม่มี cookie state
+    const dup = goodParams(); dup.append("openid.claimed_id", `https://steamcommunity.com/openid/id/${OTHER64}`);
+    expect(await processSteamReturn({ ...base, params: dup })).toBe("/me?link_error=invalid"); // claimed_id ซ้ำ
+    expect(await processSteamReturn({ ...base, params: goodParams({ "openid.response_nonce": "2020-01-01T00:00:00Zold" }) })).toBe("/me?link_error=invalid"); // nonce เก่า
+    expect(h.rpcCalls).toEqual([]);
     expect(await processSteamReturn({ ...base, admin: null })).toBe("/me?link_error=unavailable");
     h.rpcError = { message: "STEAM_ALREADY_LINKED" };
     expect(await processSteamReturn(base)).toBe("/me?link_error=already");
@@ -119,7 +160,8 @@ describe("steam.ts (pure)", () => {
 });
 
 describe("route /link/steam/return", () => {
-  const call = (qs: URLSearchParams) => returnGET(new Request(`${SITE}/link/steam/return?${qs.toString()}`));
+  const call = (qs: URLSearchParams, cookie: string | null = cookieHeader()) =>
+    returnGET(new Request(`${SITE}/link/steam/return?${qs.toString()}`, { headers: cookie ? { cookie } : {} }));
   it("ไม่ล็อกอิน → /login · ไม่แตะ rpc", async () => {
     h.user = null;
     const res = await call(goodParams());
@@ -128,7 +170,7 @@ describe("route /link/steam/return", () => {
   });
   it("return_to ไม่ตรง → error · ไม่เรียก rpc", async () => {
     vi.stubGlobal("fetch", steamSays("is_valid:true"));
-    const res = await call(goodParams({ "openid.return_to": "https://evil.com/link/steam/return" }));
+    const res = await call(goodParams({ "openid.return_to": `https://evil.com/link/steam/return?state=${STATE}` }));
     expect(res.headers.get("location")).toBe(`${SITE}/me?link_error=invalid`);
     expect(h.rpcCalls).toEqual([]);
   });
@@ -138,11 +180,27 @@ describe("route /link/steam/return", () => {
     expect(res.headers.get("location")).toBe(`${SITE}/me?link_error=invalid`);
     expect(h.rpcCalls).toEqual([]);
   });
-  it("ผ่าน → rpc ด้วย uid จาก session (ไม่ใช่จาก query)", async () => {
+  it("ผ่าน → rpc ด้วย uid จาก session (ไม่ใช่จาก query) · ลบ cookie state หลังใช้", async () => {
     vi.stubGlobal("fetch", steamSays("ns:x\nis_valid:true\n"));
     const res = await call(goodParams({ user_id: "attacker", p_user_id: "attacker" }));
     expect(res.headers.get("location")).toBe(`${SITE}/me?linked=steam`);
-    expect(h.rpcCalls).toEqual([{ fn: "link_steam_verified", args: { p_user_id: "session-user", p_account_id: "22202" } }]);
+    expect(h.rpcCalls).toEqual([{ fn: "link_steam_verified", args: { p_user_id: UID, p_account_id: "22202" } }]);
+    expect(res.headers.get("set-cookie")).toMatch(new RegExp(`${STATE_COOKIE}=;`));
+  });
+  it("CSRF: ไม่มี cookie state / cookie ของคนอื่น / state ไม่ตรง → ไม่เรียก rpc (ลิงก์ return ของผู้โจมตีใช้กับเหยื่อไม่ได้)", async () => {
+    vi.stubGlobal("fetch", steamSays("is_valid:true"));
+    for (const cookie of [null, cookieHeader(OTHER_UID), cookieHeader(UID, "f".repeat(32))]) {
+      const res = await call(goodParams(), cookie);
+      expect(res.headers.get("location")).toBe(`${SITE}/me?link_error=invalid`);
+    }
+    expect(h.rpcCalls).toEqual([]);
+  });
+  it("openid.claimed_id ซ้ำใน URL → ไม่เรียก rpc", async () => {
+    vi.stubGlobal("fetch", steamSays("is_valid:true"));
+    const dup = goodParams(); dup.append("openid.claimed_id", `https://steamcommunity.com/openid/id/${OTHER64}`);
+    const res = await call(dup);
+    expect(res.headers.get("location")).toBe(`${SITE}/me?link_error=invalid`);
+    expect(h.rpcCalls).toEqual([]);
   });
   it("ไม่มี service role (getAdminDb = null) → 'ยังไม่เปิดใช้งาน'", async () => {
     vi.stubGlobal("fetch", steamSays("is_valid:true"));
@@ -153,11 +211,30 @@ describe("route /link/steam/return", () => {
 });
 
 describe("route /link/steam/start", () => {
-  it("ไม่ล็อกอิน → /login · ล็อกอิน → redirect ไป Steam", async () => {
+  it("ไม่ล็อกอิน → /login (ไม่ตั้ง cookie)", async () => {
     h.user = null;
-    expect((await startGET(new Request(`${SITE}/link/steam/start`))).headers.get("location")).toContain("/login?next=");
-    h.user = { id: "u" };
-    expect((await startGET(new Request(`${SITE}/link/steam/start`))).headers.get("location")).toMatch(/^https:\/\/steamcommunity\.com\/openid\/login\?/);
+    const res = await startGET(new Request(`${SITE}/link/steam/start`));
+    expect(res.headers.get("location")).toContain("/login?next=");
+    expect(res.headers.get("set-cookie")).toBeNull();
+  });
+  it("ล็อกอิน → redirect ไป Steam · state สุ่มใน return_to ตรงกับ cookie (HttpOnly · SameSite=Lax · ผูก user id)", async () => {
+    const res = await startGET(new Request(`${SITE}/link/steam/start`));
+    const loc = res.headers.get("location")!;
+    expect(loc).toMatch(/^https:\/\/steamcommunity\.com\/openid\/login\?/);
+    const state = new URL(new URL(loc).searchParams.get("openid.return_to")!).searchParams.get("state")!;
+    expect(state).toMatch(/^[0-9a-f]{32}$/);
+    const setCookie = res.headers.get("set-cookie")!;
+    expect(setCookie).toContain(`${STATE_COOKIE}=${state}.${UID}`);
+    expect(setCookie).toMatch(/HttpOnly/i);
+    expect(setCookie).toMatch(/SameSite=lax/i);
+    expect(setCookie).toMatch(/Path=\/link\/steam/);
+    // ต้องอ่านกลับได้ด้วย readStateCookie ของ user คนเดิม และของคนอื่นไม่ได้
+    const pair = setCookie.split(";")[0];
+    expect(readStateCookie(pair, UID)).toBe(state);
+    expect(readStateCookie(pair, OTHER_UID)).toBeNull();
+    // สุ่มใหม่ทุกครั้ง
+    const again = await startGET(new Request(`${SITE}/link/steam/start`));
+    expect(again.headers.get("set-cookie")).not.toBe(setCookie);
   });
 });
 
@@ -177,12 +254,12 @@ describe("MLBB", () => {
   it("linkMlbb ถูก → upsert status UNVERIFIED เสมอ (ส่ง status=VERIFIED มาก็ไม่มีผล)", async () => {
     const r = await linkMlbb({ ok: false, message: "" }, fd({ mlbb_id: "123456789", zone_id: "2001", status: "VERIFIED", user_id: "attacker" }));
     expect(r.ok).toBe(true);
-    expect(h.upserts).toEqual([{ user_id: "session-user", game: "MLBB", external_id: "123456789", zone_id: "2001", status: "UNVERIFIED" }]);
+    expect(h.upserts).toEqual([{ user_id: UID, game: "MLBB", external_id: "123456789", zone_id: "2001", status: "UNVERIFIED" }]);
   });
   it("ไม่ล็อกอิน / ถูกระงับ → ไม่ upsert", async () => {
     h.user = null;
     expect((await linkMlbb({ ok: false, message: "" }, fd({ mlbb_id: "123456789", zone_id: "2001" }))).ok).toBe(false);
-    h.user = { id: "u" }; h.suspended = true;
+    h.user = { id: UID }; h.suspended = true;
     expect((await linkMlbb({ ok: false, message: "" }, fd({ mlbb_id: "123456789", zone_id: "2001" }))).ok).toBe(false);
     expect(h.upserts).toEqual([]);
   });
@@ -211,7 +288,7 @@ describe("protected-paths + SQL 213", () => {
     expect(code).toContain("external_id ~ '^[0-9]{1,12}$'");
     expect(code).not.toMatch(/CREATE POLICY|DROP POLICY/);
   });
-  it("ไม่มีความลับ/อีเมลจริงในไฟล์ SQL และโค้ดผูกบัญชี", () => {
+  it("ไม่มีความลับ/อีเมลจริงในโค้ดผูกบัญชี", () => {
     for (const f of ["lib/game-accounts/steam.ts", "app/link/steam/return/route.ts", "app/link/steam/start/route.ts"]) {
       const t = readFileSync(join(process.cwd(), f), "utf8");
       expect(t).not.toMatch(/SUPABASE_SERVICE_ROLE_KEY|eyJ[A-Za-z0-9_-]{20,}|[\w.+-]+@[\w-]+\.[\w.]+/);
