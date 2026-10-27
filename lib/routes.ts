@@ -29,8 +29,11 @@ export const routes = {
   organizerSponsors: (g: GameSlug, id: string) => `/${g}/organizer/tournaments/${id}/sponsors`,
 } as const;
 
-/** revalidate หน้าเดียวกันของทุกเกม — server action ไม่ต้องเดาเกม (ไม่ใช้ DEFAULT) */
+/** revalidate หน้าเดียวกันของทุกเกม · ไม่โยน ไม่ reject (เรียกนอก request scope เช่นในเทส = เงียบ) */
 export async function revalidateAllGames(path: (g: GameSlug) => string): Promise<void> {
-  const { revalidatePath } = await import("next/cache");
-  for (const g of Object.keys(GAME_SLUGS) as GameSlug[]) revalidatePath(path(g));
+  let revalidatePath: ((p: string) => void) | undefined;
+  try { ({ revalidatePath } = await import("next/cache")); } catch { return; }
+  for (const g of Object.keys(GAME_SLUGS) as GameSlug[]) {
+    try { revalidatePath(path(g)); } catch { /* นอก request scope · ไม่ใช่ความผิดของ caller */ }
+  }
 }
