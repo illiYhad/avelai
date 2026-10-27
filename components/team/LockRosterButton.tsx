@@ -3,7 +3,7 @@
 // ปุ่มล็อก roster — เรียก lockRosterAction (ยกตรรกะจาก Zodiac actions/team.ts)
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { lockRosterAction } from "@/app/teams/actions";
+import { lockRosterAction } from "@/app/[game]/teams/actions";
 
 export function LockRosterButton({ teamId, locked }: { teamId: string; locked: boolean }) {
   const router = useRouter();

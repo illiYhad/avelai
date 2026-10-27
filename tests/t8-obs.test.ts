@@ -208,7 +208,7 @@ import { GET as tickerGet } from "@/app/obs/api/[tournamentId]/ticker/route";
 import { GET as sponsorsGet } from "@/app/obs/api/[tournamentId]/sponsors/route";
 import { OBS_CACHE_CONTROL, TICKER_LIMIT } from "@/lib/obs/handler";
 import { obsRequestLog } from "@/lib/obs/rate-limit";
-import { addSponsorAction, deleteSponsorAction, moveSponsorAction, setObsThemeAction, updateSponsorAction } from "@/app/organizer/tournaments/[id]/sponsors/actions";
+import { addSponsorAction, deleteSponsorAction, moveSponsorAction, setObsThemeAction, updateSponsorAction } from "@/app/[game]/organizer/tournaments/[id]/sponsors/actions";
 
 const T_VIEW = { tournament_id: TID, name: "Cup", game: "MLBB", format: "SE", status: "RUNNING", best_of: 3, obs_theme: "GOLD", organizer_id: "LEAK", email: "leak@x.y" };
 const ctx = (id = TID) => ({ params: Promise.resolve({ tournamentId: id }) });

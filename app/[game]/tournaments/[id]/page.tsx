@@ -1,0 +1,54 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { getServerDb } from "@/lib/db/server";
+import { gameLabel } from "@/lib/games";
+import { ENTRY_LABEL, FORMAT_LABEL, STATUS_LABEL, type EntryType, type TournamentFormat, type TournamentStatus } from "@/lib/tournament/state";
+import { routes } from "@/lib/routes";
+import { gameFromSlug, slugOf } from "@/lib/games";
+
+// K-AV-3: รายละเอียดทัวร์ (สาธารณะ) — ไม่แสดง promptpay_id ของผู้จัดที่นี่ (เห็นเฉพาะหน้าสมัครของหัวหน้าทีม)
+export const dynamic = "force-dynamic";
+
+const thai = (iso: string | null) => (iso ? new Date(iso).toLocaleString("th-TH", { timeZone: "Asia/Bangkok", dateStyle: "medium", timeStyle: "short" }) : "–");
+
+export default async function TournamentDetailPage({ params }: { params: Promise<{ game: string; id: string }> }) {
+  const { game, id } = await params;
+  const code = gameFromSlug(game);
+  if (!code) notFound();
+  const slug = slugOf(code);
+  const db = await getServerDb();
+  if (!db) return <main className="px-6 py-10 text-sm text-white/60">ยังไม่ต่อฐานข้อมูล</main>;
+  const { data: t } = await db.from("tournaments").select("id, name, game, format, team_size, best_of, status, reg_open_at, reg_close_at, check_in_minutes, start_at, max_teams, entry_type, entry_fee_thb, rules").eq("id", id).maybeSingle();
+  if (!t || t.game !== code) notFound(); // K-AV-UX2B: id ของอีกเกม = 404
+  const [{ data: auth }, { count }] = await Promise.all([
+    db.auth.getUser(),
+    db.from("registrations").select("id", { count: "exact", head: true }).eq("tournament_id", id).in("status", ["CONFIRMED", "CHECKED_IN"]),
+  ]);
+  const status = t.status as TournamentStatus;
+  return (
+    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-6 py-10">
+      <div>
+        <p className="text-xs tracking-widest text-cyan">{STATUS_LABEL[status] ?? t.status}</p>
+        <h1 className="text-2xl font-bold text-white">{t.name}</h1>
+      </div>
+      <dl className="grid grid-cols-[9rem_1fr] gap-y-1 text-sm">
+        <dt className="text-white/60">เกม</dt><dd>{gameLabel(t.game)} · {t.team_size}v{t.team_size}</dd>
+        <dt className="text-white/60">รูปแบบ</dt><dd>{FORMAT_LABEL[t.format as TournamentFormat] ?? t.format} · Best of {t.best_of}</dd>
+        <dt className="text-white/60">ค่าเข้า</dt><dd>{ENTRY_LABEL[t.entry_type as EntryType] ?? t.entry_type}{t.entry_type === "PAID" ? ` · ${Number(t.entry_fee_thb).toLocaleString("th-TH")} บาท/ทีม (โอนตรงผู้จัด)` : ""}</dd>
+        <dt className="text-white/60">รับสมัคร</dt><dd>{thai(t.reg_open_at)} – {thai(t.reg_close_at)}</dd>
+        <dt className="text-white/60">เริ่มแข่ง</dt><dd>{thai(t.start_at)} · เช็กอินก่อน {t.check_in_minutes} นาที</dd>
+        <dt className="text-white/60">ทีม</dt><dd className="font-numeric">{count ?? 0}{t.max_teams ? ` / ${t.max_teams}` : ""} ทีมยืนยันแล้ว</dd>
+      </dl>
+      {t.rules ? <section><h2 className="mb-1 text-sm font-semibold text-white/90">กติกา</h2><p className="whitespace-pre-wrap text-base text-white/80">{t.rules}</p></section> : null}
+      <div className="flex flex-wrap gap-3">
+        {status === "REGISTRATION" || status === "CHECK_IN" ? (
+          <Link href={routes.tournamentRegister(slug, id)} className="rounded btn-primary px-4 py-2 text-sm">
+            {auth.user ? (status === "CHECK_IN" ? "เช็กอิน / ดูใบสมัคร" : "สมัครแข่ง") : "เข้าสู่ระบบเพื่อสมัคร"}
+          </Link>
+        ) : null}
+        {status === "RUNNING" || status === "COMPLETED" || status === "SEEDING" ? <Link href={t.format === "SWISS" ? routes.tournamentSwiss(slug, id) : routes.tournamentBracket(slug, id)} className="rounded border border-white/30 px-4 py-2 text-sm text-white/80">{t.format === "SWISS" ? "ตาราง Swiss" : "ดูสาย"}</Link> : null}
+        <Link href={routes.tournaments(slug)} className="rounded border border-white/30 px-4 py-2 text-sm text-white/80">กลับรายการ</Link>
+      </div>
+    </main>
+  );
+}

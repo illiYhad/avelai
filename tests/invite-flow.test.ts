@@ -55,7 +55,7 @@ vi.mock("@/lib/db/admin", () => ({
   },
 }));
 
-import { invitePlayerAction } from "@/app/teams/actions";
+import { invitePlayerAction } from "@/app/[game]/teams/actions";
 
 const TEAM = { id: "t1", owner_id: "owner", captain_id: "captain", is_roster_locked: false };
 const invite = (identifier = "player1") => {

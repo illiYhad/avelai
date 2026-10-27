@@ -44,7 +44,7 @@ vi.mock("@/lib/db/admin", () => ({
   },
 }));
 
-import { createTeamAction } from "@/app/teams/actions";
+import { createTeamAction } from "@/app/[game]/teams/actions";
 
 function form() {
   const f = new FormData();

@@ -1,4 +1,4 @@
-import type { GameSlug } from "@/lib/games";
+import { GAME_SLUGS, type GameSlug } from "@/lib/games";
 
 // K-AV-UX2B: ลิงก์ทุกตัวของหน้าระบบใหม่ใต้ /[game]/ สร้างจากที่นี่เท่านั้น (pure · เทสใน tests/routes.test.ts)
 
@@ -28,3 +28,9 @@ export const routes = {
   organizerDisputes: (g: GameSlug, id: string) => `/${g}/organizer/tournaments/${id}/disputes`,
   organizerSponsors: (g: GameSlug, id: string) => `/${g}/organizer/tournaments/${id}/sponsors`,
 } as const;
+
+/** revalidate หน้าเดียวกันของทุกเกม — server action ไม่ต้องเดาเกม (ไม่ใช้ DEFAULT) */
+export async function revalidateAllGames(path: (g: GameSlug) => string): Promise<void> {
+  const { revalidatePath } = await import("next/cache");
+  for (const g of Object.keys(GAME_SLUGS) as GameSlug[]) revalidatePath(path(g));
+}

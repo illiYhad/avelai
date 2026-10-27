@@ -3,7 +3,7 @@
 // ยกจาก Zodiac components/team/InvitePlayerModal.tsx — เปลี่ยน identifier เป็น username
 // และปรับสีเข้าธีม AVELAi (#00D4FF / #0A0A0F)
 import React, { useState, useTransition } from "react";
-import { invitePlayerAction } from "@/app/teams/actions";
+import { invitePlayerAction } from "@/app/[game]/teams/actions";
 
 interface InvitePlayerModalProps {
   teamId: string;
