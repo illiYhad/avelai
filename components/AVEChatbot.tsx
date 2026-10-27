@@ -57,7 +57,7 @@ export default function AVEChatbot() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 font-mono">
+    <div className="fixed bottom-24 right-4 z-50 font-mono sm:bottom-6 sm:right-6">
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
