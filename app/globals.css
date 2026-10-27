@@ -34,8 +34,14 @@ html:not(:has([data-obs-root])) {
   color-scheme: dark;
 }
 
+/* K-AV-UX2A: พื้นกริดจางแบบหน้า login เดิม (จอ OBS ทับด้วย background: transparent !important) */
 body {
-  background: var(--color-void);
+  background-color: var(--color-void);
+  background-image:
+    linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-attachment: fixed;
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-size: 1rem;
