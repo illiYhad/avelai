@@ -4,6 +4,7 @@ const PROTECTED: RegExp[] = [
   /^\/me$/,
   /^\/me\/dota(\/.*)?$/, // K-AV-D2: การ์ด/แมตช์ Dota 2 ของตัวเอง
   /^\/profile$/,
+  /^\/link(\/.*)?$/, // K-AV-LINK: ผูกบัญชีเกม (Steam OpenID)
   /^\/teams\/create$/,
   /^\/team\/[^/]+\/(schedule|budget|scout)$/,
   // K-AV-3: สมัคร/ใบเสร็จทัวร์ · ฝั่งผู้จัด · Weekly Pass · ตรวจสลิป (เพิ่มอย่างเดียว)

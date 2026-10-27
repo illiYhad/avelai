@@ -4,6 +4,7 @@ import { requireUser, activeRoles, isSuspended } from "@/lib/auth/roles";
 import { signOutAction } from "@/app/auth/actions";
 import ProfileForm from "./ProfileForm";
 import DotaAccountForm from "./DotaAccountForm";
+import GameAccountsCard, { type DotaAccount, type MlbbAccount } from "./GameAccountsCard";
 import { routes } from "@/lib/routes";
 
 export const metadata = { title: "โปรไฟล์ — AVELAi" };
@@ -18,8 +19,9 @@ function thaiTime(iso: string): string {
   });
 }
 
-export default async function MePage() {
+export default async function MePage({ searchParams }: { searchParams: Promise<{ linked?: string; link_error?: string }> }) {
   const { db, user } = await requireUser("/me");
+  const sp = await searchParams;
 
   const [{ data: profile }, { data: roleRows }, dotaRes] = await Promise.all([
     db
@@ -28,10 +30,24 @@ export default async function MePage() {
       .eq("id", user.id)
       .single(),
     db.from("user_roles").select("role, revoked_at, expires_at").eq("user_id", user.id),
-    // K-AV-D1: ตาราง game_accounts มาจาก SQL 130 · ยังไม่รัน = error → แสดง "ยังเปิดใช้ไม่ได้"
-    db.from("game_accounts").select("external_id, status").eq("user_id", user.id).eq("game", "DOTA2").maybeSingle(),
+    // K-AV-D1/K-AV-LINK: game_accounts (SQL 130 · คอลัมน์ zone_id/verified_via มาจาก 213) · 213 ยังไม่รัน → อ่านแบบเดิมต่อ ไม่ล้ม
+    db.from("game_accounts").select("game, external_id, status, zone_id, verified_via").eq("user_id", user.id),
   ]);
-  const dota = dotaRes.data as { external_id: string; status: string } | null;
+  type AccRow = { game: string; external_id: string; status: string; zone_id?: string | null; verified_via?: string | null };
+  let accRows = dotaRes.data as AccRow[] | null;
+  let accError = Boolean(dotaRes.error);
+  if (dotaRes.error) {
+    const legacy = await db.from("game_accounts").select("game, external_id, status").eq("user_id", user.id);
+    accRows = legacy.data as AccRow[] | null;
+    accError = Boolean(legacy.error);
+  }
+  const dotaRow = accRows?.find((r) => r.game === "DOTA2") ?? null;
+  const mlbbRow = accRows?.find((r) => r.game === "MLBB") ?? null;
+  const dota = dotaRow;
+  const dotaAccount: DotaAccount = dotaRow
+    ? { external_id: dotaRow.external_id, verified: dotaRow.status === "VERIFIED", viaSteam: dotaRow.verified_via === "STEAM_OPENID" }
+    : null;
+  const mlbbAccount: MlbbAccount = mlbbRow ? { external_id: mlbbRow.external_id, zone_id: mlbbRow.zone_id ?? null } : null;
 
   const roles = activeRoles(roleRows ?? []);
   const suspended = profile ? isSuspended(profile) : false;
@@ -81,10 +97,18 @@ export default async function MePage() {
         avatarUrl={profile?.avatar_url ?? ""}
       />
 
+      <GameAccountsCard
+        dota={dotaAccount}
+        mlbb={mlbbAccount}
+        linked={sp.linked ?? null}
+        linkError={sp.link_error ?? null}
+        unavailable={accError}
+      />
+
       <DotaAccountForm
         externalId={dota?.external_id ?? null}
         verified={dota?.status === "VERIFIED"}
-        unavailable={Boolean(dotaRes.error)}
+        unavailable={accError}
       />
     </main>
   );
