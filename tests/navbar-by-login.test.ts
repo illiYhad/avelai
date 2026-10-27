@@ -24,6 +24,7 @@ vi.mock("@/lib/db/server", () => ({
       ? null
       : { auth: { getUser: async () => { h.getUserCalls++; return { data: { user: h.user } }; } } },
 }));
+vi.mock("@/app/auth/actions", () => ({ signOutAction: async () => {} }));
 vi.mock("@/components/AVEChatbot", () => ({ default: () => createElement("div", { "data-testid": "ave-chatbot" }) }));
 
 import { navFor } from "@/lib/nav";
@@ -35,13 +36,17 @@ const LEGACY = ["/dashboard", "/leaderboard", "/profile"];
 beforeEach(() => { h.user = null; h.dbOff = false; h.getUserCalls = 0; h.pathname = "/login"; });
 
 describe("navFor (pure)", () => {
-  it("ยังไม่ล็อกอิน → โลโก้ /login · ไม่มีเมนู · ไม่มีแชทบอท", () => {
-    expect(navFor(false)).toEqual({ home: "/login", links: [], showChatbot: false });
+  it("ยังไม่ล็อกอิน → โลโก้ /login · ไม่มีเมนู · ไม่มีตัวสลับเกม · ไม่มีแชทบอท", () => {
+    const m = navFor(false);
+    expect(m.home).toBe("/login");
+    expect(m.links).toEqual([]);
+    expect(m.showGameSwitcher).toBe(false);
+    expect(m.showChatbot).toBe(false);
   });
-  it("ล็อกอินแล้ว → โลโก้ /me · มีแต่ /me และ /teams · มีแชทบอท", () => {
+  it("ล็อกอินแล้ว (K-AV-UX2A) → ลิงก์ใต้ /mlbb/ · มีแชทบอท", () => {
     const m = navFor(true);
-    expect(m.home).toBe("/me");
-    expect(m.links.map((l) => l.href)).toEqual(["/me", "/teams", "/tournaments"]);
+    expect(m.home).toBe("/mlbb/tournaments");
+    expect(m.links.map((l) => l.href)).toEqual(["/mlbb/tournaments", "/mlbb/teams"]);
     expect(m.showChatbot).toBe(true);
   });
   it("ล็อกอินแล้วก็ไม่มีลิงก์ legacy", () => {
@@ -51,16 +56,18 @@ describe("navFor (pure)", () => {
 });
 
 describe("Navbar (render)", () => {
-  it("ยังไม่ล็อกอิน: โลโก้ชี้ /login · ไม่มี /dashboard /leaderboard /profile", () => {
+  it("ยังไม่ล็อกอิน: โลโก้ชี้ /login · มีปุ่มเข้าสู่ระบบ · ไม่มีลิงก์ legacy", () => {
     const html = renderToStaticMarkup(createElement(Navbar, { signedIn: false }));
     expect(html).toContain('href="/login"');
+    expect(html).toContain("เข้าสู่ระบบ");
     for (const p of LEGACY) expect(html).not.toContain(`href="${p}"`);
   });
-  it("ล็อกอินแล้ว: โลโก้ชี้ /me · ไม่มีลิงก์ legacy", () => {
+  it("ล็อกอินแล้วอยู่ /me: ลิงก์ใต้เกมที่จำไว้ (ค่าเริ่ม mlbb) · ไม่มีลิงก์ legacy", () => {
     h.pathname = "/me";
-    const html = renderToStaticMarkup(createElement(Navbar, { signedIn: true }));
-    expect(html).toContain('href="/me"');
-    expect(html).toContain('href="/teams"');
+    const html = renderToStaticMarkup(createElement(Navbar, { signedIn: true, username: "kolt" }));
+    expect(html).toContain('href="/mlbb/tournaments"');
+    expect(html).toContain('href="/mlbb/teams"');
+    expect(html).toContain('href="/mlbb/passport/kolt"');
     for (const p of LEGACY) expect(html).not.toContain(`href="${p}"`);
   });
 });

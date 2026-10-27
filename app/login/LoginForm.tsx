@@ -17,10 +17,10 @@ export default function LoginForm({ next }: { next: string }) {
   }
 
   return (
-    <form action={formAction} className="flex w-full max-w-sm flex-col gap-3">
+    <form action={formAction} className="flex w-full flex-col gap-3">
       <input type="hidden" name="next" value={next} />
-      <label htmlFor="email" className="text-sm text-white/80">
-        อีเมล
+      <label htmlFor="email" className="font-mono text-sm tracking-[0.15em] text-ink-muted">
+        {"// อีเมล"}
       </label>
       <input
         id="email"
@@ -29,12 +29,12 @@ export default function LoginForm({ next }: { next: string }) {
         required
         autoComplete="email"
         placeholder="you@example.com"
-        className="rounded border border-white/20 bg-transparent px-3 py-2 text-white outline-none focus:border-gold"
+        className="min-h-11 rounded-md border border-line bg-white/[0.03] px-3 py-2 text-base text-ink outline-none focus:border-gold"
       />
       <button
         type="submit"
         disabled={pending}
-        className="rounded btn-primary px-4 py-2 disabled:opacity-50"
+        className="btn-primary mt-2 min-h-12 rounded-md px-4 py-2 font-display tracking-[0.1em] disabled:opacity-50"
       >
         {pending ? "กำลังส่ง…" : "ส่งลิงก์เข้าสู่ระบบ"}
       </button>
