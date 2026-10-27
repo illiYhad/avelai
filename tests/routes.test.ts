@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { routes } from "@/lib/routes";
 import { gameFromSlug, slugOf, GAME_SLUGS, type GameSlug } from "@/lib/games";
 
@@ -30,5 +30,17 @@ describe("gameFromSlug / slugOf", () => {
   it("slugOf กลับด้าน", () => {
     expect(slugOf("MLBB")).toBe("mlbb");
     expect(slugOf("DOTA2")).toBe("dota2");
+  });
+});
+
+describe("revalidateAllGames", () => {
+  it("revalidatePath โยน (นอก request scope) → resolve ไม่ reject · ลองครบทั้ง 2 เกม", async () => {
+    const calls: string[] = [];
+    vi.doMock("next/cache", () => ({ revalidatePath: (p: string) => { calls.push(p); throw new Error("outside request scope"); } }));
+    vi.resetModules();
+    const { revalidateAllGames } = await import("@/lib/routes");
+    await expect(revalidateAllGames((g) => `/${g}/x`)).resolves.toBeUndefined();
+    expect(calls).toEqual(["/mlbb/x", "/dota2/x"]);
+    vi.doUnmock("next/cache");
   });
 });

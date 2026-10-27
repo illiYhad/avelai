@@ -190,7 +190,7 @@ describe("role helpers", () => {
 
 // K-AV-FIX2.1: is_platform_organizer นับ SUPER_ADMIN + เช็กหมดอายุ
 describe("SQL 212 · is_platform_organizer", () => {
-  const code212 = readFileSync(join(root, "supabase/migrations/212_platform_organizer_super_admin.sql"), "utf8").replace(/--.*$/gm, "");
+  const code212 = readFileSync(join(root, "supabase/migrations/212_platform_organizer_super_admin.sql"), "utf8").replace(/\r\n/g, "\n").replace(/--.*$/gm, "");
   it("ห่อ BEGIN/COMMIT · ลายเซ็นเดิม", () => {
     expect(code212.trim().startsWith("BEGIN;")).toBe(true);
     expect(code212.trim().endsWith("COMMIT;")).toBe(true);
