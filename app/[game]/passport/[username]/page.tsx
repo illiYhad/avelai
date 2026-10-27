@@ -2,8 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth/roles";
 import { winRate } from "@/lib/elo/elo";
-import { gameLabel } from "@/lib/games";
 import { routes } from "@/lib/routes";
+import PageHeader from "@/components/ui/PageHeader";
+import Surface from "@/components/ui/Surface";
+import Stat from "@/components/ui/Stat";
+import GameTag from "@/components/ui/GameTag";
+import EmptyState from "@/components/ui/EmptyState";
 import { gameFromSlug, slugOf } from "@/lib/games";
 
 // K-AV-7: Passport สาธารณะ (ผู้ล็อกอิน) — อ่านจาก view passport_v (security_invoker · เฉพาะข้อมูลสาธารณะ) + elo_history (เฉพาะแมตช์ COMPLETED)
@@ -34,43 +38,50 @@ export default async function PassportPage({ params }: { params: Promise<{ game:
   const karma = rows[0].karma;
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col gap-6 px-6 py-10">
-      <div>
-        <p className="text-xs tracking-widest text-cyan">PASSPORT</p>
-        <h1 className="font-display text-2xl tracking-[0.15em] text-gold">{rows[0].username}</h1>
-        <p className="text-sm text-white/70">Karma <span className={`font-numeric ${karma < 50 ? "text-red-300" : karma < 70 ? "text-amber-300" : "text-white"}`}>{karma}</span> / 100
-          {karma < 70 ? <span className="text-xs text-amber-300"> · ลงได้เฉพาะทัวร์ฟรี{karma < 50 ? " · อาจถูกบล็อก 7 วัน" : ""}</span> : null}
-          {userId === user.id ? <> · <Link href="/me" className="text-xs underline">โปรไฟล์</Link></> : null}
-        </p>
-      </div>
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
+      <PageHeader
+        eyebrow="// PASSPORT"
+        title={rows[0].username}
+        subtitle={
+          <span>
+            Karma <span className={`font-mono tabular-nums ${karma < 50 ? "text-red-300" : karma < 70 ? "text-amber-300" : "text-ink"}`}>{karma}</span> / 100
+            {karma < 70 ? <span className="text-sm text-amber-300"> · ลงได้เฉพาะทัวร์ฟรี{karma < 50 ? " · อาจถูกบล็อก 7 วัน" : ""}</span> : null}
+            {userId === user.id ? <> · <Link href="/me" className="text-sm text-cyan underline">โปรไฟล์</Link></> : null}
+          </span>
+        }
+        aside={<GameTag game={slug} />}
+      />
 
-      <section className="grid gap-3 sm:grid-cols-2">
+      <section className="flex flex-col gap-3">
         {rows.map((r) => (
-          <div key={r.game} className="flex flex-col gap-1 rounded border border-white/15 p-4 text-sm">
-            <p className="text-xs tracking-widest text-cyan">{gameLabel(r.game)}</p>
-            <p className="font-numeric text-2xl text-white">{r.rating} <span className="text-xs text-white/50">ELO · สูงสุด {r.peak}</span></p>
-            <p className="text-white/80">ชนะ <span className="font-numeric">{r.wins}</span> · แพ้ <span className="font-numeric">{r.losses}</span> · Win rate <span className="font-numeric">{winRate(r.wins, r.matches)}%</span></p>
-            <p className="text-xs text-white/60">แมตช์ที่นับ {r.games_played} · ทัวร์ที่ลง {r.tournaments_entered}</p>
-          </div>
+          <Surface key={r.game} as="article" glow="gold" className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <Stat label="// ELO" value={r.rating} tone="gold" />
+            <Stat label="// KARMA" value={karma} tone="cyan" />
+            <Stat label="// WIN RATE" value={`${winRate(r.wins, r.matches)}%`} />
+            <Stat label="// ทัวร์ที่ลง" value={r.tournaments_entered} />
+            <p className="col-span-2 text-sm text-ink-muted sm:col-span-4">
+              ชนะ <span className="font-mono tabular-nums text-ink">{r.wins}</span> · แพ้ <span className="font-mono tabular-nums text-ink">{r.losses}</span> · สูงสุด <span className="font-mono tabular-nums text-ink">{r.peak}</span> · แมตช์ที่นับ {r.games_played}
+            </p>
+          </Surface>
         ))}
       </section>
 
-      <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold text-white/90">ประวัติแมตช์ (COMPLETED · ล่าสุด {hist.length})</h2>
-        {hist.length === 0 ? <p className="text-sm text-white/60">ยังไม่มีแมตช์ที่นับ ELO</p> : (
-          <ul className="flex flex-col gap-1 text-sm">
+      <section className="flex flex-col gap-3">
+        <h2 className="font-mono text-sm tracking-[0.2em] text-ink-muted">{"// ประวัติแมตช์"} (ล่าสุด {hist.length})</h2>
+        {hist.length === 0 ? <EmptyState message="ยังไม่มีแมตช์ที่นับ ELO" /> : (
+          <ul className="flex flex-col gap-2">
             {hist.map((h) => {
               const m = Array.isArray(h.tournament_matches) ? h.tournament_matches[0] : h.tournament_matches;
               const t = m ? (Array.isArray(m.tournaments) ? m.tournaments[0] : m.tournaments) : null;
               const d = h.after - h.before;
               return (
-                <li key={h.match_id} className="flex flex-wrap items-center gap-2 rounded border border-white/10 px-3 py-2">
-                  <span className={h.won ? "text-emerald-300" : "text-red-300"}>{h.won ? "ชนะ" : "แพ้"}</span>
-                  <span className="text-white/80">{t?.name ?? "ทัวร์"} · {m?.stage} R{m?.round} · {gameLabel(h.game)}</span>
-                  <span className="font-numeric text-white/70">{h.before} → {h.after} ({d >= 0 ? "+" : ""}{d}) · K{h.k}</span>
-                  <span className="text-xs text-white/50">{new Date(h.created_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}</span>
-                  <Link href={routes.match(slug, h.match_id)} className="text-xs text-cyan underline">ห้องแมตช์</Link>
-                </li>
+                <Surface key={h.match_id} as="li" className="flex flex-wrap items-center gap-x-3 gap-y-1 !p-4 text-sm">
+                  <span className={`rounded px-2 py-0.5 text-xs font-semibold ${h.won ? "bg-emerald-400/15 text-emerald-200" : "bg-red-400/15 text-red-200"}`}>{h.won ? "ชนะ" : "แพ้"}</span>
+                  <span className="text-base text-ink">{t?.name ?? "ทัวร์"} · {m?.stage} R{m?.round}</span>
+                  <span className="font-mono tabular-nums text-ink-muted">{h.before} → {h.after} ({d >= 0 ? "+" : ""}{d}) · K{h.k}</span>
+                  <span className="text-xs text-ink-muted">{new Date(h.created_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}</span>
+                  <Link href={routes.match(slug, h.match_id)} className="ml-auto flex min-h-11 items-center text-sm text-cyan underline">ห้องแมตช์</Link>
+                </Surface>
               );
             })}
           </ul>
