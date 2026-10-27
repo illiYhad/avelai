@@ -62,11 +62,11 @@ export const PlayerVerticalProfile: React.FC<PlayerVerticalProfileProps> = ({
       {/* 1. Header: Sub Tier & Operator ID */}
       <div>
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-mono tracking-widest text-slate-500 uppercase">
+          <span className="text-xs font-mono tracking-widest text-slate-500 uppercase">
             ID: {userId}
           </span>
           <span
-            className={`text-[10px] font-black px-2.5 py-0.5 rounded-md tracking-wider border font-mono uppercase ${isPro
+            className={`text-xs font-black px-2.5 py-0.5 rounded-md tracking-wider border font-mono uppercase ${isPro
               ? 'bg-amber-500/10 text-amber-400 border-amber-500/40 shadow-sm shadow-amber-500/20'
               : 'bg-slate-800 text-slate-400 border-slate-700'
               }`}
@@ -112,7 +112,7 @@ export const PlayerVerticalProfile: React.FC<PlayerVerticalProfileProps> = ({
           <h2 className="text-lg font-black text-white tracking-wide truncate group-hover:text-cyan-300 transition-colors font-mono">
             {username}
           </h2>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-950 border border-slate-800 text-[11px] font-semibold text-slate-400">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-950 border border-slate-800 text-xs font-semibold text-slate-400">
             <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-ping" />
             <span>{rankTitle}</span>
           </div>
@@ -131,11 +131,11 @@ export const PlayerVerticalProfile: React.FC<PlayerVerticalProfileProps> = ({
         {/* Circuit Points Metric */}
         <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3 flex justify-between items-center">
           <div>
-            <div className="text-[10px] uppercase font-mono tracking-wider text-slate-400 font-bold">
+            <div className="text-xs uppercase font-mono tracking-wider text-slate-400 font-bold">
               Circuit Points
             </div>
             <div className="text-base font-black text-indigo-400 font-mono">
-              {circuitPoints.toLocaleString()} <span className="text-[11px] font-normal text-slate-500">CP</span>
+              {circuitPoints.toLocaleString()} <span className="text-xs font-normal text-slate-500">CP</span>
             </div>
           </div>
           <div className="text-indigo-400/40 text-xl font-mono font-black">#88</div>
@@ -144,16 +144,16 @@ export const PlayerVerticalProfile: React.FC<PlayerVerticalProfileProps> = ({
         {/* Tokens & Cash Row */}
         <div className="grid grid-cols-2 gap-2">
           <div className="bg-slate-950/70 border border-amber-500/20 rounded-xl p-2.5">
-            <div className="text-[9px] uppercase font-mono tracking-wider text-slate-400 font-bold">
+            <div className="text-xs uppercase font-mono tracking-wider text-slate-400 font-bold">
               Tokens
             </div>
             <div className="text-xs font-black text-amber-400 font-mono">
-              {tokens} <span className="text-[10px] text-slate-500 font-normal">({tokens * 9}฿)</span>
+              {tokens} <span className="text-xs text-slate-500 font-normal">({tokens * 9}฿)</span>
             </div>
           </div>
 
           <div className="bg-slate-950/70 border border-emerald-500/20 rounded-xl p-2.5">
-            <div className="text-[9px] uppercase font-mono tracking-wider text-slate-400 font-bold">
+            <div className="text-xs uppercase font-mono tracking-wider text-slate-400 font-bold">
               Cash Pot
             </div>
             <div className="text-xs font-black text-emerald-400 font-mono">

@@ -20,7 +20,7 @@ export function Countdown({ deadline }: { deadline: string }) {
 }
 
 export function ReadyButton({ action, label }: { action: () => Promise<MatchActionState>; label: string }) {
-  return <ActionButton action={action} label={label} className="rounded bg-gold px-4 py-2 text-sm font-semibold text-void" />;
+  return <ActionButton action={action} label={label} className="rounded btn-primary px-4 py-2 text-sm" />;
 }
 
 export function ReportForm({ action, teamA, teamB, bestOf }: { action: (p: MatchActionState, f: FormData) => Promise<MatchActionState>; teamA: { id: string; label: string }; teamB: { id: string; label: string }; bestOf: number }) {
@@ -40,7 +40,7 @@ export function ReportForm({ action, teamA, teamB, bestOf }: { action: (p: Match
         <input name="evidence" type="file" accept="image/jpeg,image/png,image/webp" multiple required className="mt-1 block text-xs" />
       </label>
       <label className="text-xs text-white/70">หมายเหตุ<input name="note" maxLength={500} className={`mt-1 w-full ${input}`} /></label>
-      <button type="submit" disabled={pending} className="w-fit rounded bg-gold px-4 py-2 text-sm font-semibold text-void disabled:opacity-50">{pending ? "กำลังส่ง…" : "ส่งผล"}</button>
+      <button type="submit" disabled={pending} className="w-fit rounded btn-primary px-4 py-2 text-sm disabled:opacity-50">{pending ? "กำลังส่ง…" : "ส่งผล"}</button>
       <Msg state={state} />
       {state.warning ? <p className="text-sm text-amber-300">{state.warning}</p> : null}
     </form>

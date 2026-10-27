@@ -41,7 +41,7 @@ export default async function MatchRoomPage({ params }: { params: Promise<{ id: 
     <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col gap-6 px-6 py-10">
       <div>
         <p className="text-xs tracking-widest text-cyan">{MATCH_LABEL[status] ?? m.status} · {m.stage} รอบ {m.round} #{m.position} · Best of {m.best_of}</p>
-        <h1 className="text-xl font-bold text-white">{label(m.team_a_id)} <span className="text-white/40">vs</span> {label(m.team_b_id)}</h1>
+        <h1 className="text-xl font-bold text-white">{label(m.team_a_id)} <span className="text-white/60">vs</span> {label(m.team_b_id)}</h1>
         <p className="text-xs text-white/60">{t?.name} · <Link href={`/tournaments/${m.tournament_id}`} className="underline">ทัวร์</Link> · <Link href={`/matches/${id}/evidence`} className="underline">สมุดหลักฐาน</Link></p>
       </div>
 

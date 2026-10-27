@@ -76,19 +76,19 @@ export function BudgetClient({ teamId, items, members }: Props) {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <div className="rounded-lg border border-white/10 bg-[#12121A] p-3">
-          <p className="text-[10px] font-mono text-neutral-500 uppercase">เงินเดือนรวม</p>
+          <p className="text-xs font-mono text-neutral-500 uppercase">เงินเดือนรวม</p>
           <p className="text-lg font-bold mt-1">{fmt(totals.salaryTotal)} ฿</p>
         </div>
         <div className="rounded-lg border border-white/10 bg-[#12121A] p-3">
-          <p className="text-[10px] font-mono text-neutral-500 uppercase">ค่าใช้จ่ายอื่น</p>
+          <p className="text-xs font-mono text-neutral-500 uppercase">ค่าใช้จ่ายอื่น</p>
           <p className="text-lg font-bold mt-1">{fmt(totals.expenseTotal)} ฿</p>
         </div>
         <div className="rounded-lg border border-white/10 bg-[#12121A] p-3">
-          <p className="text-[10px] font-mono text-neutral-500 uppercase">รายรับ</p>
+          <p className="text-xs font-mono text-neutral-500 uppercase">รายรับ</p>
           <p className="text-lg font-bold mt-1 text-emerald-400">{fmt(totals.incomeTotal)} ฿</p>
         </div>
         <div className={`rounded-lg border p-3 ${totals.net >= 0 ? "border-emerald-500/40 bg-emerald-500/5" : "border-rose-500/40 bg-rose-500/5"}`}>
-          <p className="text-[10px] font-mono text-neutral-500 uppercase">คงเหลือ/เดือน</p>
+          <p className="text-xs font-mono text-neutral-500 uppercase">คงเหลือ/เดือน</p>
           <p className={`text-lg font-bold mt-1 ${totals.net >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
             {fmt(totals.net)} ฿
           </p>

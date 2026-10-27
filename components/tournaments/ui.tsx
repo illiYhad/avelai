@@ -37,7 +37,7 @@ export function DecisionForm({ review }: { review: (decision: "VERIFIED" | "REJE
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap gap-2">
-        <button type="button" disabled={pending} onClick={() => start(async () => setState(await review("VERIFIED", "")))} className="rounded bg-gold px-3 py-1.5 text-sm font-semibold text-void disabled:opacity-50">
+        <button type="button" disabled={pending} onClick={() => start(async () => setState(await review("VERIFIED", "")))} className="rounded btn-primary px-3 py-1.5 text-sm disabled:opacity-50">
           ยืนยันสลิป
         </button>
         <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="เหตุผลที่ปฏิเสธ (บังคับ)" className="min-w-0 flex-1 rounded border border-white/20 bg-transparent px-2 py-1 text-sm text-white" />

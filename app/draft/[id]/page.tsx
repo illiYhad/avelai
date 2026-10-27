@@ -61,7 +61,7 @@ function CaptainHeaderCard({
                         </div>
                     </div>
                     <div
-                        className="absolute -bottom-1 -left-1 px-1 text-[7px] font-black rounded border"
+                        className="absolute -bottom-1 -left-1 px-1 text-xs font-black rounded border"
                         style={{ borderColor: role.hex, color: role.hex, backgroundColor: '#020617' }}
                     >
                         P{player.pos}
@@ -72,16 +72,16 @@ function CaptainHeaderCard({
                     <div className="flex items-center justify-between">
                         <div className="font-black text-xs text-white truncate flex items-center gap-1">
                             {player.name}
-                            <span className={`text-[7px] px-1 rounded border ${isRadiant ? 'bg-[#00D4FF]/20 text-[#00D4FF] border-[#00D4FF]/40' : 'bg-[#C9A84C]/20 text-[#C9A84C] border-[#C9A84C]/40'}`}>
+                            <span className={`text-xs px-1 rounded border ${isRadiant ? 'bg-[#00D4FF]/20 text-[#00D4FF] border-[#00D4FF]/40' : 'bg-[#C9A84C]/20 text-[#C9A84C] border-[#C9A84C]/40'}`}>
                                 CAPTAIN
                             </span>
                         </div>
-                        <span className="text-[8px] font-black" style={{ color: role.hex }}>
+                        <span className="text-xs font-black" style={{ color: role.hex }}>
                             {role.name}
                         </span>
                     </div>
 
-                    <div className="mt-1 flex items-center justify-between text-[8px] bg-black/60 px-2 py-0.5 rounded border border-white/5">
+                    <div className="mt-1 flex items-center justify-between text-xs bg-black/60 px-2 py-0.5 rounded border border-white/5">
                         <span className="text-[#C9A84C] font-bold">{player.currentElo} ELO</span>
                         <span className="text-zinc-500">|</span>
                         <span className="text-emerald-400 font-bold">{player.winRate}% WR</span>
@@ -121,21 +121,21 @@ function VerticalDraftedCard({
             <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 ${isRadiant ? 'border-[#00D4FF]' : 'border-[#C9A84C]'}`} />
 
             {player.pickOrder && (
-                <div className="absolute top-1.5 right-1.5 z-20 px-1.5 py-0.5 rounded bg-linear-to-r from-[#C9A84C] to-amber-500 text-black text-[8px] font-black shadow-[0_0_10px_rgba(201,168,76,0.8)]">
+                <div className="absolute top-1.5 right-1.5 z-20 px-1.5 py-0.5 rounded bg-linear-to-r from-[#C9A84C] to-amber-500 text-black text-xs font-black shadow-[0_0_10px_rgba(201,168,76,0.8)]">
                     #{player.pickOrder} PICK
                 </div>
             )}
 
             <div className="relative w-full h-22 bg-slate-900 border border-[#C9A84C]/50 rounded-lg overflow-hidden flex items-center justify-center shadow-inner">
                 <div className="w-full h-full bg-linear-to-tr from-black via-slate-900 to-[#1e2433] flex flex-col items-center justify-center relative">
-                    <span className="text-[8px] text-[#C9A84C] font-bold tracking-wider">GACHA CARD</span>
+                    <span className="text-xs text-[#C9A84C] font-bold tracking-wider">GACHA CARD</span>
                     <span className="text-sm font-black text-white group-hover:scale-110 transition-transform duration-300">{player.avatarPlaceholder || player.name.substring(0, 2).toUpperCase()}</span>
                     {isJustDrafted && (
                         <div className="absolute inset-0 bg-linear-to-t from-[#00D4FF]/30 to-[#C9A84C]/30 animate-pulse pointer-events-none" />
                     )}
                 </div>
                 <div
-                    className="absolute bottom-1 left-1 px-1 text-[7px] font-black rounded border shadow"
+                    className="absolute bottom-1 left-1 px-1 text-xs font-black rounded border shadow"
                     style={{ borderColor: role.hex, color: role.hex, backgroundColor: '#020617' }}
                 >
                     POS {player.pos}
@@ -144,24 +144,24 @@ function VerticalDraftedCard({
 
             <div className="space-y-1 mt-1">
                 <div className="flex items-center justify-between">
-                    <div className="font-black text-[11px] text-white truncate group-hover:text-cyan-300 transition-colors">{player.name}</div>
-                    <span className="text-[7px] font-bold" style={{ color: role.hex }}>{role.name}</span>
+                    <div className="font-black text-xs text-white truncate group-hover:text-cyan-300 transition-colors">{player.name}</div>
+                    <span className="text-xs font-bold" style={{ color: role.hex }}>{role.name}</span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-1 text-[8px] bg-black/60 p-1 rounded border border-white/5 text-center">
+                <div className="grid grid-cols-2 gap-1 text-xs bg-black/60 p-1 rounded border border-white/5 text-center">
                     <div>
-                        <div className="text-[6px] text-zinc-500 uppercase">ELO</div>
+                        <div className="text-xs text-zinc-500 uppercase">ELO</div>
                         <div className="font-black text-[#C9A84C]">{player.currentElo}</div>
                     </div>
                     <div>
-                        <div className="text-[6px] text-zinc-500 uppercase">WIN RATE</div>
+                        <div className="text-xs text-zinc-500 uppercase">WIN RATE</div>
                         <div className="font-black text-emerald-400">{player.winRate}%</div>
                     </div>
                 </div>
             </div>
 
             <div
-                className={`w-full py-0.5 rounded border flex items-center justify-center gap-1 text-[7px] font-black tracking-wider ${isRadiant
+                className={`w-full py-0.5 rounded border flex items-center justify-center gap-1 text-xs font-black tracking-wider ${isRadiant
                     ? 'bg-[#00D4FF]/15 border-[#00D4FF]/40 text-[#00D4FF] shadow-[0_0_8px_rgba(0,212,255,0.2)]'
                     : 'bg-[#C9A84C]/15 border-[#C9A84C]/40 text-[#C9A84C] shadow-[0_0_8px_rgba(201,168,76,0.2)]'
                     }`}
@@ -196,8 +196,8 @@ function VerticalEmptySlot({
                 }`}
         >
             <UserPlus className={`w-5 h-5 ${isTeamActive ? isRadiant ? 'text-[#00D4FF]' : 'text-[#C9A84C]' : 'text-zinc-700'}`} />
-            <span className="text-[9px] font-bold uppercase tracking-wider">MEMBER SLOT #{slotIndex}</span>
-            <span className="text-[8px]">{isTeamActive ? 'READY TO RECEIVE PICK' : 'AWAITING DRAFT'}</span>
+            <span className="text-xs font-bold uppercase tracking-wider">MEMBER SLOT #{slotIndex}</span>
+            <span className="text-xs">{isTeamActive ? 'READY TO RECEIVE PICK' : 'AWAITING DRAFT'}</span>
         </div>
     );
 }
@@ -231,7 +231,7 @@ function SnakeMatrix10Slots3D({
         <div className="w-full h-full flex flex-col justify-between items-center font-mono">
             <div className="w-full flex justify-between items-center bg-slate-950 border border-slate-800 p-3.5 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.5)]">
                 <div>
-                    <div className="text-[9px] text-zinc-400 uppercase flex items-center gap-1.5">
+                    <div className="text-xs text-zinc-400 uppercase flex items-center gap-1.5">
                         <Sparkles className="w-3 h-3 text-[#C9A84C]" /> ACTIVE PROTOCOL TURN
                     </div>
                     <div className="text-sm font-black mt-0.5 flex items-center gap-2">
@@ -309,23 +309,23 @@ function SnakeMatrix10Slots3D({
                             >
                                 {node.player ? (
                                     <div className="w-full h-full flex flex-col justify-between text-center relative z-10">
-                                        <div className="flex justify-between items-center text-[7px] font-black">
+                                        <div className="flex justify-between items-center text-xs font-black">
                                             <span className={isRadiant ? 'text-[#00D4FF]' : 'text-[#C9A84C]'}>
                                                 {node.assignedTeam}
                                             </span>
-                                            <span className="text-[6px] text-zinc-400">#{i + 1}</span>
+                                            <span className="text-xs text-zinc-400">#{i + 1}</span>
                                         </div>
 
-                                        <div className="w-8 h-8 mx-auto rounded bg-slate-950 border border-[#C9A84C]/60 flex items-center justify-center text-[9px] font-black text-[#C9A84C] shadow">
+                                        <div className="w-8 h-8 mx-auto rounded bg-slate-950 border border-[#C9A84C]/60 flex items-center justify-center text-xs font-black text-[#C9A84C] shadow">
                                             {node.player.name.substring(0, 2).toUpperCase()}
                                         </div>
 
                                         <div>
-                                            <div className="text-[8px] font-black text-white truncate px-0.5">
+                                            <div className="text-xs font-black text-white truncate px-0.5">
                                                 {node.player.name}
                                             </div>
                                             <div
-                                                className="text-[6px] font-black px-1 py-0.2 rounded mt-0.5"
+                                                className="text-xs font-black px-1 py-0.2 rounded mt-0.5"
                                                 style={{ color: role?.hex, backgroundColor: '#020617' }}
                                             >
                                                 POS {node.player.pos} ({role?.name})
@@ -334,11 +334,11 @@ function SnakeMatrix10Slots3D({
                                     </div>
                                 ) : (
                                     <div className="w-full h-full flex flex-col items-center justify-center text-center">
-                                        <span className="text-[8px] text-zinc-500 font-bold">SLOT #{i + 1}</span>
-                                        <span className={`text-[9px] font-black mt-1 ${isRadiant ? 'text-[#00D4FF]' : 'text-[#C9A84C]'}`}>
+                                        <span className="text-xs text-zinc-500 font-bold">SLOT #{i + 1}</span>
+                                        <span className={`text-xs font-black mt-1 ${isRadiant ? 'text-[#00D4FF]' : 'text-[#C9A84C]'}`}>
                                             {node.assignedTeam}
                                         </span>
-                                        <span className="text-[6px] text-zinc-600 mt-1">AWAITING</span>
+                                        <span className="text-xs text-zinc-600 mt-1">AWAITING</span>
                                     </div>
                                 )}
                             </div>
@@ -347,7 +347,7 @@ function SnakeMatrix10Slots3D({
                 </div>
             </div>
 
-            <div className="w-full bg-slate-950 p-2.5 rounded-xl border border-[#C9A84C]/30 text-[10px] text-zinc-400 text-center flex items-center justify-center gap-2">
+            <div className="w-full bg-slate-950 p-2.5 rounded-xl border border-[#C9A84C]/30 text-xs text-zinc-400 text-center flex items-center justify-center gap-2">
                 <AlertCircle className="w-3.5 h-3.5 text-[#C9A84C]" />
                 <span>ระบบจำกัดเวลา 30 วิ/รอบ: หากกัปตันไม่ทำการเลือก ระบบจะดำเนินการ Random Pick ให้ทันที</span>
             </div>
@@ -390,12 +390,12 @@ function MasterGoldPlayerCard({
                 <div className="relative shrink-0">
                     <div className="w-14 h-18 bg-slate-900 border-2 border-[#C9A84C]/80 group-hover:border-[#00D4FF] group-hover:shadow-[0_0_15px_rgba(0,212,255,0.5)] rounded-lg overflow-hidden flex items-center justify-center relative shadow-inner group-hover:scale-105 transition-all duration-300">
                         <div className="w-full h-full bg-linear-to-tr from-black via-slate-900 to-[#1e2538] flex flex-col items-center justify-center">
-                            <span className="text-[8px] text-[#C9A84C] group-hover:text-[#00D4FF] font-bold transition-colors">GACHA</span>
+                            <span className="text-xs text-[#C9A84C] group-hover:text-[#00D4FF] font-bold transition-colors">GACHA</span>
                             <span className="text-xs font-black text-white group-hover:text-cyan-200 transition-colors">{player.avatarPlaceholder || player.name.substring(0, 2).toUpperCase()}</span>
                         </div>
                     </div>
                     <div
-                        className="absolute -bottom-2 -left-1 px-1.5 py-0.2 text-[8px] font-black rounded border tracking-wider shadow-md"
+                        className="absolute -bottom-2 -left-1 px-1.5 py-0.2 text-xs font-black rounded border tracking-wider shadow-md"
                         style={{ borderColor: role.hex, color: role.hex, backgroundColor: '#020617' }}
                     >
                         POS {player.pos}
@@ -405,22 +405,22 @@ function MasterGoldPlayerCard({
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1 border-b border-[#C9A84C]/20 group-hover:border-[#00D4FF]/30 pb-1 transition-colors">
                         <div className="font-black text-xs text-zinc-100 truncate group-hover:text-cyan-300 transition-colors">{player.name}</div>
-                        <span className="text-[8px] font-black tracking-wider" style={{ color: role.hex }}>
+                        <span className="text-xs font-black tracking-wider" style={{ color: role.hex }}>
                             {role.name.toUpperCase()}
                         </span>
                     </div>
 
-                    <div className="mt-1.5 bg-slate-900 border border-[#C9A84C]/40 group-hover:border-[#00D4FF]/40 rounded p-1.5 grid grid-cols-3 gap-1 text-[8px] transition-colors">
+                    <div className="mt-1.5 bg-slate-900 border border-[#C9A84C]/40 group-hover:border-[#00D4FF]/40 rounded p-1.5 grid grid-cols-3 gap-1 text-xs transition-colors">
                         <div>
-                            <div className="text-zinc-500 text-[6px] uppercase font-bold">Current Elo</div>
+                            <div className="text-zinc-500 text-xs uppercase font-bold">Current Elo</div>
                             <div className="font-black text-[#C9A84C] group-hover:text-[#00D4FF] mt-0.5 transition-colors">{player.currentElo}</div>
                         </div>
                         <div>
-                            <div className="text-zinc-500 text-[6px] uppercase font-bold">Peak Elo</div>
+                            <div className="text-zinc-500 text-xs uppercase font-bold">Peak Elo</div>
                             <div className="font-black text-zinc-300 mt-0.5">{player.peakElo}</div>
                         </div>
                         <div>
-                            <div className="text-zinc-500 text-[6px] uppercase font-bold">Win Rate</div>
+                            <div className="text-zinc-500 text-xs uppercase font-bold">Win Rate</div>
                             <div className="font-black text-emerald-400 mt-0.5">{player.winRate}%</div>
                         </div>
                     </div>
@@ -429,19 +429,19 @@ function MasterGoldPlayerCard({
                 <div className="shrink-0 flex flex-col items-center justify-between h-18 py-0.5">
                     <div className="relative w-7 h-7 flex items-center justify-center">
                         <div className="absolute inset-0 rounded-full border-2 border-dashed border-[#00D4FF] animate-spin" style={{ animationDuration: '8s' }} />
-                        <div className="w-4 h-4 rounded-full border border-[#C9A84C] group-hover:border-[#00D4FF] flex items-center justify-center text-[5px] font-black text-[#C9A84C] group-hover:text-[#00D4FF] transition-colors">
+                        <div className="w-4 h-4 rounded-full border border-[#C9A84C] group-hover:border-[#00D4FF] flex items-center justify-center text-xs font-black text-[#C9A84C] group-hover:text-[#00D4FF] transition-colors">
                             HUD
                         </div>
                     </div>
 
                     <div className="flex gap-1 items-center">
                         {player.authProviders.includes('steam') && (
-                            <span className="w-3.5 h-3.5 rounded bg-[#171a21] border border-[#00D4FF]/60 flex items-center justify-center text-[7px] text-[#00D4FF] font-black shadow-[0_0_8px_rgba(0,212,255,0.4)]">
+                            <span className="w-3.5 h-3.5 rounded bg-[#171a21] border border-[#00D4FF]/60 flex items-center justify-center text-xs text-[#00D4FF] font-black shadow-[0_0_8px_rgba(0,212,255,0.4)]">
                                 S
                             </span>
                         )}
                         {player.authProviders.includes('google') && (
-                            <span className="w-3.5 h-3.5 rounded bg-zinc-900 border border-[#C9A84C]/60 flex items-center justify-center text-[7px] text-[#C9A84C] font-black shadow-[0_0_8px_rgba(201,168,76,0.4)]">
+                            <span className="w-3.5 h-3.5 rounded bg-zinc-900 border border-[#C9A84C]/60 flex items-center justify-center text-xs text-[#C9A84C] font-black shadow-[0_0_8px_rgba(201,168,76,0.4)]">
                                 G
                             </span>
                         )}
@@ -649,7 +649,7 @@ export default function SnakeDraftPage() {
             <div className="max-w-7xl mx-auto space-y-6">
                 <div className="flex justify-between items-center border-b border-slate-800 pb-3">
                     <div>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-[#C9A84C]/10 border border-[#C9A84C]/30 text-[#C9A84C] font-bold flex items-center gap-1.5 w-fit">
+                        <span className="text-xs px-2 py-0.5 rounded bg-[#C9A84C]/10 border border-[#C9A84C]/30 text-[#C9A84C] font-bold flex items-center gap-1.5 w-fit">
                             <Zap className="w-3 h-3 text-[#C9A84C]" /> CAPTAIN DRAFT SYSTEM
                         </span>
                         <h1 className="text-xl font-black text-white mt-1 font-['Orbitron']">
@@ -672,12 +672,12 @@ export default function SnakeDraftPage() {
                                 <Shield className="w-4 h-4 text-[#00D4FF]" />
                                 <span className="font-black text-xs text-[#00D4FF] font-['Orbitron']">1: RADIANT (C1)</span>
                                 {currentActiveTeam === 'RADIANT' && (
-                                    <span className="text-[8px] px-1.5 py-0.2 rounded bg-[#00D4FF] text-black font-black animate-pulse shadow-[0_0_10px_rgba(0,212,255,0.8)]">
+                                    <span className="text-xs px-1.5 py-0.2 rounded bg-[#00D4FF] text-black font-black animate-pulse shadow-[0_0_10px_rgba(0,212,255,0.8)]">
                                         ACTIVE PICK
                                     </span>
                                 )}
                             </div>
-                            <span className="text-[10px] text-zinc-400">{teamRadiant.length}/5 PLAYERS</span>
+                            <span className="text-xs text-zinc-400">{teamRadiant.length}/5 PLAYERS</span>
                         </div>
                         {renderTeamSection(teamRadiant, 'RADIANT')}
                     </div>
@@ -705,12 +705,12 @@ export default function SnakeDraftPage() {
                                 <Flame className="w-4 h-4 text-[#C9A84C]" />
                                 <span className="font-black text-xs text-[#C9A84C] font-['Orbitron']">2: DIRE (C4)</span>
                                 {currentActiveTeam === 'DIRE' && (
-                                    <span className="text-[8px] px-1.5 py-0.2 rounded bg-[#C9A84C] text-black font-black animate-pulse shadow-[0_0_10px_rgba(201,168,76,0.8)]">
+                                    <span className="text-xs px-1.5 py-0.2 rounded bg-[#C9A84C] text-black font-black animate-pulse shadow-[0_0_10px_rgba(201,168,76,0.8)]">
                                         ACTIVE PICK
                                     </span>
                                 )}
                             </div>
-                            <span className="text-[10px] text-zinc-400">{teamDire.length}/5 PLAYERS</span>
+                            <span className="text-xs text-zinc-400">{teamDire.length}/5 PLAYERS</span>
                         </div>
                         {renderTeamSection(teamDire, 'DIRE')}
                     </div>
@@ -722,7 +722,7 @@ export default function SnakeDraftPage() {
                         <div className="flex items-center gap-2">
                             <Swords className="w-4 h-4 text-[#C9A84C]" />
                             <span className="font-black text-xs text-slate-200">3: AVAILABLE PLAYERS POOL</span>
-                            <span className="text-[10px] text-zinc-400">
+                            <span className="text-xs text-zinc-400">
                                 {isDraftComplete ? '(0 Draft Completed)' : `(${availablePool.length} Waiting to be drafted)`}
                             </span>
                         </div>

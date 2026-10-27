@@ -44,7 +44,7 @@ export function GrantForm({ userId, username, roles }: { userId: string; usernam
           <span>
             ยืนยันให้ <b className="text-gold">{role}</b> แก่ {username}?
           </span>
-          <button type="submit" disabled={pending} className="rounded bg-gold px-2 py-1 font-semibold text-void disabled:opacity-50">
+          <button type="submit" disabled={pending} className="rounded btn-primary px-2 py-1 disabled:opacity-50">
             ยืนยัน
           </button>
           <button type="button" onClick={() => setConfirming(false)} className="rounded border border-white/20 px-2 py-1">
@@ -56,7 +56,7 @@ export function GrantForm({ userId, username, roles }: { userId: string; usernam
           type="button"
           disabled={!ready || pending}
           onClick={() => setConfirming(true)}
-          className="self-start rounded bg-gold px-2 py-1 text-sm font-semibold text-void disabled:opacity-50"
+          className="self-start rounded btn-primary px-2 py-1 text-sm disabled:opacity-50"
         >
           ให้สิทธิ์
         </button>

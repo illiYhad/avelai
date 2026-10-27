@@ -61,7 +61,7 @@ export default async function SwissPage({ params }: { params: Promise<{ id: stri
                     <li key={p.board} className="flex flex-wrap items-center gap-2 px-3 py-2">
                       <span className="w-8 text-xs text-white/50">#{p.board}</span>
                       <span className={res.winnerId === p.team_a_id ? "text-cyan" : ""}>{teamLabel(names, p.team_a_id)}</span>
-                      <span className="text-white/40">vs</span>
+                      <span className="text-white/60">vs</span>
                       <span className={res.winnerId === p.team_b_id ? "text-cyan" : ""}>{p.team_b_id ? teamLabel(names, p.team_b_id) : "BYE"}</span>
                       <span className="ml-auto text-xs text-white/50">{!p.team_b_id ? "ผ่าน" : res.winnerId ? "จบแล้ว" : "รอผล"}</span>
                     </li>

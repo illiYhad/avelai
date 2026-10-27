@@ -52,7 +52,7 @@ export default function DotaAccountForm({
               placeholder="เช่น 94288314"
               className="rounded border border-white/20 bg-transparent px-3 py-2 text-white outline-none focus:border-gold"
             />
-            <button type="submit" disabled={linking} className="rounded bg-gold px-4 py-2 font-semibold text-void disabled:opacity-50">
+            <button type="submit" disabled={linking} className="rounded btn-primary px-4 py-2 disabled:opacity-50">
               {linking ? "กำลังบันทึก…" : externalId ? "เปลี่ยนบัญชี" : "ผูกบัญชี"}
             </button>
           </form>

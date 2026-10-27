@@ -141,7 +141,7 @@ export default function DailyArenaLobbyPage() {
                         <div className="text-sm font-bold font-mono text-slate-200 flex items-center gap-2">
                             <span>{member.userId.slice(0, 8)}...</span>
                             {isSelf && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
                                     YOU
                                 </span>
                             )}
@@ -154,7 +154,7 @@ export default function DailyArenaLobbyPage() {
 
                 <div className="flex items-center gap-2">
                     {member.isSecondaryFill && (
-                        <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold animate-pulse">
+                        <span className="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold animate-pulse">
                             Fill Bonus +20
                         </span>
                     )}
@@ -202,7 +202,7 @@ export default function DailyArenaLobbyPage() {
                                 <div className="w-24 h-28 rounded-2xl bg-slate-950 border-2 border-[#00D4FF]/50 flex items-center justify-center font-['Orbitron'] font-black text-2xl text-[#00D4FF] shadow-[0_0_20px_rgba(0,212,255,0.25)] overflow-hidden transition-all group-hover:border-[#00D4FF] group-hover:shadow-[0_0_30px_rgba(0,212,255,0.4)]">
                                     <span className="group-hover:scale-110 transition-transform duration-300">SH</span>
                                 </div>
-                                <span className="absolute -bottom-1 -right-1 text-[9px] font-mono px-2 py-0.5 rounded bg-slate-900 border border-[#C9A84C] text-[#C9A84C] font-bold shadow-md">
+                                <span className="absolute -bottom-1 -right-1 text-xs font-mono px-2 py-0.5 rounded bg-slate-900 border border-[#C9A84C] text-[#C9A84C] font-bold shadow-md">
                                     PILOT
                                 </span>
                             </div>
@@ -220,28 +220,28 @@ export default function DailyArenaLobbyPage() {
                                 </div>
 
                                 <div className="flex items-center gap-1.5 font-mono">
-                                    <span className="px-2 py-0.5 text-[9px] rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold">
+                                    <span className="px-2 py-0.5 text-xs rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold">
                                         KP BOOST
                                     </span>
-                                    <span className="px-2 py-0.5 text-[9px] rounded bg-[#00D4FF]/10 border border-[#00D4FF]/30 text-[#00D4FF] font-bold">
+                                    <span className="px-2 py-0.5 text-xs rounded bg-[#00D4FF]/10 border border-[#00D4FF]/30 text-[#00D4FF] font-bold">
                                         TIER 1
                                     </span>
-                                    <span className="px-2 py-0.5 text-[9px] rounded bg-purple-500/10 border border-purple-500/30 text-purple-400 font-bold">
+                                    <span className="px-2 py-0.5 text-xs rounded bg-purple-500/10 border border-purple-500/30 text-purple-400 font-bold">
                                         SSR
                                     </span>
                                 </div>
 
                                 <div className="grid grid-cols-3 gap-2.5 font-mono pt-1">
                                     <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-center min-w-18.75">
-                                        <span className="text-[10px] text-slate-400 block font-semibold">TICKETS</span>
+                                        <span className="text-xs text-slate-400 block font-semibold">TICKETS</span>
                                         <span className="text-lg font-black text-[#00D4FF]">{dailyTickets}</span>
                                     </div>
                                     <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-center min-w-18.75">
-                                        <span className="text-[10px] text-slate-400 block font-semibold">MATCHES</span>
+                                        <span className="text-xs text-slate-400 block font-semibold">MATCHES</span>
                                         <span className="text-lg font-black text-slate-200">{matchesPlayedToday}/5</span>
                                     </div>
                                     <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-center min-w-18.75">
-                                        <span className="text-[10px] text-slate-400 block font-semibold">BEST SCORE</span>
+                                        <span className="text-xs text-slate-400 block font-semibold">BEST SCORE</span>
                                         <span className="text-lg font-black text-[#C9A84C]">{bestScoreToday.toFixed(2)}</span>
                                     </div>
                                 </div>

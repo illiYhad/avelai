@@ -143,11 +143,11 @@ export default function ProfilePage() {
 
                 {/* Header bar */}
                 <div className="relative z-20 flex items-center justify-between px-4 pt-4 pb-2">
-                    <span className="font-mono text-[10px] text-[#00D4FF]/60 tracking-[0.25em]">AVELAI // ESPORTS PASSPORT</span>
+                    <span className="font-mono text-xs text-[#00D4FF]/60 tracking-[0.25em]">AVELAI // ESPORTS PASSPORT</span>
                     {/* 4-State LED */}
                     <div className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${led.dot} ${led.ring} ${led.pulse ? 'animate-pulse' : ''}`} />
-                        <span className="font-mono text-[9px] tracking-[0.15em] text-zinc-400">{led.label}</span>
+                        <span className="font-mono text-xs tracking-[0.15em] text-zinc-400">{led.label}</span>
                     </div>
                 </div>
 
@@ -182,7 +182,7 @@ export default function ProfilePage() {
                                 <span className="font-black text-white text-lg leading-none" style={{ fontFamily: 'Orbitron, sans-serif' }}>
                                     {profile.display_name}
                                 </span>
-                                <span className="font-mono text-[10px] text-[#C9A84C]/80">{tag}</span>
+                                <span className="font-mono text-xs text-[#C9A84C]/80">{tag}</span>
                             </div>
                         </div>
                     </div>
@@ -192,7 +192,7 @@ export default function ProfilePage() {
 
                         {/* ELO */}
                         <div className="flex flex-col gap-0.5">
-                            <span className="font-mono text-[9px] text-zinc-500 tracking-[0.2em]">ELO RATING</span>
+                            <span className="font-mono text-xs text-zinc-500 tracking-[0.2em]">ELO RATING</span>
                             <span
                                 className="font-black text-2xl text-[#00D4FF] leading-none"
                                 style={{ fontFamily: 'Orbitron, sans-serif', textShadow: '0 0 12px rgba(0,212,255,0.5)' }}
@@ -205,7 +205,7 @@ export default function ProfilePage() {
 
                         {/* Win Rate */}
                         <div className="flex flex-col gap-0.5">
-                            <span className="font-mono text-[9px] text-zinc-500 tracking-[0.2em]">WIN RATE</span>
+                            <span className="font-mono text-xs text-zinc-500 tracking-[0.2em]">WIN RATE</span>
                             <span className="font-black text-xl text-[#C9A84C] leading-none" style={{ fontFamily: 'Orbitron, sans-serif' }}>
                                 {winRate}
                             </span>
@@ -216,12 +216,12 @@ export default function ProfilePage() {
                         {/* Karma */}
                         {profile.karma_score !== undefined ? (
                         <div className="flex flex-col gap-0.5">
-                            <span className="font-mono text-[9px] text-zinc-500 tracking-[0.2em]">KARMA SCORE</span>
+                            <span className="font-mono text-xs text-zinc-500 tracking-[0.2em]">KARMA SCORE</span>
                             <div className="flex items-baseline gap-1">
                                 <span className="font-black text-xl text-emerald-400 leading-none" style={{ fontFamily: 'Orbitron, sans-serif' }}>
                                     {profile.karma_score}
                                 </span>
-                                <span className="font-mono text-[9px] text-zinc-600">/ 100</span>
+                                <span className="font-mono text-xs text-zinc-600">/ 100</span>
                             </div>
                             {/* Karma bar */}
                             <div className="mt-1 h-1 rounded-full bg-zinc-800 overflow-hidden">
@@ -239,13 +239,13 @@ export default function ProfilePage() {
                 {profile.subscription_tier !== undefined ? (<>
                 <div className="h-px bg-[#C9A84C]/15" />
                 <div className="flex flex-col gap-0.5">
-                    <span className="font-mono text-[9px] text-zinc-500 tracking-[0.2em]">ARENA PASS</span>
+                    <span className="font-mono text-xs text-zinc-500 tracking-[0.2em]">ARENA PASS</span>
                     <div className="flex items-center gap-2">
                         <span className={`text-xs font-mono px-2 py-0.5 rounded font-bold ${profile.subscription_tier === 'pro' ? 'bg-[#C9A84C]/20 text-[#C9A84C] border border-[#C9A84C]/50' : 'bg-zinc-800 text-zinc-400 border border-zinc-700'}`}>
                             {profile.subscription_tier === 'pro' ? 'PRO' : 'FREE'}
                         </span>
-                        <span className="font-mono text-[9px] text-zinc-500">{profile.arena_tickets ?? 0} TICKETS</span>
-                        <span className="font-mono text-[9px] text-zinc-500">{profile.reward_points ?? 0} PTS</span>
+                        <span className="font-mono text-xs text-zinc-500">{profile.arena_tickets ?? 0} TICKETS</span>
+                        <span className="font-mono text-xs text-zinc-500">{profile.reward_points ?? 0} PTS</span>
                     </div>
                 </div>
                 </>) : null}
@@ -255,7 +255,7 @@ export default function ProfilePage() {
 
                 {/* ── Badge Slots ──────────────────────────────────────────────────── */}
                 <div className="relative z-20 px-4 py-4">
-                    <span className="font-mono text-[9px] text-zinc-600 tracking-[0.2em] block mb-3">ACHIEVEMENT BADGES</span>
+                    <span className="font-mono text-xs text-zinc-600 tracking-[0.2em] block mb-3">ACHIEVEMENT BADGES</span>
                     <div className="grid grid-cols-3 gap-3">
                         {badges.map((badge, i) => (
                             badge ? (
@@ -264,7 +264,7 @@ export default function ProfilePage() {
                                     className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl border border-[#C9A84C]/30 bg-[#C9A84C]/5"
                                 >
                                     <span className="text-2xl">{badge.icon}</span>
-                                    <span className="font-mono text-[8px] text-zinc-400 text-center leading-tight">{badge.label}</span>
+                                    <span className="font-mono text-xs text-zinc-400 text-center leading-tight">{badge.label}</span>
                                 </div>
                             ) : (
                                 <div
@@ -274,7 +274,7 @@ export default function ProfilePage() {
                                     <div className="w-5 h-5 rounded-full border border-zinc-700 flex items-center justify-center">
                                         <span className="text-zinc-700 text-xs">+</span>
                                     </div>
-                                    <span className="font-mono text-[8px] text-zinc-700">LOCKED</span>
+                                    <span className="font-mono text-xs text-zinc-700">LOCKED</span>
                                 </div>
                             )
                         ))}
@@ -284,8 +284,8 @@ export default function ProfilePage() {
                 {/* Footer */}
                 <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-4">
                     <div className="flex items-center justify-between">
-                        <span className="font-mono text-[8px] text-zinc-700 tracking-widest">PRECISION IS FREEDOM</span>
-                        <span className="font-mono text-[8px] text-zinc-700">AVELAi © 2026</span>
+                        <span className="font-mono text-xs text-zinc-700 tracking-widest">PRECISION IS FREEDOM</span>
+                        <span className="font-mono text-xs text-zinc-700">AVELAi © 2026</span>
                     </div>
                 </div>
 

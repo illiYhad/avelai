@@ -73,8 +73,8 @@ export default async function ManageTournamentPage({ params }: { params: Promise
           <h2 className="text-sm font-semibold text-white/90">สาย / รอบ (K-AV-4)</h2>
           <div className="flex flex-wrap items-center gap-3">
             {t.format === "SWISS"
-              ? <ActionButton action={generateSwissRoundAction.bind(null, id)} label="สร้างรอบ Swiss ถัดไป" className="rounded bg-gold px-3 py-1.5 text-sm font-semibold text-void" />
-              : status === "SEEDING" ? <ActionButton action={generateBracketAction.bind(null, id)} label={`สร้างสาย ${t.format}`} confirmText="สร้างสายจากทีมที่เช็กอินแล้ว — ทำครั้งเดียว ทัวร์จะเริ่มแข่งทันที" className="rounded bg-gold px-3 py-1.5 text-sm font-semibold text-void" /> : null}
+              ? <ActionButton action={generateSwissRoundAction.bind(null, id)} label="สร้างรอบ Swiss ถัดไป" className="rounded btn-primary px-3 py-1.5 text-sm" />
+              : status === "SEEDING" ? <ActionButton action={generateBracketAction.bind(null, id)} label={`สร้างสาย ${t.format}`} confirmText="สร้างสายจากทีมที่เช็กอินแล้ว — ทำครั้งเดียว ทัวร์จะเริ่มแข่งทันที" className="rounded btn-primary px-3 py-1.5 text-sm" /> : null}
             <Link href={t.format === "SWISS" ? `/tournaments/${id}/swiss` : `/tournaments/${id}/bracket`} className="text-sm text-cyan underline">ดูสาย/ตาราง</Link>
             <Link href={`/organizer/tournaments/${id}/matches`} className="text-sm text-cyan underline">แมตช์ / ชี้ขาดผล</Link>
             <Link href={`/organizer/tournaments/${id}/disputes`} className="text-sm text-cyan underline">ข้อพิพาท / โทษ</Link>

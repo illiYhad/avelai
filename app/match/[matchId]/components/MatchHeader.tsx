@@ -80,7 +80,7 @@ export default function MatchHeader({
                         <span className="font-mono text-3xl font-black text-[#00D4FF]">
                             {radiantScore}
                         </span>
-                        <span className="text-[10px] text-neutral-500 font-bold block tracking-widest">KILLS</span>
+                        <span className="text-xs text-neutral-500 font-bold block tracking-widest">KILLS</span>
                     </div>
                 </div>
 
@@ -102,7 +102,7 @@ export default function MatchHeader({
                         <span className="font-mono text-3xl font-black text-[#C9A84C]">
                             {direScore}
                         </span>
-                        <span className="text-[10px] text-neutral-500 font-bold block tracking-widest">KILLS</span>
+                        <span className="text-xs text-neutral-500 font-bold block tracking-widest">KILLS</span>
                     </div>
                 </div>
             </div>

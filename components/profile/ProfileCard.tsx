@@ -39,11 +39,11 @@ export function ProfileCard({ player, teamType = 'radiant' }: ProfileCardProps) 
 
       {/* Header: Role & Badge */}
       <div className="flex justify-between items-center z-10">
-        <span className="text-[9px] px-1.5 py-0.5 rounded bg-black/60 border border-gray-700 text-gray-300 font-bold uppercase">
+        <span className="text-xs px-1.5 py-0.5 rounded bg-black/60 border border-gray-700 text-gray-300 font-bold uppercase">
           {player.role ? player.role.split(' ')[0] : 'POS'}
         </span>
         <span
-          className="text-[9px] font-black px-1.5 py-0.5 rounded uppercase"
+          className="text-xs font-black px-1.5 py-0.5 rounded uppercase"
           style={{ color: themeAccent, border: `1px solid ${themeAccent}40` }}
         >
           {player.card_rarity || 'CYBER_HOLO'}
@@ -59,7 +59,7 @@ export function ProfileCard({ player, teamType = 'radiant' }: ProfileCardProps) 
           <span className="text-sm font-black text-white">
             {player.display_name?.slice(0, 2).toUpperCase() || 'AV'}
           </span>
-          <span className="absolute -bottom-1 text-[7px] font-bold px-1 rounded bg-black text-gray-300 border border-gray-700">
+          <span className="absolute -bottom-1 text-xs font-bold px-1 rounded bg-black text-gray-300 border border-gray-700">
             {player.rank_tier || 'PRO'}
           </span>
         </div>
@@ -67,7 +67,7 @@ export function ProfileCard({ player, teamType = 'radiant' }: ProfileCardProps) 
         <h3 className="font-black text-xs text-gray-100 mt-2 tracking-wide truncate max-w-[110px]">
           {player.display_name || 'UNKNOWN OPERATOR'}
         </h3>
-        <p className="text-[9px] text-gray-400 mt-0.5">
+        <p className="text-xs text-gray-400 mt-0.5">
           {player.role || 'Player'}
         </p>
       </div>
@@ -75,12 +75,12 @@ export function ProfileCard({ player, teamType = 'radiant' }: ProfileCardProps) 
       {/* Footer: ELO Rating */}
       <div className="flex justify-between items-end border-t border-gray-800/80 pt-1.5 z-10">
         <div>
-          <div className="text-[8px] text-gray-500 uppercase">RATING</div>
-          <div className="text-[11px] font-black" style={{ color: themeAccent }}>
+          <div className="text-xs text-gray-500 uppercase">RATING</div>
+          <div className="text-xs font-black" style={{ color: themeAccent }}>
             {(player.elo || 1500).toLocaleString()} ELO
           </div>
         </div>
-        <span className="inline-flex items-center gap-1 text-[8px] text-emerald-400 font-bold">
+        <span className="inline-flex items-center gap-1 text-xs text-emerald-400 font-bold">
           <span className="w-1 h-1 rounded-full bg-emerald-400 animate-ping" />
           READY
         </span>

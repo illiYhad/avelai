@@ -15,7 +15,7 @@ export default async function LoginPage({
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-6 px-6">
-      <h1 className="font-display text-3xl tracking-[0.15em] text-gold">เข้าสู่ระบบ</h1>
+      <h1 className="font-display text-3xl text-gold">เข้าสู่ระบบ</h1>
       {configured ? (
         <LoginForm next={target} />
       ) : (

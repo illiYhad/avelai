@@ -66,7 +66,7 @@ export default async function RegisterPage({ params }: { params: Promise<{ id: s
               </>
             ) : null}
             {verified ? <Link href={`/tournaments/${id}/receipt/${verified.id}`} className="text-sm text-cyan underline">ใบยืนยันการชำระ</Link> : null}
-            {status === "CHECK_IN" && r.status === "CONFIRMED" ? <ActionButton action={checkInAction.bind(null, id, r.id)} label="เช็กอิน" className="w-fit rounded bg-gold px-4 py-2 text-sm font-semibold text-void" /> : null}
+            {status === "CHECK_IN" && r.status === "CONFIRMED" ? <ActionButton action={checkInAction.bind(null, id, r.id)} label="เช็กอิน" className="w-fit rounded btn-primary px-4 py-2 text-sm" /> : null}
           </section>
         );
       })}

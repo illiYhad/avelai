@@ -141,7 +141,7 @@ export default function OverviewTable({
                             {isRadiant ? 'THE RADIANT' : 'THE DIRE'}
                         </span>
                         {isWinner && (
-                            <span className="rounded-xs border border-yellow-500/40 bg-yellow-500/10 px-1.5 py-0.5 text-[9px] font-bold text-yellow-400">
+                            <span className="rounded-xs border border-yellow-500/40 bg-yellow-500/10 px-1.5 py-0.5 text-xs font-bold text-yellow-400">
                                 🏆 VICTORY
                             </span>
                         )}
@@ -150,7 +150,7 @@ export default function OverviewTable({
 
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
-                        <thead className="border-b border-neutral-800/80 bg-[#0D0D14] text-[10px] text-neutral-400 font-orbitron">
+                        <thead className="border-b border-neutral-800/80 bg-[#0D0D14] text-xs text-neutral-400 font-orbitron">
                             <tr>
                                 <th className="px-4 py-2.5">HERO / PLAYER</th>
                                 <th className="px-4 py-2.5 text-center">K / D / A</th>
@@ -163,7 +163,7 @@ export default function OverviewTable({
                                 <th className="px-4 py-2.5">ITEMS & BUFFS</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-neutral-800/40 text-[11px]">
+                        <tbody className="divide-y divide-neutral-800/40 text-xs">
                             {teamPlayers.map((p, idx) => {
                                 const heroImg = getHeroImg(p.heroId);
                                 const heroName = HERO_NAME_MAP[p.heroId] || p.heroName || `Hero ${p.heroId}`;
@@ -182,12 +182,12 @@ export default function OverviewTable({
                                                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                                     />
                                                 ) : (
-                                                    <span className="flex h-full w-full items-center justify-center text-[9px] text-neutral-500">???</span>
+                                                    <span className="flex h-full w-full items-center justify-center text-xs text-neutral-500">???</span>
                                                 )}
                                             </div>
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-white tracking-wide">{p.playerName}</span>
-                                                <span className="text-[10px] text-neutral-400 font-sans">{heroName}</span>
+                                                <span className="text-xs text-neutral-400 font-sans">{heroName}</span>
                                             </div>
                                         </td>
 
@@ -262,7 +262,7 @@ export default function OverviewTable({
                                                 <div className="flex flex-col gap-0.5">
                                                     <span
                                                         title="Aghanim's Scepter"
-                                                        className={`px-1 text-[8px] font-bold rounded-sm border ${hasScepter
+                                                        className={`px-1 text-xs font-bold rounded-sm border ${hasScepter
                                                                 ? 'border-[#00D4FF] bg-[#00D4FF]/20 text-[#00D4FF] shadow-[0_0_6px_#00D4FF]'
                                                                 : 'border-neutral-800 bg-neutral-900/40 text-neutral-700'
                                                             }`}
@@ -271,7 +271,7 @@ export default function OverviewTable({
                                                     </span>
                                                     <span
                                                         title="Aghanim's Shard"
-                                                        className={`px-1 text-[8px] font-bold rounded-sm border ${hasShard
+                                                        className={`px-1 text-xs font-bold rounded-sm border ${hasShard
                                                                 ? 'border-[#C9A84C] bg-[#C9A84C]/20 text-[#C9A84C] shadow-[0_0_6px_#C9A84C]'
                                                                 : 'border-neutral-800 bg-neutral-900/40 text-neutral-700'
                                                             }`}
@@ -286,7 +286,7 @@ export default function OverviewTable({
                             })}
                         </tbody>
 
-                        <tfoot className="border-t border-neutral-800 bg-[#0A0A0F] font-bold text-[10px]">
+                        <tfoot className="border-t border-neutral-800 bg-[#0A0A0F] font-bold text-xs">
                             <tr>
                                 <td className="px-4 py-2.5 text-neutral-400 font-orbitron tracking-wider">TOTAL / AVG</td>
                                 <td className="px-4 py-2.5 text-center text-white">
@@ -327,18 +327,18 @@ export default function OverviewTable({
                         {heroImg ? (
                             <img src={heroImg} alt={heroName} className="h-full w-full object-cover" />
                         ) : (
-                            <span className="flex h-full w-full items-center justify-center text-[7px] text-neutral-500">#{draft.hero_id}</span>
+                            <span className="flex h-full w-full items-center justify-center text-xs text-neutral-500">#{draft.hero_id}</span>
                         )}
                     </div>
-                    <span className="font-bold mr-1.5 text-[10px]">{draft.is_pick ? '✓ PICK' : '✕ BAN'}</span>
-                    <span className="text-[9px] text-neutral-400 font-mono">#{draft.order}</span>
+                    <span className="font-bold mr-1.5 text-xs">{draft.is_pick ? '✓ PICK' : '✕ BAN'}</span>
+                    <span className="text-xs text-neutral-400 font-mono">#{draft.order}</span>
                 </div>
             );
         };
 
         return (
             <div className="flex flex-wrap items-center gap-3 py-1.5">
-                <span className="font-orbitron font-bold text-[10px] w-28 shrink-0 tracking-wider" style={{ color: colorHex }}>
+                <span className="font-orbitron font-bold text-xs w-28 shrink-0 tracking-wider" style={{ color: colorHex }}>
                     {title}:
                 </span>
 
@@ -346,7 +346,7 @@ export default function OverviewTable({
                     {picks.length > 0 ? (
                         picks.map((draft, idx) => renderDraftBadge(draft, idx))
                     ) : (
-                        <span className="text-[10px] text-neutral-600 font-mono">NO PICK DATA</span>
+                        <span className="text-xs text-neutral-600 font-mono">NO PICK DATA</span>
                     )}
                 </div>
 
@@ -366,7 +366,7 @@ export default function OverviewTable({
             {renderTeamTable(radiantPlayers, true)}
 
             <div className="border border-neutral-800 bg-[#0D0D14] p-3 shadow-inner space-y-2">
-                <div className="text-[10px] font-orbitron font-bold text-neutral-500 pb-1 border-b border-neutral-800/60">
+                <div className="text-xs font-orbitron font-bold text-neutral-500 pb-1 border-b border-neutral-800/60">
                     DRAFT PICKS & BANS TIMELINE
                 </div>
                 {renderDraftRow('RADIANT DRAFT', radiantDrafts, '#00D4FF')}

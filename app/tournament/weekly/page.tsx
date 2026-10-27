@@ -143,7 +143,7 @@ export default function WeeklyTournamentPage() {
                                 <div className="bg-linear-to-b from-[#1C1F26] to-[#12151B] border-2 border-amber-400/80 rounded-xl p-4 text-center shadow-[0_0_25px_rgba(255,184,0,0.2)]">
                                     <div className="text-xs text-gray-400 font-mono">CHAMPION MATCH</div>
                                     <div className="text-base font-black text-amber-400 mt-2">TBD vs TBD</div>
-                                    <div className="mt-3 text-[11px] font-mono text-emerald-400 bg-emerald-950/40 py-1 rounded border border-emerald-500/30">
+                                    <div className="mt-3 text-xs font-mono text-emerald-400 bg-emerald-950/40 py-1 rounded border border-emerald-500/30">
                                         PRIZE: ฿ 7,500 + 100 CP
                                     </div>
                                 </div>

@@ -1,26 +1,82 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* K-AV-UX1: ธีมแบรนด์ AVELAi — มืดอย่างเดียว (ไม่มีโหมดสว่าง)
+   พื้นผิว 2–3 = ทับสีขาว 4% / 8% บน void · ตัวเลขความต่างสีอยู่ในใบตอบ K-AV-UX1 */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-void: #0B0E14;
+  --color-gold: #C9A84C;
+  --color-gold-hover: #D6B961;
+  --color-cyan: #00D4FF;
+  --color-surface-1: #0B0E14;
+  --color-surface-2: #15181D;
+  --color-surface-3: #1F2127;
+  --color-line: rgba(255, 255, 255, 0.1);
+  --color-ink: #ECEAE4;
+  --color-ink-muted: #A3A6AE;
+  --color-background: var(--color-void);
+  --color-foreground: var(--color-ink);
+
+  /* ฟอนต์ไทย Noto Sans Thai เป็น fallback ทุกชุด เพราะ Orbitron/Inter/JetBrains Mono ไม่มีอักษรไทย */
+  --font-sans: var(--font-inter), var(--font-thai), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-orbitron), var(--font-thai), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-jetbrains), var(--font-thai), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* สระ/วรรณยุกต์ไทยชนกันถ้าระยะบรรทัดต่ำกว่า 1.6 (ค่าเดิมของ Tailwind 1.33–1.5) */
+@theme {
+  --text-xs--line-height: 1.6;
+  --text-sm--line-height: 1.6;
+  --text-base--line-height: 1.6;
+}
+
+/* จอ OBS (app/obs) ต้องโปร่งใส จึงไม่ใส่ color-scheme ให้หน้านั้น */
+html:not(:has([data-obs-root])) {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  background: var(--color-void);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+@utility font-numeric {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+@layer components {
+  .btn-primary,
+  .btn-ghost {
+    font-weight: 600;
+    transition-property: background-color, border-color, opacity;
+    transition-duration: 150ms;
+  }
+  .btn-primary {
+    background-color: var(--color-gold);
+    color: var(--color-void);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--color-gold-hover);
+  }
+  .btn-ghost {
+    background-color: transparent;
+    border: 1px solid var(--color-line);
+    color: var(--color-ink);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    border-color: rgba(255, 255, 255, 0.24);
+  }
+  .btn-primary:focus-visible,
+  .btn-ghost:focus-visible {
+    outline: 2px solid var(--color-cyan);
+    outline-offset: 2px;
+  }
+  .btn-primary:disabled,
+  .btn-ghost:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }

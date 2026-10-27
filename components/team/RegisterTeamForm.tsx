@@ -21,7 +21,7 @@ export function RegisterTeamForm({ tournamentId, teamId, teamLabel, existingStat
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-bold truncate">{teamLabel}</p>
         {status ? (
-          <span className="shrink-0 rounded bg-[#00D4FF]/10 px-2 py-1 text-[10px] font-mono font-bold text-[#00D4FF]">
+          <span className="shrink-0 rounded bg-[#00D4FF]/10 px-2 py-1 text-xs font-mono font-bold text-[#00D4FF]">
             {status}
           </span>
         ) : (

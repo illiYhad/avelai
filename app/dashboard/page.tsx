@@ -154,7 +154,7 @@ export default function DashboardPage() {
             <span className="w-2 h-2 rounded-full bg-[#00D4FF] animate-pulse" /> LIVE STREAMING
           </span>
           <span className="text-gray-600">|</span>
-          <span className="text-[11px] text-gray-400">SYNC: {lastSync}</span>
+          <span className="text-xs text-gray-400">SYNC: {lastSync}</span>
         </div>
       </header>
 
@@ -174,7 +174,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="bg-[#07090E] border border-[#C9A84C]/40 px-6 py-3 rounded-xl text-center">
-              <div className="text-[10px] text-gray-400">DAILY PRIZE POOL</div>
+              <div className="text-xs text-gray-400">DAILY PRIZE POOL</div>
               <div className="text-2xl font-black text-[#C9A84C]">$12,500</div>
             </div>
           </div>
@@ -187,7 +187,7 @@ export default function DashboardPage() {
               <div key={idx} className="p-3 bg-[#07090E] border border-gray-800 rounded-xl flex justify-between items-center">
                 <div>
                   <div className="text-xs font-bold text-white">{m.radiant} vs {m.dire}</div>
-                  <div className="text-[10px] text-gray-400 font-mono">⏱ {m.time}</div>
+                  <div className="text-xs text-gray-400 font-mono">⏱ {m.time}</div>
                 </div>
                 <div className="text-sm font-black text-[#00D4FF]">{m.radiantScore}:{m.direScore}</div>
               </div>
@@ -200,7 +200,7 @@ export default function DashboardPage() {
               <div key={idx} className="p-3 bg-[#07090E] border border-gray-800 rounded-xl flex justify-between items-center">
                 <div>
                   <div className="text-xs font-bold text-white">{m.radiant} vs {m.dire}</div>
-                  <div className="text-[10px] text-gray-400">{m.time}</div>
+                  <div className="text-xs text-gray-400">{m.time}</div>
                 </div>
                 <div className="text-xs font-bold text-green-400">{m.winner}</div>
               </div>
@@ -229,7 +229,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {stats.map((s, idx) => (
               <div key={idx} className="bg-[#12121A]/80 border border-[#00D4FF]/30 p-4 rounded-lg">
-                <span className="text-[10px] text-gray-400 uppercase">{s.label}</span>
+                <span className="text-xs text-gray-400 uppercase">{s.label}</span>
                 <div className={`text-2xl font-black mt-1 ${s.highlight ? 'text-[#C9A84C]' : 'text-white'}`}>{s.value}</div>
               </div>
             ))}
@@ -242,7 +242,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {liveMatches.map((m, idx) => (
                 <div key={idx} className="p-3 bg-[#07090E] border border-gray-800 rounded-lg">
-                  <div className="text-[10px] text-gray-400 flex justify-between">
+                  <div className="text-xs text-gray-400 flex justify-between">
                     <span>{m.id}</span>
                     <span className="text-[#00D4FF] font-bold">⏱ {m.time}</span>
                   </div>
@@ -302,9 +302,9 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {stats.map((s, idx) => (
               <div key={idx} className="bg-[#12121A] border border-[#00D4FF]/30 p-4 rounded-xl relative overflow-hidden">
-                <div className="text-[10px] text-gray-400 tracking-wider uppercase">{s.label}</div>
+                <div className="text-xs text-gray-400 tracking-wider uppercase">{s.label}</div>
                 <div className={`text-2xl font-black mt-1 ${s.highlight ? 'text-[#C9A84C]' : 'text-white'}`}>{s.value}</div>
-                <div className="text-[11px] text-[#00D4FF] mt-1 flex items-center gap-1">
+                <div className="text-xs text-[#00D4FF] mt-1 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#00D4FF] animate-pulse" /> {s.sub}
                 </div>
               </div>
@@ -338,7 +338,7 @@ export default function DashboardPage() {
                     MAJOR RESULTS
                   </button>
                 </div>
-                <span className="text-[11px] text-gray-400 hidden sm:inline">WAR ROOM NOC 70%</span>
+                <span className="text-xs text-gray-400 hidden sm:inline">WAR ROOM NOC 70%</span>
               </div>
 
               <div className="space-y-3 flex-1">
@@ -347,7 +347,7 @@ export default function DashboardPage() {
                     <div key={idx} className="p-3.5 bg-[#07090E]/60 border border-gray-800 hover:border-[#00D4FF]/40 rounded-lg flex items-center justify-between transition-all">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] bg-[#00D4FF]/20 text-[#00D4FF] border border-[#00D4FF]/40 px-1.5 py-0.5 rounded font-bold">{m.tier}</span>
+                          <span className="text-xs bg-[#00D4FF]/20 text-[#00D4FF] border border-[#00D4FF]/40 px-1.5 py-0.5 rounded font-bold">{m.tier}</span>
                           <span className="text-xs text-gray-400">{m.id}</span>
                         </div>
                         <div className="text-sm font-bold text-white mt-1">
@@ -356,7 +356,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="text-right">
                         <div className="text-sm font-black text-[#00D4FF]">{m.radiantScore} : {m.direScore}</div>
-                        <div className="text-[11px] text-gray-400 font-mono">⏱ {m.time}</div>
+                        <div className="text-xs text-gray-400 font-mono">⏱ {m.time}</div>
                       </div>
                     </div>
                   ))
@@ -365,7 +365,7 @@ export default function DashboardPage() {
                     <div key={idx} className="p-3.5 bg-[#07090E]/60 border border-gray-800 hover:border-[#C9A84C]/40 rounded-lg flex items-center justify-between transition-all">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] bg-[#C9A84C]/20 text-[#C9A84C] border border-[#C9A84C]/40 px-1.5 py-0.5 rounded font-bold">DECRYPTED</span>
+                          <span className="text-xs bg-[#C9A84C]/20 text-[#C9A84C] border border-[#C9A84C]/40 px-1.5 py-0.5 rounded font-bold">DECRYPTED</span>
                           <span className="text-xs text-gray-400">{m.id}</span>
                         </div>
                         <div className="text-sm font-bold text-white mt-1">
@@ -374,7 +374,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="text-right">
                         <div className="text-xs font-bold text-green-400">{m.winner}</div>
-                        <div className="text-[11px] text-gray-400 font-mono">{m.score} ({m.time})</div>
+                        <div className="text-xs text-gray-400 font-mono">{m.score} ({m.time})</div>
                       </div>
                     </div>
                   ))
@@ -386,7 +386,7 @@ export default function DashboardPage() {
               <div>
                 <div className="flex items-center justify-between border-b border-[#00D4FF]/20 pb-3 mb-4">
                   <span className="text-xs font-bold text-[#00D4FF] tracking-wider">MAJOR TOP 3</span>
-                  <span className="text-[10px] text-[#C9A84C]">PRO ELO</span>
+                  <span className="text-xs text-[#C9A84C]">PRO ELO</span>
                 </div>
                 <div className="space-y-3">
                   {topPlayers.map((p, idx) => (
@@ -395,7 +395,7 @@ export default function DashboardPage() {
                         <span className="text-sm font-black text-[#C9A84C]">#{p.rank}</span>
                         <div>
                           <div className="text-xs font-bold text-white">{p.name}</div>
-                          <div className="text-[10px] text-gray-400">WR: {p.winRate}</div>
+                          <div className="text-xs text-gray-400">WR: {p.winRate}</div>
                         </div>
                       </div>
                       <div className="text-xs font-bold text-[#00D4FF]">{p.elo}</div>

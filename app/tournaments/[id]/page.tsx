@@ -34,10 +34,10 @@ export default async function TournamentDetailPage({ params }: { params: Promise
         <dt className="text-white/60">เริ่มแข่ง</dt><dd>{thai(t.start_at)} · เช็กอินก่อน {t.check_in_minutes} นาที</dd>
         <dt className="text-white/60">ทีม</dt><dd className="font-numeric">{count ?? 0}{t.max_teams ? ` / ${t.max_teams}` : ""} ทีมยืนยันแล้ว</dd>
       </dl>
-      {t.rules ? <section><h2 className="mb-1 text-sm font-semibold text-white/90">กติกา</h2><p className="whitespace-pre-wrap text-sm text-white/80">{t.rules}</p></section> : null}
+      {t.rules ? <section><h2 className="mb-1 text-sm font-semibold text-white/90">กติกา</h2><p className="whitespace-pre-wrap text-base text-white/80">{t.rules}</p></section> : null}
       <div className="flex flex-wrap gap-3">
         {status === "REGISTRATION" || status === "CHECK_IN" ? (
-          <Link href={`/tournaments/${id}/register`} className="rounded bg-gold px-4 py-2 text-sm font-semibold text-void">
+          <Link href={`/tournaments/${id}/register`} className="rounded btn-primary px-4 py-2 text-sm">
             {auth.user ? (status === "CHECK_IN" ? "เช็กอิน / ดูใบสมัคร" : "สมัครแข่ง") : "เข้าสู่ระบบเพื่อสมัคร"}
           </Link>
         ) : null}

@@ -48,8 +48,8 @@ export function TierBadge({ tier, reason }: TierBadgeProps) {
       <span style={{ color: cfg.color }} className="font-bold tracking-widest">
         {cfg.icon} {cfg.label}
       </span>
-      <span className="text-gray-400 text-[10px]">{cfg.sublabel}</span>
-      <span style={{ color: cfg.color }} className="text-[10px] opacity-80">
+      <span className="text-gray-400 text-xs">{cfg.sublabel}</span>
+      <span style={{ color: cfg.color }} className="text-xs opacity-80">
         {cfg.multiplier}
       </span>
     </div>

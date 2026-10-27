@@ -80,7 +80,7 @@ export default function AVEChatbot() {
                 <h3 className="text-white font-bold text-xs tracking-wider flex items-center gap-1.5">
                   AVE PROTOCOL <Sparkles className="w-3 h-3 text-[#C9A84C]" />
                 </h3>
-                <span className="text-[9px] text-[#00D4FF]/70 tracking-widest uppercase">PRECISION IS FREEDOM</span>
+                <span className="text-xs text-[#00D4FF]/70 tracking-widest uppercase">PRECISION IS FREEDOM</span>
               </div>
             </div>
             <button

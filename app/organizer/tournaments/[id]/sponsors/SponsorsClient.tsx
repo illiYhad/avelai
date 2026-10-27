@@ -45,7 +45,7 @@ export function SponsorsManager({ sponsors, actions, canEdit }: { sponsors: Spon
               <form action={(fd) => start(async () => { const r = await actions.update(s.id, fd); setState(r); if (r.ok) setEditing(null); })} className="flex flex-col gap-2">
                 <SponsorFields s={s} />
                 <div className="flex gap-2">
-                  <button type="submit" disabled={pending} className="rounded bg-gold px-3 py-1 text-xs font-semibold text-void disabled:opacity-50">บันทึก</button>
+                  <button type="submit" disabled={pending} className="rounded btn-primary px-3 py-1 text-xs disabled:opacity-50">บันทึก</button>
                   <button type="button" onClick={() => setEditing(null)} className={btn}>ยกเลิก</button>
                 </div>
               </form>
@@ -73,7 +73,7 @@ export function SponsorsManager({ sponsors, actions, canEdit }: { sponsors: Spon
         <form action={(fd) => start(async () => setState(await actions.add(fd)))} className="flex flex-col gap-2 rounded border border-white/15 p-3">
           <p className="text-xs text-white/60">เพิ่มสปอนเซอร์ (ไม่อัปโหลดไฟล์ — ใส่ลิงก์โลโก้ https)</p>
           <SponsorFields />
-          <button type="submit" disabled={pending} className="w-fit rounded bg-gold px-3 py-1.5 text-sm font-semibold text-void disabled:opacity-50">{pending ? "…" : "เพิ่ม"}</button>
+          <button type="submit" disabled={pending} className="w-fit rounded btn-primary px-3 py-1.5 text-sm disabled:opacity-50">{pending ? "…" : "เพิ่ม"}</button>
         </form>
       ) : null}
       <Msg state={state} />

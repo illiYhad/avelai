@@ -54,7 +54,7 @@ export function ResolveDisputeForm({ matchId, disputeId, teamA, teamB }: Props) 
 
   return (
     <div className="mt-3 flex flex-col gap-2 rounded border border-[#C9A84C]/40 bg-[#C9A84C]/5 p-3">
-      <p className="text-[10px] font-mono font-bold tracking-wider text-[#C9A84C]">ADMIN RESOLUTION</p>
+      <p className="text-xs font-mono font-bold tracking-wider text-[#C9A84C]">ADMIN RESOLUTION</p>
       <div className="flex flex-wrap items-center gap-2">
         <select value={winner} onChange={(e) => setWinner(e.target.value)} className={selCls}>
           <option value="DRAW">เสมอ / ยกเลิกผล</option>

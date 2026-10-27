@@ -37,7 +37,7 @@ export default function KPBreakdownTable({ players = [] }: KPBreakdownTableProps
                     <span className="text-xs font-bold uppercase tracking-wider text-[#00D4FF]">
             {'// TOP PERFORMER: '}{topPerformer.playerName} — KP: {topPerformer.totalKp?.toFixed(1)}
                     </span>
-                    <span className="border border-[#00D4FF] bg-[#00D4FF]/20 px-2 py-0.5 font-orbitron text-[10px] font-bold text-[#00D4FF]">
+                    <span className="border border-[#00D4FF] bg-[#00D4FF]/20 px-2 py-0.5 font-orbitron text-xs font-bold text-[#00D4FF]">
                         MATCH MVP
                     </span>
                 </div>
@@ -45,7 +45,7 @@ export default function KPBreakdownTable({ players = [] }: KPBreakdownTableProps
 
             <div className="overflow-x-auto border border-neutral-800 bg-[#111118]">
                 <table className="w-full text-left text-xs">
-                    <thead className="border-b border-neutral-800 bg-[#0A0A0F] font-orbitron text-[11px] text-[#00D4FF]">
+                    <thead className="border-b border-neutral-800 bg-[#0A0A0F] font-orbitron text-xs text-[#00D4FF]">
                         <tr>
                             <th className="px-4 py-3">HERO / ROLE</th>
                             <th className="px-4 py-3">PLAYER</th>
@@ -59,7 +59,7 @@ export default function KPBreakdownTable({ players = [] }: KPBreakdownTableProps
                             <th className="px-4 py-3 text-right">FINAL SCORE</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-neutral-800/60 font-mono text-[11px]">
+                    <tbody className="divide-y divide-neutral-800/60 font-mono text-xs">
                         {sortedPlayers.map((p, idx) => {
                             const isRadiant = (p.playerSlot || 0) < 128;
                             const heroImg = getHeroImageUrl(p.heroName, p.heroId);
@@ -83,12 +83,12 @@ export default function KPBreakdownTable({ players = [] }: KPBreakdownTableProps
                                                         }}
                                                     />
                                                 ) : (
-                                                    <span className="flex h-full w-full items-center justify-center text-[8px] text-neutral-400">
+                                                    <span className="flex h-full w-full items-center justify-center text-xs text-neutral-400">
                                                         {p.heroName?.substring(0, 3).toUpperCase() || 'HER'}
                                                     </span>
                                                 )}
                                             </div>
-                                            <span className="border border-neutral-800 bg-neutral-900/60 px-1.5 py-0.5 text-[9px] text-neutral-300">
+                                            <span className="border border-neutral-800 bg-neutral-900/60 px-1.5 py-0.5 text-xs text-neutral-300">
                                                 {p.role}
                                             </span>
                                         </div>
@@ -104,7 +104,7 @@ export default function KPBreakdownTable({ players = [] }: KPBreakdownTableProps
                                         <span className="text-neutral-400">{p.assists}</span>
                                     </td>
                                     <td className="px-4 py-3 text-center text-neutral-400">
-                                        <span className="mr-1 text-[10px] text-rose-400">🏯</span>
+                                        <span className="mr-1 text-xs text-rose-400">🏯</span>
                                         {p.towerKills || 0}
                                     </td>
                                     <td className="px-4 py-3 text-right text-neutral-400">
@@ -112,7 +112,7 @@ export default function KPBreakdownTable({ players = [] }: KPBreakdownTableProps
                                     </td>
                                     <td className="px-4 py-3 text-center">
                                         <span
-                                            className={`px-1 py-0.5 text-[9px] font-bold ${p.resultMultiplier === 1.0
+                                            className={`px-1 py-0.5 text-xs font-bold ${p.resultMultiplier === 1.0
                                                     ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/60'
                                                     : 'bg-rose-950/60 text-rose-400 border border-rose-800/60'
                                                 }`}
