@@ -1,4 +1,5 @@
 // K-AV-UX2A: หัวหน้า 3 ชั้นแบบหน้า draft เดิม — ป้ายหมวด mono → ชื่อหนา display → บรรทัดรอง
+// K-AV-UX3B: หัวข้อ HUD น้ำหนัก black แบบหัวหน้า Snake Draft
 export default function PageHeader({
   eyebrow,
   title,
@@ -18,7 +19,7 @@ export default function PageHeader({
             {eyebrow}
           </span>
         ) : null}
-        <h1 className="font-display text-2xl font-bold text-ink sm:text-3xl">{title}</h1>
+        <h1 className="font-display text-2xl font-black tracking-wide text-ink sm:text-3xl">{title}</h1>
         {subtitle ? <p className="text-base text-ink-muted">{subtitle}</p> : null}
       </div>
       {aside}

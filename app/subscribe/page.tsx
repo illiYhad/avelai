@@ -58,7 +58,7 @@ export default function SubscribePage() {
     return (
       <main className="min-h-screen bg-[#0A0A0F] text-white px-4 py-24 flex flex-col items-center justify-center text-center">
         <p className="text-[#00D4FF] font-mono text-sm tracking-widest mb-3">ARENA ACCESS</p>
-        <h1 className="font-['Orbitron'] text-2xl font-bold mb-3">COMING SOON</h1>
+        <h1 className="font-display text-2xl font-bold mb-3">COMING SOON</h1>
         <p className="text-gray-400 text-sm">{FEATURE_DISABLED_MESSAGE}</p>
       </main>
     )
@@ -68,7 +68,7 @@ export default function SubscribePage() {
     <main className="min-h-screen bg-[#0A0A0F] text-white px-4 py-16 flex flex-col items-center">
       <div className="text-center mb-12">
         <p className="text-[#00D4FF] font-mono text-sm tracking-widest mb-2">ARENA ACCESS</p>
-        <h1 className="font-['Orbitron'] text-4xl font-black tracking-wide mb-3">
+        <h1 className="font-display text-4xl font-black tracking-wide mb-3">
           CHOOSE YOUR <span className="text-[#C9A84C]">PASSPORT</span>
         </h1>
         <p className="text-gray-400 text-sm">PRECISION IS FREEDOM</p>
@@ -82,7 +82,7 @@ export default function SubscribePage() {
           }`}>
           <div>
             <p className="text-xs text-gray-500 font-mono tracking-widest mb-1">TIER 1</p>
-            <h2 className="font-['Orbitron'] text-2xl font-bold text-white">FREE RECRUIT</h2>
+            <h2 className="font-display text-2xl font-bold text-white">FREE RECRUIT</h2>
             <p className="text-3xl font-black mt-2">0 <span className="text-sm font-normal text-gray-400">/ mo</span></p>
           </div>
           <ul className="flex flex-col gap-2 text-sm text-gray-300 flex-1">
@@ -115,7 +115,7 @@ export default function SubscribePage() {
               <p className="text-xs text-[#C9A84C] font-mono tracking-widest">TIER 2</p>
               <span className="text-xs bg-[#C9A84C]/20 text-[#C9A84C] px-2 py-0.5 rounded font-mono">RECOMMENDED</span>
             </div>
-            <h2 className="font-['Orbitron'] text-2xl font-bold text-[#C9A84C]">PRO PASSPORT</h2>
+            <h2 className="font-display text-2xl font-bold text-[#C9A84C]">PRO PASSPORT</h2>
             <p className="text-3xl font-black mt-2 text-white">380 THB <span className="text-sm font-normal text-gray-400">/ mo</span></p>
           </div>
           <ul className="flex flex-col gap-2 text-sm text-gray-300 flex-1">

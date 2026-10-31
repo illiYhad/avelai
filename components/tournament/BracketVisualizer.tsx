@@ -43,7 +43,7 @@ export const BracketVisualizer: React.FC<BracketVisualizerProps> = ({
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-3 font-['Orbitron'] text-xs font-bold tracking-wider transition-all duration-200 ${
+              className={`px-6 py-3 font-display text-xs font-bold tracking-wider transition-all duration-200 ${
                 isActive
                   ? 'bg-[#00D4FF]/10 text-[#00D4FF] border-b-2 border-[#00D4FF]'
                   : 'text-gray-500 hover:text-gray-300 hover:bg-gray-900'
@@ -61,7 +61,7 @@ export const BracketVisualizer: React.FC<BracketVisualizerProps> = ({
           <div className="flex gap-8 items-start min-w-max">
             {bracketData.winnersTree.rounds.map((round, rIndex) => (
               <div key={rIndex} className="flex flex-col gap-4">
-                <span className="font-['Orbitron'] text-xs text-[#C9A84C] font-semibold tracking-wider">
+                <span className="font-display text-xs text-[#C9A84C] font-semibold tracking-wider">
                   ROUND {rIndex + 1}
                 </span>
                 <div className="flex flex-col gap-6">
@@ -83,7 +83,7 @@ export const BracketVisualizer: React.FC<BracketVisualizerProps> = ({
           <div className="flex gap-8 items-start min-w-max">
             {bracketData.losersTree.rounds.map((round, rIndex) => (
               <div key={rIndex} className="flex flex-col gap-4">
-                <span className="font-['Orbitron'] text-xs text-[#E8384F] font-semibold tracking-wider">
+                <span className="font-display text-xs text-[#E8384F] font-semibold tracking-wider">
                   ROUND {rIndex + 1}
                 </span>
                 <div className="flex flex-col gap-6">
@@ -103,7 +103,7 @@ export const BracketVisualizer: React.FC<BracketVisualizerProps> = ({
 
         {activeTab === 'FINALS' && (
           <div className="flex flex-col items-center justify-center py-12">
-            <span className="font-['Orbitron'] text-sm text-[#C9A84C] font-bold tracking-widest mb-6">
+            <span className="font-display text-sm text-[#C9A84C] font-bold tracking-widest mb-6">
               CHAMPIONSHIP GRAND FINAL
             </span>
             <MatchNode
@@ -112,7 +112,7 @@ export const BracketVisualizer: React.FC<BracketVisualizerProps> = ({
               onMatchClick={onMatchClick}
             />
             {bracketData.grandFinal.requiresReset && (
-              <p className="mt-6 text-xs text-[#E8384F] bg-[#E8384F]/10 px-4 py-1.5 rounded-full border border-[#E8384F]/50 font-['JetBrains_Mono']">
+              <p className="mt-6 text-xs text-[#E8384F] bg-[#E8384F]/10 px-4 py-1.5 rounded-full border border-[#E8384F]/50 font-mono">
                 ⚠️ Bracket Reset Potential Active
               </p>
             )}

@@ -186,7 +186,7 @@ export default function DailyArenaLobbyPage() {
                                     RESET AT 00:00 UTC
                                 </span>
                             </div>
-                            <h1 className="text-3xl md:text-4xl font-black tracking-wider text-white mt-2 font-['Orbitron']">
+                            <h1 className="text-3xl md:text-4xl font-black tracking-wider text-white mt-2 font-display">
                                 DAILY ARENA
                             </h1>
                             <p className="text-sm text-slate-400 max-w-xl mt-1 font-mono">
@@ -199,7 +199,7 @@ export default function DailyArenaLobbyPage() {
 
                             {/* Pilot Avatar Frame */}
                             <div className="relative group cursor-pointer shrink-0">
-                                <div className="w-24 h-28 rounded-2xl bg-slate-950 border-2 border-[#00D4FF]/50 flex items-center justify-center font-['Orbitron'] font-black text-2xl text-[#00D4FF] shadow-[0_0_20px_rgba(0,212,255,0.25)] overflow-hidden transition-all group-hover:border-[#00D4FF] group-hover:shadow-[0_0_30px_rgba(0,212,255,0.4)]">
+                                <div className="w-24 h-28 rounded-2xl bg-slate-950 border-2 border-[#00D4FF]/50 flex items-center justify-center font-display font-black text-2xl text-[#00D4FF] shadow-[0_0_20px_rgba(0,212,255,0.25)] overflow-hidden transition-all group-hover:border-[#00D4FF] group-hover:shadow-[0_0_30px_rgba(0,212,255,0.4)]">
                                     <span className="group-hover:scale-110 transition-transform duration-300">SH</span>
                                 </div>
                                 <span className="absolute -bottom-1 -right-1 text-xs font-mono px-2 py-0.5 rounded bg-slate-900 border border-[#C9A84C] text-[#C9A84C] font-bold shadow-md">
@@ -258,7 +258,7 @@ export default function DailyArenaLobbyPage() {
                         <span className="text-xs font-mono px-2.5 py-1 rounded bg-[#00D4FF]/10 border border-[#00D4FF]/30 text-[#00D4FF]">
                             SNAKE DRAFT FORMATION READY
                         </span>
-                        <h2 className="text-xl md:text-2xl font-black tracking-wide text-slate-100 mt-2 font-['Orbitron']">
+                        <h2 className="text-xl md:text-2xl font-black tracking-wide text-slate-100 mt-2 font-display">
                             MATCH DISPATCH STATUS
                         </h2>
                         <p className="text-xs text-slate-400 font-mono mt-1">
@@ -291,7 +291,7 @@ export default function DailyArenaLobbyPage() {
                         <div className="flex justify-between items-center pb-3 border-b border-slate-800">
                             <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded-full bg-[#00D4FF]" />
-                                <h2 className="text-base font-bold font-['Orbitron'] text-[#00D4FF] tracking-wide">
+                                <h2 className="text-base font-bold font-display text-[#00D4FF] tracking-wide">
                                     TEAM RADIANT
                                 </h2>
                             </div>
@@ -309,7 +309,7 @@ export default function DailyArenaLobbyPage() {
                         <div className="flex justify-between items-center pb-3 border-b border-slate-800">
                             <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded-full bg-[#C9A84C]" />
-                                <h2 className="text-base font-bold font-['Orbitron'] text-[#C9A84C] tracking-wide">
+                                <h2 className="text-base font-bold font-display text-[#C9A84C] tracking-wide">
                                     TEAM DIRE
                                 </h2>
                             </div>

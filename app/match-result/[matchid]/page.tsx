@@ -138,7 +138,7 @@ export default function MatchResultPage({ params }: PageProps) {
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
               <span className="text-xs font-bold text-emerald-400 tracking-widest uppercase">VICTORY SETTLED</span>
             </div>
-            <h1 className="font-['Orbitron'] text-2xl md:text-3xl font-black text-white tracking-wider">
+            <h1 className="font-display text-2xl md:text-3xl font-black text-white tracking-wider">
               MATCH RESULT #{matchid}
             </h1>
             <p className="text-zinc-400 text-xs mt-1">Behavior Forced-Ranking & Mandatory Voting Gate</p>
@@ -298,7 +298,7 @@ export default function MatchResultPage({ params }: PageProps) {
               <button
                 onClick={handleSubmitVotes}
                 disabled={!isFormValid || submitting}
-                className={`px-8 py-3 rounded-xl font-['Orbitron'] text-xs font-black uppercase tracking-widest transition-all ${
+                className={`px-8 py-3 rounded-xl font-display text-xs font-black uppercase tracking-widest transition-all ${
                   isFormValid && !submitting
                     ? 'bg-linear-to-r from-[#00D4FF] to-[#C9A84C] text-slate-950 hover:brightness-110 shadow-[0_0_20px_rgba(0,212,255,0.4)] cursor-pointer'
                     : 'bg-slate-800 text-zinc-500 border border-slate-700 cursor-not-allowed'
@@ -309,7 +309,7 @@ export default function MatchResultPage({ params }: PageProps) {
             ) : (
               <Link
                 href={`/match/${matchid}`}
-                className="inline-flex items-center gap-2 px-8 py-3 bg-[#00D4FF] text-slate-950 rounded-xl font-['Orbitron'] text-xs font-black uppercase tracking-widest hover:bg-[#00D4FF]/80 shadow-[0_0_20px_rgba(0,212,255,0.4)] transition-all"
+                className="inline-flex items-center gap-2 px-8 py-3 bg-[#00D4FF] text-slate-950 rounded-xl font-display text-xs font-black uppercase tracking-widest hover:bg-[#00D4FF]/80 shadow-[0_0_20px_rgba(0,212,255,0.4)] transition-all"
               >
                 <span>FULL INTEL — MATCH DETAIL</span>
                 <ArrowRight className="w-4 h-4" />

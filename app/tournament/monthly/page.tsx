@@ -294,7 +294,7 @@ export default function MonthlyTournamentPage() {
                 <div className="flex justify-end items-center">
                     <button
                         onClick={() => setIsAdminMode(!isAdminMode)}
-                        className={`px-4 py-1.5 rounded-lg border font-['Orbitron'] text-xs font-bold tracking-wider transition-all duration-200 cursor-pointer ${
+                        className={`px-4 py-1.5 rounded-lg border font-display text-xs font-bold tracking-wider transition-all duration-200 cursor-pointer ${
                             isAdminMode
                                 ? 'border-[#00D4FF] text-[#00D4FF] bg-[#00D4FF]/10 shadow-[0_0_10px_rgba(0,212,255,0.2)]'
                                 : 'border-gray-700 text-gray-400 hover:border-gray-500'

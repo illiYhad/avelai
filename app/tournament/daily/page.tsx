@@ -184,7 +184,7 @@ export default function DailyArenaPage() {
                                     RESET AT 00:00 UTC
                                 </span>
                             </div>
-                            <h1 className="text-3xl md:text-4xl font-black tracking-wider text-white mt-2 font-['Orbitron']">
+                            <h1 className="text-3xl md:text-4xl font-black tracking-wider text-white mt-2 font-display">
                                 DAILY ARENA
                             </h1>
                             <p className="text-sm text-slate-400 max-w-xl mt-1 font-mono">
@@ -262,7 +262,7 @@ export default function DailyArenaPage() {
                     {/* Left 2 Cols: Play Arena / Position Selection */}
                     <div className="lg:col-span-2 space-y-6">
                         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-                            <h2 className="text-lg font-bold font-['Orbitron'] text-slate-100 flex items-center gap-2">
+                            <h2 className="text-lg font-bold font-display text-slate-100 flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-[#00D4FF]" />
                                 ARENA DEPLOYMENT SETUP
                             </h2>
@@ -370,7 +370,7 @@ export default function DailyArenaPage() {
                     {/* Right 1 Col: Live Daily Leaderboard */}
                     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
                         <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-                            <h2 className="text-base font-bold font-['Orbitron'] text-slate-200">
+                            <h2 className="text-base font-bold font-display text-slate-200">
                                 DAILY LEADERBOARD
                             </h2>
                             <span className="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 animate-pulse">

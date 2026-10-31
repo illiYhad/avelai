@@ -16,7 +16,14 @@
   --color-background: var(--color-void);
   --color-foreground: var(--color-ink);
 
-  /* ฟอนต์ไทย Noto Sans Thai เป็น fallback ทุกชุด เพราะ Orbitron/Inter/JetBrains Mono ไม่มีอักษรไทย */
+  /* K-AV-UX3B: CI กลางจากหน้า Snake Draft (ค่าที่หน้านั้นใช้จริง) */
+  --color-panel: #020617;
+  --color-gold-deep: #854D0E;
+  --color-cyan-deep: #0E7490;
+  --shadow-glow-gold: 0 0 15px rgba(201, 168, 76, 0.3);
+  --shadow-glow-cyan: 0 0 15px rgba(0, 212, 255, 0.25);
+
+  /* ฟอนต์ไทย IBM Plex Sans Thai เป็น fallback ทุกชุด เพราะ Orbitron/Inter/JetBrains Mono ไม่มีอักษรไทย */
   --font-sans: var(--font-inter), var(--font-thai), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-orbitron), var(--font-thai), ui-sans-serif, sans-serif;
   --font-mono: var(--font-jetbrains), var(--font-thai), ui-monospace, monospace;
@@ -54,26 +61,73 @@ body {
 }
 
 @layer components {
+  /* K-AV-UX3B: ปุ่มแบบ Snake Draft — สูงอย่างน้อย 44px · ทองไล่สี + เรืองแสงอ่อน (หลัก) · ขอบฟ้า (รอง) */
   .btn-primary,
   .btn-ghost {
-    font-weight: 600;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
     transition-property: background-color, border-color, opacity;
     transition-duration: 150ms;
   }
   .btn-primary {
+    background-image: linear-gradient(to right, var(--color-gold), #f59e0b);
     background-color: var(--color-gold);
     color: var(--color-void);
+    box-shadow: var(--shadow-glow-gold);
   }
   .btn-primary:hover:not(:disabled) {
+    background-image: none;
     background-color: var(--color-gold-hover);
   }
   .btn-ghost {
-    background-color: transparent;
-    border: 1px solid var(--color-line);
+    background-color: rgba(0, 212, 255, 0.05);
+    border: 1px solid rgba(0, 212, 255, 0.4);
     color: var(--color-ink);
   }
   .btn-ghost:hover:not(:disabled) {
-    border-color: rgba(255, 255, 255, 0.24);
+    border-color: var(--color-cyan);
+    box-shadow: var(--shadow-glow-cyan);
+  }
+
+  /* K-AV-UX3B: วงเล็บมุมการ์ด (บนซ้าย + ล่างขวา) แบบการ์ดผู้เล่นหน้า Snake Draft · สีตาม --corner */
+  .ci-corners::before,
+  .ci-corners::after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    pointer-events: none;
+    border-color: var(--corner, var(--color-gold));
+  }
+  .ci-corners::before {
+    top: -1px;
+    left: -1px;
+    border-top: 2px solid;
+    border-left: 2px solid;
+    border-top-left-radius: inherit;
+  }
+  .ci-corners::after {
+    bottom: -1px;
+    right: -1px;
+    border-bottom: 2px solid;
+    border-right: 2px solid;
+    border-bottom-right-radius: inherit;
+  }
+
+  /* K-AV-UX3B: กระดานเอียง 3D ของ Snake Draft — จอเล็กกว่า 640px แบนลงให้อ่าน/แตะได้ */
+  .ci-board-3d {
+    transform: rotateX(46deg) rotateZ(-18deg);
+    transform-style: preserve-3d;
+  }
+  @media (max-width: 639px) {
+    .ci-board-3d {
+      transform: none;
+    }
   }
   .btn-primary:focus-visible,
   .btn-ghost:focus-visible {

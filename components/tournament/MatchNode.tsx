@@ -36,7 +36,7 @@ export const MatchNode: React.FC<MatchNodeProps> = ({
       }`}
     >
       {/* Match ID Badge */}
-      <span className="absolute top-2 right-2 font-['Orbitron'] text-xs text-gray-500 uppercase tracking-wider">
+      <span className="absolute top-2 right-2 font-display text-xs text-gray-500 uppercase tracking-wider">
         {match.matchId}
       </span>
 
@@ -44,13 +44,13 @@ export const MatchNode: React.FC<MatchNodeProps> = ({
         {/* Player 1 Row */}
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-2 overflow-hidden">
-            <span className="font-['JetBrains_Mono'] text-xs text-gray-400 bg-gray-800/80 px-1.5 py-0.5 rounded">
+            <span className="font-mono text-xs text-gray-400 bg-gray-800/80 px-1.5 py-0.5 rounded">
               #{match.seed1 ?? '?'}
             </span>
             <span className="truncate">{match.player1Id ?? 'TBD'}</span>
           </div>
           {match.status === 'completed' && (
-            <span className="font-bold text-[#39FF6A] font-['JetBrains_Mono']">W</span>
+            <span className="font-bold text-[#39FF6A] font-mono">W</span>
           )}
         </div>
 
@@ -59,13 +59,13 @@ export const MatchNode: React.FC<MatchNodeProps> = ({
         {/* Player 2 Row */}
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-2 overflow-hidden">
-            <span className="font-['JetBrains_Mono'] text-xs text-gray-400 bg-gray-800/80 px-1.5 py-0.5 rounded">
+            <span className="font-mono text-xs text-gray-400 bg-gray-800/80 px-1.5 py-0.5 rounded">
               #{match.seed2 ?? '?'}
             </span>
             <span className="truncate">{match.player2Id ?? 'TBD'}</span>
           </div>
           {match.status === 'completed' && (
-            <span className="font-bold text-[#E8384F] font-['JetBrains_Mono']">L</span>
+            <span className="font-bold text-[#E8384F] font-mono">L</span>
           )}
         </div>
       </div>

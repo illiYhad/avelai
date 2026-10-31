@@ -263,13 +263,9 @@ function SnakeMatrix10Slots3D({
                 </div>
             </div>
 
-            <div className="w-full py-6 flex items-center justify-center perspective-[1400px]">
+            <div className="w-full py-6 flex items-center justify-center perspective-[1400px] max-sm:justify-start max-sm:overflow-x-auto">
                 <div
-                    className="grid grid-cols-5 gap-3 md:gap-3.5 scale-95 md:scale-100 transition-transform duration-700"
-                    style={{
-                        transform: 'rotateX(46deg) rotateZ(-18deg)',
-                        transformStyle: 'preserve-3d',
-                    }}
+                    className="ci-board-3d grid grid-cols-5 gap-3 md:gap-3.5 transition-transform duration-700"
                 >
                     {slots.map((node, i) => {
                         const isActive = i === currentTurn && !isDraftComplete;
@@ -652,7 +648,7 @@ export default function SnakeDraftPage() {
                         <span className="text-xs px-2 py-0.5 rounded bg-[#C9A84C]/10 border border-[#C9A84C]/30 text-[#C9A84C] font-bold flex items-center gap-1.5 w-fit">
                             <Zap className="w-3 h-3 text-[#C9A84C]" /> CAPTAIN DRAFT SYSTEM
                         </span>
-                        <h1 className="text-xl font-black text-white mt-1 font-['Orbitron']">
+                        <h1 className="text-xl font-black text-white mt-1 font-display">
                             SNAKE DRAFT ARENA
                         </h1>
                     </div>
@@ -670,7 +666,7 @@ export default function SnakeDraftPage() {
                         <div className="flex items-center justify-between border-b border-[#00D4FF]/20 pb-2 mb-1">
                             <div className="flex items-center gap-1.5">
                                 <Shield className="w-4 h-4 text-[#00D4FF]" />
-                                <span className="font-black text-xs text-[#00D4FF] font-['Orbitron']">1: RADIANT (C1)</span>
+                                <span className="font-black text-xs text-[#00D4FF] font-display">1: RADIANT (C1)</span>
                                 {currentActiveTeam === 'RADIANT' && (
                                     <span className="text-xs px-1.5 py-0.2 rounded bg-[#00D4FF] text-black font-black animate-pulse shadow-[0_0_10px_rgba(0,212,255,0.8)]">
                                         ACTIVE PICK
@@ -703,7 +699,7 @@ export default function SnakeDraftPage() {
                         <div className="flex items-center justify-between border-b border-[#C9A84C]/20 pb-2 mb-1">
                             <div className="flex items-center gap-1.5">
                                 <Flame className="w-4 h-4 text-[#C9A84C]" />
-                                <span className="font-black text-xs text-[#C9A84C] font-['Orbitron']">2: DIRE (C4)</span>
+                                <span className="font-black text-xs text-[#C9A84C] font-display">2: DIRE (C4)</span>
                                 {currentActiveTeam === 'DIRE' && (
                                     <span className="text-xs px-1.5 py-0.2 rounded bg-[#C9A84C] text-black font-black animate-pulse shadow-[0_0_10px_rgba(201,168,76,0.8)]">
                                         ACTIVE PICK
