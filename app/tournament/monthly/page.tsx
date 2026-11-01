@@ -109,7 +109,7 @@ const RARITY_COLORS: Record<string, string> = {
     UNCOMMON: 'border-[#39FF6A]/60 text-[#39FF6A]',
     RARE: 'border-[#2E9BFF]/70 text-[#2E9BFF]',
     EPIC: 'border-[#D63CE8]/70 text-[#D63CE8]',
-    LEGENDARY: 'border-[#C9A84C] text-[#C9A84C] shadow-[0_0_15px_rgba(201,168,76,0.3)]',
+    LEGENDARY: 'border-gold text-gold shadow-[0_0_15px_rgba(201,168,76,0.3)]',
 };
 
 function generateMockBracketData(): MonthlyDoubleEliminationBracket {
@@ -154,7 +154,7 @@ function generateMockBracketData(): MonthlyDoubleEliminationBracket {
 
 const IntegrityCard: React.FC<IntegrityCardProps> = ({ displayName, avatarUrl, rarity, position, team, karmaScore = 100, winRate = 50.0, isCurrentUser = false }) => {
     const roleColor = ROLE_COLORS[position];
-    const teamBorder = team === 'TEAM_A' ? '#00D4FF' : '#C9A84C';
+    const teamBorder = team === 'TEAM_A' ? 'var(--color-cyan)' : 'var(--color-gold)';
 
     if (rarity === 'NONE') {
         return (
@@ -296,7 +296,7 @@ export default function MonthlyTournamentPage() {
                         onClick={() => setIsAdminMode(!isAdminMode)}
                         className={`px-4 py-1.5 rounded-lg border font-display text-xs font-bold tracking-wider transition-all duration-200 cursor-pointer ${
                             isAdminMode
-                                ? 'border-[#00D4FF] text-[#00D4FF] bg-[#00D4FF]/10 shadow-[0_0_10px_rgba(0,212,255,0.2)]'
+                                ? 'border-cyan text-cyan bg-cyan/10 shadow-[0_0_10px_rgba(0,212,255,0.2)]'
                                 : 'border-gray-700 text-gray-400 hover:border-gray-500'
                         }`}
                     >
