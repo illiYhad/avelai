@@ -30,7 +30,7 @@ import {
   readJobId,
   rememberParse,
 } from "@/lib/dota/match/parse";
-import { allowIp, clientIpFrom, ipKey, publicMatchIpLog, pruneIpLog, DOTA_PUBLIC_IP_LIMIT, IP_LOG_MAX_KEYS } from "@/lib/dota/ip-rate-limit";
+import { allowIp, clientIpFrom, ipBucket, ipKey, publicMatchIpLog, pruneIpLog, resetPruneClock, DOTA_PUBLIC_IP_LIMIT, IP_LOG_MAX_KEYS } from "@/lib/dota/ip-rate-limit";
 import { POST as parsePost, dotaParseLog } from "@/app/api/games/dota2/parse/[matchId]/route";
 
 const MATCH_ID = "8214277203";
@@ -408,7 +408,52 @@ describe("เพดานต่อ IP ของหน้าสาธารณะ
     expect(allowIp(publicMatchIpLog, k, now)).toBe(false);
   });
 
+  it("IPv6 ทั้งช่วง /64 นับรวมกัน (เครื่องเดียวถือหลายที่อยู่ เลี่ยงเพดานไม่ได้)", () => {
+    const a = ipBucket("2001:db8:abcd:1234:1:1:1:1");
+    expect(ipBucket("2001:db8:abcd:1234:9:9:9:9")).toBe(a);
+    expect(ipBucket("2001:db8:abcd:1234::5")).toBe(a);
+    expect(ipBucket("[2001:db8:abcd:1234::5]:443")).toBe(a);
+    expect(ipBucket("2001:db8:abcd:1234::5%eth0")).toBe(a);
+    // คนละ /64 ต้องนับแยก
+    expect(ipBucket("2001:db8:abcd:9999::5")).not.toBe(a);
+    // IPv4 ยังนับรายที่อยู่ และตัดพอร์ตออก
+    expect(ipBucket("203.0.113.9")).toBe("203.0.113.9");
+    expect(ipBucket("203.0.113.9:443")).toBe("203.0.113.9");
+    expect(ipBucket(null)).toBe("unknown");
+  });
+
+  it("IPv6 คนละที่อยู่ใน /64 เดียวกันใช้เพดานร่วมกัน", () => {
+    const now = 5_000_000;
+    const keys = new Set<string>();
+    for (let i = 0; i < 40; i++) keys.add(ipKey(`2001:db8:abcd:1234::${i}`));
+    expect(keys.size).toBe(1);
+    const k = [...keys][0];
+    for (let i = 0; i < 30; i++) expect(allowIp(publicMatchIpLog, k, now)).toBe(true);
+    expect(allowIp(publicMatchIpLog, k, now)).toBe(false);
+  });
+
+  it("เพดานจำนวนคีย์บังคับได้จริง แม้กวาดแล้วยังเต็ม (ทุกคีย์ยัง active)", () => {
+    resetPruneClock();
+    const now = 6_000_000;
+    // ยัดคีย์ที่ยัง active ให้เกินเพดาน — map ต้องไม่โตเกิน IP_LOG_MAX_KEYS
+    for (let i = 0; i < IP_LOG_MAX_KEYS + 120; i++) allowIp(publicMatchIpLog, `k${i}`, now);
+    expect(publicMatchIpLog.size).toBeLessThanOrEqual(IP_LOG_MAX_KEYS);
+  });
+
+  it("กวาดอย่างมากหนึ่งครั้งต่อหน้าต่าง ไม่ใช่ทุกคำขอ", () => {
+    resetPruneClock();
+    const now = 7_000_000;
+    allowIp(publicMatchIpLog, "a", now - 120_000); // คีย์เก่าที่ควรโดนกวาด
+    allowIp(publicMatchIpLog, "b", now); // คำขอแรกในหน้าต่างนี้ → กวาด
+    expect(publicMatchIpLog.has("a")).toBe(false);
+    allowIp(publicMatchIpLog, "c", now + 1_000); // ยังอยู่ในหน้าต่างเดิม → ไม่กวาดซ้ำ
+    publicMatchIpLog.set("stale", [now - 120_000]);
+    allowIp(publicMatchIpLog, "d", now + 2_000);
+    expect(publicMatchIpLog.has("stale")).toBe(true); // พิสูจน์ว่าไม่ได้กวาดทุกคำขอ
+  });
+
   it("กวาดคีย์หมดอายุทิ้ง ไม่ปล่อยให้หน่วยความจำโตไม่หยุด", () => {
+    resetPruneClock();
     const now = 4_000_000;
     for (let i = 0; i < 50; i++) allowIp(publicMatchIpLog, ipKey(`198.51.100.${i}`), now);
     expect(publicMatchIpLog.size).toBe(50);
