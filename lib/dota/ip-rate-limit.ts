@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { isIP } from "node:net";
 
 // K-AV-D3: เพดานต่อ IP สำหรับหน้าแมตช์สาธารณะ (ไม่ต้องล็อกอิน)
 // ⚠ ห้ามเก็บ IP ลงฐานข้อมูลหรือ log — เก็บเฉพาะค่าแฮชไว้ในหน่วยความจำของอินสแตนซ์
@@ -27,15 +28,32 @@ const SALT = createHash("sha256").update(String(Math.random()) + String(process.
 
 /** ยุบที่อยู่ให้เป็นหน่วยที่ควรนับร่วมกัน
  *  IPv6: เครื่องเดียวมักได้ทั้งช่วง /64 ถ้านับรายที่อยู่จะเลี่ยงเพดานได้ง่าย → เหลือ 4 กลุ่มแรก
- *  IPv4: นับรายที่อยู่ตามเดิม */
+ *  IPv4: นับรายที่อยู่ตามเดิม
+ *
+ *  K-AV-D3 (แก้ตามผลตรวจความปลอดภัยอัตโนมัติรอบสาม):
+ *  ของเดิมแยกสายด้วย regex อย่างเดียว ทำให้ `::ffff:203.0.113.9` (IPv4 ที่ห่อมาในรูป IPv6
+ *  ซึ่ง socket แบบ dual-stack ของ Node ส่งมาแบบนี้เป็นปกติ) ตกเข้าสาย IPv6 แล้วถูกยุบเป็น
+ *  `0:0:0:0::/64` **ทุกที่อยู่** → ผู้ชม IPv4 ทุกคนใช้ถังเดียวกัน คนเดียวยิงครบ 30 ครั้ง
+ *  ก็ล็อกคนอื่นทั้งหมด ตอนนี้ใช้ `net.isIP` ตัดสินชนิดจริง และดึง IPv4 ที่ฝังมาออกก่อนยุบ */
 export function ipBucket(ip: string | null | undefined): string {
   if (!ip) return "unknown";
   let v = ip.trim().replace(/%.*$/, ""); // ตัด zone id ของ IPv6
   const bracketed = v.match(/^\[(.+)\](?::\d+)?$/); // [2001:db8::1]:443
   if (bracketed) v = bracketed[1];
-  const v4 = v.match(/^(\d{1,3}(?:\.\d{1,3}){3})(?::\d+)?$/); // IPv4 (ตัดพอร์ตถ้ามี) — ต้องเช็กก่อน เพราะมี ":" ได้
-  if (v4) return v4[1];
-  if (!v.includes(":")) return v;
+
+  // IPv4 (ตัดพอร์ตถ้ามี) — ต้องเช็กก่อน เพราะมี ":" ได้
+  const withPort = v.match(/^(\d{1,3}(?:\.\d{1,3}){3}):\d+$/);
+  if (withPort && isIP(withPort[1]) === 4) return withPort[1];
+  if (isIP(v) === 4) return v;
+
+  // อ่านไม่ออกว่าเป็นที่อยู่อะไร = นับตามตัวอักษรไปเลย ไม่เดาและไม่ยุบรวมกับใคร
+  if (isIP(v) !== 6) return v.slice(0, 64) || "unknown";
+
+  // IPv4 ที่ฝังมาในรูป IPv6 (`::ffff:1.2.3.4` · `::1.2.3.4`) = เครื่อง IPv4 จริง ๆ
+  // ต้องนับรายที่อยู่ ห้ามยุบเป็น /64 ไม่งั้นทุกคนชนถังเดียวกัน
+  const embedded = v.match(/(\d{1,3}(?:\.\d{1,3}){3})$/);
+  if (embedded && isIP(embedded[1]) === 4) return embedded[1];
+
   const [head, tail = ""] = v.split("::");
   const headParts = head ? head.split(":").filter(Boolean) : [];
   const tailParts = tail ? tail.split(":").filter(Boolean) : [];

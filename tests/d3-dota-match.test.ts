@@ -422,6 +422,32 @@ describe("เพดานต่อ IP ของหน้าสาธารณะ
     expect(ipBucket(null)).toBe("unknown");
   });
 
+  it("IPv4 ที่ห่อมาในรูป IPv6 ต้องนับรายที่อยู่ ไม่ยุบรวมเป็นถังเดียว", () => {
+    // เคสจริง: socket แบบ dual-stack ของ Node ส่ง IPv4 มาเป็น ::ffff:a.b.c.d
+    expect(ipBucket("::ffff:203.0.113.9")).toBe("203.0.113.9");
+    expect(ipBucket("::ffff:198.51.100.7")).toBe("198.51.100.7");
+    expect(ipBucket("::203.0.113.9")).toBe("203.0.113.9");
+    expect(ipBucket("[::ffff:203.0.113.9]:443")).toBe("203.0.113.9");
+    // ของเดิมยุบทุกตัวเป็น 0:0:0:0::/64 เหมือนกันหมด — ต้องไม่ชนกันอีกแล้ว
+    expect(ipBucket("::ffff:203.0.113.9")).not.toBe(ipBucket("::ffff:198.51.100.7"));
+    // และต้องตรงกับรูปแบบ IPv4 ธรรมดาของที่อยู่เดียวกัน (คนเดียวกันต้องอยู่ถังเดียวกัน)
+    expect(ipKey("::ffff:203.0.113.9")).toBe(ipKey("203.0.113.9"));
+  });
+
+  it("คนละ IPv4 ที่ห่อมาในรูป IPv6 ล็อกกันเองไม่ได้", () => {
+    const now = 8_000_000;
+    const victim = ipKey("::ffff:198.51.100.7");
+    for (let i = 0; i < 30; i++) allowIp(publicMatchIpLog, ipKey("::ffff:203.0.113.9"), now);
+    expect(allowIp(publicMatchIpLog, ipKey("::ffff:203.0.113.9"), now)).toBe(false);
+    expect(allowIp(publicMatchIpLog, victim, now)).toBe(true);
+  });
+
+  it("ค่าที่ไม่ใช่ที่อยู่ IP ไม่ถูกยุบรวมกับใคร", () => {
+    expect(ipBucket("not-an-ip")).toBe("not-an-ip");
+    expect(ipBucket("unknown")).toBe("unknown");
+    expect(ipBucket("not-an-ip")).not.toBe(ipBucket("other-junk"));
+  });
+
   it("IPv6 คนละที่อยู่ใน /64 เดียวกันใช้เพดานร่วมกัน", () => {
     const now = 5_000_000;
     const keys = new Set<string>();
