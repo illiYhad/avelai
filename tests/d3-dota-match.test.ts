@@ -30,7 +30,7 @@ import {
   readJobId,
   rememberParse,
 } from "@/lib/dota/match/parse";
-import { allowIp, clientIpFrom, ipKey, publicMatchIpLog, DOTA_PUBLIC_IP_LIMIT } from "@/lib/dota/ip-rate-limit";
+import { allowIp, clientIpFrom, ipKey, publicMatchIpLog, pruneIpLog, DOTA_PUBLIC_IP_LIMIT, IP_LOG_MAX_KEYS } from "@/lib/dota/ip-rate-limit";
 import { POST as parsePost, dotaParseLog } from "@/app/api/games/dota2/parse/[matchId]/route";
 
 const MATCH_ID = "8214277203";
@@ -386,10 +386,34 @@ describe("เพดานต่อ IP ของหน้าสาธารณะ
     expect([...publicMatchIpLog.keys()].join("|")).not.toContain(ip);
   });
 
-  it("อ่าน IP จาก header ของ proxy ได้ (ค่าแรกของ x-forwarded-for)", () => {
+  it("ใช้ค่าที่แพลตฟอร์มใส่ก่อน และไม่เชื่อค่าซ้ายสุดของ x-forwarded-for ที่ผู้เรียกปลอมได้", () => {
     const hdr = (m: Record<string, string>) => ({ get: (n: string) => m[n] ?? null });
-    expect(clientIpFrom(hdr({ "x-forwarded-for": "1.2.3.4, 5.6.7.8" }))).toBe("1.2.3.4");
-    expect(clientIpFrom(hdr({ "x-real-ip": "9.9.9.9" }))).toBe("9.9.9.9");
+    // ผู้เรียกใส่ค่าปลอมไว้ซ้ายสุด แต่ค่าที่แพลตฟอร์มใส่ต้องชนะเสมอ
+    expect(clientIpFrom(hdr({ "x-forwarded-for": "1.1.1.1, 203.0.113.9", "x-vercel-forwarded-for": "203.0.113.9" }))).toBe("203.0.113.9");
+    expect(clientIpFrom(hdr({ "x-forwarded-for": "1.1.1.1", "x-real-ip": "203.0.113.9" }))).toBe("203.0.113.9");
+    // เหลือแค่ XFF → ใช้ค่าขวาสุด (ช่วงที่ proxy ที่เราเชื่อถือเติมล่าสุด)
+    expect(clientIpFrom(hdr({ "x-forwarded-for": "1.1.1.1, 2.2.2.2, 203.0.113.9" }))).toBe("203.0.113.9");
     expect(clientIpFrom(hdr({}))).toBeNull();
+  });
+
+  it("ปลอม x-forwarded-for ซ้ายสุดแล้วข้ามเพดานไม่ได้", () => {
+    const now = 3_000_000;
+    const real = "203.0.113.50";
+    const hdr = (fake: string) => ({ get: (n: string) => (n === "x-forwarded-for" ? `${fake}, ${real}` : null) });
+    const keys = new Set<string>();
+    for (let i = 0; i < 5; i++) keys.add(ipKey(clientIpFrom(hdr(`10.0.0.${i}`))));
+    expect(keys.size).toBe(1); // ทุกคำขอตกคีย์เดียวกัน ปลอมไม่ช่วย
+    const k = [...keys][0];
+    for (let i = 0; i < 30; i++) allowIp(publicMatchIpLog, k, now);
+    expect(allowIp(publicMatchIpLog, k, now)).toBe(false);
+  });
+
+  it("กวาดคีย์หมดอายุทิ้ง ไม่ปล่อยให้หน่วยความจำโตไม่หยุด", () => {
+    const now = 4_000_000;
+    for (let i = 0; i < 50; i++) allowIp(publicMatchIpLog, ipKey(`198.51.100.${i}`), now);
+    expect(publicMatchIpLog.size).toBe(50);
+    pruneIpLog(publicMatchIpLog, now + 60_001);
+    expect(publicMatchIpLog.size).toBe(0);
+    expect(IP_LOG_MAX_KEYS).toBe(5000);
   });
 });
