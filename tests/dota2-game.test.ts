@@ -62,10 +62,12 @@ vi.mock("@/lib/db/admin", () => ({
 }));
 
 import { GAMES, gameLabel, isGameCode, teamGame } from "@/lib/games";
-import { parseDotaAccountId } from "@/lib/games-dota-id";
 import { createTeamAction, invitePlayerAction, lockRosterAction } from "@/app/[game]/teams/actions";
 import { fetchLiquipediaAction } from "@/app/[game]/teams/[teamId]/scout/actions";
-import { linkDotaAccountAction, unlinkDotaAccountAction } from "@/app/me/dota-actions";
+import { unlinkDotaAccountAction } from "@/app/me/dota-actions";
+import * as dotaActions from "@/app/me/dota-actions";
+import { getMyDotaAccount } from "@/lib/dota/my-account";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 const NO_STATE = { ok: false, message: "" };
 
@@ -97,26 +99,6 @@ describe("lib/games", () => {
     expect(gameLabel("LOL")).toBe("LOL");
     expect(teamGame(undefined)).toBe("MLBB");
     expect(teamGame("DOTA2")).toBe("DOTA2");
-  });
-});
-
-describe("parseDotaAccountId", () => {
-  it("Steam32 5–10 หลัก", () => {
-    expect(parseDotaAccountId("94288314")).toBe("94288314");
-    expect(parseDotaAccountId(" 12345 ")).toBe("12345");
-  });
-  it("SteamID64 → Steam32", () => {
-    expect(parseDotaAccountId("76561198054554042")).toBe("94288314");
-  });
-  it("ลิงก์ dotabuff / opendota", () => {
-    expect(parseDotaAccountId("https://www.dotabuff.com/players/94288314")).toBe("94288314");
-    expect(parseDotaAccountId("opendota.com/players/94288314/")).toBe("94288314");
-    expect(parseDotaAccountId("https://www.opendota.com/players/94288314?tab=matches")).toBe("94288314");
-  });
-  it("ขยะ · 0 · ติดลบ · สั้น/ยาวเกิน · เกิน 32-bit → null", () => {
-    for (const v of ["", "abc", "0", "00000", "-94288314", "1234", "12345678901", "4294967296", "76561197960265728", "https://evil.com/players/94288314", null, 94288314]) {
-      expect(parseDotaAccountId(v as unknown)).toBeNull();
-    }
   });
 });
 
@@ -206,41 +188,39 @@ describe("สเกาต์: ทีมที่ไม่ใช่ MLBB ไม�
   });
 });
 
-describe("ผูกบัญชี Dota ในหน้า /me", () => {
-  const form = (v: string) => { const f = new FormData(); f.set("dota_id", v); return f; };
+// K-AV-LINK.1: เอาทางกรอกเลข Dota เองออก · ผูกได้ทาง Steam อย่างเดียว · เหลือแค่ยกเลิกการผูก
+describe("บัญชี Dota ในหน้า /me (หลัง K-AV-LINK.1)", () => {
+  it("ไม่มี action กรอกเลข Dota เองแล้ว", () => {
+    expect("linkDotaAccountAction" in dotaActions).toBe(false);
+  });
 
-  it("ไม่ล็อกอิน → ปฏิเสธ · ไม่เขียน", async () => {
-    expect(await linkDotaAccountAction(NO_STATE, form("94288314"))).toMatchObject({ ok: false, message: "กรุณาเข้าสู่ระบบก่อน" });
-    expect(await unlinkDotaAccountAction(NO_STATE, new FormData())).toMatchObject({ ok: false });
+  it("ยกเลิกการผูก: ไม่ล็อกอิน → ปฏิเสธ · ไม่เขียน", async () => {
+    expect(await unlinkDotaAccountAction(NO_STATE, new FormData())).toMatchObject({ ok: false, message: "กรุณาเข้าสู่ระบบก่อน" });
     expect(h.calls.some((c) => c.table === "game_accounts")).toBe(false);
   });
 
-  it("บัญชีถูกระงับ → ปฏิเสธ · ไม่เขียน", async () => {
+  it("ยกเลิกการผูก: ปกติ → ลบแถว DOTA2 ของตัวเองผ่าน client ผู้ใช้", async () => {
     h.user = { id: "u1" };
-    h.suspendedUntil = new Date(Date.now() + 86_400_000).toISOString();
-    expect(await linkDotaAccountAction(NO_STATE, form("94288314"))).toMatchObject({ ok: false });
-    expect(h.calls.some((c) => c.table === "game_accounts")).toBe(false);
-  });
-
-  it("รูปแบบผิด → ข้อความไทย · ไม่แตะ DB", async () => {
-    h.user = { id: "u1" };
-    expect((await linkDotaAccountAction(NO_STATE, form("hello"))).ok).toBe(false);
-    expect(h.calls.length).toBe(0);
-  });
-
-  it("ปกติ → upsert ผ่าน client ผู้ใช้ (ไม่ใช่ service role) เป็น UNVERIFIED · SteamID64 แปลงเป็น Steam32", async () => {
-    h.user = { id: "u1" };
-    expect(await linkDotaAccountAction(NO_STATE, form("76561198054554042"))).toEqual({ ok: true, message: "ผูกบัญชีแล้ว (ยังไม่ยืนยัน)" });
-    const up = h.calls.find((c) => c.table === "game_accounts");
-    expect(up?.op).toBe("upsert");
-    expect(up?.row).toEqual({ user_id: "u1", game: "DOTA2", external_id: "94288314", status: "UNVERIFIED" });
+    expect(await unlinkDotaAccountAction(NO_STATE, new FormData())).toEqual({ ok: true, message: "ยกเลิกการผูกแล้ว" });
+    const del = h.calls.find((c) => c.table === "game_accounts");
+    expect(del).toMatchObject({ op: "delete", filters: { user_id: "u1", game: "DOTA2" } });
     expect(h.adminCalls).toBe(0);
   });
+});
 
-  it("DB error → ไม่สะท้อน error ดิบ", async () => {
-    h.user = { id: "u1" };
-    h.resolve = (c) => (c.table === "game_accounts" ? { data: null, error: { message: "relation \"game_accounts\" does not exist" } } : { data: null, error: null });
-    const res = await linkDotaAccountAction(NO_STATE, form("94288314"));
-    expect(res).toEqual({ ok: false, message: "บันทึกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง" });
+describe("getMyDotaAccount ใช้เฉพาะแถว VERIFIED", () => {
+  const db = (row: unknown, error: unknown = null) =>
+    ({ from: () => ({ select: () => ({ eq: () => ({ eq: () => ({ maybeSingle: async () => ({ data: row, error }) }) }) }) }) }) as unknown as SupabaseClient;
+
+  it("VERIFIED → คืน ID", async () => {
+    expect(await getMyDotaAccount(db({ external_id: "94288314", status: "VERIFIED" }), "u1")).toEqual({ externalId: "94288314" });
+  });
+  it("UNVERIFIED (เลขเก่าที่กรอกมือ) → ไม่คืน ID", async () => {
+    const r = await getMyDotaAccount(db({ external_id: "94288314", status: "UNVERIFIED" }), "u1");
+    expect(r).toBe("unverified");
+  });
+  it("ไม่มีแถว → null · อ่านไม่ได้ → unavailable", async () => {
+    expect(await getMyDotaAccount(db(null), "u1")).toBeNull();
+    expect(await getMyDotaAccount(db(null, { message: "x" }), "u1")).toBe("unavailable");
   });
 });

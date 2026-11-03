@@ -33,6 +33,8 @@ import {
 } from "@/lib/game-accounts/steam";
 import { parseMlbb } from "@/lib/game-accounts/mlbb";
 import { needsLogin } from "@/lib/auth/protected-paths";
+import { safeNext } from "@/lib/auth/validate";
+import { existsSync } from "node:fs";
 import { GET as startGET } from "@/app/link/steam/start/route";
 import { GET as returnGET } from "@/app/link/steam/return/route";
 import { linkMlbb } from "@/app/me/mlbb-actions";
@@ -210,12 +212,36 @@ describe("route /link/steam/return", () => {
   });
 });
 
+// K-AV-LINK.1: /me ไม่มีทางกรอกเลข Dota เองแล้ว (เหลือปุ่มผูก Steam + MLBB กรอกเอง)
+describe("หน้า /me ไม่มีช่องกรอก Dota ID", () => {
+  const root = join(__dirname, "..");
+  it("ไม่มีฟอร์ม/ช่อง dota_id · การ์ดบัญชีเกมมีปุ่ม Steam", () => {
+    expect(existsSync(join(root, "app/me/DotaAccountForm.tsx"))).toBe(false);
+    for (const f of ["app/me/page.tsx", "app/me/GameAccountsCard.tsx"]) {
+      const src = readFileSync(join(root, f), "utf8");
+      expect(src).not.toMatch(/dota_id|DotaAccountForm/);
+    }
+    expect(readFileSync(join(root, "app/me/GameAccountsCard.tsx"), "utf8")).toContain('href="/link/steam/start"');
+  });
+});
+
 describe("route /link/steam/start", () => {
   it("ไม่ล็อกอิน → /login (ไม่ตั้ง cookie)", async () => {
     h.user = null;
     const res = await startGET(new Request(`${SITE}/link/steam/start`));
     expect(res.headers.get("location")).toContain("/login?next=");
     expect(res.headers.get("set-cookie")).toBeNull();
+  });
+  // K-AV-LINK.1: ล็อกอินเสร็จต้องกลับมาเริ่ม Steam ต่อทันที · safeNext ยอมรับ path นี้แต่ยังกันลิงก์นอกเว็บ
+  it("ไม่ล็อกอิน → next = /link/steam/start และ safeNext ยอมรับ · ลิงก์นอกเว็บยังถูกกัน", async () => {
+    h.user = null;
+    const loc = new URL((await startGET(new Request(`${SITE}/link/steam/start`))).headers.get("location")!);
+    expect(loc.pathname).toBe("/login");
+    expect(loc.searchParams.get("next")).toBe("/link/steam/start");
+    expect(safeNext(loc.searchParams.get("next"))).toBe("/link/steam/start");
+    for (const bad of ["//evil.com", "https://evil.com/link/steam/start", "/\\evil.com", "/\t/evil.com"]) {
+      expect(safeNext(bad)).toBe("/me");
+    }
   });
   it("ล็อกอิน → redirect ไป Steam · state สุ่มใน return_to ตรงกับ cookie (HttpOnly · SameSite=Lax · ผูก user id)", async () => {
     const res = await startGET(new Request(`${SITE}/link/steam/start`));

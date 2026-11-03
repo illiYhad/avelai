@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import Surface from "@/components/ui/Surface";
 import { linkMlbb, type MlbbLinkState } from "./mlbb-actions";
+import { unlinkDotaAccountAction, type DotaLinkState } from "./dota-actions";
 import { LINK_MESSAGES, type SteamLinkError } from "@/lib/game-accounts/steam";
 
 // K-AV-LINK: การ์ด "บัญชีเกม" ใน /me — Dota 2 ยืนยันผ่าน Steam จริง · MLBB กรอกเอง (ยังไม่ยืนยัน)
@@ -25,6 +26,7 @@ export default function GameAccountsCard({
   dota: DotaAccount; mlbb: MlbbAccount; linked: string | null; linkError: string | null; unavailable: boolean;
 }) {
   const [state, action, pending] = useActionState(linkMlbb, initial);
+  const [unlinkState, unlinkAction, unlinking] = useActionState(unlinkDotaAccountAction, initial as DotaLinkState);
   const flash =
     linked === "steam" ? { ok: true, text: LINK_MESSAGES.linked.steam }
     : linkError && linkError in LINK_MESSAGES.errors ? { ok: false, text: LINK_MESSAGES.errors[linkError as SteamLinkError] }
@@ -55,6 +57,15 @@ export default function GameAccountsCard({
                 <a href="/link/steam/start" className="rounded btn-primary px-4 py-2">ผูกบัญชี Steam</a>
               </div>
             )}
+            {/* K-AV-LINK.1: ยกเลิกการผูก (ทั้งแถวที่ยืนยันแล้วและแถวเก่าที่กรอกมือ) */}
+            {dota ? (
+              <form action={unlinkAction}>
+                <button type="submit" disabled={unlinking} className="min-h-11 rounded border border-white/30 px-4 text-sm text-white/80 disabled:opacity-50">
+                  {unlinking ? "กำลังยกเลิก…" : "ยกเลิกการผูก"}
+                </button>
+                {unlinkState.message ? <p className={`mt-1 text-sm ${unlinkState.ok ? "text-cyan" : "text-red-400"}`}>{unlinkState.message}</p> : null}
+              </form>
+            ) : null}
           </div>
 
           <form action={action} className="flex flex-col gap-2">

@@ -3,7 +3,6 @@ import Link from "next/link";
 import { requireUser, activeRoles, isSuspended } from "@/lib/auth/roles";
 import { signOutAction } from "@/app/auth/actions";
 import ProfileForm from "./ProfileForm";
-import DotaAccountForm from "./DotaAccountForm";
 import GameAccountsCard, { type DotaAccount, type MlbbAccount } from "./GameAccountsCard";
 import { routes } from "@/lib/routes";
 
@@ -43,7 +42,6 @@ export default async function MePage({ searchParams }: { searchParams: Promise<{
   }
   const dotaRow = accRows?.find((r) => r.game === "DOTA2") ?? null;
   const mlbbRow = accRows?.find((r) => r.game === "MLBB") ?? null;
-  const dota = dotaRow;
   const dotaAccount: DotaAccount = dotaRow
     ? { external_id: dotaRow.external_id, verified: dotaRow.status === "VERIFIED", viaSteam: dotaRow.verified_via === "STEAM_OPENID" }
     : null;
@@ -68,6 +66,15 @@ export default async function MePage({ searchParams }: { searchParams: Promise<{
           บัญชีถูกระงับถึง {thaiTime(profile.suspended_until)}
         </p>
       ) : null}
+
+      {/* K-AV-LINK.1: การ์ดบัญชีเกมเป็นการ์ดแรก · Dota 2 ผูกผ่าน Steam อย่างเดียว (ฟอร์มกรอกเลข Dota เอาออกแล้ว) */}
+      <GameAccountsCard
+        dota={dotaAccount}
+        mlbb={mlbbAccount}
+        linked={sp.linked ?? null}
+        linkError={sp.link_error ?? null}
+        unavailable={accError}
+      />
 
       <section className="flex items-center gap-4">
         {profile?.avatar_url ? (
@@ -95,20 +102,6 @@ export default async function MePage({ searchParams }: { searchParams: Promise<{
       <ProfileForm
         username={profile?.username ?? ""}
         avatarUrl={profile?.avatar_url ?? ""}
-      />
-
-      <GameAccountsCard
-        dota={dotaAccount}
-        mlbb={mlbbAccount}
-        linked={sp.linked ?? null}
-        linkError={sp.link_error ?? null}
-        unavailable={accError}
-      />
-
-      <DotaAccountForm
-        externalId={dota?.external_id ?? null}
-        verified={dota?.status === "VERIFIED"}
-        unavailable={accError}
       />
     </main>
   );
