@@ -1,167 +1,80 @@
-'use client';
-
+/* eslint-disable @next/next/no-img-element */
 import React from 'react';
-import Image from 'next/image';
+
+// K-AV-HUB1: การ์ดโปรไฟล์แนวตั้งของหน้า Hub — ชื่อ/รูปจาก session ผู้ใช้เท่านั้น (ไม่มีค่าตั้งต้นเป็นชื่อสมมติ)
+// ค่าที่ยังไม่มีข้อมูลจริง (CP · อันดับ · Token · Cash) ส่ง null → แสดง "—" · สี/ฟอนต์ใช้ token CI
+// ช่อง gachaFrameUrl / gachaTitleBadgeUrl คงไว้สำหรับ Genesis_Gacha ในอนาคต
 export interface PlayerVerticalProfileProps {
-  userId?: string;
-  username?: string;
-  avatarUrl?: string;
-  rankTitle?: string;
-  subTier?: 'PRO_380' | 'FREE';
-  gachaFrameUrl?: string | null; // Slot รองรับ Dynamic Avatar Frame จาก Genesis_Gacha
-  gachaTitleBadgeUrl?: string | null; // Slot สำหรับป้ายฉายา/Cosmetic Badge
-  circuitPoints?: number;
-  tokens?: number;
-  cashBalanceThb?: number;
-  isLoading?: boolean;
+  username: string;
+  avatarUrl?: string | null;
+  rankTitle?: string | null;
+  gachaFrameUrl?: string | null;
+  gachaTitleBadgeUrl?: string | null;
+  circuitPoints?: number | null;
+  seasonRank?: number | null;
+  tokens?: number | null;
+  cashBalanceThb?: number | null;
+  action?: React.ReactNode;
+}
+
+const dash = (v: number | null | undefined, fmt: (n: number) => string = (n) => n.toLocaleString('th-TH')) =>
+  v === null || v === undefined ? '—' : fmt(v);
+
+function Stat({ label, value, tone }: { label: string; value: string; tone: string }) {
+  return (
+    <div className="rounded-lg border border-line bg-void/60 p-3">
+      <div className="font-mono text-xs tracking-wider text-ink-muted">{label}</div>
+      <div className={`font-numeric text-base font-bold ${tone}`}>{value}</div>
+    </div>
+  );
 }
 
 export const PlayerVerticalProfile: React.FC<PlayerVerticalProfileProps> = ({
-  userId = 'usr_unknown',
-  username = 'CyberOperator',
-  avatarUrl,
-  rankTitle = 'Cyber Duelist IV',
-  subTier = 'FREE',
+  username,
+  avatarUrl = null,
+  rankTitle = null,
   gachaFrameUrl = null,
   gachaTitleBadgeUrl = null,
-  circuitPoints = 0,
-  tokens = 0,
-  cashBalanceThb = 0,
-  isLoading = false,
-}) => {
-  // Skeleton Loading Fallback State
-  if (isLoading) {
-    return (
-      <div className="w-full h-full min-h-[420px] bg-slate-900/80 border border-cyan-500/20 rounded-2xl p-6 flex flex-col items-center justify-between animate-pulse relative overflow-hidden backdrop-blur-md">
-        <div className="w-full flex justify-between items-center">
-          <div className="h-4 w-16 bg-slate-800 rounded" />
-          <div className="h-4 w-12 bg-slate-800 rounded-full" />
-        </div>
-        <div className="h-28 w-28 rounded-2xl bg-slate-800 mt-4" />
-        <div className="w-full space-y-2 mt-4 text-center">
-          <div className="h-5 w-32 bg-slate-800 mx-auto rounded" />
-          <div className="h-3 w-20 bg-slate-800 mx-auto rounded" />
-        </div>
-        <div className="w-full space-y-2 mt-6">
-          <div className="h-10 w-full bg-slate-800 rounded-xl" />
-          <div className="h-10 w-full bg-slate-800 rounded-xl" />
-        </div>
-      </div>
-    );
-  }
-
-  const isPro = subTier === 'PRO_380';
-
-  return (
-    <div className="relative w-full h-full bg-gradient-to-b from-slate-900/90 via-slate-900/95 to-slate-950 border border-slate-800 hover:border-cyan-500/40 rounded-2xl p-5 md:p-6 flex flex-col justify-between shadow-2xl backdrop-blur-md transition-all duration-300 group overflow-hidden">
-      {/* Cyberpunk Decorative Corner Cut / Accent Lines */}
-      <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-cyan-500/10 via-transparent to-transparent pointer-events-none" />
-      <div className="absolute top-0 left-0 w-8 h-[2px] bg-cyan-400/60" />
-      <div className="absolute top-0 left-0 w-[2px] h-8 bg-cyan-400/60" />
-
-      {/* 1. Header: Sub Tier & Operator ID */}
-      <div>
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-mono tracking-widest text-slate-500 uppercase">
-            ID: {userId}
-          </span>
-          <span
-            className={`text-xs font-black px-2.5 py-0.5 rounded-md tracking-wider border font-mono uppercase ${isPro
-              ? 'bg-amber-500/10 text-amber-400 border-amber-500/40 shadow-sm shadow-amber-500/20'
-              : 'bg-slate-800 text-slate-400 border-slate-700'
-              }`}
-          >
-            {isPro ? 'PRO 380' : 'FREE TIER'}
-          </span>
-        </div>
-
-        {/* 2. Avatar & Genesis_Gacha Frame Slot */}
-        <div className="relative flex justify-center mt-6 mb-4">
-          <div className="relative w-28 h-28 flex items-center justify-center">
-            {/* Base Avatar Image / Placeholder */}
-            <div className="w-24 h-24 rounded-2xl overflow-hidden bg-slate-950 border-2 border-slate-800 group-hover:border-cyan-400/50 transition-colors flex items-center justify-center">
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt={username}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="font-mono text-3xl font-black text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]">
-                  {username.slice(0, 2).toUpperCase()}
-                </span>
-              )}
-            </div>
-
-            {/* GENESIS_GACHA SLOT: Custom Cosmetic Frame */}
-            {gachaFrameUrl ? (
-              <img
-                src={gachaFrameUrl}
-                alt="Gacha Frame"
-                className="absolute inset-0 w-full h-full object-contain pointer-events-none z-10 drop-shadow-[0_0_12px_rgba(245,158,11,0.4)] animate-pulse"
-              />
-            ) : (
-              // Default Fallback Cyber Ring (เมื่อยังไม่สวม Frame จาก Gacha)
-              <div className="absolute inset-0 border border-dashed border-cyan-500/30 rounded-2xl pointer-events-none group-hover:scale-105 transition-transform" />
-            )}
-          </div>
-        </div>
-
-        {/* 3. Name & Gacha Title Slot */}
-        <div className="text-center space-y-1">
-          <h2 className="text-lg font-black text-white tracking-wide truncate group-hover:text-cyan-300 transition-colors font-mono">
-            {username}
-          </h2>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-950 border border-slate-800 text-xs font-semibold text-slate-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-ping" />
-            <span>{rankTitle}</span>
-          </div>
-
-          {/* Optional: Cosmetic Title / Badge จาก Gacha */}
-          {gachaTitleBadgeUrl && (
-            <div className="mt-1 flex justify-center">
-              <img src={gachaTitleBadgeUrl} alt="Title Badge" className="h-5 object-contain" />
-            </div>
+  circuitPoints = null,
+  seasonRank = null,
+  tokens = null,
+  cashBalanceThb = null,
+  action,
+}) => (
+  <div className="ci-corners relative flex h-full w-full flex-col justify-between rounded-2xl border border-cyan/30 bg-panel p-5 shadow-glow-cyan [--corner:var(--color-cyan)] md:p-6">
+    <div>
+      <div className="relative mx-auto mt-2 mb-4 flex h-28 w-28 items-center justify-center">
+        <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl border-2 border-line bg-void">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span className="font-display text-3xl font-black text-cyan">{username.slice(0, 2).toUpperCase()}</span>
           )}
         </div>
+        {gachaFrameUrl ? (
+          <img src={gachaFrameUrl} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-contain" />
+        ) : (
+          <div className="pointer-events-none absolute inset-0 rounded-2xl border border-dashed border-cyan/30" />
+        )}
       </div>
 
-      {/* 4. Competitive Stats (Circuit Points & Wallets) */}
-      <div className="mt-6 space-y-2.5 pt-4 border-t border-slate-800/80">
-        {/* Circuit Points Metric */}
-        <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3 flex justify-between items-center">
-          <div>
-            <div className="text-xs uppercase font-mono tracking-wider text-slate-400 font-bold">
-              Circuit Points
-            </div>
-            <div className="text-base font-black text-indigo-400 font-mono">
-              {circuitPoints.toLocaleString()} <span className="text-xs font-normal text-slate-500">CP</span>
-            </div>
-          </div>
-          <div className="text-indigo-400/40 text-xl font-mono font-black">#88</div>
-        </div>
-
-        {/* Tokens & Cash Row */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-slate-950/70 border border-amber-500/20 rounded-xl p-2.5">
-            <div className="text-xs uppercase font-mono tracking-wider text-slate-400 font-bold">
-              Tokens
-            </div>
-            <div className="text-xs font-black text-amber-400 font-mono">
-              {tokens} <span className="text-xs text-slate-500 font-normal">({tokens * 9}฿)</span>
-            </div>
-          </div>
-
-          <div className="bg-slate-950/70 border border-emerald-500/20 rounded-xl p-2.5">
-            <div className="text-xs uppercase font-mono tracking-wider text-slate-400 font-bold">
-              Cash Pot
-            </div>
-            <div className="text-xs font-black text-emerald-400 font-mono">
-              ฿{cashBalanceThb.toFixed(2)}
-            </div>
-          </div>
-        </div>
+      <div className="space-y-1 text-center">
+        <h2 className="truncate font-display text-lg font-black tracking-wide text-ink">{username}</h2>
+        {rankTitle ? (
+          <span className="inline-flex items-center rounded-full border border-line px-2.5 py-0.5 text-xs text-ink-muted">{rankTitle}</span>
+        ) : null}
+        {gachaTitleBadgeUrl ? <img src={gachaTitleBadgeUrl} alt="" className="mx-auto h-5 object-contain" /> : null}
       </div>
     </div>
-  );
-};
+
+    <div className="mt-6 space-y-2 border-t border-line pt-4">
+      <div className="grid grid-cols-2 gap-2">
+        <Stat label="CIRCUIT POINTS" value={dash(circuitPoints)} tone="text-cyan" />
+        <Stat label="อันดับซีซัน" value={dash(seasonRank, (n) => `#${n}`)} tone="text-cyan" />
+        <Stat label="TOKENS" value={dash(tokens)} tone="text-gold" />
+        <Stat label="CASH" value={dash(cashBalanceThb, (n) => `฿${n.toFixed(2)}`)} tone="text-gold" />
+      </div>
+      {action}
+    </div>
+  </div>
+);
