@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { SampleChip } from '@/components/tournament/TournamentHub'
 
 const POSITIONS = ['Global', 'Pos 1', 'Pos 2', 'Pos 3', 'Pos 4', 'Pos 5']
 
@@ -90,12 +91,15 @@ export default function LeaderboardPage() {
 
  const renderHexForm = (form: any = ['W', 'W', 'L', 'W', 'W']) => {
     let formArray: ('W' | 'L')[] = ['W', 'W', 'L', 'W', 'W'];
+    // K-AV-UX4c: ค่าเริ่มต้น W W L W W เป็นข้อมูลสมมติ → ติดชิปเมื่อใช้ค่านี้
+    let isSample = true;
     if (Array.isArray(form)) {
       formArray = form;
+      isSample = false;
     } else if (typeof form === 'string') {
       try {
         const parsed = JSON.parse(form);
-        if (Array.isArray(parsed)) formArray = parsed;
+        if (Array.isArray(parsed)) { formArray = parsed; isSample = false; }
       } catch (e) {
         formArray = ['W', 'W', 'L', 'W', 'W'];
       }
@@ -111,6 +115,7 @@ export default function LeaderboardPage() {
             {result}
           </div>
         ))}
+        {isSample && <SampleChip />}
       </div>
     );
   };
@@ -122,6 +127,7 @@ export default function LeaderboardPage() {
             <div className="flex flex-col items-center justify-center mb-10 mt-16">
                 <div className="hud-panel hud-panel-gold ci-corners hud-hero relative px-8 py-5 rounded-xl text-center w-full max-w-100">
                     <p className="text-xs uppercase tracking-[0.25em] text-gold font-semibold mb-2">DAILY PRIZE POOL</p>
+                    <div className="flex justify-center mb-2"><SampleChip /></div>
                     <div className="flex items-center justify-center gap-2">
                         <span className="text-3xl font-black text-gold">THB</span>
                         <h2 className="text-3xl md:text-4xl font-black text-gold tracking-wider">

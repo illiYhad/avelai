@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import HudScan from '@/components/ui/HudScan';
+import { SampleChip } from '@/components/tournament/TournamentHub';
 
 interface SwissStanding {
     rank: number;
@@ -49,6 +50,7 @@ export default function WeeklyTournamentPage() {
                             <div className="text-right">
                                 <div className="text-xs text-ink-muted font-mono">WEEKLY PRIZE POOL (25%)</div>
                                 <div className="text-2xl font-black text-gold font-mono">฿ 25,000</div>
+                                <SampleChip />
                             </div>
                             <div className="border-l border-line pl-6 text-right">
                                 <div className="text-xs text-ink-muted font-mono">CURRENT PHASE</div>
@@ -87,6 +89,7 @@ export default function WeeklyTournamentPage() {
                             <h2 className="text-sm font-mono font-bold uppercase text-ink">
                                 Playoff Bracket (Single Elimination)
                             </h2>
+                            <SampleChip />
                             <div className="flex items-center gap-4 text-xs font-mono">
                                 <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-cyan"></span> Radiant / Advance</span>
                                 <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-ink-muted/60"></span> Defeated (Dimmed)</span>
@@ -159,6 +162,7 @@ export default function WeeklyTournamentPage() {
                             <h2 className="text-sm font-mono font-bold tracking-wider uppercase text-ink">
                                 Swiss Stage Standings (Round 5/5)
                             </h2>
+                            <SampleChip />
                         </div>
                         <table className="w-full text-left text-sm font-mono">
                             <thead className="bg-surface-2 text-xs text-ink-muted uppercase border-b border-line">
