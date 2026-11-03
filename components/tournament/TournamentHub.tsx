@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PlayerVerticalProfile } from "@/components/profile/PlayerVerticalProfile";
 import { HUB_SAMPLE } from "@/lib/tournament/hub-sample";
 
+// K-AV-REL1: การ์ดใช้ hud-panel ของ UX4 (พื้น/ขอบ/เส้นแสงชุดเดียวกับทั้งเว็บ)
 // K-AV-HUB1: เลย์เอาต์ Tournament Hub (เดิม app/tournament/page.tsx) เป็น server component — ไม่มี state ปลอม
 // ชื่อ/รูปจาก session · ค่าติดตัวผู้ใช้ที่ยังไม่มีข้อมูลจริง = "—" · ค่าภาพรวมมาจาก HUB_SAMPLE และทุกส่วนมีชิป "ข้อมูลตัวอย่าง"
 
@@ -41,7 +42,7 @@ export default function TournamentHub({ viewer, showLinkGame }: { viewer: HubVie
   return (
     <div className="flex flex-col gap-6">
       {/* 1. ภาพรวมซีซัน + สัดส่วนกองรางวัล */}
-      <section data-section="season" className="ci-corners relative rounded-2xl border border-gold/50 bg-panel p-5 shadow-glow-gold [--corner:var(--color-gold)] md:p-6">
+      <section data-section="season" className="hud-panel hud-panel-gold ci-corners relative rounded-2xl p-5 md:p-6">
         <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
           <div className="flex flex-col gap-1">
             <span className="flex flex-wrap items-center gap-2">
@@ -80,7 +81,7 @@ export default function TournamentHub({ viewer, showLinkGame }: { viewer: HubVie
               action={showLinkGame ? <Link href="/me" className="btn-ghost w-full rounded-lg px-4 text-sm">ผูกบัญชีเกม</Link> : null}
             />
           ) : (
-            <div data-section="login" className="flex w-full flex-col items-center justify-center gap-4 rounded-2xl border border-cyan/30 bg-panel p-6 text-center">
+            <div data-section="login" className="flex w-full flex-col items-center justify-center gap-4 hud-panel ci-corners rounded-2xl p-6 text-center">
               <p className="text-base text-ink">เข้าสู่ระบบเพื่อดูโปรไฟล์ผู้เล่นของคุณ</p>
               <Link href="/login" className="btn-primary w-full rounded-lg px-4 text-sm">เข้าสู่ระบบ</Link>
             </div>
@@ -88,7 +89,7 @@ export default function TournamentHub({ viewer, showLinkGame }: { viewer: HubVie
         </div>
 
         <div className="flex flex-col gap-6 lg:col-span-8">
-          <div className="flex flex-col justify-between gap-3 rounded-2xl border border-line bg-surface-2 p-5 sm:flex-row sm:items-center">
+          <div className="flex flex-col justify-between gap-3 hud-panel rounded-2xl p-5 sm:flex-row sm:items-center">
             <div>
               <span className="font-mono text-xs tracking-wider text-ink-muted">CASCADE PROGRESSION</span>
               <h3 className="text-base font-bold text-ink">สถานะการคัดเลือกลีกประจำสัปดาห์</h3>
@@ -96,7 +97,7 @@ export default function TournamentHub({ viewer, showLinkGame }: { viewer: HubVie
             <span className="rounded-full border border-line px-3 py-1 font-mono text-sm text-ink-muted">Weekly Pass: —</span>
           </div>
 
-          <div id="mercenary-section" data-section="mercenary" className="flex flex-1 flex-col justify-between rounded-2xl border border-cyan/30 bg-panel p-5 md:p-6">
+          <div id="mercenary-section" data-section="mercenary" className="flex flex-1 flex-col justify-between hud-panel ci-corners rounded-2xl p-5 md:p-6">
             <div className="flex items-start justify-between gap-4">
               <div className="flex flex-col gap-1">
                 <span className="flex flex-wrap items-center gap-2">
@@ -136,7 +137,7 @@ export default function TournamentHub({ viewer, showLinkGame }: { viewer: HubVie
           const d = s.tiers[t.key];
           const pool = s.allocation[t.pct];
           return (
-            <div key={t.key} className={`flex flex-col justify-between rounded-2xl border border-line bg-surface-2 p-5 ${t.href ? "" : "opacity-70"}`}>
+            <div key={t.key} className={`flex flex-col justify-between hud-panel rounded-2xl p-5 ${t.href ? "" : "opacity-70"}`}>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <span className="rounded border border-cyan/30 bg-cyan/10 px-2 py-0.5 font-mono text-xs text-cyan">{t.tag}</span>
