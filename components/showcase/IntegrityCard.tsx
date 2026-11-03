@@ -77,7 +77,7 @@ export const IntegrityCard: React.FC<IntegrityCardProps> = ({
 
         <div className="w-full pt-2 border-t border-gray-800/80">
           {isCurrentUser ? (
-            <Link className="block w-full py-2 bg-linear-to-r from-[#00D4FF] to-[#C9A84C] text-[#0A0A0F] font-['Orbitron'] text-xs font-black rounded shadow-[0_0_15px_rgba(0,212,255,0.4)] hover:brightness-110 active:scale-95 transition-all text-center tracking-wider" href="/gacha">
+            <Link className="block w-full py-2 bg-linear-to-r from-[#00D4FF] to-[#C9A84C] text-[#0A0A0F] font-display text-xs font-black rounded shadow-[0_0_15px_rgba(0,212,255,0.4)] hover:brightness-110 active:scale-95 transition-all text-center tracking-wider" href="/gacha">
               GET INTEGRITY CARD
             </Link>
           ) : (
@@ -138,7 +138,7 @@ export const IntegrityCard: React.FC<IntegrityCardProps> = ({
         >
           {ROLE_NAMES[position]}
         </span>
-        <span className={`text-xs font-['Orbitron'] font-black px-1.5 py-0.5 rounded ${config.badgeBg}`}>
+        <span className={`text-xs font-display font-black px-1.5 py-0.5 rounded ${config.badgeBg}`}>
           {config.badgeText}
         </span>
       </div>
@@ -159,7 +159,7 @@ export const IntegrityCard: React.FC<IntegrityCardProps> = ({
               {avatarUrl ? (
                 <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
               ) : (
-                <span className="font-['Orbitron'] font-bold text-white text-lg">
+                <span className="font-display font-bold text-white text-lg">
                   {displayName.slice(0, 2).toUpperCase()}
                 </span>
               )}

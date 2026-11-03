@@ -1,6 +1,8 @@
 import { readClientConfig } from "@/lib/db/config";
 import { safeNext } from "@/lib/auth/validate";
 import LoginForm from "./LoginForm";
+import Logo3D from "@/components/ui/Logo3D";
+import HudScan from "@/components/ui/HudScan";
 
 export const metadata = { title: "เข้าสู่ระบบ — AVELAi" };
 
@@ -20,13 +22,13 @@ export default async function LoginPage({
         aria-hidden
         className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-[radial-gradient(circle,color-mix(in_srgb,var(--color-gold)_8%,transparent)_0%,transparent_70%)]"
       />
-      <div className="relative z-10 w-full max-w-md rounded-xl border border-gold/25 bg-surface-2 p-6 sm:p-10">
-        <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent" />
+      {/* K-AV-UX4: การ์ด HUD ทอง + วงเล็บมุม + แสงสแกน · โลโก้ 3D หมุน (h1 เดิมคงไว้สำหรับโปรแกรมอ่านจอ) */}
+      <div className="hud-panel hud-panel-gold ci-corners relative z-10 w-full max-w-md rounded-xl p-6 sm:p-10">
+        <HudScan />
         <div className="mb-6 text-center">
-          <h1 className="font-display text-3xl font-bold tracking-[0.15em] text-ink">
-            AVEL<span className="text-gold">Ai</span>
-          </h1>
-          <p className="mt-2 font-mono text-sm tracking-[0.2em] text-cyan/70">— PRECISION IS FREEDOM —</p>
+          <h1 className="sr-only">AVELAi</h1>
+          <Logo3D />
+          <p className="mt-3 font-mono text-sm tracking-[0.2em] text-cyan/70">— PRECISION IS FREEDOM —</p>
         </div>
         <div className="mb-6 flex items-center justify-center gap-2">
           <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan" />

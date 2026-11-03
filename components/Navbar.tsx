@@ -136,7 +136,10 @@ export default function Navbar({ signedIn, username = null, isAdmin = false }: P
   const initial = (username ?? '?').slice(0, 1).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-void/90 backdrop-blur-md">
+    // K-AV-UX4: แถบบน HUD — เส้นแสงทอง/ฟ้าใต้แถบแทนเส้นเทาเรียบ
+    <header className="sticky top-0 z-50 bg-void/85 shadow-hud backdrop-blur-md">
+      <div aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-transparent via-cyan/50 to-transparent" />
+      <div aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-gold/40 via-transparent to-transparent" />
       <nav className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 md:h-16">
         <Logo href={nav.home} />
         {nav.showGameSwitcher ? <GameSwitcher game={game} locked={nav.gameLocked} pathname={pathname} /> : null}

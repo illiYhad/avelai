@@ -15,7 +15,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/app/globals.css", () => ({}));  // postcss/tailwind ไม่เกี่ยวกับเทสนี้
 vi.mock("next/font/google", () => {          // K-AV-UX1: ฟอนต์โหลดตอน build เท่านั้น ไม่เกี่ยวกับเทสนี้
   const font = () => ({ variable: "", className: "" });
-  return { Inter: font, Orbitron: font, JetBrains_Mono: font, Noto_Sans_Thai: font };
+  return { Inter: font, Orbitron: font, JetBrains_Mono: font, IBM_Plex_Sans_Thai: font };
 });
 vi.mock("next/navigation", () => ({ usePathname: () => h.pathname }));
 vi.mock("@/lib/db/server", () => ({
