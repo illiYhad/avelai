@@ -8,6 +8,7 @@ import {
     FormedTeamMember,
     DotaPosition
 } from '@/lib/matchmaking/dailyArenaTierEngine';
+import HudScan from '@/components/ui/HudScan'
 
 const POSITION_LABELS: Record<DotaPosition, { label: string; role: string }> = {
     1: { label: 'Pos 1', role: 'Safe Carry' },
@@ -99,7 +100,7 @@ export default function DailyArenaLobbyPage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center text-cyan font-mono">
+            <div className="min-h-screen flex items-center justify-center text-cyan font-mono">
                 INITIALIZING DRAFT BALANCING...
             </div>
         );
@@ -107,7 +108,7 @@ export default function DailyArenaLobbyPage() {
 
     if (!formation) {
         return (
-            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 font-mono gap-4">
+            <div className="min-h-screen flex flex-col items-center justify-center text-slate-400 font-mono gap-4">
                 <p>MATCH FORMATION NOT FOUND</p>
                 <button
                     onClick={() => router.push('/tournament/daily')}
@@ -167,11 +168,13 @@ export default function DailyArenaLobbyPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white pt-20 pb-12 px-6 md:px-10 font-sans">
+        <div className="min-h-screen text-white pt-20 pb-12 px-6 md:px-10 font-sans">
             <div className="max-w-7xl mx-auto space-y-6">
 
                 {/* 1. Header Banner with Integrated Player Pilot & Stats */}
-                <div className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl">
+                <div className="hud-panel hud-panel-gold hud-hero relative overflow-hidden rounded-2xl p-6 md:p-8">
+                    {/* K-AV-UX4: พาเนล HUD (ทอง · เอียงเล็กน้อยบนจอใหญ่ · แสงสแกน) แทนกล่อง slate เรียบ */}
+                    <HudScan />
                     <div className="absolute top-0 right-0 w-96 h-96 bg-cyan/5 rounded-full blur-3xl pointer-events-none" />
 
                     <div className="relative z-10 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
@@ -186,7 +189,7 @@ export default function DailyArenaLobbyPage() {
                                     RESET AT 00:00 UTC
                                 </span>
                             </div>
-                            <h1 className="text-3xl md:text-4xl font-black tracking-wider text-white mt-2 font-display">
+                            <h1 className="hud-title text-3xl md:text-4xl text-white mt-2">
                                 DAILY ARENA
                             </h1>
                             <p className="text-sm text-slate-400 max-w-xl mt-1 font-mono">
@@ -253,7 +256,7 @@ export default function DailyArenaLobbyPage() {
                 </div>
 
                 {/* 2. Match Control & Ready Bar */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="hud-panel ci-corners rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <span className="text-xs font-mono px-2.5 py-1 rounded bg-cyan/10 border border-cyan/30 text-cyan">
                             SNAKE DRAFT FORMATION READY

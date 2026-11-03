@@ -3,10 +3,11 @@
 // K-AV-UX3B: การ์ดเรืองแสงได้วงเล็บมุม + พื้น panel แบบการ์ดหน้า Snake Draft
 type Glow = "gold" | "cyan" | "none";
 
+// K-AV-UX4: ทุกแบบเป็นพาเนล HUD (พื้น panel + เส้นแสงบน + เงาลึก) · none = ไม่มีวงเล็บมุม
 const GLOW: Record<Glow, string> = {
-  gold: "ci-corners border-gold/50 bg-panel shadow-glow-gold [--corner:var(--color-gold)]",
-  cyan: "ci-corners border-cyan/40 bg-panel shadow-glow-cyan [--corner:var(--color-cyan)]",
-  none: "bg-surface-2 border-line",
+  gold: "hud-panel hud-panel-gold ci-corners",
+  cyan: "hud-panel ci-corners border-cyan/40 shadow-glow-cyan",
+  none: "hud-panel",
 };
 
 export default function Surface({
@@ -22,6 +23,6 @@ export default function Surface({
   className?: string;
   children: React.ReactNode;
 }) {
-  const edge = dashed ? "border-dashed border-white/20 bg-transparent" : GLOW[glow];
-  return <Tag className={`relative rounded-xl border p-4 sm:p-6 ${edge} ${className}`}>{children}</Tag>;
+  const edge = dashed ? "border border-dashed border-white/20 bg-transparent" : GLOW[glow];
+  return <Tag className={`relative rounded-xl p-4 sm:p-6 ${edge} ${className}`}>{children}</Tag>;
 }

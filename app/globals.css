@@ -23,6 +23,12 @@
   --shadow-glow-gold: 0 0 15px rgba(201, 168, 76, 0.3);
   --shadow-glow-cyan: 0 0 15px rgba(0, 212, 255, 0.25);
 
+  /* K-AV-UX4: ภาษาภาพ HUD ทั้งเว็บ (ต่อยอดจาก /draft/demo) */
+  --color-hud-edge: rgba(0, 212, 255, 0.22);
+  --color-hud-edge-gold: rgba(201, 168, 76, 0.45);
+  --color-hud-sheen: rgba(0, 212, 255, 0.06);
+  --shadow-hud: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 18px 40px -20px rgba(0, 0, 0, 0.8);
+
   /* ฟอนต์ไทย IBM Plex Sans Thai เป็น fallback ทุกชุด เพราะ Orbitron/Inter/JetBrains Mono ไม่มีอักษรไทย */
   --font-sans: var(--font-inter), var(--font-thai), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-orbitron), var(--font-thai), ui-sans-serif, sans-serif;
@@ -44,15 +50,39 @@ html:not(:has([data-obs-root])) {
 /* K-AV-UX2A: พื้นกริดจางแบบหน้า login เดิม (จอ OBS ทับด้วย background: transparent !important) */
 body {
   background-color: var(--color-void);
+  /* K-AV-UX4: + แสงทองมุมซ้ายบน / ฟ้ามุมขวา แบบฉาก Snake Draft */
   background-image:
-    linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
+    radial-gradient(1100px 620px at 8% -12%, rgba(201, 168, 76, 0.09), transparent 62%),
+    radial-gradient(900px 640px at 105% 8%, rgba(0, 212, 255, 0.08), transparent 60%),
+    linear-gradient(rgba(0, 212, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.035) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
   background-attachment: fixed;
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-size: 1rem;
   line-height: 1.6;
+}
+
+/* K-AV-UX4: เส้นสแกนจางทั้งจอ (ไม่ใส่ในจอ OBS · ไม่รับคลิก) */
+html:not(:has([data-obs-root])) body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1; /* ใต้เนื้อหาทั้งหมด เหนือพื้น body */
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 4px);
+}
+
+@keyframes hud-scan {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(250%); }
+}
+
+/* หมุนส่าย ±30° แทนหมุนรอบตัว — ไม่มีช่วงเห็นตัวอักษรกลับด้าน/เห็นแค่สันโลโก้ */
+@keyframes logo-spin {
+  0%, 100% { transform: rotateX(8deg) rotateY(-30deg); }
+  50% { transform: rotateX(8deg) rotateY(30deg); }
 }
 
 @utility font-numeric {
@@ -129,6 +159,111 @@ body {
       transform: none;
     }
   }
+  /* K-AV-UX4: พาเนล HUD — พื้น panel ไล่แสงฟ้าจากบน · เส้นแสงขอบบน · ขอบฟ้าบาง · เงาลึก (ใช้คู่ ci-corners ได้) */
+  .hud-panel {
+    position: relative;
+    background-color: var(--color-panel);
+    background-image:
+      linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.35), transparent),
+      linear-gradient(180deg, var(--color-hud-sheen), transparent 45%);
+    background-size: 100% 1px, 100% 100%;
+    background-repeat: no-repeat;
+    border: 1px solid var(--color-hud-edge);
+    box-shadow: var(--shadow-hud);
+    --corner: var(--color-cyan);
+  }
+  .hud-panel-gold {
+    border-color: var(--color-hud-edge-gold);
+    background-image:
+      linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.55), transparent),
+      linear-gradient(180deg, rgba(201, 168, 76, 0.07), transparent 45%);
+    box-shadow: var(--shadow-hud), var(--shadow-glow-gold);
+    --corner: var(--color-gold);
+  }
+
+  /* ป้ายชิป mono แบบหน้า Snake Draft (≥12px) */
+  .hud-chip {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid rgba(0, 212, 255, 0.35);
+    background: rgba(0, 212, 255, 0.06);
+    color: var(--color-cyan);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.25rem;
+  }
+  .hud-chip-gold {
+    border-color: rgba(201, 168, 76, 0.45);
+    background: rgba(201, 168, 76, 0.08);
+    color: var(--color-gold);
+  }
+
+  /* หัวเรื่อง Orbitron เรืองแสงอ่อน */
+  .hud-title {
+    font-family: var(--font-display);
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-shadow: 0 0 18px rgba(0, 212, 255, 0.25);
+  }
+
+  /* การ์ดแสดงผล/ฮีโร่เท่านั้น: เอียง 3D เล็กน้อยบนจอใหญ่ · ฟอร์ม/ตาราง/ปุ่มห้ามใช้ */
+  @media (min-width: 1024px) {
+    .hud-hero {
+      transform: perspective(1400px) rotateX(4deg) rotateY(-3deg);
+      transform-origin: center top;
+      transition: transform 400ms ease;
+    }
+    .hud-hero:hover {
+      transform: perspective(1400px) rotateX(0deg) rotateY(0deg);
+    }
+  }
+
+  /* แถบแสงสแกนวิ่งช้า ๆ ในฮีโร่ (<span className="hud-scanline" aria-hidden /> ในกล่องที่ overflow-hidden) */
+  .hud-scanline {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 40%;
+    pointer-events: none;
+    background: linear-gradient(180deg, transparent, rgba(0, 212, 255, 0.07), transparent);
+    animation: hud-scan 6s linear infinite;
+  }
+
+  /* โลโก้ AVELAi 3D หมุนช้า ๆ (CSS ล้วน ไม่มี JS) */
+  .logo-3d {
+    perspective: 900px;
+  }
+  .logo-3d-spin {
+    position: relative;
+    display: inline-block;
+    transform-style: preserve-3d;
+    animation: logo-spin 8s ease-in-out infinite;
+  }
+  .logo-3d-face {
+    text-shadow: 0 0 24px rgba(0, 212, 255, 0.35);
+  }
+  .logo-3d-layer {
+    position: absolute;
+    inset: 0;
+    color: var(--color-cyan-deep);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hud-scanline,
+    .logo-3d-spin {
+      animation: none;
+    }
+    .hud-hero,
+    .hud-hero:hover {
+      transform: none;
+      transition: none;
+    }
+  }
+
   .btn-primary:focus-visible,
   .btn-ghost:focus-visible {
     outline: 2px solid var(--color-cyan);

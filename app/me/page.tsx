@@ -5,6 +5,8 @@ import { signOutAction } from "@/app/auth/actions";
 import ProfileForm from "./ProfileForm";
 import DotaAccountForm from "./DotaAccountForm";
 import { routes } from "@/lib/routes";
+import Logo3D from "@/components/ui/Logo3D";
+import HudScan from "@/components/ui/HudScan";
 
 export const metadata = { title: "โปรไฟล์ — AVELAi" };
 // หน้า session ต้องไม่ถูก prerender เป็น static (ตอน build ไม่มี env จะหลุดเป็น static ได้)
@@ -37,11 +39,21 @@ export default async function MePage() {
   const suspended = profile ? isSuspended(profile) : false;
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-6 px-6 py-10">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl text-gold">โปรไฟล์</h1>
+    <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-6 px-4 py-10 sm:px-6">
+      {/* K-AV-UX4: ฮีโร่หน้าแรกหลังล็อกอิน — โลโก้ 3D หมุน + ชิปสถานะ (พาเนลแสดงผล เอียงได้บนจอใหญ่) */}
+      <section className="hud-panel hud-panel-gold ci-corners hud-hero relative rounded-xl px-4 py-8 text-center">
+        <HudScan />
+        <Logo3D size="text-4xl" />
+        <span className="hud-chip mt-4">
+          <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan" />
+          AVE ONLINE // ARENA READY
+        </span>
+      </section>
+
+      <div className="flex items-center justify-between border-b border-line pb-4">
+        <h1 className="hud-title text-2xl text-gold">โปรไฟล์</h1>
         <form action={signOutAction}>
-          <button className="rounded border border-white/30 px-3 py-1.5 text-sm text-white/80">
+          <button className="btn-ghost rounded px-4 text-sm">
             ออกจากระบบ
           </button>
         </form>

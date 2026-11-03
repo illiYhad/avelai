@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import HudScan from '@/components/ui/HudScan'
 
 // ============================================================================
 // 1. TYPES & INTERFACES
@@ -201,7 +202,7 @@ const IntegrityCard: React.FC<IntegrityCardProps> = ({ displayName, avatarUrl, r
 
 const BracketVisualizer: React.FC<{ bracketData: MonthlyDoubleEliminationBracket; isAdminMode?: boolean; onMatchClick?: (matchId: string) => void }> = ({ bracketData, isAdminMode, onMatchClick }) => {
     return (
-        <div className="w-full bg-[#0D1117] border border-cyan-500/30 rounded-xl p-8 overflow-x-auto min-h-100 font-mono flex gap-12">
+        <div className="w-full hud-panel rounded-xl p-8 overflow-x-auto min-h-100 font-mono flex gap-12">
             {bracketData.winnersTree.rounds.map((round) => (
                 <div key={round.roundId} className="flex flex-col justify-around gap-6">
                     <h4 className="text-center text-amber-400 text-xs font-bold">ROUND {round.roundNumber}</h4>
@@ -259,17 +260,19 @@ export default function MonthlyTournamentPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#090D14] text-white p-6 md:p-10 font-sans">
+        <div className="min-h-screen text-white p-6 md:p-10 font-sans">
             <div className="max-w-6xl mx-auto space-y-6">
 
                 {/* 1. HEADER BANNER */}
-                <div className="relative overflow-hidden bg-linear-to-r from-[#161B22] via-[#0D1117] to-[#1F242C] border border-amber-500/40 rounded-2xl p-6 md:p-8 shadow-2xl">
+                <div className="hud-panel hud-panel-gold hud-hero relative overflow-hidden rounded-2xl p-6 md:p-8">
+                    {/* K-AV-UX4: พาเนล HUD (ทอง · เอียงเล็กน้อยบนจอใหญ่ · แสงสแกน) แทนกล่อง slate เรียบ */}
+                    <HudScan />
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
                             <span className="text-xs font-mono px-2.5 py-1 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400">
                                 FEATURE-4300: MONTHLY CIRCUIT & FINALS
                             </span>
-                            <h1 className="text-3xl font-black tracking-wide text-gray-100 mt-2">
+                            <h1 className="hud-title text-3xl text-gray-100 mt-2">
                                 MONTHLY CHAMPIONSHIP
                             </h1>
                             <p className="text-sm text-gray-400 mt-1 font-mono">
@@ -341,7 +344,7 @@ export default function MonthlyTournamentPage() {
                 {/* 3. TAB CONTENT VIEWS */}
                 {activeTab === 'double_elim' && (
                     <div className="space-y-6">
-                        <div className="bg-[#0D1117] border border-amber-500/30 rounded-xl p-4 flex items-center justify-between text-xs text-amber-400 font-mono">
+                        <div className="hud-panel hud-panel-gold rounded-xl p-4 flex items-center justify-between text-xs text-amber-400 font-mono">
                             <span>*Interactive Data Tree from Part 3</span>
                         </div>
                         
@@ -363,7 +366,7 @@ export default function MonthlyTournamentPage() {
                 )}
 
                 {activeTab === 'integrity_showcase' && (
-                    <div className="bg-[#0D1117] border border-gray-800 rounded-xl p-6 shadow-2xl font-mono">
+                    <div className="hud-panel ci-corners rounded-xl p-6 font-mono">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             <div className="flex flex-col gap-3">
                                 <div className="border-b border-cyan-400/40 pb-2 text-cyan-400 font-bold text-sm">TEAM ALPHA (RADIANT)</div>
@@ -382,7 +385,7 @@ export default function MonthlyTournamentPage() {
                 )}
 
                 {activeTab === 'rewards_store' && (
-                    <div className="bg-[#0D1117] border border-gray-800 rounded-xl p-6 shadow-2xl font-mono space-y-6">
+                    <div className="hud-panel ci-corners rounded-xl p-6 font-mono space-y-6">
                         <div className="flex justify-between items-center bg-[#161B22] p-4 rounded-lg border border-amber-500/30">
                             <div className="text-gray-400 text-sm">CURRENT BALANCE</div>
                             <div className="text-2xl font-bold text-amber-400">{walletBalance} PTS</div>
@@ -405,7 +408,7 @@ export default function MonthlyTournamentPage() {
                 )}
 
                 {activeTab === 'circuit_rank' && (
-                    <div className="bg-[#0D1117] border border-gray-800 rounded-xl overflow-hidden shadow-xl font-mono">
+                    <div className="hud-panel rounded-xl overflow-hidden font-mono">
                         <div className="p-5 border-b border-gray-800 flex justify-between items-center">
                             <h2 className="text-sm font-bold tracking-wider uppercase text-gray-300">Top 16 Circuit Points Standings (Week 1-3)</h2>
                             <span className="text-xs text-emerald-400">QUALIFIED FOR MONTHLY FINAL</span>

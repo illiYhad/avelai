@@ -6,6 +6,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { DotaPosition } from '@/lib/matchmaking/dailyArenaTierEngine';
+import HudScan from '@/components/ui/HudScan'
 
 interface LeaderboardEntry {
     rank: number;
@@ -165,11 +166,13 @@ export default function DailyArenaPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-100 pt-6 md:pt-8 pb-14 px-4 md:px-10 font-sans">
+        <div className="min-h-screen text-slate-100 pt-6 md:pt-8 pb-14 px-4 md:px-10 font-sans">
             <div className="max-w-7xl mx-auto space-y-8">
 
                 {/* Header Banner */}
-                <div className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl">
+                <div className="hud-panel hud-panel-gold hud-hero relative overflow-hidden rounded-2xl p-6 md:p-8">
+                    {/* K-AV-UX4: พาเนล HUD (ทอง · เอียงเล็กน้อยบนจอใหญ่ · แสงสแกน) แทนกล่อง slate เรียบ */}
+                    <HudScan />
                     <div className="absolute top-0 right-0 w-96 h-96 bg-cyan/5 rounded-full blur-3xl pointer-events-none" />
 
                     <div className="relative z-10 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
@@ -184,7 +187,7 @@ export default function DailyArenaPage() {
                                     RESET AT 00:00 UTC
                                 </span>
                             </div>
-                            <h1 className="text-3xl md:text-4xl font-black tracking-wider text-white mt-2 font-display">
+                            <h1 className="hud-title text-3xl md:text-4xl text-white mt-2">
                                 DAILY ARENA
                             </h1>
                             <p className="text-sm text-slate-400 max-w-xl mt-1 font-mono">
@@ -237,15 +240,15 @@ export default function DailyArenaPage() {
 
                             {/* Stats Overview 3 ช่อง */}
                             <div className="grid grid-cols-3 gap-2.5 font-mono">
-                                <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-center min-w-19.5">
+                                <div className="hud-panel ci-corners p-3.5 rounded-xl text-center min-w-19.5">
                                     <span className="text-xs text-slate-400 block font-semibold">TICKETS</span>
                                     <span className="text-xl font-black text-cyan">{dailyTickets}</span>
                                 </div>
-                                <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-center min-w-19.5">
+                                <div className="hud-panel ci-corners p-3.5 rounded-xl text-center min-w-19.5">
                                     <span className="text-xs text-slate-400 block font-semibold">MATCHES</span>
                                     <span className="text-xl font-black text-slate-200">{matchesPlayedToday}/5</span>
                                 </div>
-                                <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-center min-w-19.5">
+                                <div className="hud-panel ci-corners p-3.5 rounded-xl text-center min-w-19.5">
                                     <span className="text-xs text-slate-400 block font-semibold">BEST SCORE</span>
                                     <span className="text-xl font-black text-gold">{bestScoreToday.toFixed(2)}</span>
                                 </div>
@@ -261,7 +264,7 @@ export default function DailyArenaPage() {
 
                     {/* Left 2 Cols: Play Arena / Position Selection */}
                     <div className="lg:col-span-2 space-y-6">
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+                        <div className="hud-panel ci-corners rounded-2xl p-6 space-y-6">
                             <h2 className="text-lg font-bold font-display text-slate-100 flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-cyan" />
                                 ARENA DEPLOYMENT SETUP
@@ -368,7 +371,7 @@ export default function DailyArenaPage() {
                     </div>
 
                     {/* Right 1 Col: Live Daily Leaderboard */}
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                    <div className="hud-panel ci-corners rounded-2xl p-6 space-y-4">
                         <div className="flex justify-between items-center pb-2 border-b border-slate-800">
                             <h2 className="text-base font-bold font-display text-slate-200">
                                 DAILY LEADERBOARD
