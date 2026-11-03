@@ -10,6 +10,7 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import EmptyState from "@/components/ui/EmptyState";
 import GameTag from "@/components/ui/GameTag";
 import { tournamentBadge } from "@/lib/tournament/badge";
+import TournamentHub, { type HubViewer } from "@/components/tournament/TournamentHub";
 
 // K-AV-3: รายการทัวร์ (สาธารณะ · RLS ให้เห็นเฉพาะที่ไม่ใช่ร่าง · ไม่แสดงข้อมูลส่วนตัว/PromptPay)
 // K-AV-UX2A Phase B: ปรับชั้นแสดงผลเท่านั้น (ข้อมูลเพิ่มจากเดิม: best_of · max_teams · จำนวนทีมที่ยืนยัน — อ่านอย่างเดียว)
@@ -17,6 +18,20 @@ export const metadata = { title: "ทัวร์นาเมนต์ — AVELA
 export const dynamic = "force-dynamic";
 
 type Row = { id: string; name: string; game: string; format: string; best_of: number; max_teams: number | null; status: string; entry_type: string; entry_fee_thb: number | string; start_at: string | null; team_size: number };
+
+// K-AV-HUB1: ชื่อ/รูปของผู้ใช้จาก session (public_profiles_v ตาม id ของ session เหมือน layout) · ไม่ล็อกอิน/ไม่ต่อ DB/อ่านพลาด = null → การ์ดเป็นปุ่มเข้าสู่ระบบ
+async function readViewer(db: Awaited<ReturnType<typeof getServerDb>>): Promise<HubViewer> {
+  if (!db) return null;
+  try {
+    const { data } = await db.auth.getUser();
+    if (!data.user) return null;
+    const { data: p } = await db.from("public_profiles_v").select("username, avatar_url").eq("id", data.user.id).maybeSingle();
+    const row = p as { username: string | null; avatar_url: string | null } | null;
+    return { username: row?.username ?? "ผู้เล่น", avatarUrl: row?.avatar_url ?? null };
+  } catch {
+    return null;
+  }
+}
 
 export default async function TournamentsPage({ params }: { params: Promise<{ game: string }> }) {
   const { game } = await params;
@@ -29,9 +44,12 @@ export default async function TournamentsPage({ params }: { params: Promise<{ ga
   const { data: regs } = db && rows.length ? await db.from("registrations").select("tournament_id").in("tournament_id", rows.map((r) => r.id)).in("status", ["CONFIRMED", "CHECKED_IN"]) : { data: [] };
   const counts = new Map<string, number>();
   for (const r of (regs ?? []) as { tournament_id: string }[]) counts.set(r.tournament_id, (counts.get(r.tournament_id) ?? 0) + 1);
+  const viewer = await readViewer(db);
 
+  // K-AV-HUB1: Hub เต็มรูปแบบด้านบน · รายการทัวร์จริงของเกม (โค้ดเดิม) ต่อท้าย
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
+      <TournamentHub viewer={viewer} showLinkGame={code === "DOTA2" && viewer !== null} />
       <PageHeader eyebrow="// TOURNAMENTS" title="ทัวร์นาเมนต์" subtitle={`รายการแข่งของ ${gameLabel(code)}`} aside={<GameTag game={slug} />} />
       {!db ? <p className="text-base text-ink-muted">ยังไม่ต่อฐานข้อมูล</p> : rows.length === 0 ? (
         <EmptyState message={`ยังไม่มีทัวร์ของ ${gameLabel(code)}`} />

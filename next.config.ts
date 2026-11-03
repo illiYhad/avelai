@@ -29,6 +29,10 @@ export const GAME_REDIRECTS = MOVED.flatMap(([source, to]) => [
   { source, destination: `/mlbb${to}`, permanent: true },
 ]);
 
+// K-AV-HUB1: หน้า Hub เดิม /tournament (ตรงตัวเท่านั้น) → หน้าทัวร์ของเกม · /tournament/daily|weekly|monthly|[id] ไม่โดน
+// ไม่ permanent (307) เพราะหน้าปลายทางอาจย้ายตามเกมที่เลือกภายหลัง
+export const HUB_REDIRECTS = [{ source: "/tournament", destination: "/mlbb/tournaments", permanent: false }];
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   devIndicators: false,
@@ -36,7 +40,7 @@ const nextConfig: NextConfig = {
     return [{ source: "/(.*)", headers: SECURITY_HEADERS }];
   },
   async redirects() {
-    return GAME_REDIRECTS;
+    return [...GAME_REDIRECTS, ...HUB_REDIRECTS];
   },
 };
 
