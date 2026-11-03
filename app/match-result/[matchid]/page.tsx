@@ -2,6 +2,7 @@
 
 import React, { use, useState, useEffect } from 'react';
 import Link from 'next/link';
+import HudScan from '@/components/ui/HudScan';
 import { Shield, Flame, Clock, CheckCircle, AlertTriangle, Sparkles, ArrowRight } from 'lucide-react';
 
 interface PlayerTelemetry {
@@ -128,26 +129,28 @@ export default function MatchResultPage({ params }: PageProps) {
   };
 
   return (
-    <main className="min-h-screen bg-[#07090E] text-[#E0E0E0] p-4 md:p-8 font-mono">
+    <main className="min-h-screen text-ink p-4 md:p-8 font-mono">
       <div className="mx-auto max-w-6xl space-y-6">
         
         {/* HEADER: MATCH RESULT BANNER */}
-        <header className="border border-cyan/30 bg-[#0A0A12] p-6 rounded-2xl shadow-[0_0_30px_rgba(0,212,255,0.1)] flex flex-col md:flex-row justify-between items-center gap-4">
+        <header className="hud-panel ci-corners hud-hero relative overflow-hidden p-6 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-4">
+          {/* K-AV-UX4b: พาเนล HUD แทนกล่อง hex */}
+          <HudScan />
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
               <span className="text-xs font-bold text-emerald-400 tracking-widest uppercase">VICTORY SETTLED</span>
             </div>
-            <h1 className="font-display text-2xl md:text-3xl font-black text-white tracking-wider">
+            <h1 className="hud-title text-2xl md:text-3xl text-ink">
               MATCH RESULT #{matchid}
             </h1>
-            <p className="text-zinc-400 text-xs mt-1">Behavior Forced-Ranking & Mandatory Voting Gate</p>
+            <p className="text-ink-muted text-xs mt-1">Behavior Forced-Ranking & Mandatory Voting Gate</p>
           </div>
 
-          <div className="flex items-center gap-4 bg-slate-900 border border-slate-800 px-5 py-3 rounded-xl">
+          <div className="flex items-center gap-4 bg-surface-2 border border-line px-5 py-3 rounded-xl">
             <Clock className="w-5 h-5 text-gold" />
             <div>
-              <div className="text-xs text-zinc-500 uppercase font-bold">VOTING GATE</div>
+              <div className="text-xs text-ink-muted uppercase font-bold">VOTING GATE</div>
               <div className={`text-base font-black tracking-widest ${countdown > 0 ? 'text-gold animate-pulse' : 'text-emerald-400'}`}>
                 {countdown > 0 ? `00:${countdown.toString().padStart(2, '0')}` : 'GATE OPEN'}
               </div>
@@ -156,30 +159,30 @@ export default function MatchResultPage({ params }: PageProps) {
         </header>
 
         {/* SECTION 1: ALLY TEAM VOTING */}
-        <section className="bg-slate-950 border border-cyan/30 p-5 rounded-2xl space-y-4">
-          <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+        <section className="hud-panel ci-corners p-5 rounded-2xl space-y-4">
+          <div className="flex flex-wrap gap-2 justify-between items-center border-b border-line pb-3">
             <h2 className="text-sm font-black text-cyan flex items-center gap-2">
               <Shield className="w-4 h-4 text-cyan" /> RATE ALLY PERFORMANCE (REQUIRED: 5, 4, 3, 2)
             </h2>
-            <span className="text-xs font-bold text-zinc-400">
+            <span className="text-xs font-bold text-ink-muted">
               STATUS: {isAllyComplete ? <b className="text-emerald-400">COMPLETE</b> : <b className="text-rose-400">INCOMPLETE ({4 - Object.keys(allyVotes).length} LEFT)</b>}
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {allies.map(player => (
-              <div key={player.userId} className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl flex flex-col justify-between space-y-3">
+              <div key={player.userId} className="bg-surface-2 border border-line p-4 rounded-xl flex flex-col justify-between space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-white truncate max-w-30">{player.displayName}</span>
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-slate-800 text-cyan font-bold">POS {player.position}</span>
+                  <span className="text-xs font-bold text-ink truncate max-w-30">{player.displayName}</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-surface-2 text-cyan font-bold">POS {player.position}</span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-1 text-xs bg-slate-950 p-2 rounded border border-slate-800">
-                  <span className="text-zinc-500">KDA / KP:</span>
-                  <span className="text-right text-zinc-300 font-bold">{player.stats.kills}/{player.stats.deaths}/{player.stats.assists} ({player.stats.kp}%)</span>
-                  <span className="text-zinc-500">VISION SCORE:</span>
+                <div className="grid grid-cols-2 gap-1 text-xs bg-panel p-2 rounded border border-line">
+                  <span className="text-ink-muted">KDA / KP:</span>
+                  <span className="text-right text-ink font-bold">{player.stats.kills}/{player.stats.deaths}/{player.stats.assists} ({player.stats.kp}%)</span>
+                  <span className="text-ink-muted">VISION SCORE:</span>
                   <span className="text-right text-cyan font-bold">{player.stats.visionScore} PTS</span>
-                  <span className="text-zinc-500">TOWER DMG SHARE:</span>
+                  <span className="text-ink-muted">TOWER DMG SHARE:</span>
                   <span className="text-right text-emerald-400 font-bold">{player.stats.towerDmgShare}%</span>
                 </div>
 
@@ -198,10 +201,10 @@ export default function MatchResultPage({ params }: PageProps) {
                         disabled={votingCompleted || (!isSelected && isTakenByOther)}
                         className={`flex-1 py-1.5 text-xs font-black rounded border transition-all ${
                           isSelected
-                            ? 'bg-cyan text-slate-950 border-cyan shadow-[0_0_12px_rgba(0,212,255,0.5)] scale-105 z-10 cursor-pointer'
+                            ? 'bg-cyan text-void border-cyan shadow-glow-cyan scale-105 z-10 cursor-pointer'
                             : isTakenByOther
-                            ? 'bg-slate-950/40 border-slate-900 text-zinc-700 cursor-not-allowed opacity-30 line-through'
-                            : 'bg-slate-950 border-slate-700 text-zinc-400 hover:border-cyan/50 hover:text-white cursor-pointer'
+                            ? 'bg-panel/40 border-line text-ink-muted/60 cursor-not-allowed opacity-30 line-through'
+                            : 'bg-panel border-line text-ink-muted hover:border-cyan/50 hover:text-ink cursor-pointer'
                         }`}
                         title={isTakenByOther ? 'Score already assigned to another ally' : ''}
                       >
@@ -216,29 +219,29 @@ export default function MatchResultPage({ params }: PageProps) {
         </section>
 
         {/* SECTION 2: OPPONENT TEAM VOTING */}
-        <section className="bg-slate-950 border border-gold/30 p-5 rounded-2xl space-y-4">
-          <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+        <section className="hud-panel hud-panel-gold ci-corners p-5 rounded-2xl space-y-4">
+          <div className="flex flex-wrap gap-2 justify-between items-center border-b border-line pb-3">
             <h2 className="text-sm font-black text-gold flex items-center gap-2">
               <Flame className="w-4 h-4 text-gold" /> RATE OPPONENT RESPECT (REQUIRED: 5, 4, 3, 2, 1)
             </h2>
-            <span className="text-xs font-bold text-zinc-400">
+            <span className="text-xs font-bold text-ink-muted">
               STATUS: {isOpponentComplete ? <b className="text-emerald-400">COMPLETE</b> : <b className="text-rose-400">INCOMPLETE ({5 - Object.keys(opponentVotes).length} LEFT)</b>}
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
             {opponents.map(player => (
-              <div key={player.userId} className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between space-y-2">
+              <div key={player.userId} className="bg-surface-2 border border-line p-3.5 rounded-xl flex flex-col justify-between space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-white truncate max-w-25">{player.displayName}</span>
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-slate-800 text-gold font-bold">POS {player.position}</span>
+                  <span className="text-xs font-bold text-ink truncate max-w-25">{player.displayName}</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-surface-2 text-gold font-bold">POS {player.position}</span>
                 </div>
 
-                <div className="text-xs bg-slate-950 p-1.5 rounded border border-slate-800 space-y-0.5">
-                  <div className="flex justify-between text-zinc-400">
-                    <span>KDA:</span> <span className="text-white font-bold">{player.stats.kills}/{player.stats.deaths}/{player.stats.assists}</span>
+                <div className="text-xs bg-panel p-1.5 rounded border border-line space-y-0.5">
+                  <div className="flex justify-between text-ink-muted">
+                    <span>KDA:</span> <span className="text-ink font-bold">{player.stats.kills}/{player.stats.deaths}/{player.stats.assists}</span>
                   </div>
-                  <div className="flex justify-between text-zinc-400">
+                  <div className="flex justify-between text-ink-muted">
                     <span>APM:</span> <span className="text-gold font-bold">{player.stats.apm}</span>
                   </div>
                 </div>
@@ -258,10 +261,10 @@ export default function MatchResultPage({ params }: PageProps) {
                         disabled={votingCompleted || (!isSelected && isTakenByOther)}
                         className={`flex-1 py-1 text-xs font-black rounded border transition-all ${
                           isSelected
-                            ? 'bg-gold text-slate-950 border-gold shadow-[0_0_12px_rgba(201,168,76,0.5)] scale-105 z-10 cursor-pointer'
+                            ? 'bg-gold text-void border-gold shadow-glow-gold scale-105 z-10 cursor-pointer'
                             : isTakenByOther
-                            ? 'bg-slate-950/40 border-slate-900 text-zinc-700 cursor-not-allowed opacity-30 line-through'
-                            : 'bg-slate-950 border-slate-700 text-zinc-400 hover:border-gold/50 hover:text-white cursor-pointer'
+                            ? 'bg-panel/40 border-line text-ink-muted/60 cursor-not-allowed opacity-30 line-through'
+                            : 'bg-panel border-line text-ink-muted hover:border-gold/50 hover:text-ink cursor-pointer'
                         }`}
                         title={isTakenByOther ? 'Score already assigned to another opponent' : ''}
                       >
@@ -276,10 +279,10 @@ export default function MatchResultPage({ params }: PageProps) {
         </section>
 
         {/* SUBMIT & EXIT CONTROLS */}
-        <div className="border-t border-slate-800 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="text-xs text-zinc-400">
+        <div className="border-t border-line pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="text-xs text-ink-muted">
             {!isFormValid ? (
-              <span className="text-amber-400 flex items-center gap-1.5">
+              <span className="text-gold flex items-center gap-1.5">
                 <AlertTriangle className="w-4 h-4" /> Please assign all available unique scores to every player.
               </span>
             ) : votingCompleted ? (
@@ -300,8 +303,8 @@ export default function MatchResultPage({ params }: PageProps) {
                 disabled={!isFormValid || submitting}
                 className={`px-8 py-3 rounded-xl font-display text-xs font-black uppercase tracking-widest transition-all ${
                   isFormValid && !submitting
-                    ? 'bg-linear-to-r from-cyan to-gold text-slate-950 hover:brightness-110 shadow-[0_0_20px_rgba(0,212,255,0.4)] cursor-pointer'
-                    : 'bg-slate-800 text-zinc-500 border border-slate-700 cursor-not-allowed'
+                    ? 'bg-linear-to-r from-cyan to-gold text-void hover:brightness-110 shadow-glow-cyan cursor-pointer'
+                    : 'bg-surface-2 text-ink-muted border border-line cursor-not-allowed'
                 }`}
               >
                 {submitting ? 'RECORDING VOTES...' : 'SUBMIT MANDATORY VOTES'}
@@ -309,7 +312,7 @@ export default function MatchResultPage({ params }: PageProps) {
             ) : (
               <Link
                 href={`/match/${matchid}`}
-                className="inline-flex items-center gap-2 px-8 py-3 bg-cyan text-slate-950 rounded-xl font-display text-xs font-black uppercase tracking-widest hover:bg-cyan/80 shadow-[0_0_20px_rgba(0,212,255,0.4)] transition-all"
+                className="inline-flex items-center gap-2 px-8 py-3 bg-cyan text-void rounded-xl font-display text-xs font-black uppercase tracking-widest hover:bg-cyan/80 shadow-glow-cyan transition-all"
               >
                 <span>FULL INTEL — MATCH DETAIL</span>
                 <ArrowRight className="w-4 h-4" />

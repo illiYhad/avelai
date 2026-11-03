@@ -56,42 +56,42 @@ export default function SubscribePage() {
   // K-AV-R: ปิดระบบจ่ายเงินด้วย feature flag — เก็บโค้ดเดิมด้านล่างไว้ทั้งหมด
   if (!FEATURES.payments) {
     return (
-      <main className="min-h-screen bg-[#0A0A0F] text-white px-4 py-24 flex flex-col items-center justify-center text-center">
-        <p className="text-cyan font-mono text-sm tracking-widest mb-3">ARENA ACCESS</p>
-        <h1 className="font-display text-2xl font-bold mb-3">COMING SOON</h1>
-        <p className="text-gray-400 text-sm">{FEATURE_DISABLED_MESSAGE}</p>
+      <main className="min-h-screen text-ink px-4 py-24 flex flex-col items-center justify-center text-center">
+        <p className="hud-chip mx-auto mb-3">ARENA ACCESS</p>
+        <h1 className="hud-title text-2xl mb-3">COMING SOON</h1>
+        <p className="text-ink-muted text-sm">{FEATURE_DISABLED_MESSAGE}</p>
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen bg-[#0A0A0F] text-white px-4 py-16 flex flex-col items-center">
+    <main className="min-h-screen text-ink px-4 py-16 flex flex-col items-center">
       <div className="text-center mb-12">
-        <p className="text-cyan font-mono text-sm tracking-widest mb-2">ARENA ACCESS</p>
-        <h1 className="font-display text-4xl font-black tracking-wide mb-3">
+        <p className="hud-chip mx-auto mb-2">ARENA ACCESS</p>
+        <h1 className="hud-title text-3xl sm:text-4xl mb-3">
           CHOOSE YOUR <span className="text-gold">PASSPORT</span>
         </h1>
-        <p className="text-gray-400 text-sm">PRECISION IS FREEDOM</p>
+        <p className="text-ink-muted text-sm">PRECISION IS FREEDOM</p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-6 w-full max-w-3xl">
 
         <div className={`flex-1 rounded-xl border p-6 flex flex-col gap-4 transition-all duration-300 ${currentTier === 'free'
-          ? 'border-cyan shadow-[0_0_24px_rgba(0,212,255,0.2)] bg-[#12121A]'
-          : 'border-gray-700 bg-[#12121A]'
+          ? 'hud-panel ci-corners border-cyan shadow-glow-cyan'
+          : 'hud-panel'
           }`}>
           <div>
-            <p className="text-xs text-gray-500 font-mono tracking-widest mb-1">TIER 1</p>
-            <h2 className="font-display text-2xl font-bold text-white">FREE RECRUIT</h2>
-            <p className="text-3xl font-black mt-2">0 <span className="text-sm font-normal text-gray-400">/ mo</span></p>
+            <p className="text-xs text-ink-muted font-mono tracking-widest mb-1">TIER 1</p>
+            <h2 className="font-display text-2xl font-bold text-ink">FREE RECRUIT</h2>
+            <p className="text-3xl font-black mt-2">0 <span className="text-sm font-normal text-ink-muted">/ mo</span></p>
           </div>
-          <ul className="flex flex-col gap-2 text-sm text-gray-300 flex-1">
+          <ul className="flex flex-col gap-2 text-sm text-ink flex-1">
             <li className="flex items-center gap-2"><span className="text-cyan">+</span> 1 Arena Ticket / week</li>
             <li className="flex items-center gap-2"><span className="text-cyan">+</span> Leaderboard access</li>
             <li className="flex items-center gap-2"><span className="text-cyan">+</span> Standard Passport</li>
-            <li className="flex items-center gap-2"><span className="text-gray-600">-</span> <span className="text-gray-500">Daily tickets</span></li>
-            <li className="flex items-center gap-2"><span className="text-gray-600">-</span> <span className="text-gray-500">AVE AI analysis</span></li>
-            <li className="flex items-center gap-2"><span className="text-gray-600">-</span> <span className="text-gray-500">Gold Passport frame</span></li>
+            <li className="flex items-center gap-2"><span className="text-ink-muted/60">-</span> <span className="text-ink-muted">Daily tickets</span></li>
+            <li className="flex items-center gap-2"><span className="text-ink-muted/60">-</span> <span className="text-ink-muted">AVE AI analysis</span></li>
+            <li className="flex items-center gap-2"><span className="text-ink-muted/60">-</span> <span className="text-ink-muted">Gold Passport frame</span></li>
           </ul>
           {currentTier === 'free' ? (
             <div className="w-full py-2 text-center text-xs font-mono text-cyan border border-cyan rounded-lg">
@@ -99,15 +99,15 @@ export default function SubscribePage() {
             </div>
           ) : (
             <button onClick={handleDowngrade} disabled={loading}
-              className="w-full py-2 text-xs font-mono text-gray-400 border border-gray-600 rounded-lg hover:border-gray-400 transition-colors">
+              className="w-full py-2 text-xs font-mono text-ink-muted border border-line rounded-lg hover:border-cyan/40 transition-colors">
               DOWNGRADE
             </button>
           )}
         </div>
 
         <div className={`flex-1 rounded-xl border p-6 flex flex-col gap-4 transition-all duration-300 relative overflow-hidden ${currentTier === 'pro'
-          ? 'border-gold shadow-[0_0_32px_rgba(201,168,76,0.3)] bg-[#12121A]'
-          : 'border-gold/50 bg-[#12121A]'
+          ? 'hud-panel hud-panel-gold ci-corners'
+          : 'hud-panel hud-panel-gold'
           }`}>
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-gold to-transparent" />
           <div>
@@ -116,9 +116,9 @@ export default function SubscribePage() {
               <span className="text-xs bg-gold/20 text-gold px-2 py-0.5 rounded font-mono">RECOMMENDED</span>
             </div>
             <h2 className="font-display text-2xl font-bold text-gold">PRO PASSPORT</h2>
-            <p className="text-3xl font-black mt-2 text-white">380 THB <span className="text-sm font-normal text-gray-400">/ mo</span></p>
+            <p className="text-3xl font-black mt-2 text-ink">380 THB <span className="text-sm font-normal text-ink-muted">/ mo</span></p>
           </div>
-          <ul className="flex flex-col gap-2 text-sm text-gray-300 flex-1">
+          <ul className="flex flex-col gap-2 text-sm text-ink flex-1">
             <li className="flex items-center gap-2"><span className="text-gold">+</span> 1 Arena Ticket / day</li>
             <li className="flex items-center gap-2"><span className="text-gold">+</span> Leaderboard access</li>
             <li className="flex items-center gap-2"><span className="text-gold">+</span> Gold Passport frame</li>
@@ -132,14 +132,14 @@ export default function SubscribePage() {
             </div>
           ) : (
             <button onClick={handleUpgrade} disabled={loading}
-              className="w-full py-2 text-xs font-mono text-black bg-gold rounded-lg hover:bg-[#E8C05A] transition-colors font-bold disabled:opacity-50">
+              className="w-full py-2 text-xs font-mono text-void bg-gold rounded-lg hover:bg-gold-hover transition-colors font-bold disabled:opacity-50">
               {loading ? 'UPGRADING...' : 'UPGRADE TO PRO'}
             </button>
           )}
         </div>
       </div>
 
-      <p className="mt-10 text-xs text-gray-600 font-mono text-center">
+      <p className="mt-10 text-xs text-ink-muted/60 font-mono text-center">
         75% of all revenue returns to the community Prize Pool — AVELAi PRECISION IS FREEDOM
       </p>
     </main>

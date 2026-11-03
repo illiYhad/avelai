@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import HudScan from '@/components/ui/HudScan'
+import { SampleChip } from '@/components/tournament/TournamentHub'
 
 // ============================================================================
 // 1. TYPES & INTERFACES
@@ -106,11 +107,11 @@ const CATALOG_ITEMS: StoreItem[] = [
 ];
 
 const RARITY_COLORS: Record<string, string> = {
-    COMMON: 'border-gray-700 text-gray-300',
+    COMMON: 'border-line text-ink',
     UNCOMMON: 'border-[#39FF6A]/60 text-[#39FF6A]',
     RARE: 'border-[#2E9BFF]/70 text-[#2E9BFF]',
     EPIC: 'border-[#D63CE8]/70 text-[#D63CE8]',
-    LEGENDARY: 'border-gold text-gold shadow-[0_0_15px_rgba(201,168,76,0.3)]',
+    LEGENDARY: 'border-gold text-gold shadow-glow-gold',
 };
 
 function generateMockBracketData(): MonthlyDoubleEliminationBracket {
@@ -159,41 +160,41 @@ const IntegrityCard: React.FC<IntegrityCardProps> = ({ displayName, avatarUrl, r
 
     if (rarity === 'NONE') {
         return (
-            <div className="relative w-full max-w-50 h-80 rounded-xl border border-dashed border-gray-700 bg-[#0A0A0F]/80 p-4 flex flex-col justify-between items-center text-center">
+            <div className="relative w-full max-w-50 h-80 rounded-xl border border-dashed border-line bg-panel/80 p-4 flex flex-col justify-between items-center text-center">
                 <div className="text-xs font-mono font-bold px-2 py-0.5 rounded border" style={{ borderColor: `${roleColor}55`, color: roleColor, backgroundColor: `${roleColor}15` }}>
                     {ROLE_NAMES[position]}
                 </div>
                 <div className="flex flex-col items-center">
-                    <div className="w-16 h-16 rounded-full border border-gray-700 bg-gray-900 flex items-center justify-center text-gray-500 font-bold mb-2 overflow-hidden">
+                    <div className="w-16 h-16 rounded-full border border-line bg-surface-2 flex items-center justify-center text-ink-muted font-bold mb-2 overflow-hidden">
                         {avatarUrl ? <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" /> : displayName.slice(0, 2).toUpperCase()}
                     </div>
-                    <span className="text-xs font-mono font-bold text-gray-300">{displayName}</span>
+                    <span className="text-xs font-mono font-bold text-ink">{displayName}</span>
                 </div>
-                <div className="w-full pt-2 border-t border-gray-800">
-                    {isCurrentUser ? <button className="w-full py-1.5 bg-amber-500 text-black text-xs font-bold rounded">GET CARD</button> : <span className="text-xs text-gray-600">UNPROTECTED</span>}
+                <div className="w-full pt-2 border-t border-line">
+                    {isCurrentUser ? <button className="w-full py-1.5 bg-gold text-void text-xs font-bold rounded">GET CARD</button> : <span className="text-xs text-ink-muted/60">UNPROTECTED</span>}
                 </div>
             </div>
         );
     }
     return (
-        <div className={`relative w-full max-w-50 h-80 rounded-xl bg-[#0A0A0F] p-3 flex flex-col justify-between border ${rarity === 'LEGENDARY' ? 'border-cyan-400 shadow-[0_0_15px_rgba(0,212,255,0.4)]' : rarity === 'EPIC' ? 'border-amber-400' : 'border-gray-500'}`}>
+        <div className={`relative w-full max-w-50 h-80 rounded-xl bg-panel p-3 flex flex-col justify-between border ${rarity === 'LEGENDARY' ? 'border-cyan shadow-glow-cyan' : rarity === 'EPIC' ? 'border-gold' : 'border-ink-muted'}`}>
             <div className="relative z-10 flex items-center justify-between">
                 <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded border" style={{ borderColor: `${roleColor}88`, color: roleColor }}>{ROLE_NAMES[position]}</span>
-                <span className={`text-xs font-black px-1.5 py-0.5 rounded ${rarity === 'LEGENDARY' ? 'bg-cyan-400 text-black' : 'bg-gray-400 text-black'}`}>{rarity}</span>
+                <span className={`text-xs font-black px-1.5 py-0.5 rounded ${rarity === 'LEGENDARY' ? 'bg-cyan text-void' : 'bg-ink-muted text-void'}`}>{rarity}</span>
             </div>
-            <div className="relative z-10 w-full h-35 my-1.5 rounded-lg border border-gray-800 bg-gray-900 flex flex-col items-center justify-center">
-                <div className="w-14 h-14 rounded-full border-2 mb-1 flex items-center justify-center text-white overflow-hidden" style={{ borderColor: teamBorder }}>
+            <div className="relative z-10 w-full h-35 my-1.5 rounded-lg border border-line bg-surface-2 flex flex-col items-center justify-center">
+                <div className="w-14 h-14 rounded-full border-2 mb-1 flex items-center justify-center text-ink overflow-hidden" style={{ borderColor: teamBorder }}>
                     {avatarUrl ? <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" /> : displayName.slice(0, 2).toUpperCase()}
                 </div>
             </div>
-            <div className="relative z-10 pt-1.5 border-t border-gray-800 font-mono">
+            <div className="relative z-10 pt-1.5 border-t border-line font-mono">
                 <div className="flex justify-between mb-1">
-                    <span className="text-xs font-bold text-white truncate">{displayName}</span>
+                    <span className="text-xs font-bold text-ink truncate">{displayName}</span>
                     <span className="text-xs text-emerald-400">{winRate}%</span>
                 </div>
-                <div className="flex justify-between text-xs text-gray-400">
+                <div className="flex justify-between text-xs text-ink-muted">
                     <span>KARMA</span>
-                    <span className="text-cyan-400">{karmaScore}</span>
+                    <span className="text-cyan">{karmaScore}</span>
                 </div>
             </div>
         </div>
@@ -205,21 +206,21 @@ const BracketVisualizer: React.FC<{ bracketData: MonthlyDoubleEliminationBracket
         <div className="w-full hud-panel rounded-xl p-8 overflow-x-auto min-h-100 font-mono flex gap-12">
             {bracketData.winnersTree.rounds.map((round) => (
                 <div key={round.roundId} className="flex flex-col justify-around gap-6">
-                    <h4 className="text-center text-amber-400 text-xs font-bold">ROUND {round.roundNumber}</h4>
+                    <h4 className="text-center text-gold text-xs font-bold">ROUND {round.roundNumber}</h4>
                     {round.matches.map((match) => {
                         const isClickable = isAdminMode ? true : match.status !== 'waiting';
                         return (
                             <div 
                                 key={match.matchId} 
                                 onClick={() => isClickable && onMatchClick?.(match.matchId)}
-                                className={`w-48 rounded-lg border p-2 text-xs transition-all ${match.status === 'ready' ? 'border-cyan-400 bg-cyan-950/20' : 'border-gray-700 bg-gray-900/50'} ${isClickable ? 'cursor-pointer hover:border-cyan-300' : 'cursor-not-allowed opacity-60'}`}
+                                className={`w-48 rounded-lg border p-2 text-xs transition-all ${match.status === 'ready' ? 'border-cyan bg-cyan/10' : 'border-line bg-surface-2'} ${isClickable ? 'cursor-pointer hover:border-cyan' : 'cursor-not-allowed opacity-60'}`}
                             >
                                 <div className="flex justify-between pb-1">
-                                    <span className={match.status === 'ready' ? 'text-white' : 'text-gray-500'}>{match.player1Id || 'TBD'}</span>
+                                    <span className={match.status === 'ready' ? 'text-ink' : 'text-ink-muted'}>{match.player1Id || 'TBD'}</span>
                                 </div>
-                                <div className="h-px w-full bg-gray-800 my-0.5" />
+                                <div className="h-px w-full bg-surface-2 my-0.5" />
                                 <div className="flex justify-between pt-1">
-                                    <span className={match.status === 'ready' ? 'text-white' : 'text-gray-500'}>{match.player2Id || 'TBD'}</span>
+                                    <span className={match.status === 'ready' ? 'text-ink' : 'text-ink-muted'}>{match.player2Id || 'TBD'}</span>
                                 </div>
                             </div>
                         );
@@ -236,7 +237,8 @@ const BracketVisualizer: React.FC<{ bracketData: MonthlyDoubleEliminationBracket
 
 export default function MonthlyTournamentPage() {
     const [activeTab, setActiveTab] = useState<'double_elim' | 'circuit_rank' | 'season_info' | 'integrity_showcase' | 'rewards_store'>('double_elim');
-    const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
+    // K-AV-UX4b: เอาปุ่มสลับโหมดแอดมินออกจากหน้าผู้เล่น — ปิดโหมดแอดมินเสมอ
+    const isAdminMode = false;
     
     const [circuitRankings] = useState<CircuitPlayer[]>([
         { rank: 1, name: 'CyberShadow', circuitPoints: 260, winRate: 78.5, isQualified: true },
@@ -260,7 +262,7 @@ export default function MonthlyTournamentPage() {
     };
 
     return (
-        <div className="min-h-screen text-white p-6 md:p-10 font-sans">
+        <div className="min-h-screen text-ink p-6 md:p-10 font-sans">
             <div className="max-w-6xl mx-auto space-y-6">
 
                 {/* 1. HEADER BANNER */}
@@ -269,73 +271,58 @@ export default function MonthlyTournamentPage() {
                     <HudScan />
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
-                            <span className="text-xs font-mono px-2.5 py-1 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400">
-                                FEATURE-4300: MONTHLY CIRCUIT & FINALS
-                            </span>
-                            <h1 className="hud-title text-3xl text-gray-100 mt-2">
+                            <h1 className="hud-title text-3xl text-ink">
                                 MONTHLY CHAMPIONSHIP
                             </h1>
-                            <p className="text-sm text-gray-400 mt-1 font-mono">
+                            <p className="text-sm text-ink-muted mt-1 font-mono">
                                 Circuit Points Top 16 • No Pay-to-Enter • Double Elimination Bracket
                             </p>
                         </div>
 
-                        <div className="flex items-center gap-6 bg-[#0B0E14]/80 px-6 py-4 rounded-xl border border-gray-800">
+                        <div className="flex flex-wrap items-center gap-6 bg-void/80 px-6 py-4 rounded-xl border border-line">
+                            <SampleChip />
                             <div className="text-right">
-                                <div className="text-xs text-gray-400 font-mono">MONTHLY PRIZE POOL (40%)</div>
-                                <div className="text-2xl font-black text-amber-400 font-mono">฿ 40,000</div>
+                                <div className="text-xs text-ink-muted font-mono">MONTHLY PRIZE POOL (40%)</div>
+                                <div className="text-2xl font-black text-gold font-mono">฿ 40,000</div>
                             </div>
-                            <div className="border-l border-gray-700 pl-6 text-right">
-                                <div className="text-xs text-gray-400 font-mono">SEASON PHASE</div>
-                                <div className="text-lg font-black text-cyan-400 font-mono">WEEK 4 (FINALS)</div>
+                            <div className="border-l border-line pl-6 text-right">
+                                <div className="text-xs text-ink-muted font-mono">SEASON PHASE</div>
+                                <div className="text-lg font-black text-cyan font-mono">WEEK 4 (FINALS)</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* ADMIN MODE TOGGLE */}
-                <div className="flex justify-end items-center">
-                    <button
-                        onClick={() => setIsAdminMode(!isAdminMode)}
-                        className={`px-4 py-1.5 rounded-lg border font-display text-xs font-bold tracking-wider transition-all duration-200 cursor-pointer ${
-                            isAdminMode
-                                ? 'border-cyan text-cyan bg-cyan/10 shadow-[0_0_10px_rgba(0,212,255,0.2)]'
-                                : 'border-gray-700 text-gray-400 hover:border-gray-500'
-                        }`}
-                    >
-                        ADMIN MODE: {isAdminMode ? 'ACTIVE' : 'OFF'}
-                    </button>
-                </div>
 
                 {/* 2. NAVIGATION TABS */}
-                <div className="flex flex-wrap gap-4 border-b border-gray-800 pb-3">
+                <div className="flex flex-wrap gap-4 border-b border-line pb-3">
                     <button 
                         onClick={() => setActiveTab('double_elim')} 
-                        className={`px-5 py-2 rounded-lg font-mono text-sm font-bold transition-all cursor-pointer ${activeTab === 'double_elim' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40 shadow-[0_0_12px_rgba(255,184,0,0.2)]' : 'text-gray-400 hover:text-gray-200'}`}
+                        className={`px-5 py-2 rounded-lg font-mono text-sm font-bold transition-all cursor-pointer ${activeTab === 'double_elim' ? 'bg-gold/20 text-gold border border-gold/40 shadow-glow-gold' : 'text-ink-muted hover:text-ink'}`}
                     >
-                        BRACKET VISUALIZER (PART 3)
+                        BRACKET VISUALIZER
                     </button>
                     <button 
                         onClick={() => setActiveTab('circuit_rank')} 
-                        className={`px-5 py-2 rounded-lg font-mono text-sm font-bold transition-all cursor-pointer ${activeTab === 'circuit_rank' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' : 'text-gray-400 hover:text-gray-200'}`}
+                        className={`px-5 py-2 rounded-lg font-mono text-sm font-bold transition-all cursor-pointer ${activeTab === 'circuit_rank' ? 'bg-gold/20 text-gold border border-gold/40' : 'text-ink-muted hover:text-ink'}`}
                     >
                         CIRCUIT RANKINGS
                     </button>
                     <button 
                         onClick={() => setActiveTab('integrity_showcase')} 
-                        className={`px-5 py-2 rounded-lg font-mono text-sm font-bold transition-all cursor-pointer ${activeTab === 'integrity_showcase' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 shadow-[0_0_12px_rgba(0,212,255,0.2)]' : 'text-gray-400 hover:text-gray-200'}`}
+                        className={`px-5 py-2 rounded-lg font-mono text-sm font-bold transition-all cursor-pointer ${activeTab === 'integrity_showcase' ? 'bg-cyan/20 text-cyan border border-cyan/40 shadow-glow-cyan' : 'text-ink-muted hover:text-ink'}`}
                     >
-                        INTEGRITY SHOWCASE (PART 1)
+                        INTEGRITY SHOWCASE
                     </button>
                     <button 
                         onClick={() => setActiveTab('rewards_store')} 
-                        className={`px-5 py-2 rounded-lg font-mono text-sm font-bold transition-all cursor-pointer ${activeTab === 'rewards_store' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' : 'text-gray-400 hover:text-gray-200'}`}
+                        className={`px-5 py-2 rounded-lg font-mono text-sm font-bold transition-all cursor-pointer ${activeTab === 'rewards_store' ? 'bg-gold/20 text-gold border border-gold/40' : 'text-ink-muted hover:text-ink'}`}
                     >
-                        REWARDS STORE (PART 2)
+                        REWARDS STORE
                     </button>
                     <button 
                         onClick={() => setActiveTab('season_info')} 
-                        className={`px-5 py-2 rounded-lg font-mono text-sm font-bold transition-all cursor-pointer ${activeTab === 'season_info' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' : 'text-gray-400 hover:text-gray-200'}`}
+                        className={`px-5 py-2 rounded-lg font-mono text-sm font-bold transition-all cursor-pointer ${activeTab === 'season_info' ? 'bg-gold/20 text-gold border border-gold/40' : 'text-ink-muted hover:text-ink'}`}
                     >
                         RULES & KYC
                     </button>
@@ -344,9 +331,7 @@ export default function MonthlyTournamentPage() {
                 {/* 3. TAB CONTENT VIEWS */}
                 {activeTab === 'double_elim' && (
                     <div className="space-y-6">
-                        <div className="hud-panel hud-panel-gold rounded-xl p-4 flex items-center justify-between text-xs text-amber-400 font-mono">
-                            <span>*Interactive Data Tree from Part 3</span>
-                        </div>
+                        <SampleChip />
                         
                         {/* แก้ไขตาม QA: ส่ง isAdminMode และ onMatchClick ครบถ้วนแล้ว */}
                         {bracketData && (
@@ -357,25 +342,27 @@ export default function MonthlyTournamentPage() {
                             />
                         )}
                         
-                        <div className="bg-linear-to-b from-[#1C1F26] to-[#12151B] border-2 border-amber-400 rounded-xl p-6 text-center shadow-[0_0_25px_rgba(255,184,0,0.2)]">
-                            <span className="text-xs font-mono uppercase tracking-widest text-amber-400 font-bold">GRAND FINAL (BO3 + BRACKET RESET RULE)</span>
-                            <div className="text-xl font-black text-gray-100 mt-2">Upper Winner vs Lower Winner</div>
-                            <div className="mt-4 inline-block text-xs font-bold text-black bg-amber-400 px-6 py-2 rounded-lg font-mono">CHAMPION PRIZE: ฿ 10,000 + HALL OF FAME ถาวร</div>
+                        <div className="hud-panel hud-panel-gold ci-corners rounded-xl p-6 text-center flex flex-col items-center gap-2">
+                            <SampleChip />
+                            <span className="text-xs font-mono uppercase tracking-widest text-gold font-bold">GRAND FINAL (BO3 + BRACKET RESET RULE)</span>
+                            <div className="text-xl font-black text-ink mt-2">Upper Winner vs Lower Winner</div>
+                            <div className="mt-4 inline-block text-xs font-bold text-void bg-gold px-6 py-2 rounded-lg font-mono">CHAMPION PRIZE: ฿ 10,000 + HALL OF FAME ถาวร</div>
                         </div>
                     </div>
                 )}
 
                 {activeTab === 'integrity_showcase' && (
-                    <div className="hud-panel ci-corners rounded-xl p-6 font-mono">
+                    <div className="hud-panel ci-corners rounded-xl p-6 font-mono space-y-4">
+                        <SampleChip />
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             <div className="flex flex-col gap-3">
-                                <div className="border-b border-cyan-400/40 pb-2 text-cyan-400 font-bold text-sm">TEAM ALPHA (RADIANT)</div>
+                                <div className="border-b border-cyan/40 pb-2 text-cyan font-bold text-sm">TEAM ALPHA (RADIANT)</div>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                     {teamA.map((player) => <IntegrityCard key={player.userId} {...player} />)}
                                 </div>
                             </div>
                             <div className="flex flex-col gap-3">
-                                <div className="border-b border-amber-400/40 pb-2 text-amber-400 font-bold text-sm">TEAM OMEGA (DIRE)</div>
+                                <div className="border-b border-gold/40 pb-2 text-gold font-bold text-sm">TEAM OMEGA (DIRE)</div>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                     {teamB.map((player) => <IntegrityCard key={player.userId} {...player} />)}
                                 </div>
@@ -386,19 +373,20 @@ export default function MonthlyTournamentPage() {
 
                 {activeTab === 'rewards_store' && (
                     <div className="hud-panel ci-corners rounded-xl p-6 font-mono space-y-6">
-                        <div className="flex justify-between items-center bg-[#161B22] p-4 rounded-lg border border-amber-500/30">
-                            <div className="text-gray-400 text-sm">CURRENT BALANCE</div>
-                            <div className="text-2xl font-bold text-amber-400">{walletBalance} PTS</div>
+                        <SampleChip />
+                        <div className="flex justify-between items-center bg-surface-2 p-4 rounded-lg border border-gold/30">
+                            <div className="text-ink-muted text-sm">CURRENT BALANCE</div>
+                            <div className="text-2xl font-bold text-gold">{walletBalance} PTS</div>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {CATALOG_ITEMS.map((item) => (
-                                <div key={item.itemId} className={`p-4 bg-[#161B22] rounded-lg border ${RARITY_COLORS[item.rarity]} flex flex-col justify-between`}>
+                                <div key={item.itemId} className={`p-4 bg-surface-2 rounded-lg border ${RARITY_COLORS[item.rarity]} flex flex-col justify-between`}>
                                     <div className="text-center mb-3">
                                         <div className="text-3xl mb-2">{item.icon}</div>
-                                        <h3 className="text-sm font-bold text-white">{item.name}</h3>
-                                        <span className="text-xs text-gray-400 tracking-widest">[{item.rarity}]</span>
+                                        <h3 className="text-sm font-bold text-ink">{item.name}</h3>
+                                        <span className="text-xs text-ink-muted tracking-widest">[{item.rarity}]</span>
                                     </div>
-                                    <button className="mt-4 w-full py-2 bg-amber-500 text-black text-xs font-bold rounded hover:bg-amber-400 cursor-pointer">
+                                    <button className="mt-4 w-full py-2 bg-gold text-void text-xs font-bold rounded hover:bg-gold-hover cursor-pointer">
                                         REDEEM ({item.costRewardPoints} PTS)
                                     </button>
                                 </div>
@@ -409,12 +397,12 @@ export default function MonthlyTournamentPage() {
 
                 {activeTab === 'circuit_rank' && (
                     <div className="hud-panel rounded-xl overflow-hidden font-mono">
-                        <div className="p-5 border-b border-gray-800 flex justify-between items-center">
-                            <h2 className="text-sm font-bold tracking-wider uppercase text-gray-300">Top 16 Circuit Points Standings (Week 1-3)</h2>
+                        <div className="p-5 border-b border-line flex justify-between items-center">
+                            <h2 className="text-sm font-bold tracking-wider uppercase text-ink flex flex-wrap items-center gap-2">Top 16 Circuit Points Standings (Week 1-3) <SampleChip /></h2>
                             <span className="text-xs text-emerald-400">QUALIFIED FOR MONTHLY FINAL</span>
                         </div>
                         <table className="w-full text-left text-sm">
-                            <thead className="bg-[#161B22] text-xs text-gray-400 uppercase border-b border-gray-800">
+                            <thead className="bg-surface-2 text-xs text-ink-muted uppercase border-b border-line">
                                 <tr>
                                     <th className="py-3 px-4">Rank</th>
                                     <th className="py-3 px-4">Player</th>
@@ -423,12 +411,12 @@ export default function MonthlyTournamentPage() {
                                     <th className="py-3 px-4 text-center">Status</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-800/60">
+                            <tbody className="divide-y divide-line">
                                 {circuitRankings.map((p) => (
-                                    <tr key={p.rank} className="hover:bg-[#161B22]/50">
-                                        <td className="py-3.5 px-4 font-bold text-amber-400">#{p.rank}</td>
-                                        <td className="py-3.5 px-4 font-bold text-gray-200">{p.name}</td>
-                                        <td className="py-3.5 px-4 font-bold text-cyan-400">{p.circuitPoints} CP</td>
+                                    <tr key={p.rank} className="hover:bg-surface-2/50">
+                                        <td className="py-3.5 px-4 font-bold text-gold">#{p.rank}</td>
+                                        <td className="py-3.5 px-4 font-bold text-ink">{p.name}</td>
+                                        <td className="py-3.5 px-4 font-bold text-cyan">{p.circuitPoints} CP</td>
                                         <td className="py-3.5 px-4 text-emerald-400">{p.winRate}%</td>
                                         <td className="py-3.5 px-4 text-center">
                                             <span className="text-xs px-2.5 py-1 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/40">
@@ -444,21 +432,21 @@ export default function MonthlyTournamentPage() {
 
                 {activeTab === 'season_info' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-mono">
-                        <div className="bg-[#0D1117] border border-gray-800 rounded-xl p-6 space-y-4">
-                            <h3 className="text-sm font-bold text-cyan-400 uppercase">Season Soft Reset Protocol</h3>
-                            <p className="text-xs text-gray-400 leading-relaxed">
+                        <div className="hud-panel rounded-xl p-6 space-y-4">
+                            <h3 className="text-sm font-bold text-cyan uppercase">Season Soft Reset Protocol</h3>
+                            <p className="text-xs text-ink-muted leading-relaxed">
                                 การแข่งขันจัดขึ้นในรูปแบบซีซั่นรอบละ 3 เดือน เมื่อสิ้นสุดซีซั่น คะแนน Season KP จะถูก Soft Reset ตามสูตรมาตรฐาน:
                             </p>
-                            <div className="p-3 bg-[#161B22] rounded-lg border border-cyan-500/30 text-cyan-300 text-sm font-bold text-center">
+                            <div className="p-3 bg-surface-2 rounded-lg border border-cyan/30 text-cyan text-sm font-bold text-center">
                                 KP_new = (KP_old × 0.5) + 1000
                             </div>
                         </div>
-                        <div className="bg-[#0D1117] border border-gray-800 rounded-xl p-6 space-y-4">
-                            <h3 className="text-sm font-bold text-amber-400 uppercase">KYC & Prize Payout Gateway</h3>
-                            <p className="text-xs text-gray-400 leading-relaxed">
+                        <div className="hud-panel rounded-xl p-6 space-y-4">
+                            <h3 className="text-sm font-bold text-gold uppercase">KYC & Prize Payout Gateway</h3>
+                            <p className="text-xs text-ink-muted leading-relaxed">
                                 เงินรางวัลจากการแข่งขันทั้งหมดสามารถถอนผ่านระบบ PromptPay (TH) หรือ Bank Transfer โดยมีเงื่อนไขความปลอดภัย:
                             </p>
-                            <ul className="text-xs text-gray-300 space-y-2 list-disc pl-4">
+                            <ul className="text-xs text-ink space-y-2 list-disc pl-4">
                                 <li>ต้องผ่านการยืนยันตัวตน KYC Gate ก่อนทำการเบิกเงินครั้งแรก</li>
                                 <li>ระบบตัดรอบโอนเงินแบบ Batch รอบ 15:00 น. ทุกวันทำการ</li>
                             </ul>

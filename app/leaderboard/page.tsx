@@ -115,27 +115,21 @@ export default function LeaderboardPage() {
     );
   };
     return (
-        <main className="min-h-screen bg-[#030308] text-white pt-20 p-4 md:pt-24 md:p-8 font-mono relative overflow-hidden">
-            {/* Cyberpunk ambient glow */}
-            <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-yellow-500/3 rounded-full blur-[150px] pointer-events-none" />
+        <main className="min-h-screen text-ink pt-20 p-4 md:pt-24 md:p-8 font-mono relative overflow-hidden">
+            {/* K-AV-UX4b: แสงพื้นหลังมาจาก body ของ UX4 แล้ว */}
 
             {/* Prize Pool */}
             <div className="flex flex-col items-center justify-center mb-10 mt-16">
-                <div className="relative border border-yellow-500/40 bg-black/70 px-8 py-5 rounded-sm text-center min-w-[320px] md:min-w-[400px] shadow-[0_0_25px_rgba(234,179,8,0.15)] ring-1 ring-yellow-500/20">
-                    <div className="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 border-yellow-500" />
-                    <div className="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 border-yellow-500" />
-                    <div className="absolute -bottom-1 -left-1 w-3 h-3 border-b-2 border-l-2 border-yellow-500" />
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 border-yellow-500" />
-                    <p className="text-xs uppercase tracking-[0.25em] text-yellow-500/70 font-semibold mb-2">DAILY PRIZE POOL</p>
+                <div className="hud-panel hud-panel-gold ci-corners hud-hero relative px-8 py-5 rounded-xl text-center w-full max-w-100">
+                    <p className="text-xs uppercase tracking-[0.25em] text-gold font-semibold mb-2">DAILY PRIZE POOL</p>
                     <div className="flex items-center justify-center gap-2">
-                        <span className="text-3xl font-black text-yellow-400">THB</span>
-                        <h2 className="text-3xl md:text-4xl font-black text-yellow-400 tracking-wider">
+                        <span className="text-3xl font-black text-gold">THB</span>
+                        <h2 className="text-3xl md:text-4xl font-black text-gold tracking-wider">
                             {prizePool.toLocaleString()}
                         </h2>
-                        <span className="text-lg font-medium text-yellow-500/80 self-end mb-1">THB</span>
+                        <span className="text-lg font-medium text-gold self-end mb-1">THB</span>
                     </div>
-                    <p className="text-xs text-gray-500 tracking-widest mt-2">75% COMMUNITY RETURN &middot; AUTO SEEDED</p>
+                    <p className="text-xs text-ink-muted tracking-widest mt-2">75% COMMUNITY RETURN &middot; AUTO SEEDED</p>
                 </div>
             </div>
 
@@ -146,8 +140,8 @@ export default function LeaderboardPage() {
                         key={pos}
                         onClick={() => setActiveTab(pos)}
                         className={`px-4 py-2 text-xs md:text-sm font-bold border uppercase tracking-wider transition-all duration-300 ${activeTab === pos
-                            ? 'border-[#00D4FF] text-[#00D4FF] bg-[#00D4FF]/10 shadow-[0_0_15px_rgba(0,212,255,0.25)] ring-1 ring-[#00D4FF]/30'
-                            : 'border-gray-800 text-gray-400 hover:border-gray-700 hover:text-white'
+                            ? 'border-cyan text-cyan bg-cyan/10 shadow-glow-cyan'
+                            : 'border-line text-ink-muted hover:border-cyan/40 hover:text-ink'
                             }`}
                         style={{ clipPath: 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)' }}
                     >
@@ -157,11 +151,11 @@ export default function LeaderboardPage() {
             </div>
 
             {/* Leaderboard Table */}
-            <div className="max-w-6xl mx-auto border border-cyan-500/20 bg-black/60 rounded-sm p-1 shadow-[0_0_30px_rgba(6,182,212,0.05)]">
+            <div className="max-w-6xl mx-auto hud-panel ci-corners rounded-xl p-1">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[700px]">
                         <thead>
-                            <tr className="border-b border-cyan-500/20 text-cyan-400/80 text-xs uppercase tracking-[0.2em] font-semibold bg-cyan-950/20">
+                            <tr className="border-b border-cyan/20 text-cyan/80 text-xs uppercase tracking-[0.2em] font-semibold bg-cyan/10">
                                 <th className="py-4 px-6 text-center w-[80px]">Rank</th>
                                 <th className="py-4 px-6">Player</th>
                                 <th className="py-4 px-6 text-center w-[120px]">Elo</th>
@@ -170,16 +164,16 @@ export default function LeaderboardPage() {
                                 <th className="py-4 px-6 text-center w-[100px]">Karma</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-900/50">
+                        <tbody className="divide-y divide-line">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={6} className="py-16 text-center text-gray-500 animate-pulse tracking-widest text-sm">
+                                    <td colSpan={6} className="py-16 text-center text-ink-muted animate-pulse tracking-widest text-sm">
                                         SCANNING SECURE NETWORKS...
                                     </td>
                                 </tr>
                             ) : players.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="py-16 text-center text-gray-500 tracking-widest text-sm">
+                                    <td colSpan={6} className="py-16 text-center text-ink-muted tracking-widest text-sm">
                                         NO PLAYERS REGISTERED YET
                                     </td>
                                 </tr>
@@ -190,13 +184,13 @@ export default function LeaderboardPage() {
                                     return (
                                         <tr
                                             key={player.id}
-                                            className="group hover:bg-cyan-500/5 transition-all duration-200 border-b border-gray-900/30"
+                                            className="group hover:bg-cyan/5 transition-all duration-200 border-b border-line"
                                         >
                                             {/* Rank */}
                                             <td className="py-4 px-6 text-center">
-                                                <span className={`text-sm font-bold ${index === 0 ? 'text-yellow-400 font-extrabold text-base drop-shadow-[0_0_8px_rgba(234,179,8,0.4)]' :
-                                                    index === 1 ? 'text-slate-300' :
-                                                        index === 2 ? 'text-amber-600' : 'text-gray-400'
+                                                <span className={`text-sm font-bold ${index === 0 ? 'text-gold font-extrabold text-base drop-shadow-glow-gold' :
+                                                    index === 1 ? 'text-ink' :
+                                                        index === 2 ? 'text-gold-deep' : 'text-ink-muted'
                                                     }`}>
                                                     #{index + 1}
                                                 </span>
@@ -205,22 +199,22 @@ export default function LeaderboardPage() {
                                             {/* Player */}
                                             <td className="py-4 px-6">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="relative w-8 h-8 border border-cyan-500/30 bg-cyan-950/40 rounded-sm overflow-hidden flex items-center justify-center flex-shrink-0">
+                                                    <div className="relative w-8 h-8 border border-cyan/30 bg-cyan/10 rounded-sm overflow-hidden flex items-center justify-center flex-shrink-0">
                                                         {player.avatar_url ? (
                                                             <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
                                                         ) : (
-                                                            <span className="text-xs text-cyan-400 font-bold uppercase">
+                                                            <span className="text-xs text-cyan font-bold uppercase">
                                                                 {player.display_name?.slice(0, 2) || 'AV'}
                                                             </span>
                                                         )}
-                                                        <div className="absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-black shadow-[0_0_4px_#10b981]" />
+                                                        <div className="absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-black" />
                                                     </div>
                                                     <div>
-                                                        <a href={`/profile/${player.id}`} className="text-sm font-bold tracking-wide text-gray-200 group-hover:text-cyan-400 transition-colors duration-150">
+                                                        <a href={`/profile/${player.id}`} className="text-sm font-bold tracking-wide text-ink group-hover:text-cyan transition-colors duration-150">
                                                             {player.display_name || 'UNKNOWN AGENT'}
                                                         </a>
                                                         {player.preferred_position && (
-                                                            <span className="ml-2 px-1.5 py-0.5 text-xs border border-cyan-500/40 text-cyan-400 bg-cyan-950/30 uppercase tracking-widest rounded-sm">
+                                                            <span className="ml-2 px-1.5 py-0.5 text-xs border border-cyan/40 text-cyan bg-cyan/10 uppercase tracking-widest rounded-sm">
                                                                 {player.preferred_position}
                                                             </span>
                                                         )}
@@ -230,32 +224,32 @@ export default function LeaderboardPage() {
 
                                             {/* Elo */}
                                             <td className="py-4 px-6 text-center">
-                                                <span className="text-sm font-bold font-mono text-[#00D4FF] drop-shadow-[0_0_5px_rgba(0,212,255,0.15)]">
+                                                <span className="text-sm font-bold font-mono text-cyan drop-shadow-glow-cyan">
                                                     {player.current_elo || 1500}
                                                 </span>
                                             </td>
 
                                             {/* Win Rate */}
-                                            <td className="py-4 px-6 text-center text-sm font-bold text-gray-300 font-mono">
+                                            <td className="py-4 px-6 text-center text-sm font-bold text-ink font-mono">
                                                 {displayWinRate}
                                             </td>
 
                                             {/* Recent Form */}
                                             <td className="py-4 px-6 text-center">
                                                 {displayForm.length > 0 ? renderHexForm(displayForm) : (
-                                                    <span className="text-gray-600 text-xs">No data</span>
+                                                    <span className="text-ink-muted/60 text-xs">No data</span>
                                                 )}
                                             </td>
 
                                             {/* Karma */}
                                             <td className="py-4 px-6 text-center">
                                                 {player.karma_score === undefined ? (
-                                                    <span className="text-gray-600 text-xs">—</span>
+                                                    <span className="text-ink-muted/60 text-xs">—</span>
                                                 ) : (
                                                 <span className={`text-xs font-extrabold px-2 py-1 rounded-sm border ${player.karma_score >= 80
                                                     ? 'border-emerald-500/40 text-emerald-400 bg-emerald-950/20'
                                                     : player.karma_score >= 50
-                                                        ? 'border-yellow-500/40 text-yellow-400 bg-yellow-950/20'
+                                                        ? 'border-gold/40 text-gold bg-gold/10'
                                                         : 'border-red-500/40 text-red-400 bg-red-950/20 animate-pulse'
                                                     }`}>
                                                     {player.karma_score}

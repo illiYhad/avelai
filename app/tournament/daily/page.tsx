@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 'use client';
 'use client';
 
@@ -166,7 +165,7 @@ export default function DailyArenaPage() {
     };
 
     return (
-        <div className="min-h-screen text-slate-100 pt-6 md:pt-8 pb-14 px-4 md:px-10 font-sans">
+        <div className="min-h-screen text-ink pt-6 md:pt-8 pb-14 px-4 md:px-10 font-sans">
             <div className="max-w-7xl mx-auto space-y-8">
 
                 {/* Header Banner */}
@@ -183,73 +182,34 @@ export default function DailyArenaPage() {
                                 <span className="px-2.5 py-0.5 text-xs font-mono font-semibold rounded bg-cyan/10 text-cyan border border-cyan/30">
                                     TIER 1 DAILY CIRCUIT
                                 </span>
-                                <span className="text-xs font-mono text-slate-400">
+                                <span className="text-xs font-mono text-ink-muted">
                                     RESET AT 00:00 UTC
                                 </span>
                             </div>
-                            <h1 className="hud-title text-3xl md:text-4xl text-white mt-2">
+                            <h1 className="hud-title text-3xl md:text-4xl text-ink mt-2">
                                 DAILY ARENA
                             </h1>
-                            <p className="text-sm text-slate-400 max-w-xl mt-1 font-mono">
+                            <p className="text-sm text-ink-muted max-w-xl mt-1 font-mono">
                                 5v5 Snake Draft Matchmaking. Earn Kill Points, secure your rank, and claim daily rewards.
                             </p>
                         </div>
 
-                        {/* ฝั่งขวา: Pilot Showcase + Stats Overview */}
+                        {/* ฝั่งขวา: Stats Overview */}
                         <div className="flex flex-wrap items-center justify-start xl:justify-end gap-5 w-full xl:w-auto">
 
-                            {/* Pilot Profile Info */}
-                            <div className="text-right hidden sm:block font-mono">
-                                <div className="text-sm font-bold text-slate-200 tracking-wider flex items-center justify-end gap-2">
-                                    <span>EVE // OPERATOR</span>
-                                    <span className="w-2 h-2 rounded-full bg-cyan animate-pulse" />
-                                </div>
-                                <div className="text-xs text-gold font-semibold mt-0.5">
-                                    GENESIS PILOT SYNC: 100%
-                                </div>
-
-                                <div className="flex items-center justify-end gap-1.5 mt-2">
-                                    <span className="px-2 py-0.5 text-xs rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold">
-                                        KP BOOST
-                                    </span>
-                                    <span className="px-2 py-0.5 text-xs rounded bg-cyan/10 border border-cyan/30 text-cyan font-bold">
-                                        TIER 1
-                                    </span>
-                                    <span className="px-2 py-0.5 text-xs rounded bg-purple-500/10 border border-purple-500/30 text-purple-400 font-bold">
-                                        SSR
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Genesis Pilot Avatar Card */}
-                            <div className="relative group cursor-pointer">
-                                <div className="w-20 h-28 rounded-2xl bg-slate-950 border-2 border-cyan/50 overflow-hidden flex items-center justify-center p-1 shadow-[0_0_20px_rgba(0,212,255,0.2)] transition-all group-hover:border-cyan group-hover:shadow-[0_0_30px_rgba(0,212,255,0.35)]">
-                                    <img
-                                        src="/images/gacha/genesis-avatar.png"
-                                        alt="Genesis Pilot"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).src = 'https://api.dicebear.com/7.x/bottts/svg?seed=AVELAiPilot';
-                                        }}
-                                        className="w-full h-full object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
-                                    />
-                                </div>
-                                <span className="absolute -bottom-2 -right-1.5 text-xs font-mono px-2 py-0.5 rounded-md bg-slate-900 border border-gold text-gold font-black tracking-wider shadow-lg">
-                                    GENESIS
-                                </span>
-                            </div>
-
+                            {/* K-AV-UX4b: เอาการ์ดนักบินสมมติ (รูป/ชื่อ/ป้าย) ออก · สถิติ 3 ช่องอ่านจากข้อมูลจริง */}
                             {/* Stats Overview 3 ช่อง */}
                             <div className="grid grid-cols-3 gap-2.5 font-mono">
                                 <div className="hud-panel ci-corners p-3.5 rounded-xl text-center min-w-19.5">
-                                    <span className="text-xs text-slate-400 block font-semibold">TICKETS</span>
+                                    <span className="text-xs text-ink-muted block font-semibold">TICKETS</span>
                                     <span className="text-xl font-black text-cyan">{dailyTickets}</span>
                                 </div>
                                 <div className="hud-panel ci-corners p-3.5 rounded-xl text-center min-w-19.5">
-                                    <span className="text-xs text-slate-400 block font-semibold">MATCHES</span>
-                                    <span className="text-xl font-black text-slate-200">{matchesPlayedToday}/5</span>
+                                    <span className="text-xs text-ink-muted block font-semibold">MATCHES</span>
+                                    <span className="text-xl font-black text-ink">{matchesPlayedToday}/5</span>
                                 </div>
                                 <div className="hud-panel ci-corners p-3.5 rounded-xl text-center min-w-19.5">
-                                    <span className="text-xs text-slate-400 block font-semibold">BEST SCORE</span>
+                                    <span className="text-xs text-ink-muted block font-semibold">BEST SCORE</span>
                                     <span className="text-xl font-black text-gold">{bestScoreToday.toFixed(2)}</span>
                                 </div>
                             </div>
@@ -265,7 +225,7 @@ export default function DailyArenaPage() {
                     {/* Left 2 Cols: Play Arena / Position Selection */}
                     <div className="lg:col-span-2 space-y-6">
                         <div className="hud-panel ci-corners rounded-2xl p-6 space-y-6">
-                            <h2 className="text-lg font-bold font-display text-slate-100 flex items-center gap-2">
+                            <h2 className="text-lg font-bold font-display text-ink flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-cyan" />
                                 ARENA DEPLOYMENT SETUP
                             </h2>
@@ -273,7 +233,7 @@ export default function DailyArenaPage() {
                             {/* Role Selectors */}
                             <div className="space-y-4">
                                 <div>
-                                    <label className="text-xs font-mono text-slate-400 font-bold block mb-2">
+                                    <label className="text-xs font-mono text-ink-muted font-bold block mb-2">
                                         1. PRIMARY POSITION (MAIN PREFERENCE)
                                     </label>
                                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono text-xs">
@@ -283,8 +243,8 @@ export default function DailyArenaPage() {
                                                 type="button"
                                                 onClick={() => setPrimaryPos(pos.id)}
                                                 className={`p-3 rounded-xl border text-left transition-all ${primaryPos === pos.id
-                                                    ? 'bg-cyan/10 border-cyan text-cyan font-bold shadow-[0_0_10px_rgba(0,212,255,0.15)]'
-                                                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                                                    ? 'bg-cyan/10 border-cyan text-cyan font-bold shadow-glow-cyan'
+                                                    : 'bg-panel border-line text-ink-muted hover:border-cyan/40'
                                                     }`}
                                             >
                                                 <div className="font-bold">{pos.label}</div>
@@ -295,7 +255,7 @@ export default function DailyArenaPage() {
                                 </div>
 
                                 <div>
-                                    <label className="text-xs font-mono text-slate-400 font-bold block mb-2">
+                                    <label className="text-xs font-mono text-ink-muted font-bold block mb-2">
                                         2. SECONDARY POSITION (ELIGIBLE FOR FILL BONUS +20 PT)
                                     </label>
                                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono text-xs">
@@ -306,10 +266,10 @@ export default function DailyArenaPage() {
                                                 disabled={pos.id === primaryPos}
                                                 onClick={() => setSecondaryPos(pos.id)}
                                                 className={`p-3 rounded-xl border text-left transition-all ${secondaryPos === pos.id
-                                                    ? 'bg-gold/10 border-gold text-gold font-bold shadow-[0_0_10px_rgba(201,168,76,0.15)]'
+                                                    ? 'bg-gold/10 border-gold text-gold font-bold shadow-glow-gold'
                                                     : pos.id === primaryPos
-                                                        ? 'bg-slate-950/40 border-slate-900 text-slate-600 cursor-not-allowed'
-                                                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                                                        ? 'bg-panel/40 border-line text-ink-muted/60 cursor-not-allowed'
+                                                        : 'bg-panel border-line text-ink-muted hover:border-cyan/40'
                                                     }`}
                                             >
                                                 <div className="font-bold">{pos.label}</div>
@@ -321,8 +281,8 @@ export default function DailyArenaPage() {
                             </div>
 
                             {/* Rules & Warnings */}
-                            <div className="bg-slate-950 border border-slate-800/80 rounded-xl p-4 text-xs font-mono text-slate-400 space-y-1.5">
-                                <p className="text-slate-300 font-bold">📋 ARENA RULES & FORMATION:</p>
+                            <div className="bg-panel border border-line rounded-xl p-4 text-xs font-mono text-ink-muted space-y-1.5">
+                                <p className="text-ink font-bold">📋 ARENA RULES & FORMATION:</p>
                                 <p>• 1 Ticket per match. Limit of 5 rolling window matches per day.</p>
                                 <p>• Snake Draft distributes players based on Tier Profile (Form Level 1-20).</p>
                                 <p>• Rank #1 champions are locked from Daily Arena and trigger Auto Buy-back.</p>
@@ -339,21 +299,21 @@ export default function DailyArenaPage() {
                             {isDailyLocked ? (
                                 <button
                                     disabled
-                                    className="w-full py-4 bg-slate-950 border border-slate-800 text-slate-500 font-mono font-bold text-sm rounded-xl cursor-not-allowed"
+                                    className="w-full py-4 bg-panel border border-line text-ink-muted font-mono font-bold text-sm rounded-xl cursor-not-allowed"
                                 >
                                     🔒 QUALIFIED (LOCKED FOR TODAY)
                                 </button>
                             ) : matchesPlayedToday >= 5 ? (
                                 <button
                                     disabled
-                                    className="w-full py-4 bg-slate-950 border border-slate-800 text-slate-500 font-mono font-bold text-sm rounded-xl cursor-not-allowed"
+                                    className="w-full py-4 bg-panel border border-line text-ink-muted font-mono font-bold text-sm rounded-xl cursor-not-allowed"
                                 >
                                     DAILY MATCH LIMIT REACHED (5/5)
                                 </button>
                             ) : dailyTickets <= 0 ? (
                                 <button
                                     disabled
-                                    className="w-full py-4 bg-slate-950 border border-slate-800 text-slate-500 font-mono font-bold text-sm rounded-xl cursor-not-allowed"
+                                    className="w-full py-4 bg-panel border border-line text-ink-muted font-mono font-bold text-sm rounded-xl cursor-not-allowed"
                                 >
                                     NO TICKETS REMAINING
                                 </button>
@@ -362,7 +322,7 @@ export default function DailyArenaPage() {
                                     type="button"
                                     onClick={handleEnterArena}
                                     disabled={isEntering}
-                                    className="w-full py-4 bg-linear-to-r from-cyan to-cyan-600 hover:from-cyan-400 hover:to-cyan text-slate-950 font-black text-sm rounded-xl tracking-wider transition-all shadow-[0_0_20px_rgba(0,212,255,0.25)] font-mono disabled:opacity-50 cursor-pointer"
+                                    className="w-full py-4 bg-linear-to-r from-cyan to-cyan-deep hover:from-cyan hover:to-cyan text-void font-black text-sm rounded-xl tracking-wider transition-all shadow-glow-cyan font-mono disabled:opacity-50 cursor-pointer"
                                 >
                                     {isEntering ? 'SEARCHING & BALANCING DRAFT...' : 'ENTER ARENA (1 TICKET) →'}
                                 </button>
@@ -372,8 +332,8 @@ export default function DailyArenaPage() {
 
                     {/* Right 1 Col: Live Daily Leaderboard */}
                     <div className="hud-panel ci-corners rounded-2xl p-6 space-y-4">
-                        <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-                            <h2 className="text-base font-bold font-display text-slate-200">
+                        <div className="flex justify-between items-center pb-2 border-b border-line">
+                            <h2 className="text-base font-bold font-display text-ink">
                                 DAILY LEADERBOARD
                             </h2>
                             <span className="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 animate-pulse">
@@ -382,11 +342,11 @@ export default function DailyArenaPage() {
                         </div>
 
                         {isLoadingData ? (
-                            <div className="py-12 text-center text-xs font-mono text-slate-500">
+                            <div className="py-12 text-center text-xs font-mono text-ink-muted">
                                 LOADING LEADERBOARD...
                             </div>
                         ) : leaderboard.length === 0 ? (
-                            <div className="py-12 text-center text-xs font-mono text-slate-500">
+                            <div className="py-12 text-center text-xs font-mono text-ink-muted">
                                 NO MATCHES RECORDED TODAY
                             </div>
                         ) : (
@@ -396,11 +356,11 @@ export default function DailyArenaPage() {
                                         key={player.user_id}
                                         className={`p-3 rounded-xl border flex items-center justify-between ${player.rank === 1
                                             ? 'bg-gold/10 border-gold/40 text-gold'
-                                            : 'bg-slate-950 border-slate-800/80 text-slate-300'
+                                            : 'bg-panel border-line text-ink'
                                             }`}
                                     >
                                         <div className="flex items-center gap-2.5">
-                                            <span className={`w-5 font-bold ${player.rank === 1 ? 'text-gold' : 'text-slate-500'}`}>
+                                            <span className={`w-5 font-bold ${player.rank === 1 ? 'text-gold' : 'text-ink-muted'}`}>
                                                 #{player.rank}
                                             </span>
                                             <span className="font-semibold truncate max-w-27.5">
@@ -408,8 +368,8 @@ export default function DailyArenaPage() {
                                             </span>
                                         </div>
                                         <div className="text-right">
-                                            <div className="font-bold text-slate-100">{player.score.toFixed(2)} pts</div>
-                                            <div className="text-xs text-slate-500">+{player.reward_points} RP</div>
+                                            <div className="font-bold text-ink">{player.score.toFixed(2)} pts</div>
+                                            <div className="text-xs text-ink-muted">+{player.reward_points} RP</div>
                                         </div>
                                     </div>
                                 ))}
