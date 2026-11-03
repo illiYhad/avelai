@@ -22,8 +22,10 @@ export async function GET() {
   const account = await getMyDotaAccount(db, data.user.id);
   if (account === "unavailable") return json({ error: "ระบบบัญชีเกมยังเปิดใช้ไม่ได้" }, 503);
   if (!account) return json({ error: "ยังไม่ได้ผูกบัญชี Dota 2 — ไปผูกที่หน้า /me" }, 404);
+  // K-AV-LINK.1: เลขที่กรอกมือ (ยังไม่ยืนยัน) ไม่ใช้ดึงสถิติแล้ว
+  if (account === "unverified") return json({ error: "บัญชี Dota 2 ยังไม่ยืนยัน — ผูก Steam ที่หน้า /me" }, 403);
 
   const r = await getPlayerCard(account.externalId);
   if (!r.ok) return json({ error: r.message }, r.status);
-  return json({ player: r.data, verified: account.verified });
+  return json({ player: r.data, verified: true }); // คง key เดิมให้ client เดิมอ่านได้
 }

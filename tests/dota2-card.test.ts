@@ -198,16 +198,26 @@ describe("GET /api/games/dota2/me", () => {
     expect(calls).toHaveLength(0);
   });
 
-  it("ดึงเฉพาะ ID ที่ผู้ใช้ผูกเอง · response มีแค่ฟิลด์ที่ map แล้ว", async () => {
+  // K-AV-LINK.1: เลขที่กรอกมือ (UNVERIFIED) ไม่ใช้ดึงสถิติ → 403 · ไม่ยิง OpenDota
+  it("บัญชียังไม่ยืนยัน → 403 · ไม่ยิง OpenDota", async () => {
     h.user = { id: "u1" };
     h.account = { external_id: "11111111", status: "UNVERIFIED" };
+    stubFetch(playerRoutes("11111111"));
+    const res = await getMe();
+    expect(res.status).toBe(403);
+    expect(calls).toHaveLength(0);
+  });
+
+  it("ดึงเฉพาะ ID ที่ผู้ใช้ผูกเอง (ยืนยันแล้ว) · response มีแค่ฟิลด์ที่ map แล้ว", async () => {
+    h.user = { id: "u1" };
+    h.account = { external_id: "11111111", status: "VERIFIED" };
     stubFetch(playerRoutes("11111111"));
     const res = await getMe();
     expect(res.status).toBe(200);
     expect(calls.every((u) => u.includes("/players/11111111"))).toBe(true);
     const body = await res.json();
     expect(Object.keys(body).sort()).toEqual(["player", "verified"]);
-    expect(body.verified).toBe(false);
+    expect(body.verified).toBe(true);
     expect(Object.keys(body.player).sort()).toEqual(["accountId", "avatar", "heroes", "lose", "name", "rankTier", "recent", "win", "winRate"]);
     expect(JSON.stringify(body)).not.toMatch(/SECRET|steamid|mmr_estimate/);
     expect(res.headers.get("Cache-Control")).toContain("no-store");
@@ -215,7 +225,7 @@ describe("GET /api/games/dota2/me", () => {
 
   it(`เพดาน ${DOTA_USER_LIMIT} ครั้ง/นาที ต่อผู้ใช้ → 429`, async () => {
     h.user = { id: "u1" };
-    h.account = { external_id: "11111111", status: "UNVERIFIED" };
+    h.account = { external_id: "11111111", status: "VERIFIED" };
     stubFetch(playerRoutes("11111111"));
     for (let i = 0; i < DOTA_USER_LIMIT; i++) expect((await getMe()).status).toBe(200);
     expect((await getMe()).status).toBe(429);

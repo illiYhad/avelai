@@ -30,6 +30,18 @@ export default async function MyDotaPage() {
   const { db, user } = await requireUser("/me/dota");
   const account = await getMyDotaAccount(db, user.id);
   if (account === "unavailable") return <Shell><Note>ระบบบัญชีเกมยังเปิดใช้ไม่ได้</Note></Shell>;
+  // K-AV-LINK.1: แถวเก่าที่กรอกมือยังไม่ยืนยัน → ไม่ดึงสถิติจากเลขนั้น · ให้ผูก Steam (link_steam_verified เขียนทับแถวเดิมได้)
+  if (account === "unverified") {
+    return (
+      <Shell>
+        <Note>
+          บัญชี Dota 2 ยังไม่ยืนยัน —{" "}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a href="/link/steam/start" className="text-cyan underline">ผูกบัญชี Steam</a>
+        </Note>
+      </Shell>
+    );
+  }
   if (!account) {
     return (
       <Shell>
@@ -54,7 +66,7 @@ export default async function MyDotaPage() {
           <p className="truncate text-lg text-white">{p.name ?? "Anonymous"}</p>
           <p className="text-sm text-white/60">
             Dota ID <span className="font-numeric">{p.accountId}</span> ·{" "}
-            <span className={account.verified ? "text-cyan" : "text-white/70"}>{account.verified ? "ยืนยันแล้ว" : "ยังไม่ยืนยัน"}</span>
+            <span className="text-cyan">ยืนยันแล้ว</span>
           </p>
         </div>
       </section>
