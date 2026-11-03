@@ -5,6 +5,8 @@ import { dash, heroLookup } from "@/lib/dota/display";
 import { getMatchDetail, type DotaMatchDetailPlayer } from "@/lib/dota/match";
 import { isValidMatchId } from "@/lib/dota/opendota";
 import { getItemImageUrl } from "@/lib/dotaAssets";
+import { guardPublicMatchView } from "@/lib/dota/match/guard";
+import { blockedNotice } from "./BlockedNotice";
 
 // K-AV-D3 · แท็บ Overview — ตารางผู้เล่นและ pick/ban จากข้อมูลจริงของ OpenDota เท่านั้น
 // ไม่มีคะแนน KP · ไม่มีตำแหน่งที่เดาจากช่องผู้เล่น · ไม่มีข้อมูลตัวอย่าง
@@ -13,6 +15,9 @@ export const dynamic = "force-dynamic";
 export default async function OverviewPage({ params }: { params: Promise<{ game: string; matchId: string }> }) {
   const { game, matchId } = await params;
   if (game !== "dota2" || !isValidMatchId(matchId)) notFound();
+
+  // K-AV-D3.1: ผ่านยามก่อนอ่านข้อมูลเสมอ — การนำทางระหว่างแท็บ render เฉพาะ page จึงข้าม layout ไม่ได้
+  if (!(await guardPublicMatchView())) return blockedNotice();
 
   const [r, hero] = await Promise.all([getMatchDetail(matchId), heroLookup()]);
   if (!r.ok) return null; // layout แสดงข้อความผิดพลาดให้แล้ว ไม่แสดงซ้ำ

@@ -28,13 +28,16 @@ export function findRecentParse(
   return hit;
 }
 
+/** K-AV-D3.1: บันทึกกันซ้ำเฉพาะคำขอที่ OpenDota รับแล้ว (มี jobId) · ไม่มี jobId = ไม่บันทึก คืน false */
 export function rememberParse(
   log: Map<string, { at: number; jobId: string | null }>,
   matchId: string,
   jobId: string | null,
   nowMs: number,
-) {
+): boolean {
+  if (!jobId) return false;
   log.set(matchId, { at: nowMs, jobId });
+  return true;
 }
 
 /** jobId จากคำตอบของ POST /request — โครงที่ OpenDota ใช้คือ { job: { jobId: number } } */

@@ -48,7 +48,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ matchI
 
   const r = await submitParse(matchId);
   if (!r.ok) return json({ error: r.message }, r.status);
-  rememberParse(parseRequestLog, matchId, r.data.jobId, now);
+  // K-AV-D3.1: จำกันซ้ำเฉพาะเมื่อได้ jobId — ถูกปฏิเสธแล้วต้องกดใหม่ได้ (ยังอยู่ใต้เพดาน 3 ครั้ง/นาที)
   if (!r.data.jobId) return json({ status: "rejected", message: parseRejectMessage(r.data.raw) }, 502);
+  rememberParse(parseRequestLog, matchId, r.data.jobId, now);
   return json({ status: "pending", jobId: r.data.jobId, message: "ส่งคำขอวิเคราะห์แล้ว กำลังรอผล" }, 202);
 }

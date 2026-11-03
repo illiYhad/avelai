@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
@@ -6,7 +5,8 @@ import Surface from "@/components/ui/Surface";
 import { dash, duration, gameModeLabel, lobbyLabel, thaiDateTime } from "@/lib/dota/display";
 import { getMatchDetail, regionLabel } from "@/lib/dota/match";
 import { isValidMatchId } from "@/lib/dota/opendota";
-import { allowPublicMatchView } from "@/lib/dota/ip-rate-limit";
+import { guardPublicMatchView } from "@/lib/dota/match/guard";
+import { blockedNotice } from "./BlockedNotice";
 import { MATCH_TABS, matchTabPath } from "./tabs";
 import MatchTabNav from "./MatchTabNav";
 import ParseRequestPanel from "./ParseRequestPanel";
@@ -27,17 +27,9 @@ export default async function MatchStatsLayout({
   if (game !== "dota2") notFound();
   if (!isValidMatchId(matchId)) notFound();
 
-  // เพดานต่อ IP 30 ครั้ง/นาที · เก็บเฉพาะค่าแฮชในหน่วยความจำ ไม่เก็บ IP และไม่ log
-  const h = await headers();
-  if (!allowPublicMatchView(h)) {
-    return (
-      <main className="mx-auto w-full max-w-6xl px-4 py-10">
-        <Surface glow="cyan">
-          <p className="text-base text-ink">เปิดหน้านี้บ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่</p>
-        </Surface>
-      </main>
-    );
-  }
+  // K-AV-D3.1: เพดานต่อ IP 30 ครั้ง/นาที ผ่านยามร่วม (นับครั้งเดียวต่อคำขอ ร่วมกับ page)
+  // ถูกล็อก = ไม่เรียก getMatchDetail และไม่มีข้อมูลแมตช์ออกไป
+  if (!(await guardPublicMatchView())) return blockedNotice(true);
 
   const r = await getMatchDetail(matchId);
 
@@ -77,7 +69,7 @@ export default async function MatchStatsLayout({
         </dl>
       </Surface>
 
-      {m.isParsed ? null : <ParseRequestPanel matchId={m.matchId} />}
+      <ParseRequestPanel matchId={m.matchId} isParsed={m.isParsed} />
 
       <MatchTabNav matchId={m.matchId} tabs={MATCH_TABS.map((t) => ({ ...t, href: matchTabPath(m.matchId, t.slug) }))} />
 
