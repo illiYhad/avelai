@@ -130,7 +130,7 @@ export default async function MyDotaPage() {
                 {p.recent.map((m) => (
                   <tr key={m.matchId} className="border-t border-white/10">
                     <td className="py-1.5">
-                      <Link href={`/me/dota/match/${m.matchId}`} className="underline">{hero(m.heroId).label}</Link>
+                      <Link href={`/dota2/stats/matches/${m.matchId}`} className="underline">{hero(m.heroId).label}</Link>
                     </td>
                     <td className={m.won === null ? "" : m.won ? "text-cyan" : "text-red-400"}>{m.won === null ? "–" : m.won ? "ชนะ" : "แพ้"}</td>
                     <td className="font-numeric">{dash(m.kills)}/{dash(m.deaths)}/{dash(m.assists)}</td>

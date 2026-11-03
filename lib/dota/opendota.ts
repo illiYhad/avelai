@@ -10,7 +10,7 @@ export const OPENDOTA_TIMEOUT_MS = 8000;
 export type DotaError = { ok: false; status: 404 | 429 | 502 | 504; message: string };
 export type DotaResult<T> = { ok: true; data: T } | DotaError;
 
-const ERR = {
+export const ERR = {
   notFound: { ok: false, status: 404, message: "ไม่พบข้อมูล หรือผู้เล่นไม่ได้เปิดข้อมูลสาธารณะใน Dota 2" },
   rateLimited: { ok: false, status: 429, message: "OpenDota ถึงเพดานการเรียกแล้ว ลองใหม่ภายหลัง" },
   timeout: { ok: false, status: 504, message: "OpenDota ตอบช้าเกินไป ลองใหม่ภายหลัง" },
@@ -18,7 +18,9 @@ const ERR = {
   badJson: { ok: false, status: 502, message: "ข้อมูลจาก OpenDota อ่านไม่ได้ ลองใหม่ภายหลัง" },
 } as const satisfies Record<string, DotaError>;
 
-async function getJson(path: string): Promise<DotaResult<unknown>> {
+/** เรียก OpenDota หนึ่ง path · K-AV-D3: เปิดให้ lib/dota/match ใช้ซ้ำ จะได้ไม่เขียน error handling ใหม่
+ *  revalidateSec = อายุแคชข้อมูลของ Next (ค่าเดิม 600 วินาที) */
+export async function fetchOpenDota(path: string, revalidateSec = 600): Promise<DotaResult<unknown>> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), OPENDOTA_TIMEOUT_MS);
   const key = process.env.OPENDOTA_API_KEY;
@@ -26,7 +28,35 @@ async function getJson(path: string): Promise<DotaResult<unknown>> {
     const res = await fetch(`${BASE}${path}`, {
       signal: ctrl.signal,
       headers: { Accept: "application/json", ...(key ? { Authorization: `Bearer ${key}` } : {}) },
-      next: { revalidate: 600 },
+      next: { revalidate: revalidateSec },
+    } as RequestInit);
+    if (res.status === 404) return ERR.notFound;
+    if (res.status === 429) return ERR.rateLimited;
+    if (!res.ok) return ERR.upstream;
+    try {
+      return { ok: true, data: await res.json() };
+    } catch {
+      return ERR.badJson;
+    }
+  } catch (e) {
+    return (e as { name?: string })?.name === "AbortError" ? ERR.timeout : ERR.upstream;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** K-AV-D3: POST ไป OpenDota (ใช้กับ /request เท่านั้น) — ใช้ชุด error เดียวกับ GET ไม่เขียนใหม่
+ *  ไม่แคช เพราะเป็นการสั่งงาน ไม่ใช่การอ่าน */
+export async function postOpenDota(path: string): Promise<DotaResult<unknown>> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), OPENDOTA_TIMEOUT_MS);
+  const key = process.env.OPENDOTA_API_KEY;
+  try {
+    const res = await fetch(`${BASE}${path}`, {
+      method: "POST",
+      signal: ctrl.signal,
+      headers: { Accept: "application/json", ...(key ? { Authorization: `Bearer ${key}` } : {}) },
+      cache: "no-store",
     } as RequestInit);
     if (res.status === 404) return ERR.notFound;
     if (res.status === 429) return ERR.rateLimited;
@@ -251,10 +281,10 @@ const isAccountId = (v: string) => /^\d{1,10}$/.test(v);
 export async function getPlayerCard(accountId: string): Promise<DotaResult<DotaPlayerCard>> {
   if (!isAccountId(accountId)) return ERR.notFound;
   const [profile, wl, heroes, recent] = await Promise.all([
-    getJson(`/players/${accountId}`),
-    getJson(`/players/${accountId}/wl`),
-    getJson(`/players/${accountId}/heroes`),
-    getJson(`/players/${accountId}/recentMatches`),
+    fetchOpenDota(`/players/${accountId}`),
+    fetchOpenDota(`/players/${accountId}/wl`),
+    fetchOpenDota(`/players/${accountId}/heroes`),
+    fetchOpenDota(`/players/${accountId}/recentMatches`),
   ]);
   for (const r of [profile, wl, heroes, recent]) if (!r.ok) return r;
   // OpenDota ตอบ 200 แต่ไม่มี profile = บัญชีไม่มี/ไม่เปิดข้อมูล
@@ -265,9 +295,15 @@ export async function getPlayerCard(accountId: string): Promise<DotaResult<DotaP
   };
 }
 
+/** K-AV-D3: ดึง JSON ดิบของแมตช์ · path ของ API ภายนอกรวมไว้ในไฟล์นี้ไฟล์เดียว
+ *  (lib/dota/match/* จึงไม่ต้องเขียน path ตรง ๆ ซึ่งผิดกฎ guard เส้นทางเก่า) */
+export async function fetchMatchRaw(matchId: string, revalidateSec: number): Promise<DotaResult<unknown>> {
+  return fetchOpenDota(`/matches/${matchId}`, revalidateSec);
+}
+
 export async function getMatchSummary(matchId: string): Promise<DotaResult<DotaMatchSummary>> {
   if (!isValidMatchId(matchId)) return ERR.notFound;
-  const r = await getJson(`/matches/${matchId}`);
+  const r = await fetchOpenDota(`/matches/${matchId}`);
   if (!r.ok) return r;
   if (!Array.isArray(obj(r.data).players)) return ERR.notFound;
   return { ok: true, data: mapMatch(matchId, r.data) };
