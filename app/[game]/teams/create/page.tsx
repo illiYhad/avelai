@@ -27,8 +27,7 @@ export default function CreateTeamPage() {
     });
   }
 
-  const inputCls =
-    "w-full rounded border border-white/15 bg-surface-2 px-3 py-2.5 text-sm text-white placeholder:text-neutral-500 focus:border-cyan focus:outline-none";
+  const inputCls = "hud-input"; // K-AV-POLISH.2: ช่องกรอกกลาง
 
   return (
     <main className="min-h-screen bg-void px-4 pt-20 pb-10 text-white">

@@ -61,8 +61,7 @@ export function ScheduleClient({ teamId, myUserId, isLeader, sessions, stats }: 
     });
   }
 
-  const inputCls =
-    "rounded border border-white/15 bg-void px-2 py-1.5 text-xs text-white focus:border-cyan focus:outline-none";
+  const inputCls = "hud-input"; // K-AV-POLISH.2: ช่องกรอกกลาง
 
   return (
     <div className="flex flex-col gap-8">
