@@ -46,13 +46,13 @@ export function ScoutClient({ teamId, isLeader, privateBeta, prospects }: Props)
   }
 
   const inputCls =
-    "rounded border border-white/15 bg-[#0A0A0F] px-2 py-1.5 text-xs text-white focus:border-[#00D4FF] focus:outline-none";
+    "rounded border border-white/15 bg-void px-2 py-1.5 text-xs text-white focus:border-cyan focus:outline-none";
 
   return (
     <div className="flex flex-col gap-6">
       {isLeader && (
-        <form onSubmit={onAdd} className="rounded-lg border border-white/10 bg-[#12121A] p-4 flex flex-col gap-2">
-          <p className="font-mono text-xs font-bold tracking-wider text-[#00D4FF] uppercase">เพิ่มผู้เล่นที่จับตา</p>
+        <form onSubmit={onAdd} className="rounded-lg border border-white/10 bg-surface-2 p-4 flex flex-col gap-2">
+          <p className="font-mono text-xs font-bold tracking-wider text-cyan uppercase">เพิ่มผู้เล่นที่จับตา</p>
           <div className="flex flex-wrap gap-2">
             <input name="nickname" required placeholder="ชื่อในเกม *" className={`${inputCls} flex-1 min-w-32`} />
             <select name="position" className={inputCls} defaultValue="">
@@ -73,7 +73,7 @@ export function ScoutClient({ teamId, isLeader, privateBeta, prospects }: Props)
           <input name="liquipediaUrl" placeholder="ลิงก์ Liquipedia (https://liquipedia.net/...)" className={inputCls} />
           <div className="flex flex-wrap items-center gap-2">
             <input name="notes" placeholder="โน้ต" className={`${inputCls} flex-1 min-w-40`} />
-            <button type="submit" disabled={isPending} className="rounded bg-[#00D4FF] px-4 py-1.5 text-xs font-bold text-black disabled:opacity-50">
+            <button type="submit" disabled={isPending} className="rounded bg-cyan px-4 py-1.5 text-xs font-bold text-black disabled:opacity-50">
               {isPending ? "..." : "+ เพิ่ม"}
             </button>
           </div>
@@ -82,26 +82,26 @@ export function ScoutClient({ teamId, isLeader, privateBeta, prospects }: Props)
       )}
 
       {!privateBeta && (
-        <p className="rounded border border-[#C9A84C]/40 bg-[#C9A84C]/5 px-3 py-2 text-xs text-[#C9A84C]">
+        <p className="rounded border border-gold/40 bg-gold/5 px-3 py-2 text-xs text-gold">
           ปุ่ม &quot;ดึงข้อมูลจาก Liquipedia&quot; เปิดเฉพาะทีมที่อยู่ใน Private Beta
         </p>
       )}
 
       <ul className="flex flex-col gap-3">
         {prospects.map((p) => (
-          <li key={p.id} className="rounded-lg border border-white/10 bg-[#12121A] p-4">
+          <li key={p.id} className="rounded-lg border border-white/10 bg-surface-2 p-4">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="text-sm font-bold">
                   {p.nickname}
-                  {p.position && <span className="ml-2 rounded bg-[#00D4FF]/10 px-1.5 py-0.5 text-xs font-mono text-[#00D4FF]">{p.position}</span>}
+                  {p.position && <span className="ml-2 rounded bg-cyan/10 px-1.5 py-0.5 text-xs font-mono text-cyan">{p.position}</span>}
                 </p>
                 <p className="text-xs text-neutral-400 mt-0.5">
-                  {p.current_team ? `ทีม: ${p.current_team}` : "ไม่มีทีม/ไม่ทราบ"} · <span className="text-[#C9A84C]">{"★".repeat(p.stars)}</span>
+                  {p.current_team ? `ทีม: ${p.current_team}` : "ไม่มีทีม/ไม่ทราบ"} · <span className="text-gold">{"★".repeat(p.stars)}</span>
                 </p>
                 {p.notes && <p className="text-xs text-neutral-400 mt-1">{p.notes}</p>}
                 {p.liquipedia_url && (
-                  <a href={p.liquipedia_url} target="_blank" rel="noopener noreferrer" className="text-xs text-[#00D4FF] underline">
+                  <a href={p.liquipedia_url} target="_blank" rel="noopener noreferrer" className="text-xs text-cyan underline">
                     หน้า Liquipedia
                   </a>
                 )}
@@ -119,7 +119,7 @@ export function ScoutClient({ teamId, isLeader, privateBeta, prospects }: Props)
                           if (!("error" in res)) router.refresh();
                         })
                       }
-                      className="rounded border border-[#00D4FF]/60 px-3 py-1 text-xs font-bold text-[#00D4FF] hover:bg-[#00D4FF]/10 disabled:opacity-50"
+                      className="rounded border border-cyan/60 px-3 py-1 text-xs font-bold text-cyan hover:bg-cyan/10 disabled:opacity-50"
                     >
                       ⟳ ดึงข้อมูลจาก Liquipedia
                     </button>
@@ -140,7 +140,7 @@ export function ScoutClient({ teamId, isLeader, privateBeta, prospects }: Props)
             {rowMessage[p.id] && <p className="mt-2 text-xs text-neutral-300">{rowMessage[p.id]}</p>}
 
             {p.liquipedia_cache?.found && (
-              <div className="mt-3 rounded border border-white/10 bg-[#0A0A0F] p-3 text-xs">
+              <div className="mt-3 rounded border border-white/10 bg-void p-3 text-xs">
                 <p className="font-mono text-xs text-neutral-500 uppercase mb-1">
                   Liquipedia · ดึงเมื่อ {p.liquipedia_fetched_at ? new Date(p.liquipedia_fetched_at).toLocaleString("th-TH") : "-"}
                 </p>

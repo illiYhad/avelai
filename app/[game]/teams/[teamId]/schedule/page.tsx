@@ -21,7 +21,7 @@ export default async function TeamSchedulePage({ params }: PageProps) {
 
   if (!db) {
     return (
-      <main className="min-h-screen bg-[#0A0A0F] px-4 pt-20 text-white">
+      <main className="min-h-screen bg-void px-4 pt-20 text-white">
         <p className="text-neutral-400 text-sm">ยังไม่ต่อฐานข้อมูล — ตั้งค่า environment ก่อนใช้งานหน้านี้</p>
       </main>
     );
@@ -101,11 +101,11 @@ export default async function TeamSchedulePage({ params }: PageProps) {
     .sort((a, b) => b.percent - a.percent);
 
   return (
-    <main className="min-h-screen bg-[#0A0A0F] px-4 pt-20 pb-10 text-white">
+    <main className="min-h-screen bg-void px-4 pt-20 pb-10 text-white">
       <div className="mx-auto w-full max-w-2xl">
-        <p className="text-[#00D4FF] font-mono text-xs tracking-widest mb-2">TEAM SCHEDULE</p>
+        <p className="text-cyan font-mono text-xs tracking-widest mb-2">TEAM SCHEDULE</p>
         <h1 className="text-2xl font-bold mb-6">
-          ตารางซ้อม — {team.name} <span className="text-[#00D4FF]">[{team.tag}]</span>
+          ตารางซ้อม — {team.name} <span className="text-cyan">[{team.tag}]</span>
         </h1>
         <ScheduleClient
           teamId={teamId}

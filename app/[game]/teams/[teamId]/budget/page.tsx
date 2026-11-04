@@ -18,7 +18,7 @@ export default async function TeamBudgetPage({ params }: PageProps) {
 
   if (!db) {
     return (
-      <main className="min-h-screen bg-[#0A0A0F] px-4 pt-20 text-white">
+      <main className="min-h-screen bg-void px-4 pt-20 text-white">
         <p className="text-neutral-400 text-sm">ยังไม่ต่อฐานข้อมูล — ตั้งค่า environment ก่อนใช้งานหน้านี้</p>
       </main>
     );
@@ -50,9 +50,9 @@ export default async function TeamBudgetPage({ params }: PageProps) {
 
   if (!allowed) {
     return (
-      <main className="min-h-screen bg-[#0A0A0F] px-4 pt-20 text-white">
+      <main className="min-h-screen bg-void px-4 pt-20 text-white">
         <div className="mx-auto w-full max-w-md text-center pt-10">
-          <p className="text-[#C9A84C] font-mono text-xs tracking-widest mb-2">RESTRICTED</p>
+          <p className="text-gold font-mono text-xs tracking-widest mb-2">RESTRICTED</p>
           <p className="text-sm text-neutral-400">หน้างบทีมเข้าถึงได้เฉพาะ OWNER และ MANAGER ของทีมเท่านั้น</p>
         </div>
       </main>
@@ -99,11 +99,11 @@ export default async function TeamBudgetPage({ params }: PageProps) {
   }));
 
   return (
-    <main className="min-h-screen bg-[#0A0A0F] px-4 pt-20 pb-10 text-white">
+    <main className="min-h-screen bg-void px-4 pt-20 pb-10 text-white">
       <div className="mx-auto w-full max-w-2xl">
-        <p className="text-[#00D4FF] font-mono text-xs tracking-widest mb-2">TEAM BUDGET</p>
+        <p className="text-cyan font-mono text-xs tracking-widest mb-2">TEAM BUDGET</p>
         <h1 className="text-2xl font-bold mb-6">
-          เงินเดือน/งบทีม — {team.name} <span className="text-[#00D4FF]">[{team.tag}]</span>
+          เงินเดือน/งบทีม — {team.name} <span className="text-cyan">[{team.tag}]</span>
         </h1>
         <BudgetClient teamId={teamId} items={views} members={memberOptions} />
       </div>

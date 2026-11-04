@@ -132,7 +132,7 @@ export default async function TeamDetailPage({ params }: PageProps) {
       </nav>
 
       <section className="flex flex-col gap-3">
-        <h2 className="font-mono text-sm tracking-[0.2em] text-ink-muted">{"// ตัวจริง"} ({starters.length}/{GAMES[code].teamSize})</h2>
+        <h2 className="hud-section-title">{"// ตัวจริง"} ({starters.length}/{GAMES[code].teamSize})</h2>
         <ul className="flex flex-col gap-2">
           {starters.map((m) => <MemberCard key={m.userId} m={m} />)}
           {Array.from({ length: Math.max(slots - starters.length, 0) }, (_, i) => (
@@ -143,7 +143,7 @@ export default async function TeamDetailPage({ params }: PageProps) {
 
       {bench.length > 0 ? (
         <section className="flex flex-col gap-3">
-          <h2 className="font-mono text-sm tracking-[0.2em] text-ink-muted">{"// ตัวสำรอง / ทีมงาน"}</h2>
+          <h2 className="hud-section-title">{"// ตัวสำรอง / ทีมงาน"}</h2>
           <ul className="flex flex-col gap-2">{bench.map((m) => <MemberCard key={m.userId} m={m} />)}</ul>
         </section>
       ) : null}

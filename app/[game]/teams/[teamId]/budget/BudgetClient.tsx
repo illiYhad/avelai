@@ -63,7 +63,7 @@ export function BudgetClient({ teamId, items, members }: Props) {
   }
 
   const inputCls =
-    "rounded border border-white/15 bg-[#0A0A0F] px-2 py-1.5 text-xs text-white focus:border-[#00D4FF] focus:outline-none";
+    "rounded border border-white/15 bg-void px-2 py-1.5 text-xs text-white focus:border-cyan focus:outline-none";
 
   return (
     <div className="flex flex-col gap-6">
@@ -75,15 +75,15 @@ export function BudgetClient({ teamId, items, members }: Props) {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <div className="rounded-lg border border-white/10 bg-[#12121A] p-3">
+        <div className="rounded-lg border border-white/10 bg-surface-2 p-3">
           <p className="text-xs font-mono text-neutral-500 uppercase">เงินเดือนรวม</p>
           <p className="text-lg font-bold mt-1">{fmt(totals.salaryTotal)} ฿</p>
         </div>
-        <div className="rounded-lg border border-white/10 bg-[#12121A] p-3">
+        <div className="rounded-lg border border-white/10 bg-surface-2 p-3">
           <p className="text-xs font-mono text-neutral-500 uppercase">ค่าใช้จ่ายอื่น</p>
           <p className="text-lg font-bold mt-1">{fmt(totals.expenseTotal)} ฿</p>
         </div>
-        <div className="rounded-lg border border-white/10 bg-[#12121A] p-3">
+        <div className="rounded-lg border border-white/10 bg-surface-2 p-3">
           <p className="text-xs font-mono text-neutral-500 uppercase">รายรับ</p>
           <p className="text-lg font-bold mt-1 text-emerald-400">{fmt(totals.incomeTotal)} ฿</p>
         </div>
@@ -95,8 +95,8 @@ export function BudgetClient({ teamId, items, members }: Props) {
         </div>
       </div>
 
-      <form onSubmit={onAdd} className="rounded-lg border border-white/10 bg-[#12121A] p-4 flex flex-col gap-2">
-        <p className="font-mono text-xs font-bold tracking-wider text-[#00D4FF] uppercase">เพิ่มรายการ (เดือน {month})</p>
+      <form onSubmit={onAdd} className="rounded-lg border border-white/10 bg-surface-2 p-4 flex flex-col gap-2">
+        <p className="font-mono text-xs font-bold tracking-wider text-cyan uppercase">เพิ่มรายการ (เดือน {month})</p>
         <div className="flex flex-wrap gap-2">
           <select name="itemType" value={itemType} onChange={(e) => setItemType(e.target.value)} className={inputCls}>
             <option value="SALARY">เงินเดือน</option>
@@ -123,7 +123,7 @@ export function BudgetClient({ teamId, items, members }: Props) {
           <label className="text-xs text-neutral-400 flex items-center gap-1">
             <input type="checkbox" name="recurring" /> รายเดือน
           </label>
-          <button type="submit" disabled={isPending} className="rounded bg-[#00D4FF] px-4 py-1.5 text-xs font-bold text-black disabled:opacity-50">
+          <button type="submit" disabled={isPending} className="rounded bg-cyan px-4 py-1.5 text-xs font-bold text-black disabled:opacity-50">
             {isPending ? "..." : "+ เพิ่ม"}
           </button>
         </div>
@@ -131,12 +131,12 @@ export function BudgetClient({ teamId, items, members }: Props) {
       </form>
 
       <section>
-        <h2 className="font-mono text-sm font-bold tracking-wider text-neutral-300 uppercase mb-3">
+        <h2 className="hud-section-title mb-3">
           รายการเดือนนี้ ({monthItems.length})
         </h2>
         <ul className="flex flex-col gap-2">
           {monthItems.map((i) => (
-            <li key={i.id} className="flex items-center justify-between gap-3 rounded border border-white/10 bg-[#12121A] px-3 py-2 text-xs">
+            <li key={i.id} className="flex items-center justify-between gap-3 rounded border border-white/10 bg-surface-2 px-3 py-2 text-xs">
               <div className="min-w-0">
                 <p className="font-bold truncate">
                   {i.label}

@@ -28,12 +28,12 @@ export default function CreateTeamPage() {
   }
 
   const inputCls =
-    "w-full rounded border border-white/15 bg-[#12121A] px-3 py-2.5 text-sm text-white placeholder:text-neutral-500 focus:border-[#00D4FF] focus:outline-none";
+    "w-full rounded border border-white/15 bg-surface-2 px-3 py-2.5 text-sm text-white placeholder:text-neutral-500 focus:border-cyan focus:outline-none";
 
   return (
-    <main className="min-h-screen bg-[#0A0A0F] px-4 pt-20 pb-10 text-white">
+    <main className="min-h-screen bg-void px-4 pt-20 pb-10 text-white">
       <div className="mx-auto w-full max-w-md">
-        <p className="text-[#00D4FF] font-mono text-xs tracking-widest mb-2">TEAM MANAGEMENT</p>
+        <p className="text-cyan font-mono text-xs tracking-widest mb-2">TEAM MANAGEMENT</p>
         <h1 className="text-2xl font-bold mb-6">สร้างทีมใหม่</h1>
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
@@ -71,7 +71,7 @@ export default function CreateTeamPage() {
           <button
             type="submit"
             disabled={isPending}
-            className="mt-2 rounded bg-[#00D4FF] px-4 py-2.5 text-sm font-bold text-black hover:bg-[#3ae0ff] disabled:opacity-50"
+            className="mt-2 rounded bg-cyan px-4 py-2.5 text-sm font-bold text-black hover:bg-cyan disabled:opacity-50"
           >
             {isPending ? "กำลังสร้างทีม..." : "สร้างทีม"}
           </button>

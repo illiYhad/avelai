@@ -62,13 +62,13 @@ export function ScheduleClient({ teamId, myUserId, isLeader, sessions, stats }: 
   }
 
   const inputCls =
-    "rounded border border-white/15 bg-[#0A0A0F] px-2 py-1.5 text-xs text-white focus:border-[#00D4FF] focus:outline-none";
+    "rounded border border-white/15 bg-void px-2 py-1.5 text-xs text-white focus:border-cyan focus:outline-none";
 
   return (
     <div className="flex flex-col gap-8">
       {isLeader && (
-        <form onSubmit={onCreate} className="rounded-lg border border-white/10 bg-[#12121A] p-4 flex flex-col gap-3">
-          <p className="font-mono text-xs font-bold tracking-wider text-[#00D4FF] uppercase">สร้างนัดซ้อม</p>
+        <form onSubmit={onCreate} className="rounded-lg border border-white/10 bg-surface-2 p-4 flex flex-col gap-3">
+          <p className="font-mono text-xs font-bold tracking-wider text-cyan uppercase">สร้างนัดซ้อม</p>
           <div className="flex flex-wrap gap-2">
             <input name="title" placeholder="หัวข้อ (ไม่บังคับ)" className={`${inputCls} flex-1 min-w-40`} />
             <select name="sessionType" className={inputCls} defaultValue="SCRIM">
@@ -87,7 +87,7 @@ export function ScheduleClient({ teamId, myUserId, isLeader, sessions, stats }: 
             <button
               type="submit"
               disabled={isPending}
-              className="rounded bg-[#00D4FF] px-4 py-1.5 text-xs font-bold text-black disabled:opacity-50"
+              className="rounded bg-cyan px-4 py-1.5 text-xs font-bold text-black disabled:opacity-50"
             >
               {isPending ? "กำลังบันทึก..." : "+ สร้างนัด"}
             </button>
@@ -99,14 +99,14 @@ export function ScheduleClient({ teamId, myUserId, isLeader, sessions, stats }: 
       {!isLeader && error && <p className="text-xs text-rose-300">{error}</p>}
 
       <section>
-        <h2 className="font-mono text-sm font-bold tracking-wider text-neutral-300 uppercase mb-3">
+        <h2 className="hud-section-title mb-3">
           นัดซ้อม ({sessions.length})
         </h2>
         <ul className="flex flex-col gap-3">
           {sessions.map((s) => {
             const mine = s.attendance.find((a) => a.user_id === myUserId);
             return (
-              <li key={s.id} className="rounded-lg border border-white/10 bg-[#12121A] p-4">
+              <li key={s.id} className="rounded-lg border border-white/10 bg-surface-2 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-bold">
@@ -184,7 +184,7 @@ export function ScheduleClient({ teamId, myUserId, isLeader, sessions, stats }: 
       </section>
 
       <section>
-        <h2 className="font-mono text-sm font-bold tracking-wider text-neutral-300 uppercase mb-3">
+        <h2 className="hud-section-title mb-3">
           สรุป % เข้าซ้อมรายคน
         </h2>
         <p className="text-xs text-neutral-500 mb-2">นับเฉพาะนัดที่หัวหน้าเช็กชื่อแล้ว (ตัวเลขในวงเล็บ = มาจริง/ถูกเช็กชื่อ) · นัดที่ยังไม่เช็กชื่อไม่นับ</p>
@@ -193,7 +193,7 @@ export function ScheduleClient({ teamId, myUserId, isLeader, sessions, stats }: 
             <li key={s.userId} className="flex items-center gap-3 text-xs">
               <span className="w-32 truncate">@{s.username}</span>
               <div className="flex-1 h-2 rounded bg-white/10 overflow-hidden">
-                <div className="h-full bg-[#00D4FF]" style={{ width: `${s.percent}%` }} />
+                <div className="h-full bg-cyan" style={{ width: `${s.percent}%` }} />
               </div>
               <span className="w-20 text-right font-mono">
                 {s.percent}% ({s.attendedCount}/{s.checkedCount})

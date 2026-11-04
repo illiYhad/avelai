@@ -17,7 +17,7 @@ export default async function MyTeamsPage({ params }: { params: Promise<{ game: 
 
   if (!db) {
     return (
-      <main className="min-h-screen bg-[#0A0A0F] px-4 pt-20 text-white">
+      <main className="min-h-screen bg-void px-4 pt-20 text-white">
         <p className="text-neutral-400 text-sm">ยังไม่ต่อฐานข้อมูล — ตั้งค่า environment ก่อนใช้งานหน้านี้</p>
       </main>
     );
@@ -42,16 +42,16 @@ export default async function MyTeamsPage({ params }: { params: Promise<{ game: 
   });
 
   return (
-    <main className="min-h-screen bg-[#0A0A0F] px-4 pt-20 pb-10 text-white">
+    <main className="min-h-screen bg-void px-4 pt-20 pb-10 text-white">
       <div className="mx-auto w-full max-w-2xl">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <div>
-            <p className="text-[#00D4FF] font-mono text-xs tracking-widest mb-1">TEAM MANAGEMENT</p>
+            <p className="text-cyan font-mono text-xs tracking-widest mb-1">TEAM MANAGEMENT</p>
             <h1 className="text-2xl font-bold">ทีมของฉัน</h1>
           </div>
           <Link
             href={routes.teamCreate(slug)}
-            className="rounded bg-[#00D4FF] px-4 py-2 text-xs font-bold text-black hover:bg-[#3ae0ff]"
+            className="rounded bg-cyan px-4 py-2 text-xs font-bold text-black hover:bg-cyan"
           >
             + สร้างทีม
           </Link>
@@ -68,11 +68,11 @@ export default async function MyTeamsPage({ params }: { params: Promise<{ game: 
             <li key={t.id}>
               <Link
                 href={routes.team(slug, t.id)}
-                className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-[#12121A] px-4 py-3 hover:border-[#00D4FF]/50 transition-colors"
+                className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-surface-2 px-4 py-3 hover:border-cyan/50 transition-colors"
               >
                 <div className="min-w-0">
                   <p className="font-bold truncate">
-                    {t.name} <span className="text-[#00D4FF]">[{t.tag}]</span>
+                    {t.name} <span className="text-cyan">[{t.tag}]</span>
                   </p>
                   <p className="text-xs text-neutral-400 mt-0.5">
                     {gameLabel(t.game)} · บทบาท: {t.myRole} · {t.wins}W-{t.losses}L {t.is_roster_locked ? "· 🔒 roster ล็อกแล้ว" : ""}

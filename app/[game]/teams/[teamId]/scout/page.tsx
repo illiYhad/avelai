@@ -21,7 +21,7 @@ export default async function TeamScoutPage({ params }: PageProps) {
 
   if (!db) {
     return (
-      <main className="min-h-screen bg-[#0A0A0F] px-4 pt-20 text-white">
+      <main className="min-h-screen bg-void px-4 pt-20 text-white">
         <p className="text-neutral-400 text-sm">ยังไม่ต่อฐานข้อมูล — ตั้งค่า environment ก่อนใช้งานหน้านี้</p>
       </main>
     );
@@ -44,13 +44,13 @@ export default async function TeamScoutPage({ params }: PageProps) {
   // K-AV-D1: สเกาต์ผูกกับ Liquipedia ของ Mobile Legends — ทีมเกมอื่นแสดงข้อความแทน ไม่ดึงรายชื่อ/ไม่เรียก API
   if (teamGame(team.game) !== "MLBB") {
     return (
-      <main className="min-h-screen bg-[#0A0A0F] px-4 pt-20 pb-10 text-white">
+      <main className="min-h-screen bg-void px-4 pt-20 pb-10 text-white">
         <div className="mx-auto w-full max-w-2xl">
-          <p className="text-[#00D4FF] font-mono text-xs tracking-widest mb-2">SCOUTING</p>
+          <p className="text-cyan font-mono text-xs tracking-widest mb-2">SCOUTING</p>
           <h1 className="text-2xl font-bold mb-4">
-            สเกาต์ — {team.name} <span className="text-[#00D4FF]">[{team.tag}]</span>
+            สเกาต์ — {team.name} <span className="text-cyan">[{team.tag}]</span>
           </h1>
-          <p className="rounded border border-white/10 bg-[#12121A] px-4 py-3 text-sm text-neutral-300">
+          <p className="rounded border border-white/10 bg-surface-2 px-4 py-3 text-sm text-neutral-300">
             สเกาต์เกมนี้ยังไม่เปิดใช้ ({gameLabel(team.game)})
           </p>
         </div>
@@ -82,11 +82,11 @@ export default async function TeamScoutPage({ params }: PageProps) {
   const isLeader = userId !== null && (team.owner_id === userId || team.captain_id === userId || myRole !== null);
 
   return (
-    <main className="min-h-screen bg-[#0A0A0F] px-4 pt-20 pb-10 text-white">
+    <main className="min-h-screen bg-void px-4 pt-20 pb-10 text-white">
       <div className="mx-auto w-full max-w-2xl">
-        <p className="text-[#00D4FF] font-mono text-xs tracking-widest mb-2">SCOUTING</p>
+        <p className="text-cyan font-mono text-xs tracking-widest mb-2">SCOUTING</p>
         <h1 className="text-2xl font-bold mb-6">
-          สเกาต์ — {team.name} <span className="text-[#00D4FF]">[{team.tag}]</span>
+          สเกาต์ — {team.name} <span className="text-cyan">[{team.tag}]</span>
         </h1>
         <ScoutClient
           teamId={teamId}
