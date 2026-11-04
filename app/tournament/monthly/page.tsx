@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
+import { POSITION_COLORS } from '@/lib/ui/colors';
 
 import React, { useState } from 'react';
 import HudScan from '@/components/ui/HudScan'
@@ -84,7 +85,8 @@ export interface MonthlyDoubleEliminationBracket {
 // 2. CONSTANTS & MOCK DATA
 // ============================================================================
 
-const ROLE_COLORS: Record<PlayerPosition, string> = { 1: '#E8384F', 2: '#2E9BFF', 3: '#39FF6A', 4: '#D63CE8', 5: '#C8CDD4' };
+// K-AV-POLISH.2: สีตำแหน่งจากไฟล์เดียว lib/ui/colors.ts
+const ROLE_COLORS: Record<PlayerPosition, string> = { 1: POSITION_COLORS['Pos 1'], 2: POSITION_COLORS['Pos 2'], 3: POSITION_COLORS['Pos 3'], 4: POSITION_COLORS['Pos 4'], 5: POSITION_COLORS['Pos 5'] };
 const ROLE_NAMES: Record<PlayerPosition, string> = { 1: 'POS 1 · CARRY', 2: 'POS 2 · MID', 3: 'POS 3 · OFF', 4: 'POS 4 · SOFT', 5: 'POS 5 · HARD' };
 
 const MOCK_LOBBY_PARTICIPANTS: IntegrityCardProps[] = [
@@ -108,9 +110,9 @@ const CATALOG_ITEMS: StoreItem[] = [
 
 const RARITY_COLORS: Record<string, string> = {
     COMMON: 'border-line text-ink',
-    UNCOMMON: 'border-[#39FF6A]/60 text-[#39FF6A]',
-    RARE: 'border-[#2E9BFF]/70 text-[#2E9BFF]',
-    EPIC: 'border-[#D63CE8]/70 text-[#D63CE8]',
+    UNCOMMON: 'border-win/60 text-win',
+    RARE: 'border-cyan/70 text-cyan',
+    EPIC: 'border-epic/70 text-epic',
     LEGENDARY: 'border-gold text-gold shadow-glow-gold',
 };
 

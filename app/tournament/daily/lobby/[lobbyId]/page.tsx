@@ -202,7 +202,7 @@ export default function DailyArenaLobbyPage() {
 
                             {/* Pilot Avatar Frame */}
                             <div className="relative group cursor-pointer shrink-0">
-                                <div className="w-24 h-28 rounded-2xl bg-slate-950 border-2 border-cyan/50 flex items-center justify-center font-display font-black text-2xl text-cyan shadow-[0_0_20px_rgba(0,212,255,0.25)] overflow-hidden transition-all group-hover:border-cyan group-hover:shadow-[0_0_30px_rgba(0,212,255,0.4)]">
+                                <div className="w-24 h-28 rounded-2xl bg-slate-950 border-2 border-cyan/50 flex items-center justify-center font-display font-black text-2xl text-cyan shadow-glow-cyan overflow-hidden transition-all group-hover:border-cyan group-hover:shadow-glow-cyan">
                                     <span className="group-hover:scale-110 transition-transform duration-300">SH</span>
                                 </div>
                                 <span className="absolute -bottom-1 -right-1 text-xs font-mono px-2 py-0.5 rounded bg-slate-900 border border-gold text-gold font-bold shadow-md">
@@ -275,7 +275,7 @@ export default function DailyArenaLobbyPage() {
                         ) : (
                             <button
                                 onClick={handleReady}
-                                className="w-full md:w-auto px-8 py-3.5 bg-linear-to-r from-cyan to-cyan-600 hover:from-cyan-400 hover:to-cyan text-slate-950 font-black text-sm rounded-xl tracking-wider transition-all shadow-[0_0_15px_rgba(0,212,255,0.25)] cursor-pointer font-mono"
+                                className="w-full md:w-auto px-8 py-3.5 bg-linear-to-r from-cyan to-cyan-600 hover:from-cyan-400 hover:to-cyan text-slate-950 font-black text-sm rounded-xl tracking-wider transition-all shadow-glow-cyan cursor-pointer font-mono"
                             >
                                 READY TO DEPLOY →
                             </button>

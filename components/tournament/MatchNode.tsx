@@ -19,12 +19,12 @@ export const MatchNode: React.FC<MatchNodeProps> = ({
   const getStatusStyles = () => {
     switch (match.status) {
       case 'ready':
-        return 'border-[#00D4FF] bg-[#0A0A0F] text-white font-bold shadow-[0_0_15px_rgba(0,212,255,0.3)]';
+        return 'border-cyan bg-void text-white font-bold shadow-glow-cyan';
       case 'completed':
-        return 'border-[#C9A84C] bg-[#1a1a24] text-gray-300';
+        return 'border-gold bg-surface-2 text-gray-300';
       case 'waiting':
       default:
-        return 'border-gray-700 bg-[#12121A]/80 opacity-60 text-gray-500';
+        return 'border-gray-700 bg-surface-2/80 opacity-60 text-gray-500';
     }
   };
 
@@ -50,7 +50,7 @@ export const MatchNode: React.FC<MatchNodeProps> = ({
             <span className="truncate">{match.player1Id ?? 'TBD'}</span>
           </div>
           {match.status === 'completed' && (
-            <span className="font-bold text-[#39FF6A] font-mono">W</span>
+            <span className="font-bold text-win font-mono">W</span>
           )}
         </div>
 
@@ -65,7 +65,7 @@ export const MatchNode: React.FC<MatchNodeProps> = ({
             <span className="truncate">{match.player2Id ?? 'TBD'}</span>
           </div>
           {match.status === 'completed' && (
-            <span className="font-bold text-[#E8384F] font-mono">L</span>
+            <span className="font-bold text-lose font-mono">L</span>
           )}
         </div>
       </div>

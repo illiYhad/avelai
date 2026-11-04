@@ -48,8 +48,8 @@ export default async function SwissPage({ params }: { params: Promise<{ game: st
           <section>
             <h2 className="mb-2 text-sm font-semibold text-white/90">อันดับ{t.swiss_rounds ? ` · ${t.swiss_rounds} รอบ` : ""}</h2>
             {table.length === 0 ? <p className="text-sm text-white/60">ยังไม่มีทีมเช็กอิน</p> : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+              <div className="hud-table-wrap">
+                <table className="hud-table">
                   <thead className="text-left text-white/60"><tr><th className="py-1">#</th><th>ทีม</th><th>ชนะ</th><th>แพ้</th><th>Buchholz</th></tr></thead>
                   <tbody>{table.map((s) => <tr key={s.teamId} className="border-t border-white/10"><td className="py-1 font-numeric">{s.rank}</td><td>{teamLabel(names, s.teamId)}</td><td className="font-numeric">{s.wins}</td><td className="font-numeric">{s.losses}</td><td className="font-numeric">{s.buchholz}</td></tr>)}</tbody>
                 </table>

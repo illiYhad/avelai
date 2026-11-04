@@ -404,3 +404,8 @@ html:not(:has([data-obs-root])) body::before {
   --color-dota-radiant: #39ff6a;
   --color-dota-dire: #e8384f;
 }
+
+/* K-AV-POLISH.2: สีความหายาก (rarity) ของไอเทม/รางวัล — EPIC ม่วง ไม่มี token ใกล้เคียง · UNCOMMON=win · RARE=cyan */
+@theme inline {
+  --color-epic: #d63ce8;
+}

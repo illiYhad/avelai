@@ -16,7 +16,7 @@ export default async function TournamentRegisterPage({ params }: PageProps) {
 
   if (!db) {
     return (
-      <main className="min-h-screen bg-[#0A0A0F] px-4 pt-20 text-white">
+      <main className="min-h-screen bg-void px-4 pt-20 text-white">
         <p className="text-neutral-400 text-sm">ยังไม่ต่อฐานข้อมูล — ตั้งค่า environment ก่อนใช้งานหน้านี้</p>
       </main>
     );
@@ -55,9 +55,9 @@ export default async function TournamentRegisterPage({ params }: PageProps) {
   const regByTeam = new Map((registrations ?? []).map((r) => [r.team_id, r.status]));
 
   return (
-    <main className="min-h-screen bg-[#0A0A0F] px-4 pt-20 pb-10 text-white">
+    <main className="min-h-screen bg-void px-4 pt-20 pb-10 text-white">
       <div className="mx-auto w-full max-w-md">
-        <p className="text-[#00D4FF] font-mono text-xs tracking-widest mb-2">TOURNAMENT REGISTRATION</p>
+        <p className="text-cyan font-mono text-xs tracking-widest mb-2">TOURNAMENT REGISTRATION</p>
         <h1 className="text-2xl font-bold mb-1">สมัครแข่งขัน ({tournament.tier.toUpperCase()})</h1>
         <p className="text-xs text-neutral-400 mb-6">
           เริ่ม {new Date(tournament.start_at).toLocaleString("th-TH")} · สมัครฟรี
