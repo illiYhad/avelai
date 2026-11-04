@@ -50,11 +50,11 @@ export function ResolveDisputeForm({ matchId, disputeId, teamA, teamB }: Props) 
   }
 
   const selCls =
-    "rounded border border-white/20 bg-[#0A0A0F] px-2 py-1.5 text-xs text-white focus:border-[#00D4FF] focus:outline-none";
+    "rounded border border-white/20 bg-void px-2 py-1.5 text-xs text-white focus:border-cyan focus:outline-none";
 
   return (
-    <div className="mt-3 flex flex-col gap-2 rounded border border-[#C9A84C]/40 bg-[#C9A84C]/5 p-3">
-      <p className="text-xs font-mono font-bold tracking-wider text-[#C9A84C]">ADMIN RESOLUTION</p>
+    <div className="mt-3 flex flex-col gap-2 rounded border border-gold/40 bg-gold/5 p-3">
+      <p className="text-xs font-mono font-bold tracking-wider text-gold">ADMIN RESOLUTION</p>
       <div className="flex flex-wrap items-center gap-2">
         <select value={winner} onChange={(e) => setWinner(e.target.value)} className={selCls}>
           <option value="DRAW">เสมอ / ยกเลิกผล</option>
@@ -77,7 +77,7 @@ export function ResolveDisputeForm({ matchId, disputeId, teamA, teamB }: Props) 
           type="button"
           disabled={busy || notes.trim().length < 5}
           onClick={submit}
-          className="rounded bg-[#C9A84C] px-4 py-1.5 text-xs font-bold text-black disabled:opacity-50"
+          className="rounded bg-gold px-4 py-1.5 text-xs font-bold text-black disabled:opacity-50"
         >
           {busy ? "กำลังบันทึก..." : "ชี้ขาด"}
         </button>

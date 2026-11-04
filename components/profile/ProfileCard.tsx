@@ -23,11 +23,11 @@ export function ProfileCard({ player, teamType = 'radiant' }: ProfileCardProps) 
 
   const isRadiant = teamType === 'radiant';
   const themeAccent = isRadiant ? '#00D4FF' : '#C9A84C';
-  const themeBorder = isRadiant ? 'border-[#00D4FF]/40' : 'border-[#C9A84C]/40';
+  const themeBorder = isRadiant ? 'border-cyan/40' : 'border-gold/40';
 
   return (
     <div
-      className={`relative flex flex-col justify-between w-full h-[230px] bg-[#0A0E17] border ${themeBorder} rounded-xl p-3 shadow-lg overflow-hidden group hover:scale-[1.02] transition-all duration-300 font-mono select-none`}
+      className={`relative flex flex-col justify-between w-full h-[230px] bg-surface-2 border ${themeBorder} rounded-xl p-3 shadow-lg overflow-hidden group hover:scale-[1.02] transition-all duration-300 font-mono select-none`}
     >
       {/* Background Glow */}
       <div
@@ -53,7 +53,7 @@ export function ProfileCard({ player, teamType = 'radiant' }: ProfileCardProps) 
       {/* Avatar / Center Info */}
       <div className="my-auto flex flex-col items-center justify-center z-10 text-center">
         <div
-          className="w-12 h-12 rounded-full border-2 flex items-center justify-center bg-[#111622] shadow-[0_0_12px_rgba(0,0,0,0.8)] relative"
+          className="w-12 h-12 rounded-full border-2 flex items-center justify-center bg-surface-2 shadow-hud relative"
           style={{ borderColor: themeAccent }}
         >
           <span className="text-sm font-black text-white">

@@ -61,7 +61,7 @@ export default function AVEChatbot() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="bg-[#00D4FF] hover:bg-[#00D4FF]/80 text-black font-black p-4 rounded-full shadow-[0_0_20px_rgba(0,212,255,0.5)] flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer"
+          className="bg-cyan hover:bg-cyan/80 text-black font-black p-4 rounded-full shadow-glow-cyan flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer"
           title="Open AVE Assistant"
         >
           <Bot className="w-6 h-6" />
@@ -69,18 +69,18 @@ export default function AVEChatbot() {
       )}
 
       {isOpen && (
-        <div className="bg-[#0B0F17] border border-[#00D4FF]/40 rounded-2xl w-80 sm:w-96 h-120 shadow-[0_0_30px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden backdrop-blur-xl">
+        <div className="bg-panel border border-cyan/40 rounded-2xl w-80 sm:w-96 h-120 shadow-hud flex flex-col overflow-hidden backdrop-blur-xl">
           {/* Header */}
           <div className="bg-slate-950 p-3.5 border-b border-slate-800 flex justify-between items-center">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-[#00D4FF]/10 border border-[#00D4FF]/40 flex items-center justify-center text-[#00D4FF]">
+              <div className="w-8 h-8 rounded-lg bg-cyan/10 border border-cyan/40 flex items-center justify-center text-cyan">
                 <Bot className="w-4 h-4" />
               </div>
               <div>
                 <h3 className="text-white font-bold text-xs tracking-wider flex items-center gap-1.5">
-                  AVE PROTOCOL <Sparkles className="w-3 h-3 text-[#C9A84C]" />
+                  AVE PROTOCOL <Sparkles className="w-3 h-3 text-gold" />
                 </h3>
-                <span className="text-xs text-[#00D4FF]/70 tracking-widest uppercase">PRECISION IS FREEDOM</span>
+                <span className="text-xs text-cyan/70 tracking-widest uppercase">PRECISION IS FREEDOM</span>
               </div>
             </div>
             <button
@@ -92,7 +92,7 @@ export default function AVEChatbot() {
           </div>
 
           {/* Messages Container */}
-          <div className="flex-1 p-3.5 overflow-y-auto space-y-3 selection:bg-[#00D4FF] selection:text-black">
+          <div className="flex-1 p-3.5 overflow-y-auto space-y-3 selection:bg-cyan selection:text-black">
             {messages.map((msg, index) => (
               <div
                 key={index}
@@ -100,7 +100,7 @@ export default function AVEChatbot() {
               >
                 <div
                   className={`max-w-[85%] rounded-xl p-3 text-xs leading-relaxed font-sans ${msg.role === 'user'
-                      ? 'bg-[#00D4FF] text-slate-950 font-medium rounded-br-xs shadow-md'
+                      ? 'bg-cyan text-slate-950 font-medium rounded-br-xs shadow-md'
                       : 'bg-slate-900 text-zinc-200 border border-slate-800 rounded-bl-xs shadow-inner'
                     }`}
                 >
@@ -110,8 +110,8 @@ export default function AVEChatbot() {
             ))}
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-slate-900 border border-slate-800 rounded-xl rounded-bl-xs p-3 text-xs text-[#00D4FF] animate-pulse flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#00D4FF] animate-ping" />
+                <div className="bg-slate-900 border border-slate-800 rounded-xl rounded-bl-xs p-3 text-xs text-cyan animate-pulse flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-cyan animate-ping" />
                   AVE กำลังประมวลผลข้อมูล...
                 </div>
               </div>
@@ -133,12 +133,12 @@ export default function AVEChatbot() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="สอบถามระบบ AVELAi ได้ที่นี่..."
-                className="flex-1 bg-slate-900 border border-slate-800 focus:border-[#00D4FF]/60 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-600 focus:outline-hidden transition-colors"
+                className="flex-1 bg-slate-900 border border-slate-800 focus:border-cyan/60 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-600 focus:outline-hidden transition-colors"
               />
               <button
                 type="submit"
                 disabled={loading || !input.trim()}
-                className="bg-[#00D4FF] hover:bg-[#00D4FF]/80 disabled:opacity-40 disabled:hover:bg-[#00D4FF] text-slate-950 font-black p-2 rounded-xl transition-all cursor-pointer flex items-center justify-center shrink-0"
+                className="bg-cyan hover:bg-cyan/80 disabled:opacity-40 disabled:hover:bg-cyan text-slate-950 font-black p-2 rounded-xl transition-all cursor-pointer flex items-center justify-center shrink-0"
               >
                 <Send className="w-3.5 h-3.5" />
               </button>

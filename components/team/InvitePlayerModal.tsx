@@ -51,14 +51,14 @@ export function InvitePlayerModal({ teamId }: InvitePlayerModalProps) {
       <button
         type="button"
         onClick={handleOpen}
-        className="flex items-center gap-2 rounded border border-[#00D4FF] bg-transparent px-4 py-2 text-xs font-bold tracking-wider text-[#00D4FF] hover:bg-[#00D4FF]/10 transition-all cursor-pointer"
+        className="flex items-center gap-2 rounded border border-cyan bg-transparent px-4 py-2 text-xs font-bold tracking-wider text-cyan hover:bg-cyan/10 transition-all cursor-pointer"
       >
         + เชิญผู้เล่น / INVITE PLAYER
       </button>
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-xl border border-white/10 bg-[#12121A] p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-xl border border-white/10 bg-surface-2 p-6 shadow-2xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-mono text-sm font-black tracking-wider text-white uppercase">
                 เชิญผู้เล่นเข้าร่วมทีม
@@ -85,7 +85,7 @@ export function InvitePlayerModal({ teamId }: InvitePlayerModalProps) {
                   placeholder="เช่น player_abc123"
                   disabled={isPending}
                   required
-                  className="w-full rounded border border-white/15 bg-[#0A0A0F] px-3.5 py-2.5 font-mono text-xs text-white placeholder:text-neutral-500 focus:border-[#00D4FF] focus:outline-none"
+                  className="w-full rounded border border-white/15 bg-void px-3.5 py-2.5 font-mono text-xs text-white placeholder:text-neutral-500 focus:border-cyan focus:outline-none"
                 />
               </div>
 
@@ -113,7 +113,7 @@ export function InvitePlayerModal({ teamId }: InvitePlayerModalProps) {
                 <button
                   type="submit"
                   disabled={isPending || !identifier.trim()}
-                  className="rounded bg-[#00D4FF] px-5 py-2 text-xs font-bold text-black hover:bg-[#3ae0ff] disabled:opacity-50"
+                  className="rounded bg-cyan px-5 py-2 text-xs font-bold text-black hover:bg-cyan disabled:opacity-50"
                 >
                   {isPending ? "กำลังเพิ่ม..." : "เพิ่มเข้าทีม"}
                 </button>

@@ -9,24 +9,24 @@ const TIER_CONFIG = {
   1: {
     label: 'TIER 1',
     sublabel: 'Severely Disadvantaged',
-    color: '#FF4444',
-    glow: 'rgba(255,68,68,0.4)',
+    color: 'var(--color-lose)',
+    glow: 'color-mix(in srgb, var(--color-lose) 40%, transparent)',
     icon: '🔴',
     multiplier: '×1.5 Bonus',
   },
   2: {
     label: 'TIER 2',
     sublabel: 'Partial Impact',
-    color: '#FFB800',
-    glow: 'rgba(255,184,0,0.4)',
+    color: 'var(--color-warn)',
+    glow: 'color-mix(in srgb, var(--color-warn) 40%, transparent)',
     icon: '🟡',
     multiplier: '×1.2 Bonus',
   },
   3: {
     label: 'TIER 3',
     sublabel: 'Low Impact',
-    color: '#00D4FF',
-    glow: 'rgba(0,212,255,0.3)',
+    color: 'var(--color-cyan)',
+    glow: 'color-mix(in srgb, var(--color-cyan) 30%, transparent)',
     icon: '🔵',
     multiplier: '×1.0 Standard',
   },
@@ -41,7 +41,7 @@ export function TierBadge({ tier, reason }: TierBadgeProps) {
       style={{
         borderColor: cfg.color,
         boxShadow: `0 0 8px ${cfg.glow}`,
-        background: 'rgba(10,10,15,0.8)',
+        background: 'color-mix(in srgb, var(--color-void) 80%, transparent)',
       }}
       title={reason}
     >

@@ -17,11 +17,11 @@ export function RegisterTeamForm({ tournamentId, teamId, teamLabel, existingStat
   const [isPending, startTransition] = useTransition();
 
   return (
-    <div className="rounded-lg border border-white/10 bg-[#12121A] px-4 py-3">
+    <div className="rounded-lg border border-white/10 bg-surface-2 px-4 py-3">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-bold truncate">{teamLabel}</p>
         {status ? (
-          <span className="shrink-0 rounded bg-[#00D4FF]/10 px-2 py-1 text-xs font-mono font-bold text-[#00D4FF]">
+          <span className="shrink-0 rounded bg-cyan/10 px-2 py-1 text-xs font-mono font-bold text-cyan">
             {status}
           </span>
         ) : (
@@ -36,7 +36,7 @@ export function RegisterTeamForm({ tournamentId, teamId, teamLabel, existingStat
                 else setStatus(res.status);
               })
             }
-            className="shrink-0 rounded bg-[#00D4FF] px-4 py-1.5 text-xs font-bold text-black hover:bg-[#3ae0ff] disabled:opacity-50"
+            className="shrink-0 rounded bg-cyan px-4 py-1.5 text-xs font-bold text-black hover:bg-cyan disabled:opacity-50"
           >
             {isPending ? "กำลังสมัคร..." : "สมัคร"}
           </button>

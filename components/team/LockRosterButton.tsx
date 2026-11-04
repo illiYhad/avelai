@@ -11,7 +11,7 @@ export function LockRosterButton({ teamId, locked }: { teamId: string; locked: b
   const [isPending, startTransition] = useTransition();
 
   if (locked) {
-    return <span className="text-xs font-mono text-[#C9A84C]">🔒 ROSTER LOCKED</span>;
+    return <span className="text-xs font-mono text-gold">🔒 ROSTER LOCKED</span>;
   }
 
   return (
@@ -27,7 +27,7 @@ export function LockRosterButton({ teamId, locked }: { teamId: string; locked: b
             else router.refresh();
           })
         }
-        className="rounded border border-[#C9A84C] px-4 py-2 text-xs font-bold text-[#C9A84C] hover:bg-[#C9A84C]/10 disabled:opacity-50"
+        className="rounded border border-gold px-4 py-2 text-xs font-bold text-gold hover:bg-gold/10 disabled:opacity-50"
       >
         {isPending ? "กำลังล็อก..." : "🔒 ล็อก Roster"}
       </button>

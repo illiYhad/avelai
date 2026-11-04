@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { CHART_COLORS } from '@/lib/ui/colors';
 import { createClient } from '@/lib/supabase/client';
 import { Flame, Shield, Trophy, Target, Bot, Zap, Wifi, WifiOff, Swords } from 'lucide-react';
 import { CareerTimeline } from '@/components/profile/CareerTimeline';
@@ -42,19 +43,19 @@ const RadarGraph = ({ stats }: { stats: number[] }) => {
   return (
     <svg viewBox="0 0 240 240" className="w-48 h-48">
       {[0.25, 0.5, 0.75, 1].map((ratio, i) => (
-        <path key={i} d={toPath(gridPoints(ratio))} fill="none" stroke="#3f3f46" strokeWidth="0.8" />
+        <path key={i} d={toPath(gridPoints(ratio))} fill="none" stroke={CHART_COLORS.grid} strokeWidth="0.8" />
       ))}
       {angles.map((a, i) => (
-        <line key={i} x1={cx} y1={cy} x2={cx + r * Math.cos(a)} y2={cy + r * Math.sin(a)} stroke="#3f3f46" strokeWidth="0.8" />
+        <line key={i} x1={cx} y1={cy} x2={cx + r * Math.cos(a)} y2={cy + r * Math.sin(a)} stroke={CHART_COLORS.grid} strokeWidth="0.8" />
       ))}
-      <path d={toPath(points(stats))} fill="rgba(239,68,68,0.2)" stroke="#ef4444" strokeWidth="1.5" />
+      <path d={toPath(points(stats))} fill="color-mix(in srgb, var(--color-lose) 20%, transparent)" stroke={CHART_COLORS.lose} strokeWidth="1.5" />
       {points(stats).map((p, i) => (
-        <circle key={i} cx={p[0]} cy={p[1]} r="3" fill="#ef4444" />
+        <circle key={i} cx={p[0]} cy={p[1]} r="3" fill={CHART_COLORS.lose} />
       ))}
       {labels.map((label, i) => {
         const x = cx + (r + 16) * Math.cos(angles[i]);
         const y = cy + (r + 16) * Math.sin(angles[i]);
-        return <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="middle" fontSize="9" fill="#a1a1aa">{label}</text>;
+        return <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="middle" fontSize="9" fill={CHART_COLORS.muted}>{label}</text>;
       })}
     </svg>
   );
@@ -84,7 +85,7 @@ export default function ProfilePage() {
   }, []);
 
   if (loading) return (
-    <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
+    <div className="min-h-screen bg-void flex items-center justify-center">
       <div className="text-zinc-500 animate-pulse font-mono">Loading Passport...</div>
     </div>
   );
@@ -100,7 +101,7 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 pt-16 pb-12 px-4 md:px-6">
+    <div className="min-h-screen bg-void text-zinc-100 pt-16 pb-12 px-4 md:px-6">
       <div className="max-w-5xl mx-auto space-y-4">
 
         {/* ZONE 1: IDENTITY */}
@@ -111,7 +112,7 @@ export default function ProfilePage() {
               <img
                 src={profile?.avatar_url || profile?.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${profile?.id}`}
                 alt="Profile Avatar"
-                className="w-20 h-20 rounded-2xl border-2 border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.3)] object-cover"
+                className="w-20 h-20 rounded-2xl border-2 border-amber-500/60 shadow-glow-gold object-cover"
               />
               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full border-2 border-zinc-900" />
             </div>
@@ -151,7 +152,7 @@ export default function ProfilePage() {
         <div className="p-5 rounded-2xl bg-zinc-900/80 border border-zinc-800">
           <p className="text-xs text-zinc-500 uppercase tracking-widest mb-3">Card Waiting Room Showcase</p>
           <div className="relative flex items-center justify-center h-32 rounded-xl border border-amber-500/30 bg-linear-to-br from-zinc-900 via-red-950/20 to-zinc-900 shadow-[0_0_30px_rgba(245,158,11,0.1)] overflow-hidden">
-            <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(239,68,68,0.03)_10px,rgba(239,68,68,0.03)_11px)]" />
+            <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,color-mix(in_srgb,var(--color-lose)_3%,transparent)_10px,color-mix(in_srgb,var(--color-lose)_3%,transparent)_11px)]" />
             <div className="text-center z-10">
               <div className="text-2xl mb-1">⚡</div>
               <div className="text-xs font-bold text-amber-400">AVE FOUNDER HOLOGRAM</div>

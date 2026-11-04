@@ -62,10 +62,10 @@ export default function ReportResultForm({ matchId, teamA, teamB, bestOf, status
   }
 
   const pickCls = (active: boolean) =>
-    `px-3 py-2 rounded border text-sm ${active ? "bg-[#00D4FF] border-[#00D4FF] text-black font-bold" : "bg-transparent border-white/30 text-white"}`;
+    `px-3 py-2 rounded border text-sm ${active ? "bg-cyan border-cyan text-black font-bold" : "bg-transparent border-white/30 text-white"}`;
 
   return (
-    <div className="p-4 pt-20 bg-[#0A0A0F] text-white min-h-screen">
+    <div className="p-4 pt-20 bg-void text-white min-h-screen">
       <h1 className="text-xl font-bold mb-4">รายงานผลการแข่งขัน</h1>
       <div className="flex flex-col gap-4 max-w-sm">
         {!open && (
@@ -92,7 +92,7 @@ export default function ReportResultForm({ matchId, teamA, teamB, bestOf, status
             min={0}
             max={bestOf}
             step={1}
-            className="ml-2 w-16 rounded border border-white/30 bg-[#12121A] px-2 py-1 text-white"
+            className="ml-2 w-16 rounded border border-white/30 bg-surface-2 px-2 py-1 text-white"
             value={scoreA}
             onChange={(e) => setScoreA(e.target.value)}
           />
@@ -105,7 +105,7 @@ export default function ReportResultForm({ matchId, teamA, teamB, bestOf, status
             min={0}
             max={bestOf}
             step={1}
-            className="ml-2 w-16 rounded border border-white/30 bg-[#12121A] px-2 py-1 text-white"
+            className="ml-2 w-16 rounded border border-white/30 bg-surface-2 px-2 py-1 text-white"
             value={scoreB}
             onChange={(e) => setScoreB(e.target.value)}
           />
@@ -115,7 +115,7 @@ export default function ReportResultForm({ matchId, teamA, teamB, bestOf, status
           <input
             data-testid="report-evidence"
             type="text"
-            className="mt-1 block w-full rounded border border-white/30 bg-[#12121A] px-2 py-1 text-white placeholder:text-gray-500"
+            className="mt-1 block w-full rounded border border-white/30 bg-surface-2 px-2 py-1 text-white placeholder:text-gray-500"
             value={evidence}
             onChange={(e) => setEvidence(e.target.value)}
             placeholder="https://..."
@@ -126,7 +126,7 @@ export default function ReportResultForm({ matchId, teamA, teamB, bestOf, status
           data-testid="report-submit"
           disabled={!open || busy}
           onClick={submit}
-          className="bg-[#00D4FF] text-black font-bold p-2 rounded disabled:opacity-50"
+          className="bg-cyan text-black font-bold p-2 rounded disabled:opacity-50"
         >
           ส่งผลการแข่งขัน
         </button>

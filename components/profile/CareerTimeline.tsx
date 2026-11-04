@@ -81,7 +81,7 @@ export function CareerTimeline({ records }: CareerTimelineProps) {
                     border: 'border-amber-400/60',
                     bg: 'bg-amber-950/20',
                     text: 'text-amber-400',
-                    glow: 'shadow-[0_0_15px_rgba(255,184,0,0.25)]',
+                    glow: 'shadow-glow-gold',
                 };
             case 'SILVER':
                 return {
@@ -89,7 +89,7 @@ export function CareerTimeline({ records }: CareerTimelineProps) {
                     border: 'border-slate-400/60',
                     bg: 'bg-slate-900/40',
                     text: 'text-slate-300',
-                    glow: 'shadow-[0_0_15px_rgba(203,213,225,0.2)]',
+                    glow: 'shadow-[0_0_15px_var(--color-line)]',
                 };
             case 'BRONZE':
                 return {
@@ -97,7 +97,7 @@ export function CareerTimeline({ records }: CareerTimelineProps) {
                     border: 'border-amber-700/60',
                     bg: 'bg-amber-950/10',
                     text: 'text-amber-600',
-                    glow: 'shadow-[0_0_15px_rgba(217,119,6,0.15)]',
+                    glow: 'shadow-glow-gold',
                 };
             default:
                 return {
@@ -105,13 +105,13 @@ export function CareerTimeline({ records }: CareerTimelineProps) {
                     border: 'border-cyan-500/40',
                     bg: 'bg-cyan-950/20',
                     text: 'text-cyan-400',
-                    glow: 'shadow-[0_0_15px_rgba(0,210,255,0.15)]',
+                    glow: 'shadow-glow-cyan',
                 };
         }
     };
 
     return (
-        <div className="bg-[#0D1117] border border-gray-800 rounded-2xl p-6 md:p-8 font-mono shadow-2xl space-y-6">
+        <div className="bg-surface-2 border border-gray-800 rounded-2xl p-6 md:p-8 font-mono shadow-2xl space-y-6">
             {/* Header & Stats Summary */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-800 pb-5 gap-4">
                 <div>
@@ -127,7 +127,7 @@ export function CareerTimeline({ records }: CareerTimelineProps) {
                 </div>
 
                 {/* Medals Tally Mini-Box */}
-                <div className="flex items-center gap-3 bg-[#161B22] border border-gray-800 p-2.5 rounded-xl text-xs">
+                <div className="flex items-center gap-3 bg-surface-2 border border-gray-800 p-2.5 rounded-xl text-xs">
                     <div className="text-center px-2">
                         <div className="text-amber-400 font-black text-sm">2</div>
                         <div className="text-xs text-gray-500">GOLD</div>
@@ -154,7 +154,7 @@ export function CareerTimeline({ records }: CareerTimelineProps) {
                         <div key={rec.id} className="relative group">
                             {/* Timeline Dot Indicator */}
                             <div
-                                className={`absolute -left-[31px] md:-left-[39px] top-1.5 w-4 h-4 rounded-full border-2 bg-[#090D14] transition-all group-hover:scale-125 ${badge.border} ${badge.glow}`}
+                                className={`absolute -left-[31px] md:-left-[39px] top-1.5 w-4 h-4 rounded-full border-2 bg-void transition-all group-hover:scale-125 ${badge.border} ${badge.glow}`}
                             />
 
                             {/* Tournament Card Item */}
@@ -182,22 +182,22 @@ export function CareerTimeline({ records }: CareerTimelineProps) {
 
                                 {/* Performance & Prize Breakdown */}
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 text-xs">
-                                    <div className="bg-[#161B22]/80 p-2.5 rounded-lg border border-gray-800">
+                                    <div className="bg-surface-2/80 p-2.5 rounded-lg border border-gray-800">
                                         <div className="text-xs text-gray-500">PRIZE WON</div>
                                         <div className="font-bold text-emerald-400 mt-0.5 truncate">{rec.prizeWon || '-'}</div>
                                     </div>
 
-                                    <div className="bg-[#161B22]/80 p-2.5 rounded-lg border border-gray-800">
+                                    <div className="bg-surface-2/80 p-2.5 rounded-lg border border-gray-800">
                                         <div className="text-xs text-gray-500">PERFORMANCE SCORE</div>
                                         <div className="font-bold text-cyan-400 mt-0.5">{rec.performanceScore.toFixed(2)} KP</div>
                                     </div>
 
-                                    <div className="bg-[#161B22]/80 p-2.5 rounded-lg border border-gray-800">
+                                    <div className="bg-surface-2/80 p-2.5 rounded-lg border border-gray-800">
                                         <div className="text-xs text-gray-500">AVG K / D / A</div>
                                         <div className="font-bold text-gray-300 mt-0.5">{rec.kdaRatio}</div>
                                     </div>
 
-                                    <div className="bg-[#161B22]/80 p-2.5 rounded-lg border border-gray-800">
+                                    <div className="bg-surface-2/80 p-2.5 rounded-lg border border-gray-800">
                                         <div className="text-xs text-gray-500">SIGNATURE HERO</div>
                                         <div className="font-bold text-gray-200 mt-0.5">{rec.highlightHero}</div>
                                     </div>

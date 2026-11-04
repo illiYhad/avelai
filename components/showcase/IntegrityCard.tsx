@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import { CHART_COLORS, POSITION_COLORS } from '@/lib/ui/colors';
 import Link from 'next/link';
 
 export type IntegrityRarity = 'NONE' | 'COMMON' | 'EPIC' | 'LEGENDARY';
@@ -20,12 +21,13 @@ export interface IntegrityCardProps {
   isCurrentUser?: boolean;
 }
 
+// K-AV-POLISH.2: สีตำแหน่งจากไฟล์เดียว lib/ui/colors.ts
 const ROLE_COLORS: Record<PlayerPosition, string> = {
-  1: '#E8384F', // Pos 1 - Carry
-  2: '#2E9BFF', // Pos 2 - Mid
-  3: '#39FF6A', // Pos 3 - Offlane
-  4: '#D63CE8', // Pos 4 - Soft Support
-  5: '#C8CDD4', // Pos 5 - Hard Support
+  1: POSITION_COLORS['Pos 1'],
+  2: POSITION_COLORS['Pos 2'],
+  3: POSITION_COLORS['Pos 3'],
+  4: POSITION_COLORS['Pos 4'],
+  5: POSITION_COLORS['Pos 5'],
 };
 
 const ROLE_NAMES: Record<PlayerPosition, string> = {
@@ -48,12 +50,12 @@ export const IntegrityCard: React.FC<IntegrityCardProps> = ({
   isCurrentUser = false,
 }) => {
   const roleColor = ROLE_COLORS[position];
-  const teamBorder = team === 'TEAM_A' ? '#00D4FF' : '#C9A84C';
+  const teamBorder = team === 'TEAM_A' ? CHART_COLORS.cyan : CHART_COLORS.gold;
 
   // 1. สถานะไม่มีการ์ด (NONE) -> TFT-Style Empty Slot + FOMO Action Prompt
   if (rarity === 'NONE') {
     return (
-      <div className="relative w-full max-w-52.5 h-85 rounded-xl border border-dashed border-gray-700/80 bg-[#0A0A0F]/80 p-4 flex flex-col justify-between items-center text-center backdrop-blur-sm group hover:border-gray-500 transition-colors">
+      <div className="relative w-full max-w-52.5 h-85 rounded-xl border border-dashed border-gray-700/80 bg-void/80 p-4 flex flex-col justify-between items-center text-center backdrop-blur-sm group hover:border-gray-500 transition-colors">
         <div
           className="text-xs font-mono font-bold px-2 py-0.5 rounded border"
           style={{ borderColor: `${roleColor}55`, color: roleColor, backgroundColor: `${roleColor}15` }}
@@ -77,7 +79,7 @@ export const IntegrityCard: React.FC<IntegrityCardProps> = ({
 
         <div className="w-full pt-2 border-t border-gray-800/80">
           {isCurrentUser ? (
-            <Link className="block w-full py-2 bg-linear-to-r from-[#00D4FF] to-[#C9A84C] text-[#0A0A0F] font-display text-xs font-black rounded shadow-[0_0_15px_rgba(0,212,255,0.4)] hover:brightness-110 active:scale-95 transition-all text-center tracking-wider" href="/gacha">
+            <Link className="block w-full py-2 bg-linear-to-r from-cyan to-gold text-void font-display text-xs font-black rounded shadow-glow-cyan hover:brightness-110 active:scale-95 transition-all text-center tracking-wider" href="/gacha">
               GET INTEGRITY CARD
             </Link>
           ) : (
@@ -93,30 +95,30 @@ export const IntegrityCard: React.FC<IntegrityCardProps> = ({
     switch (rarity) {
       case 'LEGENDARY':
         return {
-          frameClass: 'border-2 border-[#00D4FF] shadow-[0_0_25px_rgba(0,212,255,0.5)]',
-          badgeBg: 'bg-[#00D4FF] text-[#0A0A0F]',
+          frameClass: 'border-2 border-cyan shadow-glow-cyan',
+          badgeBg: 'bg-cyan text-void',
           badgeText: 'LEGENDARY AVE',
           glowLayer: (
             <>
-              <div className="absolute -inset-px rounded-xl bg-linear-to-b from-[#00D4FF] via-transparent to-[#C9A84C] opacity-40 animate-pulse pointer-events-none" />
-              <div className="absolute inset-0 bg-[linear-gradient(110deg,transparent_20%,rgba(0,212,255,0.15)_45%,rgba(201,168,76,0.15)_55%,transparent_80%)] animate-[shimmer_3s_infinite] pointer-events-none" />
+              <div className="absolute -inset-px rounded-xl bg-linear-to-b from-cyan via-transparent to-gold opacity-40 animate-pulse pointer-events-none" />
+              <div className="absolute inset-0 bg-[linear-gradient(110deg,transparent_20%,color-mix(in_srgb,var(--color-cyan)_15%,transparent)_45%,color-mix(in_srgb,var(--color-gold)_15%,transparent)_55%,transparent_80%)] animate-[shimmer_3s_infinite] pointer-events-none" />
             </>
           ),
         };
       case 'EPIC':
         return {
-          frameClass: 'border-2 border-[#C9A84C] shadow-[0_0_20px_rgba(201,168,76,0.35)]',
-          badgeBg: 'bg-[#C9A84C] text-[#0A0A0F]',
+          frameClass: 'border-2 border-gold shadow-glow-gold',
+          badgeBg: 'bg-gold text-void',
           badgeText: 'EPIC HOLO',
           glowLayer: (
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(201,168,76,0.2),transparent_70%)] pointer-events-none" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--color-gold)_20%,transparent),transparent_70%)] pointer-events-none" />
           ),
         };
       case 'COMMON':
       default:
         return {
-          frameClass: 'border border-[#C8CDD4]/50 shadow-[0_0_10px_rgba(200,205,212,0.1)]',
-          badgeBg: 'bg-[#C8CDD4] text-[#0A0A0F]',
+          frameClass: 'border border-ink-muted/50 shadow-[0_0_10px_var(--color-line)]',
+          badgeBg: 'bg-ink-muted text-void',
           badgeText: 'COMMON STEEL',
           glowLayer: null,
         };
@@ -127,7 +129,7 @@ export const IntegrityCard: React.FC<IntegrityCardProps> = ({
 
   return (
     <div
-      className={`relative w-full max-w-52.5 h-85 rounded-xl bg-[#0A0A0F] p-3 flex flex-col justify-between overflow-hidden transition-all duration-300 hover:scale-105 hover:z-20 ${config.frameClass}`}
+      className={`relative w-full max-w-52.5 h-85 rounded-xl bg-void p-3 flex flex-col justify-between overflow-hidden transition-all duration-300 hover:scale-105 hover:z-20 ${config.frameClass}`}
     >
       {config.glowLayer}
 
@@ -174,14 +176,14 @@ export const IntegrityCard: React.FC<IntegrityCardProps> = ({
           <span className="text-xs font-bold text-white truncate max-w-27.5" title={displayName}>
             {displayName}
           </span>
-          <span className="text-xs text-[#39FF6A] font-bold">
+          <span className="text-xs text-win font-bold">
             {winRate.toFixed(1)}% WR
           </span>
         </div>
 
         <div className="flex items-center justify-between text-xs text-gray-400">
           <span>KARMA INDEX</span>
-          <span className="text-[#00D4FF] font-bold">{karmaScore} PTS</span>
+          <span className="text-cyan font-bold">{karmaScore} PTS</span>
         </div>
       </div>
     </div>
