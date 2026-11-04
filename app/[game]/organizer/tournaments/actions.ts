@@ -2,7 +2,6 @@
 
 // K-AV-3: action ฝั่งผู้จัด — ล็อกอิน → ไม่ถูกระงับ → สิทธิ์ (ORGANIZER/ADMIN · เจ้าของทัวร์ · staff) ตรวจฝั่ง server ทุกครั้ง
 // เขียนผ่าน client ผู้ใช้ (RLS คุมซ้ำ) · ไม่ใช้ service role · เงินไม่ผ่านระบบ: ยืนยันสลิป = คนกดเท่านั้น
-import { revalidatePath } from "next/cache";
 import { logAudit } from "@/lib/audit";
 import { isGameCode } from "@/lib/games";
 import { parsePromptPayId } from "@/lib/payments/promptpay";

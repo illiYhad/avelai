@@ -2,7 +2,6 @@
 
 // K-AV-3: สมัครทัวร์ + อัปสลิป + เช็กอิน (ฝั่งหัวหน้าทีม) — ตรวจล็อกอิน/ระงับ/หัวหน้าทีม/เกม/roster ฝั่ง server
 // เขียนด้วย client ผู้ใช้ (RLS: หัวหน้าทีม · ทัวร์ REGISTRATION) · สมัครซ้ำ = คืนผลเดิม · อัปสลิป idempotent ด้วย token
-import { revalidatePath } from "next/cache";
 import { logAudit } from "@/lib/audit";
 import { hasActivePass } from "@/lib/passes";
 import { validateSlip } from "@/lib/payments/slip";

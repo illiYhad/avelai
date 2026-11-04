@@ -2,7 +2,6 @@
 
 // K-AV-5: action ของห้องแมตช์ — หัวหน้าทีม: เช็กความพร้อม · ส่งผล+หลักฐาน · ผู้ตัดสิน: ชี้ขาดผล (บังคับ Idempotency-Key)
 // ทุก action: ล็อกอิน → ไม่ถูกระงับ → สิทธิ์จาก DB · เขียนด้วย client ผู้ใช้ (RLS + trigger คุมซ้ำ) · audit ทุกการเขียน
-import { revalidatePath } from "next/cache";
 import { logAudit } from "@/lib/audit";
 import { validateSlip } from "@/lib/payments/slip";
 import { advanceBracketAfterMatch } from "@/lib/match/bracket-advance";

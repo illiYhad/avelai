@@ -1,7 +1,7 @@
 import { FEATURES, FEATURE_DISABLED_MESSAGE } from '@/lib/featureFlags';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getTop8Qualifiers } from '@/lib/tournament/swissPairing';
+import { getTop8Qualifiers, type TiebreakerResult } from '@/lib/tournament/swissPairing';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
 
     const top8 = getTop8Qualifiers(players);
 
-    const bracketSlotsPayload = top8.map((player: any, index: number) => ({
+    const bracketSlotsPayload = top8.map((player: TiebreakerResult & { id?: string }, index: number) => ({
       tournament_id: weeklyTournamentId,
       player_id: player.id,
       seed_rank: index + 1,
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     if (error) throw error;
 
     return NextResponse.json({ success: true, top8 }, { status: 200 });
-  } catch (error: any) {
+  } catch {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

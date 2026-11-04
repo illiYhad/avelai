@@ -5,7 +5,7 @@ import { isActiveTeamMember } from "@/lib/team/access";
 import { TeamRestricted } from "../TeamRestricted";
 import { computeAttendanceStats } from "@/lib/team/attendance";
 import { ScheduleClient, type SessionView } from "./ScheduleClient";
-import { gameFromSlug, slugOf } from "@/lib/games";
+import { gameFromSlug } from "@/lib/games";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,6 @@ export default async function TeamSchedulePage({ params }: PageProps) {
   const { game, teamId } = await params;
   const code = gameFromSlug(game);
   if (!code) notFound();
-  const slug = slugOf(code);
   const db = await getServerDb();
 
   if (!db) {

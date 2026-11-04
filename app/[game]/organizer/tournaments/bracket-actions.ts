@@ -1,7 +1,6 @@
 "use server";
 
 // K-AV-4: สร้างสาย (SE/DE) · สร้างรอบ Swiss — ผู้จัด/staff เท่านั้น · idempotent · deterministic (ไม่มีสุ่ม/เวลาในเอนจิน)
-import { revalidatePath } from "next/cache";
 import { logAudit } from "@/lib/audit";
 import { buildDoubleElim, buildSingleElim, matchRowsFromSlots, pairNextRound, roundComplete, seedTeams, slotToRow, suggestedRounds, type SwissResult } from "@/lib/tournament/engine";
 import { TOURNAMENT_COLS, dbMessage, requireActiveUser, tournamentStaffLevel, type Ctx, type TournamentRow } from "@/lib/tournament/access";

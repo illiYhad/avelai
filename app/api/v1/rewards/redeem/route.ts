@@ -1,11 +1,15 @@
 import { FEATURES, FEATURE_DISABLED_MESSAGE } from '@/lib/featureFlags';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getServerDb } from '@/lib/db/server';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-service-key'
-);
+// K-AV-POLISH: service-role client สร้างหลังเช็ก session แล้วเท่านั้น (ไม่สร้างตอน import)
+function serviceClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-service-key'
+  );
+}
 
 export interface RedeemPayload {
   itemId: string;
@@ -21,12 +25,17 @@ export async function POST(req: NextRequest) {
   if (!FEATURES.payments) {
     return Response.json({ error: FEATURE_DISABLED_MESSAGE }, { status: 503 });
   }
+  // K-AV-POLISH เฟส 1 ข้อ 3: user_id มาจาก session เท่านั้น — ไม่รับจาก body ไม่ใช้ค่าคงที่
+  const db = await getServerDb();
+  const { data: auth } = db ? await db.auth.getUser() : { data: { user: null } };
+  if (!auth.user) {
+    return NextResponse.json({ success: false, error: 'กรุณาเข้าสู่ระบบ' }, { status: 401 });
+  }
+  const userId = auth.user.id;
+  const supabase = serviceClient();
   try {
     const body: RedeemPayload = await req.json();
     const { itemId, costPoints, idempotencyKey } = body;
-
-    // TODO: ดึง user_id จาก authenticated session (auth.uid())
-    const userId = '00000000-0000-0000-0000-000000000001'; // Simulated authenticated user ID
 
     if (!itemId || !costPoints || costPoints <= 0 || !idempotencyKey) {
       return NextResponse.json(

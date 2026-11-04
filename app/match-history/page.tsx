@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { createBrowserClient } from '@supabase/ssr';
 
 interface PlayerStat {
@@ -43,10 +44,11 @@ export default function MatchHistoryPage() {
     const [filterRole, setFilterRole] = useState<string>('all');
     const [loading, setLoading] = useState(true);
 
-    const supabase = createBrowserClient(
+    // K-AV-POLISH: memo client ให้คงตัวเดิมทุก render — ใส่ใน deps ของ useEffect ได้โดยไม่ดึงซ้ำ
+    const supabase: SupabaseClient = useMemo(() => createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key'
-    );
+    ), []);
 
     useEffect(() => {
         async function fetchMatchHistory() {
@@ -80,8 +82,9 @@ export default function MatchHistoryPage() {
                 if (error) throw error;
 
                 if (data && data.length > 0) {
-                    setMatches(data as any);
-                    setSelectedMatch(data[0] as any);
+                    const rows = data as unknown as MatchRecord[];
+                    setMatches(rows);
+                    setSelectedMatch(rows[0]);
                 }
             } catch (err) {
                 console.error('Error fetching match history:', err);
@@ -91,7 +94,7 @@ export default function MatchHistoryPage() {
         }
 
         fetchMatchHistory();
-    }, []);
+    }, [supabase]);
 
     const filteredMatches = useMemo(() => {
         return matches.filter((m) => {

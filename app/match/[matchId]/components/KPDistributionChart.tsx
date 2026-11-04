@@ -9,6 +9,7 @@ import {
     YAxis,
     Tooltip,
     Cell,
+    type TooltipContentProps,
 } from 'recharts';
 
 export interface PlayerKPData {
@@ -75,7 +76,7 @@ export default function KPDistributionChart({ players = [] }: KPDistributionChar
                             unit="%"
                         />
                         <Tooltip
-                            content={(props: any) => {
+                            content={(props: TooltipContentProps) => {
                                 const { active, payload } = props;
                                 if (active && payload && payload.length) {
                                     const data = payload[0].payload;

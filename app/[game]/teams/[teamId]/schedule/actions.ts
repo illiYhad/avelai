@@ -1,7 +1,6 @@
 "use server";
 
 // ตารางซ้อม + เช็กชื่อ (K-AV-R เฟส 3 ข้อ 11 — ของน้องเปา)
-import { revalidatePath } from "next/cache";
 import { getServerDb } from "@/lib/db/server";
 import { getAdminDb } from "@/lib/db/admin";
 import { logAudit } from "@/lib/audit";

@@ -27,7 +27,7 @@ export interface OverviewPlayer {
     hasAghsShard?: boolean;
 }
 
-interface DraftEntry {
+export interface DraftEntry {
     is_pick: boolean;
     hero_id: number;
     team: number; // 0 = radiant, 1 = dire

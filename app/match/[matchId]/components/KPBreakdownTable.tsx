@@ -74,6 +74,7 @@ export default function KPBreakdownTable({ players = [] }: KPBreakdownTableProps
                                         <div className="flex items-center gap-2">
                                             <div className="relative h-6 w-10 overflow-hidden border border-neutral-800 bg-neutral-900">
                                                 {heroImg ? (
+                                                    // eslint-disable-next-line @next/next/no-img-element -- K-AV-POLISH: รูปจาก CDN ภายนอก ยังไม่มี images.remotePatterns ใน next.config
                                                     <img
                                                         src={heroImg}
                                                         alt={p.heroName || 'hero'}

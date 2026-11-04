@@ -104,7 +104,7 @@ export default function PerformanceRadar({
         return p.heroName || (p.heroId ? `Hero #${p.heroId}` : 'Hero');
     };
 
-    const getTowerKills = (p: any) => {
+    const getTowerKills = (p: PerformancePlayer & { bld?: number }) => {
         const dmg = p.tower_damage ?? p.towerDamage ?? p.bld ?? 0;
         const directKills = p.tower_kills ?? p.towerKills ?? p.towers;
 
@@ -127,7 +127,7 @@ export default function PerformanceRadar({
     ];
 
     const chartData = radarCategories.map((cat) => {
-        const row: Record<string, any> = { subject: cat.label };
+        const row: Record<string, string | number> = { subject: cat.label };
         sortedPlayers.forEach((p) => {
             let val = 0;
             const isRadiant = (p.playerSlot || 0) < 128;
@@ -177,6 +177,7 @@ export default function PerformanceRadar({
                 <div className="flex items-center gap-2 pl-1.5 overflow-hidden">
                     <div className="h-7 w-12 overflow-hidden border border-neutral-700 bg-neutral-950 shrink-0">
                         {heroImg ? (
+                            // eslint-disable-next-line @next/next/no-img-element -- K-AV-POLISH: รูปจาก CDN ภายนอก ยังไม่มี images.remotePatterns ใน next.config
                             <img src={heroImg} alt={heroName} className="h-full w-full object-cover" />
                         ) : (
                             <span className="flex h-full w-full items-center justify-center text-xs">???</span>
@@ -237,6 +238,7 @@ export default function PerformanceRadar({
                                         <td className="px-4 py-2 flex items-center gap-3">
                                             <div className="h-8 w-14 overflow-hidden border border-neutral-700 bg-neutral-900 shrink-0">
                                                 {heroImg ? (
+                                                    // eslint-disable-next-line @next/next/no-img-element -- K-AV-POLISH: รูปจาก CDN ภายนอก ยังไม่มี images.remotePatterns ใน next.config
                                                     <img src={heroImg} alt={heroName} className="h-full w-full object-cover" />
                                                 ) : (
                                                     <span className="flex h-full w-full items-center justify-center text-xs text-neutral-500">???</span>

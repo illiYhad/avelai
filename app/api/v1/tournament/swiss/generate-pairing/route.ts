@@ -47,7 +47,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const playersForEngine: PlayerHistory[] = participants.map((p: any) => ({
+    type ParticipantRow = {
+      player_id?: string; userId?: string; id?: string; score?: unknown;
+      has_received_bye?: unknown; hasReceivedBye?: unknown; previous_opponent_ids?: unknown; opponentsFaced?: unknown;
+    };
+    const playersForEngine: PlayerHistory[] = participants.map((p: ParticipantRow) => ({
       userId: String(p.player_id || p.userId || p.id),
       hasWeeklyPass: true,
       score: typeof p.score === 'number' ? p.score : 0,
@@ -77,9 +81,9 @@ export async function POST(req: Request) {
     if (insertErr) throw insertErr;
 
     return NextResponse.json({ success: true, pairings }, { status: 200 });
-  } catch (error: any) {
+  } catch (error) {
     return NextResponse.json(
-      { error: 'Internal Server Error', details: error.message },
+      { error: 'Internal Server Error', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

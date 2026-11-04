@@ -1,24 +1,33 @@
 'use client';
 
-import OverviewTable from './OverviewTable';
+import OverviewTable, { type DraftEntry, type OverviewPlayer } from './OverviewTable';
 import React, { useState } from 'react';
-import TowerMapGrid from './TowerMapGrid';
-import PerformanceRadar from './PerformanceRadar';
-import DeepAnalyticsBoard from './DeepAnalyticsBoard';
+import PerformanceRadar, { type PerformancePlayer } from './PerformanceRadar';
+import DeepAnalyticsBoard, { type AnalyticsMatchData, type AnalyticsPlayer } from './DeepAnalyticsBoard';
+import type { PlayerKPData } from './KPBreakdownTable';
 
-interface MatchData {
-    overviewPlayers: any[];
-    kpPlayers: any[];
-    performancePlayers: any[];
+/** K-AV-POLISH: ผู้เล่นหนึ่งคนหลังแปลงจาก OpenDota (app/match/[matchId]/page.tsx) — ชุดเดียวใช้ได้ทุกแท็บ */
+export type MatchPlayer = OverviewPlayer & PlayerKPData & PerformancePlayer & AnalyticsPlayer;
+
+export interface MatchData extends AnalyticsMatchData {
+    matchId: string;
+    radiantWin: boolean;
+    duration: number;
+    overviewPlayers: MatchPlayer[];
+    kpPlayers: MatchPlayer[];
+    performancePlayers: MatchPlayer[];
+    players?: MatchPlayer[];
+    draftTimings?: DraftEntry[];
+    radiantTowersKilled?: number;
+    direTowersKilled?: number;
     towerStatusRadiant: number;
     towerStatusDire: number;
     barracksStatusRadiant: number;
     barracksStatusDire: number;
     radiantGoldAdv: number[];
     radiantXpAdv: number[];
-    radiantScore?: number;
-    direScore?: number;
-    [key: string]: any;
+    radiantScore: number;
+    direScore: number;
 }
 
 interface MatchDetailViewProps {
@@ -131,6 +140,7 @@ export default function MatchDetailView({
                                                 <td className="px-3 py-2.5">
                                                     <div className="h-7 w-12 overflow-hidden border border-neutral-700 bg-neutral-900">
                                                         {heroImg ? (
+                                                            // eslint-disable-next-line @next/next/no-img-element -- K-AV-POLISH: รูปจาก CDN ภายนอก ยังไม่มี images.remotePatterns ใน next.config
                                                             <img
                                                                 src={heroImg}
                                                                 alt={p.heroName || 'hero'}

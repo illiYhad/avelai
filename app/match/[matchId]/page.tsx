@@ -1,6 +1,6 @@
 import React from 'react';
 import MatchHeader from './components/MatchHeader';
-import MatchDetailView from './components/MatchDetailView';
+import MatchDetailView, { type MatchData } from './components/MatchDetailView';
 
 // นำเข้าฟังก์ชันดึง Constants จาก OpenDota
 import { getHeroIdToImgMap } from '@/lib/dota/getHeroes';
@@ -19,7 +19,50 @@ const ROLE_MAP: Record<number, string> = {
     132: 'Pos 5',
 };
 
-const FALLBACK_MATCH = {
+// K-AV-POLISH: รูปร่างข้อมูลดิบจาก OpenDota เฉพาะฟิลด์ที่หน้านี้อ่าน
+type OpenDotaPlayer = {
+    player_slot: number;
+    hero_id: number;
+    account_id?: number;
+    personaname?: string;
+    kills: number;
+    deaths: number;
+    assists: number;
+    tower_kills?: number;
+    net_worth?: number;
+    last_hits?: number;
+    denies?: number;
+    gold_per_min?: number;
+    xp_per_min?: number;
+    hero_damage?: number;
+    hero_healing?: number;
+    tower_damage?: number;
+    item_0: number;
+    item_1: number;
+    item_2: number;
+    item_3: number;
+    item_4: number;
+    item_5: number;
+    item_neutral?: number;
+    aghanims_scepter?: number;
+    aghanims_shard?: number;
+};
+type OpenDotaMatch = {
+    match_id?: number;
+    radiant_win?: boolean;
+    duration?: number;
+    radiant_score?: number;
+    dire_score?: number;
+    tower_status_radiant?: number;
+    tower_status_dire?: number;
+    barracks_status_radiant?: number;
+    barracks_status_dire?: number;
+    radiant_gold_adv?: number[];
+    radiant_xp_adv?: number[];
+    players?: OpenDotaPlayer[];
+};
+
+const FALLBACK_MATCH: MatchData = {
     matchId: '8956631986',
     radiantWin: true,
     duration: 2533,
@@ -47,7 +90,7 @@ export default async function MatchDetailPage({
 
     let heroIdToImg: Record<number, string> = {};
     let itemIdToName: Record<number, string> = {};
-    let matchData: any = FALLBACK_MATCH;
+    let matchData: MatchData = FALLBACK_MATCH;
 
     try {
         const [res, heroesDict, itemsDict] = await Promise.all([
@@ -62,12 +105,12 @@ export default async function MatchDetailPage({
         itemIdToName = itemsDict || {};
 
         if (res.ok) {
-            const raw = await res.json();
+            const raw = (await res.json()) as OpenDotaMatch | null;
             if (raw && raw.players) {
-                const radiantPlayers = raw.players.filter((p: any) => p.player_slot < 128);
-                const direPlayers = raw.players.filter((p: any) => p.player_slot >= 128);
+                const radiantPlayers = raw.players.filter((p) => p.player_slot < 128);
+                const direPlayers = raw.players.filter((p) => p.player_slot >= 128);
 
-                const processed = raw.players.map((p: any, idx: number) => {
+                const processed: MatchData['kpPlayers'] = raw.players.map((p, idx) => {
                     const isRadiant = p.player_slot < 128;
                     const isWin = isRadiant ? raw.radiant_win : !raw.radiant_win;
                     const baseKp = Math.max(
@@ -115,10 +158,10 @@ export default async function MatchDetailPage({
                     matchId: raw.match_id?.toString() || matchId,
                     radiantWin: !!raw.radiant_win,
                     duration: raw.duration || 0,
-                    radiantScore: raw.radiant_score ?? radiantPlayers.reduce((s: number, p: any) => s + (p.kills || 0), 0),
-                    direScore: raw.dire_score ?? direPlayers.reduce((s: number, p: any) => s + (p.kills || 0), 0),
-                    radiantTowersKilled: direPlayers.reduce((s: number, p: any) => s + (p.tower_kills || 0), 0),
-                    direTowersKilled: radiantPlayers.reduce((s: number, p: any) => s + (p.tower_kills || 0), 0),
+                    radiantScore: raw.radiant_score ?? radiantPlayers.reduce((s, p) => s + (p.kills || 0), 0),
+                    direScore: raw.dire_score ?? direPlayers.reduce((s, p) => s + (p.kills || 0), 0),
+                    radiantTowersKilled: direPlayers.reduce((s, p) => s + (p.tower_kills || 0), 0),
+                    direTowersKilled: radiantPlayers.reduce((s, p) => s + (p.tower_kills || 0), 0),
                     towerStatusRadiant: raw.tower_status_radiant || 0,
                     towerStatusDire: raw.tower_status_dire || 0,
                     barracksStatusRadiant: raw.barracks_status_radiant || 0,

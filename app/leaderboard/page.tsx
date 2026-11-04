@@ -89,7 +89,7 @@ export default function LeaderboardPage() {
         return () => { supabase.removeChannel(channel) }
     }, [activeTab, supabase])
 
- const renderHexForm = (form: any = ['W', 'W', 'L', 'W', 'W']) => {
+ const renderHexForm = (form: unknown = ['W', 'W', 'L', 'W', 'W']) => {
     let formArray: ('W' | 'L')[] = ['W', 'W', 'L', 'W', 'W'];
     // K-AV-UX4c: ค่าเริ่มต้น W W L W W เป็นข้อมูลสมมติ → ติดชิปเมื่อใช้ค่านี้
     let isSample = true;
@@ -100,7 +100,7 @@ export default function LeaderboardPage() {
       try {
         const parsed = JSON.parse(form);
         if (Array.isArray(parsed)) { formArray = parsed; isSample = false; }
-      } catch (e) {
+      } catch {
         formArray = ['W', 'W', 'L', 'W', 'W'];
       }
     }
@@ -207,6 +207,7 @@ export default function LeaderboardPage() {
                                                 <div className="flex items-center gap-3">
                                                     <div className="relative w-8 h-8 border border-cyan/30 bg-cyan/10 rounded-sm overflow-hidden flex items-center justify-center flex-shrink-0">
                                                         {player.avatar_url ? (
+                                                            // eslint-disable-next-line @next/next/no-img-element -- K-AV-POLISH: รูปจาก CDN ภายนอก ยังไม่มี images.remotePatterns ใน next.config
                                                             <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
                                                         ) : (
                                                             <span className="text-xs text-cyan font-bold uppercase">

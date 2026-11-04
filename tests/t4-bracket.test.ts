@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 
 // K-AV-4: เอนจินสาย SE/DE/Swiss (pure · deterministic) + action สร้างสาย — ไม่มี Math.random ในเอนจิน (เทสใช้ xorshift ที่มี seed)
 

@@ -257,8 +257,8 @@ export default function MonthlyTournamentPage() {
     const teamA = MOCK_LOBBY_PARTICIPANTS.filter((p) => p.team === 'TEAM_A');
     const teamB = MOCK_LOBBY_PARTICIPANTS.filter((p) => p.team === 'TEAM_B');
 
-    const handleMatchClick = (matchId: string) => {
-        console.log('Clicked match ID:', matchId);
+    const handleMatchClick = (_matchId: string) => {
+        // ข้อมูลตัวอย่าง: ยังไม่มีหน้าแมตช์ให้เปิด (K-AV-POLISH เอา console.log ออก)
     };
 
     return (

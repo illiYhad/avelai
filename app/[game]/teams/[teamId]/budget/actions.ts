@@ -1,7 +1,6 @@
 "use server";
 
 // เงินเดือน/งบทีม (K-AV-R เฟส 3 ข้อ 12) — เห็น/แก้ได้เฉพาะ OWNER/MANAGER (RLS + ตรวจซ้ำที่นี่)
-import { revalidatePath } from "next/cache";
 import { getServerDb } from "@/lib/db/server";
 import { getAdminDb } from "@/lib/db/admin";
 import { logAudit } from "@/lib/audit";

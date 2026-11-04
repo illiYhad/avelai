@@ -2,7 +2,6 @@
 
 // K-AV-6: ข้อพิพาท + โทษ — เปิด (หัวหน้าทีม) · รับเรื่อง/ชี้ขาด (REFEREE/ผู้จัด/ADMIN · บังคับ Idempotency-Key) · ออกโทษ · ยกเลิกโทษ (ADMIN)
 // Karma: ไม่เขียนใน T6 — คืนค่า delta (lib/dispute/rules.ts) ให้ T7
-import { revalidatePath } from "next/cache";
 import { logAudit } from "@/lib/audit";
 import { KARMA_DELTA, MAX_REASON_LENGTH, PENALTY_TYPES, canOpenDispute, validatePenalty, validateResolution, type Resolution } from "@/lib/dispute/rules";
 import { advanceBracketAfterMatch } from "@/lib/match/bracket-advance";

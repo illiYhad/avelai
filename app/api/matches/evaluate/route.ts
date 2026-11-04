@@ -16,7 +16,6 @@ export async function POST(request: NextRequest) {
         if (!supabaseUrl || !supabaseServiceKey) {
             return NextResponse.json({ error: 'Supabase credentials missing' }, { status: 500 });
         }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const _supabase = createClient(supabaseUrl, supabaseServiceKey);
         const body = await request.json();
 

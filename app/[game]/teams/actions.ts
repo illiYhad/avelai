@@ -7,7 +7,6 @@
 // - audit_logs ใช้สคีมา 001 ผ่าน lib/audit.ts
 // - notifications ของ Zodiac ไม่มีใน AVELAi → ตัดออก (ระบุในใบตอบ)
 
-import { revalidatePath } from "next/cache";
 import { getServerDb } from "@/lib/db/server";
 import { getAdminDb } from "@/lib/db/admin";
 import { checkRosterEligibility } from "@/lib/team/rosterEligibility";

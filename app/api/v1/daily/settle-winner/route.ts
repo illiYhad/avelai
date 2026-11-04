@@ -1,6 +1,5 @@
 import { FEATURES, FEATURE_DISABLED_MESSAGE } from '@/lib/featureFlags';
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 
 // ================================================================================
 // SYSTEM ARCHITECTURE: MATCHMAKING & TIER EVALUATION ENGINE
@@ -241,11 +240,6 @@ export function calculateDailyFillBonus(isSecondaryFill: boolean): number {
 // 5. NEXT.JS APP ROUTER HTTP HANDLER
 // ============================================================================
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-service-key'
-);
-
 export async function POST(req: Request) {
   if (!FEATURES.payments) {
     return Response.json({ error: FEATURE_DISABLED_MESSAGE }, { status: 503 });
@@ -261,7 +255,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const settlements: DailyRewardSettlementPayload[] = players.map((player: any) => {
+    type SettlePlayerInput = { userId?: unknown; isSecondaryFill?: unknown };
+    const settlements: DailyRewardSettlementPayload[] = players.map((player: SettlePlayerInput) => {
       const isSecondaryFill = Boolean(player.isSecondaryFill);
       const bonusPoints = calculateDailyFillBonus(isSecondaryFill);
 
@@ -281,9 +276,9 @@ export async function POST(req: Request) {
       },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error) {
     return NextResponse.json(
-      { error: 'Internal Server Error', details: error.message },
+      { error: 'Internal Server Error', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

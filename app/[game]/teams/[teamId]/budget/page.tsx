@@ -2,7 +2,7 @@
 import { notFound } from "next/navigation";
 import { getServerDb } from "@/lib/db/server";
 import { BudgetClient, type BudgetItemView } from "./BudgetClient";
-import { gameFromSlug, slugOf } from "@/lib/games";
+import { gameFromSlug } from "@/lib/games";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,6 @@ export default async function TeamBudgetPage({ params }: PageProps) {
   const { game, teamId } = await params;
   const code = gameFromSlug(game);
   if (!code) notFound();
-  const slug = slugOf(code);
   const db = await getServerDb();
 
   if (!db) {

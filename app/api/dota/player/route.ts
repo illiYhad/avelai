@@ -25,7 +25,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ player, matches })
 
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch from OpenDota' }, { status: 500 })
   }
 }

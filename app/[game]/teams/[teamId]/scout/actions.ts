@@ -3,7 +3,6 @@
 // สเกาต์ผู้เล่น + ดึงข้อมูลจาก Liquipedia (K-AV-R เฟส 3 ข้อ 13)
 // กติกา Liquipedia API: จำกัด 60 ครั้ง/ชม. (นับทั้งระบบจากตาราง liquipedia_requests)
 // + User-Agent ระบุตัวตน + cache ผลใน DB · ใช้ได้เฉพาะทีมที่เปิด private_beta
-import { revalidatePath } from "next/cache";
 import { getServerDb } from "@/lib/db/server";
 import { getAdminDb } from "@/lib/db/admin";
 import { logAudit } from "@/lib/audit";

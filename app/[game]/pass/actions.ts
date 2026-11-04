@@ -1,7 +1,6 @@
 "use server";
 
 // K-AV-3: ซื้อ Weekly Pass — ผู้ใช้โอน PromptPay ของแพลตฟอร์ม (env PLATFORM_PROMPTPAY_ID) แล้วอัปสลิป · ADMIN ยืนยันที่ /admin/payments
-import { revalidatePath } from "next/cache";
 import { logAudit } from "@/lib/audit";
 import { isGameCode } from "@/lib/games";
 import { PASS_PRICE_THB } from "@/lib/passes";

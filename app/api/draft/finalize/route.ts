@@ -45,8 +45,6 @@ export async function POST(req: Request) {
             },
         };
 
-        console.log('[AVELAi Webhook] Dispatching payload to Steam Bot Manager:', botPayload);
-
         let botResponse = { success: true, simulated: true, lobbyId: 'MOCK_LOBBY_9981' };
 
         if (process.env.STEAM_BOT_SERVICE_URL) {

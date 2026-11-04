@@ -57,9 +57,9 @@ export async function POST(req: Request) {
       (s) => s.side === 'WINNER' || s.side === 'LOSER' || s.slot_id.startsWith('WB_') || s.slot_id.startsWith('LB_')
     );
 
-    let updatedDbSlots: any[] = [];
+    let updatedDbSlots: Record<string, unknown>[] = [];
     let gfResetTriggered = false;
-    let gfResetMatchPayload: any = null;
+    let gfResetMatchPayload: Record<string, unknown> | null = null;
 
     if (isDoubleElimination) {
       // --- จัดการเคส Double Elimination (Monthly) ---
@@ -208,10 +208,10 @@ export async function POST(req: Request) {
       },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error('[/api/v1/tournament/bracket/report-result Error]:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal Server Error' },
+      { error: (error instanceof Error && error.message) || 'Internal Server Error' },
       { status: 500 }
     );
   }

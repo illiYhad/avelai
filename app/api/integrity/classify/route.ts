@@ -1,6 +1,5 @@
 ﻿import { FEATURES, FEATURE_DISABLED_MESSAGE } from '@/lib/featureFlags';
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,8 +15,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Supabase credentials missing' }, { status: 500 });
     }
 
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-    const body = await req.json();
+    await req.json();
 
     // Integrity Classification Logic...
     return NextResponse.json({ success: true });

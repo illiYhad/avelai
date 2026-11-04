@@ -68,7 +68,7 @@ export default function TowerMapGrid({
 
     // Auto-play Animation
     useEffect(() => {
-        let interval: any;
+        let interval: ReturnType<typeof setInterval> | undefined;
         if (isPlaying) {
             interval = setInterval(() => {
                 setCurrentMinute((prev) => {

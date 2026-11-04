@@ -5,7 +5,7 @@ import { gameLabel, teamGame } from "@/lib/games";
 import { isActiveTeamMember } from "@/lib/team/access";
 import { TeamRestricted } from "../TeamRestricted";
 import { ScoutClient, type ProspectView } from "./ScoutClient";
-import { gameFromSlug, slugOf } from "@/lib/games";
+import { gameFromSlug } from "@/lib/games";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,6 @@ export default async function TeamScoutPage({ params }: PageProps) {
   const { game, teamId } = await params;
   const code = gameFromSlug(game);
   if (!code) notFound();
-  const slug = slugOf(code);
   const db = await getServerDb();
 
   if (!db) {
