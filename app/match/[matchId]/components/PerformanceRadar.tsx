@@ -1,5 +1,6 @@
 'use client';
 
+import { CHART_COLORS, POSITION_COLORS, POSITION_FALLBACK } from '@/lib/ui/colors';
 import React, { useState } from 'react';
 import {
     Radar,
@@ -37,13 +38,7 @@ interface PerformanceRadarProps {
     heroIdToImg?: Record<number, string>;
 }
 
-const POS_COLORS: Record<string, string> = {
-    'Pos 1': '#E8384F',
-    'Pos 2': '#2E9BFF',
-    'Pos 3': '#39FF6A',
-    'Pos 4': '#D63CE8',
-    'Pos 5': '#C8CDD4',
-};
+const POS_COLORS = POSITION_COLORS; // K-AV-POLISH: ไฟล์เดียว lib/ui/colors.ts
 
 const HERO_DATA_MAP: Record<number, { name: string; shortName: string }> = {
     1: { name: 'Anti-Mage', shortName: 'antimage' },
@@ -153,7 +148,7 @@ export default function PerformanceRadar({
     const renderVerticalPlayerCard = (p: PerformancePlayer) => {
         const isRadiant = (p.playerSlot || 0) < 128;
         const isSelected = selectedSlots.includes(p.playerSlot);
-        const posColor = POS_COLORS[p.role] ?? '#C8CDD4';
+        const posColor = POS_COLORS[p.role] ?? POSITION_FALLBACK;
         const heroImg = getHeroImg(p);
         const heroName = getHeroDisplayName(p);
 
@@ -163,9 +158,9 @@ export default function PerformanceRadar({
                 onClick={() => togglePlayer(p.playerSlot)}
                 className={`relative w-full flex items-center justify-between gap-2.5 border p-2 text-xs font-bold transition-all rounded-xs text-left overflow-hidden ${isSelected
                         ? isRadiant
-                            ? 'border-[#00D4FF] bg-[#00D4FF]/15 text-white shadow-[0_0_12px_rgba(0,212,255,0.25)]'
-                            : 'border-[#C9A84C] bg-[#C9A84C]/15 text-white shadow-[0_0_12px_rgba(201,168,76,0.25)]'
-                        : 'border-neutral-800/80 bg-[#0B0B10]/80 text-neutral-500 hover:border-neutral-700 hover:text-neutral-300'
+                            ? 'border-cyan bg-cyan/15 text-white shadow-glow-cyan'
+                            : 'border-gold bg-gold/15 text-white shadow-glow-gold'
+                        : 'border-neutral-800/80 $1-void/80 text-neutral-500 hover:border-neutral-700 hover:text-neutral-300'
                     }`}
             >
                 {/* แถบสีระบุ Role ด้านข้างการ์ด */}
@@ -200,11 +195,11 @@ export default function PerformanceRadar({
     };
 
     const renderPerformanceTable = (teamPlayers: PerformancePlayer[], isRadiant: boolean) => {
-        const accentColor = isRadiant ? '#00D4FF' : '#C9A84C';
+        const accentColor = isRadiant ? CHART_COLORS.cyan : CHART_COLORS.gold;
 
         return (
-            <div className="border border-neutral-800 bg-[#111118] shadow-xl">
-                <div className="flex items-center justify-between border-b border-neutral-800 bg-[#0A0A0F] px-4 py-2">
+            <div className="border border-neutral-800 bg-surface-2 shadow-xl">
+                <div className="flex items-center justify-between border-b border-neutral-800 bg-void px-4 py-2">
                     <span className="font-orbitron text-xs font-bold uppercase tracking-wider" style={{ color: accentColor }}>
                         {isRadiant ? 'THE RADIANT PERFORMANCE' : 'THE DIRE PERFORMANCE'}
                     </span>
@@ -212,7 +207,7 @@ export default function PerformanceRadar({
 
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs font-mono">
-                        <thead className="border-b border-neutral-800/80 bg-[#0D0D14] text-xs text-neutral-400 font-orbitron">
+                        <thead className="border-b border-neutral-800/80 bg-void text-xs text-neutral-400 font-orbitron">
                             <tr>
                                 <th className="px-4 py-2.5">HERO / PLAYER</th>
                                 <th className="px-4 py-2.5 text-center">FIGHT PART %</th>
@@ -228,7 +223,7 @@ export default function PerformanceRadar({
                                 const teamKills = isRadiant ? (radiantScore || 1) : (direScore || 1);
                                 const fightPart = Math.min(100, (((p.kills + p.assists) / teamKills) * 100) || 0).toFixed(1);
                                 const kpPerDeath = ((p.totalKp || 0) / Math.max(1, p.deaths)).toFixed(1);
-                                const posColor = POS_COLORS[p.role] ?? '#C8CDD4';
+                                const posColor = POS_COLORS[p.role] ?? POSITION_FALLBACK;
                                 const heroImg = getHeroImg(p);
                                 const heroName = getHeroDisplayName(p);
                                 const towerCount = getTowerKills(p);
@@ -268,7 +263,7 @@ export default function PerformanceRadar({
                                         <td className="px-4 py-2 text-center text-yellow-400 font-bold">
                                             🏯 {towerCount}
                                         </td>
-                                        <td className="px-4 py-2 text-right font-bold text-[#00D4FF]">
+                                        <td className="px-4 py-2 text-right font-bold text-cyan">
                                             {p.totalKp ? p.totalKp.toFixed(1) : '0.0'}
                                         </td>
                                     </tr>
@@ -284,9 +279,9 @@ export default function PerformanceRadar({
     return (
         <div className="space-y-8 font-mono pb-12">
             {/* ── 3-COLUMN COCKPIT RADAR PANEL ── */}
-            <div className="border border-[#00D4FF]/30 bg-[#111118] p-5 shadow-[0_0_25px_rgba(0,212,255,0.05)]">
+            <div className="border border-cyan/30 bg-surface-2 p-5 shadow-glow-cyan">
                 <div className="flex flex-wrap items-center justify-between gap-4 border-b border-neutral-800 pb-3 mb-4">
-                    <h3 className="font-orbitron text-xs font-bold uppercase tracking-wider text-[#00D4FF]">
+                    <h3 className="font-orbitron text-xs font-bold uppercase tracking-wider text-cyan">
                         ⚙️ TACTICAL RADAR INTEL (CLICK TO COMPARE)
                     </h3>
                     <span className="text-xs text-neutral-500 font-mono">
@@ -297,9 +292,9 @@ export default function PerformanceRadar({
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
                     {/* LEFT COLUMN: RADIANT SQUAD (Pos 1-5) */}
                     <div className="lg:col-span-3 space-y-2">
-                        <div className="border-b border-[#00D4FF]/30 pb-1 text-xs font-orbitron font-bold text-[#00D4FF] flex items-center justify-between">
+                        <div className="border-b border-cyan/30 pb-1 text-xs font-orbitron font-bold text-cyan flex items-center justify-between">
                             <span>THE RADIANT</span>
-                            <span className="text-xs text-[#00D4FF]/70 font-mono">SOLID LINE</span>
+                            <span className="text-xs text-cyan/70 font-mono">SOLID LINE</span>
                         </div>
                         <div className="space-y-1.5">
                             {radiantPlayers.map((p) => renderVerticalPlayerCard(p))}
@@ -311,21 +306,21 @@ export default function PerformanceRadar({
                         <div className="h-[460px] w-full max-w-[500px]">
                             <ResponsiveContainer width="100%" height="100%">
                                 <RadarChart cx="50%" cy="50%" outerRadius="75%" data={chartData}>
-                                    <PolarGrid stroke="#22222E" />
-                                    <PolarAngleAxis dataKey="subject" stroke="#888888" fontSize={11} />
-                                    <PolarRadiusAxis stroke="#333333" fontSize={9} domain={[0, 100]} />
+                                    <PolarGrid stroke={CHART_COLORS.grid} />
+                                    <PolarAngleAxis dataKey="subject" stroke={CHART_COLORS.muted} fontSize={11} />
+                                    <PolarRadiusAxis stroke={CHART_COLORS.grid} fontSize={9} domain={[0, 100]} />
                                     <Tooltip
                                         contentStyle={{
-                                            backgroundColor: '#0D0D12',
+                                            backgroundColor: CHART_COLORS.panel,
                                             borderColor: '#00D4FF30',
-                                            color: '#FFF',
+                                            color: CHART_COLORS.ink,
                                             fontSize: '11px',
                                         }}
                                     />
                                     {sortedPlayers.map((p) => {
                                         if (!selectedSlots.includes(p.playerSlot)) return null;
                                         const isRadiant = (p.playerSlot || 0) < 128;
-                                        const roleColor = POS_COLORS[p.role] ?? '#C8CDD4';
+                                        const roleColor = POS_COLORS[p.role] ?? POSITION_FALLBACK;
 
                                         return (
                                             <Radar
@@ -347,11 +342,11 @@ export default function PerformanceRadar({
                         {/* Radar Legend Footer */}
                         <div className="mt-2 flex flex-wrap items-center justify-center gap-4 text-xs text-neutral-400 font-mono">
                             <span className="flex items-center gap-1.5">
-                                <span className="inline-block w-4 h-0.5 bg-[#00D4FF]"></span>
+                                <span className="inline-block w-4 h-0.5 bg-cyan"></span>
                                 RADIANT: Solid Line
                             </span>
                             <span className="flex items-center gap-1.5">
-                                <span className="inline-block w-4 h-0.5 border-b border-dashed border-[#C9A84C]"></span>
+                                <span className="inline-block w-4 h-0.5 border-b border-dashed border-gold"></span>
                                 DIRE: Dashed Line
                             </span>
                         </div>
@@ -359,9 +354,9 @@ export default function PerformanceRadar({
 
                     {/* RIGHT COLUMN: DIRE SQUAD (Pos 1-5) */}
                     <div className="lg:col-span-3 space-y-2">
-                        <div className="border-b border-[#C9A84C]/30 pb-1 text-xs font-orbitron font-bold text-[#C9A84C] flex items-center justify-between">
+                        <div className="border-b border-gold/30 pb-1 text-xs font-orbitron font-bold text-gold flex items-center justify-between">
                             <span>THE DIRE</span>
-                            <span className="text-xs text-[#C9A84C]/70 font-mono">DASHED LINE</span>
+                            <span className="text-xs text-gold/70 font-mono">DASHED LINE</span>
                         </div>
                         <div className="space-y-1.5">
                             {direPlayers.map((p) => renderVerticalPlayerCard(p))}

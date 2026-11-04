@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
+import { CHART_COLORS } from '@/lib/ui/colors';
 import React from 'react';
 
 export interface OverviewPlayer {
@@ -131,11 +132,11 @@ export default function OverviewTable({
     const renderTeamTable = (teamPlayers: OverviewPlayer[], isRadiant: boolean) => {
         const summary = calculateSum(teamPlayers);
         const isWinner = isRadiant ? radiantWin : !radiantWin;
-        const accentColor = isRadiant ? '#00D4FF' : '#C9A84C';
+        const accentColor = isRadiant ? CHART_COLORS.cyan : CHART_COLORS.gold;
 
         return (
-            <div className="border border-neutral-800 bg-[#111118] font-mono shadow-xl">
-                <div className="flex items-center justify-between border-b border-neutral-800 bg-[#0A0A0F] px-4 py-2.5">
+            <div className="border border-neutral-800 bg-surface-2 font-mono shadow-xl">
+                <div className="flex items-center justify-between border-b border-neutral-800 bg-void px-4 py-2.5">
                     <div className="flex items-center gap-2">
                         <span className="font-orbitron text-xs font-bold uppercase tracking-wider" style={{ color: accentColor }}>
                             {isRadiant ? 'THE RADIANT' : 'THE DIRE'}
@@ -150,11 +151,11 @@ export default function OverviewTable({
 
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
-                        <thead className="border-b border-neutral-800/80 bg-[#0D0D14] text-xs text-neutral-400 font-orbitron">
+                        <thead className="border-b border-neutral-800/80 bg-void text-xs text-neutral-400 font-orbitron">
                             <tr>
                                 <th className="px-4 py-2.5">HERO / PLAYER</th>
                                 <th className="px-4 py-2.5 text-center">K / D / A</th>
-                                <th className="px-4 py-2.5 text-right text-[#C9A84C]">NET</th>
+                                <th className="px-4 py-2.5 text-right text-gold">NET</th>
                                 <th className="px-4 py-2.5 text-center">LH / DN</th>
                                 <th className="px-4 py-2.5 text-center">GPM / XPM</th>
                                 <th className="px-4 py-2.5 text-right">DMG</th>
@@ -197,7 +198,7 @@ export default function OverviewTable({
                                             <span className="text-neutral-400">{p.assists}</span>
                                         </td>
 
-                                        <td className="px-4 py-2 text-right font-bold text-[#C9A84C]">
+                                        <td className="px-4 py-2 text-right font-bold text-gold">
                                             {formatNum(p.netWorth)}
                                         </td>
 
@@ -229,7 +230,7 @@ export default function OverviewTable({
                                                         return (
                                                             <div
                                                                 key={itemIdx}
-                                                                className="flex h-6 w-8 items-center justify-center overflow-hidden border border-neutral-800/80 bg-[#0A0A0F]"
+                                                                className="flex h-6 w-8 items-center justify-center overflow-hidden border border-neutral-800/80 bg-void"
                                                             >
                                                                 {itemUrl ? (
                                                                     <img
@@ -246,7 +247,7 @@ export default function OverviewTable({
                                                     })}
                                                 </div>
 
-                                                <div className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-neutral-700 bg-[#0A0A0F]">
+                                                <div className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-neutral-700 bg-void">
                                                     {getItemUrl(p.neutralItem) ? (
                                                         <img
                                                             src={getItemUrl(p.neutralItem)}
@@ -263,7 +264,7 @@ export default function OverviewTable({
                                                     <span
                                                         title="Aghanim's Scepter"
                                                         className={`px-1 text-xs font-bold rounded-sm border ${hasScepter
-                                                                ? 'border-[#00D4FF] bg-[#00D4FF]/20 text-[#00D4FF] shadow-[0_0_6px_#00D4FF]'
+                                                                ? 'border-cyan bg-cyan/20 text-cyan shadow-glow-cyan'
                                                                 : 'border-neutral-800 bg-neutral-900/40 text-neutral-700'
                                                             }`}
                                                     >
@@ -272,7 +273,7 @@ export default function OverviewTable({
                                                     <span
                                                         title="Aghanim's Shard"
                                                         className={`px-1 text-xs font-bold rounded-sm border ${hasShard
-                                                                ? 'border-[#C9A84C] bg-[#C9A84C]/20 text-[#C9A84C] shadow-[0_0_6px_#C9A84C]'
+                                                                ? 'border-gold bg-gold/20 text-gold shadow-glow-gold'
                                                                 : 'border-neutral-800 bg-neutral-900/40 text-neutral-700'
                                                             }`}
                                                     >
@@ -286,13 +287,13 @@ export default function OverviewTable({
                             })}
                         </tbody>
 
-                        <tfoot className="border-t border-neutral-800 bg-[#0A0A0F] font-bold text-xs">
+                        <tfoot className="border-t border-neutral-800 bg-void font-bold text-xs">
                             <tr>
                                 <td className="px-4 py-2.5 text-neutral-400 font-orbitron tracking-wider">TOTAL / AVG</td>
                                 <td className="px-4 py-2.5 text-center text-white">
                                     {summary.kills} / <span className="text-rose-500">{summary.deaths}</span> / {summary.assists}
                                 </td>
-                                <td className="px-4 py-2.5 text-right text-[#C9A84C]">{formatNum(summary.netWorth)}</td>
+                                <td className="px-4 py-2.5 text-right text-gold">{formatNum(summary.netWorth)}</td>
                                 <td className="px-4 py-2.5 text-center text-neutral-400">{summary.lastHits} / {summary.denies}</td>
                                 <td className="px-4 py-2.5 text-center text-neutral-400">{summary.gpm} / {summary.xpm}</td>
                                 <td className="px-4 py-2.5 text-right text-neutral-200">{formatNum(summary.heroDamage)}</td>
@@ -319,7 +320,7 @@ export default function OverviewTable({
                     key={idx}
                     title={`${draft.is_pick ? 'PICK' : 'BAN'} #${draft.order}: ${heroName}`}
                     className={`relative flex items-center overflow-hidden border px-2 py-1 rounded-xs transition-all hover:scale-105 ${draft.is_pick
-                            ? 'border-emerald-500/60 bg-emerald-950/40 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.15)]'
+                            ? 'border-emerald-500/60 bg-emerald-950/40 text-emerald-400 shadow-[0_0_$1px_var(--color-win)]'
                             : 'border-rose-500/50 bg-rose-950/30 text-rose-400 grayscale contrast-125'
                         }`}
                 >
@@ -365,12 +366,12 @@ export default function OverviewTable({
         <div className="space-y-6 pb-12">
             {renderTeamTable(radiantPlayers, true)}
 
-            <div className="border border-neutral-800 bg-[#0D0D14] p-3 shadow-inner space-y-2">
+            <div className="border border-neutral-800 bg-void p-3 shadow-inner space-y-2">
                 <div className="text-xs font-orbitron font-bold text-neutral-500 pb-1 border-b border-neutral-800/60">
                     DRAFT PICKS & BANS TIMELINE
                 </div>
-                {renderDraftRow('RADIANT DRAFT', radiantDrafts, '#00D4FF')}
-                {renderDraftRow('DIRE DRAFT', direDrafts, '#C9A84C')}
+                {renderDraftRow('RADIANT DRAFT', radiantDrafts, CHART_COLORS.cyan)}
+                {renderDraftRow('DIRE DRAFT', direDrafts, CHART_COLORS.gold)}
             </div>
 
             {renderTeamTable(direPlayers, false)}

@@ -26,13 +26,13 @@ export default function TabNav({
         <div className="mb-6 space-y-2">
             {/* 🔹 Loading / Decrypting Terminal line */}
             {isLoading && (
-                <div className="font-mono text-xs text-[#00D4FF] animate-pulse">
+                <div className="font-mono text-xs text-cyan animate-pulse">
                     {'> DECRYPTING MATCH DATA...'}
                 </div>
             )}
 
             {/* 🔹 Navigation Tabs */}
-            <div className="flex border-b border-neutral-800 bg-[#111118] p-1 gap-1 overflow-x-auto">
+            <div className="flex border-b border-neutral-800 bg-surface-2 p-1 gap-1 overflow-x-auto">
                 {tabs.map((tab) => {
                     const isActive = activeTab === tab.id;
                     return (
@@ -40,7 +40,7 @@ export default function TabNav({
                             key={tab.id}
                             onClick={() => onTabChange(tab.id)}
                             className={`flex items-center gap-2 px-4 py-2 text-xs font-orbitron font-bold transition-all whitespace-nowrap ${isActive
-                                ? 'text-[#00D4FF] border-b-2 border-[#00D4FF] bg-[#00D4FF]/10'
+                                ? 'text-cyan border-b-2 border-cyan bg-cyan/10'
                                 : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
                                 }`}
                         >

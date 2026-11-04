@@ -132,8 +132,8 @@ export default function WaitingRoomPage({ params }: PageProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#07090E] text-[#00D4FF] flex flex-col items-center justify-center font-mono space-y-4">
-        <span className="w-10 h-10 rounded-full border-2 border-[#00D4FF] border-t-transparent animate-spin" />
+      <div className="min-h-screen bg-void text-cyan flex flex-col items-center justify-center font-mono space-y-4">
+        <span className="w-10 h-10 rounded-full border-2 border-cyan border-t-transparent animate-spin" />
         <p className="tracking-widest uppercase text-xs animate-pulse">Syncing Cyber Holo-Deck Protocol...</p>
       </div>
     );
@@ -141,7 +141,7 @@ export default function WaitingRoomPage({ params }: PageProps) {
 
   if (error && !lobbyData) {
     return (
-      <div className="min-h-screen bg-[#07090E] text-rose-400 flex flex-col items-center justify-center font-mono space-y-4">
+      <div className="min-h-screen bg-void text-rose-400 flex flex-col items-center justify-center font-mono space-y-4">
         <p className="tracking-widest uppercase font-bold text-xs">⚠️ Connection Error: {error}</p>
         <button onClick={() => router.push('/dashboard')} className="px-6 py-2 border border-rose-500/50 hover:bg-rose-500/10 text-white rounded-lg text-xs tracking-widest uppercase transition-all">
           ← Return to Dashboard
@@ -155,8 +155,8 @@ export default function WaitingRoomPage({ params }: PageProps) {
   const teamB = formation.teamB || [];
 
   return (
-    <div className="min-h-screen bg-[#07090E] text-white pt-24 pb-12 px-4 md:px-8 flex flex-col justify-between font-mono selection:bg-[#00D4FF] selection:text-black">
-      <div className="absolute inset-0 bg-[radial-gradient(#00D4FF_1px,transparent_1px)] bg-size-[28px_28px] opacity-10 pointer-events-none" />
+    <div className="min-h-screen bg-void text-white pt-24 pb-12 px-4 md:px-8 flex flex-col justify-between font-mono selection:bg-cyan selection:text-black">
+      <div className="absolute inset-0 bg-[radial-gradient(var(--color-cyan)_1px,transparent_1px)] bg-size-[28px_28px] opacity-10 pointer-events-none" />
 
       <div className="w-full max-w-7xl mx-auto space-y-6 z-10">
         
@@ -164,18 +164,18 @@ export default function WaitingRoomPage({ params }: PageProps) {
         <header className="flex flex-col md:flex-row items-center justify-between border-b border-slate-800 pb-4 gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#00D4FF] animate-ping" />
-              <span className="text-[#00D4FF] text-xs tracking-widest uppercase font-bold">CYBER HOLO-DECK 1.2</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-cyan animate-ping" />
+              <span className="text-cyan text-xs tracking-widest uppercase font-bold">CYBER HOLO-DECK 1.2</span>
             </div>
             <h1 className="text-2xl md:text-3xl font-black tracking-wider text-white mt-1">
               10-MAN INTEGRITY SHOWCASE
             </h1>
           </div>
           
-          <div className="flex items-center gap-4 bg-slate-950 border border-[#C9A84C]/40 px-5 py-2.5 rounded-xl shadow-[0_0_20px_rgba(201,168,76,0.15)]">
+          <div className="flex items-center gap-4 bg-slate-950 border border-gold/40 px-5 py-2.5 rounded-xl shadow-glow-gold">
             <div className="text-right">
               <div className="text-xs text-zinc-500 uppercase tracking-widest">LOBBY ID</div>
-              <div className="text-[#C9A84C] font-black text-base tracking-widest">{lobbyId}</div>
+              <div className="text-gold font-black text-base tracking-widest">{lobbyId}</div>
             </div>
             <div className="h-7 w-px bg-slate-800" />
             <div className="text-left">
@@ -190,7 +190,7 @@ export default function WaitingRoomPage({ params }: PageProps) {
           <button 
             onClick={() => setActiveTab('lobby')} 
             className={`px-4 py-2 text-xs font-bold tracking-widest rounded-t-lg transition-colors cursor-pointer ${
-              activeTab === 'lobby' ? 'bg-[#00D4FF]/20 text-[#00D4FF] border-b-2 border-[#00D4FF]' : 'text-zinc-500 hover:text-zinc-300'
+              activeTab === 'lobby' ? 'bg-cyan/20 text-cyan border-b-2 border-cyan' : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
             VERSUS SHOWCASE (5v5)
@@ -198,7 +198,7 @@ export default function WaitingRoomPage({ params }: PageProps) {
           <button 
             onClick={() => setActiveTab('store')} 
             className={`px-4 py-2 text-xs font-bold tracking-widest rounded-t-lg transition-colors cursor-pointer ${
-              activeTab === 'store' ? 'bg-[#C9A84C]/20 text-[#C9A84C] border-b-2 border-[#C9A84C]' : 'text-zinc-500 hover:text-zinc-300'
+              activeTab === 'store' ? 'bg-gold/20 text-gold border-b-2 border-gold' : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
             REWARDS STORE
@@ -210,10 +210,10 @@ export default function WaitingRoomPage({ params }: PageProps) {
           <main className="space-y-6">
             
             {/* TEAM RADIANT */}
-            <section className="bg-slate-950/80 border border-[#00D4FF]/40 p-5 rounded-2xl shadow-2xl space-y-3">
-              <div className="flex items-center justify-between border-b border-[#00D4FF]/20 pb-2">
-                <h2 className="text-[#00D4FF] font-black text-sm tracking-widest flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-[#00D4FF]"/> TEAM RADIANT (ORIGIN C1)
+            <section className="bg-slate-950/80 border border-cyan/40 p-5 rounded-2xl shadow-2xl space-y-3">
+              <div className="flex items-center justify-between border-b border-cyan/20 pb-2">
+                <h2 className="text-cyan font-black text-sm tracking-widest flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-cyan"/> TEAM RADIANT (ORIGIN C1)
                 </h2>
                 <span className="text-xs text-zinc-400">STATUS: <b className="text-white">5/5 DECK LOCKED</b></span>
               </div>
@@ -237,18 +237,18 @@ export default function WaitingRoomPage({ params }: PageProps) {
 
             {/* VS Divider */}
             <div className="flex items-center justify-center gap-4 my-2">
-              <div className="flex-1 h-px bg-linear-to-r from-transparent via-[#00D4FF]/40 to-transparent" />
-              <div className="w-11 h-11 rounded-full border-2 border-[#C9A84C] bg-slate-950 flex items-center justify-center font-black text-sm text-[#C9A84C] shadow-[0_0_20px_rgba(201,168,76,0.4)] animate-pulse">
+              <div className="flex-1 h-px bg-linear-to-r from-transparent via-cyan/40 to-transparent" />
+              <div className="w-11 h-11 rounded-full border-2 border-gold bg-slate-950 flex items-center justify-center font-black text-sm text-gold shadow-glow-gold animate-pulse">
                 VS
               </div>
-              <div className="flex-1 h-px bg-linear-to-r from-transparent via-[#C9A84C]/40 to-transparent" />
+              <div className="flex-1 h-px bg-linear-to-r from-transparent via-gold/40 to-transparent" />
             </div>
 
             {/* TEAM DIRE */}
-            <section className="bg-slate-950/80 border border-[#C9A84C]/40 p-5 rounded-2xl shadow-2xl space-y-3">
-              <div className="flex items-center justify-between border-b border-[#C9A84C]/20 pb-2">
-                <h2 className="text-[#C9A84C] font-black text-sm tracking-widest flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-[#C9A84C]"/> TEAM DIRE (ORIGIN C4)
+            <section className="bg-slate-950/80 border border-gold/40 p-5 rounded-2xl shadow-2xl space-y-3">
+              <div className="flex items-center justify-between border-b border-gold/20 pb-2">
+                <h2 className="text-gold font-black text-sm tracking-widest flex items-center gap-2">
+                  <Flame className="w-4 h-4 text-gold"/> TEAM DIRE (ORIGIN C4)
                 </h2>
                 <span className="text-xs text-zinc-400">STATUS: <b className="text-white">5/5 DECK LOCKED</b></span>
               </div>
@@ -270,10 +270,10 @@ export default function WaitingRoomPage({ params }: PageProps) {
             </section>
           </main>
         ) : (
-          <main className="bg-slate-950 border border-[#C9A84C]/30 rounded-2xl p-6 shadow-2xl space-y-6">
-            <div className="flex justify-between items-center bg-slate-900 p-4 rounded-xl border border-[#C9A84C]/30">
+          <main className="bg-slate-950 border border-gold/30 rounded-2xl p-6 shadow-2xl space-y-6">
+            <div className="flex justify-between items-center bg-slate-900 p-4 rounded-xl border border-gold/30">
               <div className="text-zinc-400 text-xs">AVAILABLE BALANCE</div>
-              <div className="text-2xl font-black text-[#C9A84C] flex items-center gap-2">
+              <div className="text-2xl font-black text-gold flex items-center gap-2">
                 <Coins className="w-6 h-6"/> 450 PTS
               </div>
             </div>
@@ -285,7 +285,7 @@ export default function WaitingRoomPage({ params }: PageProps) {
                     <h3 className="text-sm font-bold text-white">{item.name}</h3>
                     <p className="text-xs text-zinc-400 mt-1">{item.description}</p>
                   </div>
-                  <button className="mt-4 w-full py-2.5 bg-[#C9A84C] text-slate-950 text-xs font-black rounded-lg hover:bg-amber-400 transition-colors cursor-pointer">
+                  <button className="mt-4 w-full py-2.5 bg-gold text-slate-950 text-xs font-black rounded-lg hover:bg-amber-400 transition-colors cursor-pointer">
                     REDEEM ({item.costRewardPoints} PTS)
                   </button>
                 </div>
@@ -305,11 +305,11 @@ export default function WaitingRoomPage({ params }: PageProps) {
 
           <div className="flex items-center gap-4">
             <span className="text-xs text-zinc-400">
-              ROSTERS: <b className="text-[#00D4FF]">10/10 READY</b>
+              ROSTERS: <b className="text-cyan">10/10 READY</b>
             </span>
             <button 
               onClick={() => router.push(`/match/${lobbyId || 'match_01'}`)}
-              className="px-8 py-3 bg-[#00D4FF] hover:bg-[#00D4FF]/80 text-slate-950 font-black text-xs tracking-widest uppercase rounded-xl shadow-[0_0_25px_rgba(0,212,255,0.5)] transition-all hover:scale-105 active:scale-95 flex items-center gap-2 cursor-pointer"
+              className="px-8 py-3 bg-cyan hover:bg-cyan/80 text-slate-950 font-black text-xs tracking-widest uppercase rounded-xl shadow-glow-cyan transition-all hover:scale-105 active:scale-95 flex items-center gap-2 cursor-pointer"
             >
               <Zap className="w-4 h-4 fill-current"/> INITIALIZE MATCH
             </button>

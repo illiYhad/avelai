@@ -1,5 +1,6 @@
 'use client';
 
+import { CHART_COLORS } from '@/lib/ui/colors';
 import React, { useState } from 'react';
 import {
     ResponsiveContainer,
@@ -35,7 +36,7 @@ export default function AdvantageGraph({ goldAdv = [], xpAdv = [] }: AdvantageGr
 
     if (maxLength === 0) {
         return (
-            <div className="border border-[#00D4FF]/30 bg-[#111118] p-8 text-center font-mono">
+            <div className="border border-cyan/30 bg-surface-2 p-8 text-center font-mono">
                 <p className="text-xs text-neutral-400">
                     TACTICAL DATA UNAVAILABLE FOR THIS MATCH
                 </p>
@@ -55,19 +56,19 @@ export default function AdvantageGraph({ goldAdv = [], xpAdv = [] }: AdvantageGr
     };
 
     return (
-        <div className="border border-[#00D4FF]/30 bg-[#111118] p-4 font-mono">
+        <div className="border border-cyan/30 bg-surface-2 p-4 font-mono">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-neutral-800 pb-2">
-                <h3 className="font-orbitron text-xs font-bold uppercase tracking-wider text-[#00D4FF]">
+                <h3 className="font-orbitron text-xs font-bold uppercase tracking-wider text-cyan">
                     📈 TEAM ADVANTAGE TIMELINE
                 </h3>
 
-                <div className="flex gap-1 bg-[#0A0A0F] p-1 border border-neutral-800">
+                <div className="flex gap-1 bg-void p-1 border border-neutral-800">
                     {(['gold', 'xp', 'both'] as const).map((mode) => (
                         <button
                             key={mode}
                             onClick={() => setViewMode(mode)}
                             className={`px-3 py-1 text-xs font-orbitron font-bold uppercase transition-all cursor-pointer ${viewMode === mode
-                                    ? 'bg-[#00D4FF] text-black font-bold'
+                                    ? 'bg-cyan text-black font-bold'
                                     : 'text-neutral-400 hover:text-white'
                                 }`}
                         >
@@ -80,21 +81,21 @@ export default function AdvantageGraph({ goldAdv = [], xpAdv = [] }: AdvantageGr
             <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                        <XAxis dataKey="minute" stroke="#666666" fontSize={10} tickLine={false} unit="m" />
-                        <YAxis stroke="#666666" fontSize={10} tickLine={false} tickFormatter={formatYAxis} />
-                        <ReferenceLine y={0} stroke="#333333" strokeDasharray="3 3" />
+                        <XAxis dataKey="minute" stroke={CHART_COLORS.muted} fontSize={10} tickLine={false} unit="m" />
+                        <YAxis stroke={CHART_COLORS.muted} fontSize={10} tickLine={false} tickFormatter={formatYAxis} />
+                        <ReferenceLine y={0} stroke={CHART_COLORS.grid} strokeDasharray="3 3" />
 
                         <Tooltip
                             content={(props) => {
                                 const { active, payload, label } = props as unknown as CustomTooltipProps;
                                 if (active && payload && payload.length) {
                                     return (
-                                        <div className="border border-[#00D4FF]/50 bg-[#0A0A0F] p-2 text-xs font-mono shadow-lg">
+                                        <div className="border border-cyan/50 bg-void p-2 text-xs font-mono shadow-lg">
                                             <p className="text-neutral-400">Time: {label}:00</p>
                                             {payload.map((p) => {
                                                 const isRadiant = p.value >= 0;
                                                 return (
-                                                    <p key={String(p.dataKey)} className={p.dataKey === 'gold' ? 'text-[#C9A84C]' : 'text-[#00D4FF]'}>
+                                                    <p key={String(p.dataKey)} className={p.dataKey === 'gold' ? 'text-gold' : 'text-cyan'}>
                                                         {p.name}: {isRadiant ? `+${p.value} (RAD)` : `${p.value} (DIRE)`}
                                                     </p>
                                                 );
@@ -111,8 +112,8 @@ export default function AdvantageGraph({ goldAdv = [], xpAdv = [] }: AdvantageGr
                                 type="monotone"
                                 dataKey="gold"
                                 name="Gold"
-                                stroke="#C9A84C"
-                                fill="#C9A84C"
+                                stroke={CHART_COLORS.gold}
+                                fill={CHART_COLORS.gold}
                                 fillOpacity={0.15}
                             />
                         )}
@@ -122,8 +123,8 @@ export default function AdvantageGraph({ goldAdv = [], xpAdv = [] }: AdvantageGr
                                 type="monotone"
                                 dataKey="xp"
                                 name="Experience"
-                                stroke="#00D4FF"
-                                fill="#00D4FF"
+                                stroke={CHART_COLORS.cyan}
+                                fill={CHART_COLORS.cyan}
                                 fillOpacity={0.15}
                             />
                         )}

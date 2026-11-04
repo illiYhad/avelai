@@ -1,5 +1,6 @@
 'use client';
 
+import { POSITION_COLORS, POSITION_FALLBACK } from '@/lib/ui/colors';
 import OverviewTable, { type DraftEntry, type OverviewPlayer } from './OverviewTable';
 import React, { useState } from 'react';
 import PerformanceRadar, { type PerformancePlayer } from './PerformanceRadar';
@@ -64,23 +65,17 @@ export default function MatchDetailView({
     const maxFinalScore = Math.max(...kpPlayers.map((p) => p.finalScore ?? 0), 1);
     const topPerformer = kpPlayers[0];
 
-    const POS_COLORS: Record<string, string> = {
-        'Pos 1': '#E8384F',
-        'Pos 2': '#2E9BFF',
-        'Pos 3': '#39FF6A',
-        'Pos 4': '#D63CE8',
-        'Pos 5': '#C8CDD4',
-    };
+    const POS_COLORS = POSITION_COLORS; // K-AV-POLISH: ไฟล์เดียว lib/ui/colors.ts
 
     return (
         <div className="mt-6 flex flex-col gap-0">
-            <div className="flex border-b border-[rgba(0,212,255,0.2)] font-orbitron text-xs tracking-widest">
+            <div className="flex overflow-x-auto border-b border-cyan/20 font-orbitron text-xs tracking-widest">
                 {TABS.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-1.5 px-5 py-3 transition-all ${activeTab === tab.id
-                            ? 'border-b-2 border-[#00D4FF] text-[#00D4FF] bg-[#00D4FF]/5'
+                        className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap px-5 py-3 transition-all ${activeTab === tab.id
+                            ? 'border-b-2 border-cyan text-cyan bg-cyan/5'
                             : 'text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800/20'
                             }`}
                     >
@@ -95,7 +90,7 @@ export default function MatchDetailView({
                 {activeTab === 'kp' && (
                     <div className="flex flex-col gap-4">
                         {topPerformer && (
-                            <div className="border border-[#00D4FF]/30 bg-[#00D4FF]/5 px-4 py-2 font-mono text-xs text-[#00D4FF]">
+                            <div className="border border-cyan/30 bg-cyan/5 px-4 py-2 font-mono text-xs text-cyan">
                                 {'// TOP PERFORMER: '}
                                 <span className="font-bold">{topPerformer.playerName}</span>
                                 {' — KP: '}
@@ -105,9 +100,9 @@ export default function MatchDetailView({
                             </div>
                         )}
 
-                        <div className="overflow-x-auto border border-[rgba(0,212,255,0.2)] bg-[#111118]">
+                        <div className="overflow-x-auto border border-cyan/20 bg-surface-2">
                             <table className="w-full text-left text-xs font-mono">
-                                <thead className="border-b border-neutral-800 bg-[#0A0A0F] font-orbitron text-xs text-[#00D4FF]">
+                                <thead className="border-b border-neutral-800 bg-void font-orbitron text-xs text-cyan">
                                     <tr>
                                         <th className="px-3 py-3 w-14">HERO</th>
                                         <th className="px-3 py-3">ROLE</th>
@@ -117,9 +112,9 @@ export default function MatchDetailView({
                                         <th className="px-3 py-3 text-right">BASE KP</th>
                                         <th className="px-3 py-3 text-center">MULT</th>
                                         <th className="px-3 py-3 text-right">ROLE BONUS</th>
-                                        <th className="px-3 py-3 text-right text-[#00D4FF]">TOTAL KP</th>
+                                        <th className="px-3 py-3 text-right text-cyan">TOTAL KP</th>
                                         <th className="px-3 py-3 text-center">OUTCOME</th>
-                                        <th className="px-3 py-3 text-right text-[#C9A84C]">FINAL</th>
+                                        <th className="px-3 py-3 text-right text-gold">FINAL</th>
                                         <th className="px-3 py-3 w-24"></th>
                                     </tr>
                                 </thead>
@@ -127,15 +122,15 @@ export default function MatchDetailView({
                                     {kpPlayers.map((p, idx) => {
                                         const isRadiant = (p.playerSlot ?? 0) < 128;
                                         const isWin = p.matchOutcome > 0;
-                                        const posColor = POS_COLORS[p.role] ?? '#C8CDD4';
+                                        const posColor = POS_COLORS[p.role] ?? POSITION_FALLBACK;
                                         const barWidth = Math.max(4, ((p.finalScore ?? 0) / maxFinalScore) * 100);
                                         const heroImg = getHeroImg(p.heroId);
 
                                         return (
                                             <tr
                                                 key={idx}
-                                                className={`transition-colors hover:bg-[rgba(0,212,255,0.04)] ${p.isRegisteredUser ? 'shadow-[inset_2px_0_0_#00D4FF]' : ''
-                                                    } ${isRadiant ? 'bg-[rgba(0,212,255,0.01)]' : 'bg-[rgba(201,168,76,0.01)]'}`}
+                                                className={`transition-colors hover:bg-cyan/5 ${p.isRegisteredUser ? 'shadow-[inset_2px_0_0_var(--color-cyan)]' : ''
+                                                    } ${isRadiant ? 'bg-cyan/5' : 'bg-gold/5'}`}
                                             >
                                                 <td className="px-3 py-2.5">
                                                     <div className="h-7 w-12 overflow-hidden border border-neutral-700 bg-neutral-900">
@@ -163,7 +158,7 @@ export default function MatchDetailView({
                                                     </span>
                                                 </td>
                                                 <td className="px-3 py-2.5 font-semibold">
-                                                    <span className={isRadiant ? 'text-[#00D4FF]' : 'text-[#C9A84C]'}>
+                                                    <span className={isRadiant ? 'text-cyan' : 'text-gold'}>
                                                         {p.playerName}
                                                     </span>
                                                 </td>
@@ -181,7 +176,7 @@ export default function MatchDetailView({
                                                     </span>
                                                 </td>
                                                 <td className="px-3 py-2.5 text-right text-neutral-400">+{p.roleBonus?.toFixed(1)}</td>
-                                                <td className="px-3 py-2.5 text-right font-bold text-[#00D4FF]">
+                                                <td className="px-3 py-2.5 text-right font-bold text-cyan">
                                                     {p.totalKp?.toFixed(1)}
                                                 </td>
                                                 <td className="px-3 py-2.5 text-center">
@@ -190,13 +185,13 @@ export default function MatchDetailView({
                                                         {isWin ? '+25' : '-10'}
                                                     </span>
                                                 </td>
-                                                <td className="px-3 py-2.5 text-right font-bold text-[#C9A84C] text-sm">
+                                                <td className="px-3 py-2.5 text-right font-bold text-gold text-sm">
                                                     {p.finalScore?.toFixed(1)}
                                                 </td>
                                                 <td className="px-3 py-2.5">
                                                     <div className="h-1.5 w-full rounded-full bg-neutral-800">
                                                         <div
-                                                            className="h-1.5 rounded-full bg-[#00D4FF]"
+                                                            className="h-1.5 rounded-full bg-cyan"
                                                             style={{ width: `${barWidth}%` }}
                                                         />
                                                     </div>

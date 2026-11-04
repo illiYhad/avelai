@@ -398,3 +398,9 @@ html:not(:has([data-obs-root])) body::before {
     color: var(--color-ink-muted);
   }
 }
+
+/* K-AV-POLISH: สีฝั่งแผนที่ Dota 2 (เขียว Radiant · แดง Dire) — ใช้เฉพาะแผนที่/ป้ายฝั่งใน app/match */
+@theme inline {
+  --color-dota-radiant: #39ff6a;
+  --color-dota-dire: #e8384f;
+}

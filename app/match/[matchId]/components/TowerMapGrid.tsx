@@ -103,12 +103,12 @@ export default function TowerMapGrid({
     const direStanding = STRUCTURE_COORDS.filter((s) => s.team === 'dire' && isAliveAtMinute(s)).length;
 
     return (
-        <div className="border border-[#00D4FF]/30 bg-[#111118] p-5 font-mono shadow-[0_0_25px_rgba(0,212,255,0.05)] flex flex-col justify-between">
+        <div className="border border-cyan/30 bg-surface-2 p-5 font-mono shadow-glow-cyan flex flex-col justify-between">
             {/* Header */}
             <div>
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-neutral-800 pb-3">
                     <div className="flex items-center gap-2">
-                        <h3 className="font-orbitron text-xs font-bold uppercase tracking-wider text-[#00D4FF]">
+                        <h3 className="font-orbitron text-xs font-bold uppercase tracking-wider text-cyan">
                             🗺️ TACTICAL MAP TIMELINE
                         </h3>
                         <span className="rounded-xs bg-neutral-900 border border-neutral-800 px-1.5 py-0.5 text-xs text-yellow-400">
@@ -117,19 +117,19 @@ export default function TowerMapGrid({
                     </div>
 
                     <div className="flex items-center gap-3 text-xs">
-                        <span className="flex items-center gap-1 font-bold text-[#39FF6A]">
-                            <span className="inline-block h-2 w-2 bg-[#39FF6A] shadow-[0_0_6px_#39FF6A]"></span>
+                        <span className="flex items-center gap-1 font-bold $1-dota-radiant">
+                            <span className="inline-block h-2 w-2 $1-dota-radiant shadow-[0_0_$1px_var(--color-dota-radiant)]"></span>
                             RAD: {radiantStanding}/17
                         </span>
-                        <span className="flex items-center gap-1 font-bold text-[#E8384F]">
-                            <span className="inline-block h-2 w-2 bg-[#E8384F] shadow-[0_0_6px_#E8384F]"></span>
+                        <span className="flex items-center gap-1 font-bold $1-dota-dire">
+                            <span className="inline-block h-2 w-2 $1-dota-dire shadow-[0_0_$1px_var(--color-dota-dire)]"></span>
                             DIRE: {direStanding}/17
                         </span>
                     </div>
                 </div>
 
                 {/* Tactical Map Container */}
-                <div className="relative mx-auto aspect-square w-full max-w-[370px] overflow-hidden border border-neutral-800 bg-[#0c1015] rounded-xs shadow-2xl">
+                <div className="relative mx-auto aspect-square w-full max-w-[370px] overflow-hidden border border-neutral-800 $1-void rounded-xs shadow-2xl">
                     {/* Vector Dota 2 Terrain */}
                     <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full pointer-events-none">
                         <polygon points="0,100 0,25 75,100" fill="#142618" opacity="0.9" />
@@ -147,7 +147,7 @@ export default function TowerMapGrid({
                     </svg>
 
                     {/* Vignette */}
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(5,5,10,0.75)_100%)] pointer-events-none"></div>
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,color-mix(in_srgb,var(--color-void)_75%,transparent)_100%)] pointer-events-none"></div>
 
                     {/* Structure Nodes (ป้อม & บารัค ที่ตอบสนองต่อ Timeline) */}
                     {STRUCTURE_COORDS.map((struct) => {
@@ -165,8 +165,8 @@ export default function TowerMapGrid({
                                     <div
                                         className={`relative transition-all duration-300 ${alive
                                                 ? isRadiant
-                                                    ? 'h-3.5 w-2.5 bg-[#39FF6A] shadow-[0_0_10px_#39FF6A] border-t border-white/80 scale-100'
-                                                    : 'h-3.5 w-2.5 bg-[#E8384F] shadow-[0_0_10px_#E8384F] border-t border-white/80 scale-100'
+                                                    ? 'h-3.5 w-2.5 $1-dota-radiant shadow-[0_0_$1px_var(--color-dota-radiant)] border-t border-white/80 scale-100'
+                                                    : 'h-3.5 w-2.5 $1-dota-dire shadow-[0_0_$1px_var(--color-dota-dire)] border-t border-white/80 scale-100'
                                                 : 'h-3.5 w-2.5 bg-black/90 border border-neutral-700/40 opacity-15 scale-75'
                                             }`}
                                         style={{
@@ -177,8 +177,8 @@ export default function TowerMapGrid({
                                     <div
                                         className={`h-2 w-2 transition-all duration-300 ${alive
                                                 ? isRadiant
-                                                    ? 'bg-[#39FF6A] shadow-[0_0_6px_#39FF6A] scale-100'
-                                                    : 'bg-[#E8384F] shadow-[0_0_6px_#E8384F] scale-100'
+                                                    ? '$1-dota-radiant shadow-[0_0_$1px_var(--color-dota-radiant)] scale-100'
+                                                    : '$1-dota-dire shadow-[0_0_$1px_var(--color-dota-dire)] scale-100'
                                                 : 'bg-black/90 border border-neutral-700/40 opacity-10 scale-75'
                                             }`}
                                     />
@@ -195,7 +195,7 @@ export default function TowerMapGrid({
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setIsPlaying(!isPlaying)}
-                            className="px-2 py-0.5 bg-[#00D4FF]/20 border border-[#00D4FF]/50 text-[#00D4FF] rounded-xs font-bold hover:bg-[#00D4FF]/30 transition-all"
+                            className="px-2 py-0.5 bg-cyan/20 border border-cyan/50 text-cyan rounded-xs font-bold hover:bg-cyan/30 transition-all"
                         >
                             {isPlaying ? '⏸ PAUSE' : '▶ PLAY REPLAY'}
                         </button>
@@ -213,7 +213,7 @@ export default function TowerMapGrid({
                         </button>
                     </div>
                     <span className="text-neutral-500 font-mono">
-                        MINUTE <span className="text-[#00D4FF] font-bold">{currentMinute}</span> / {maxMinutes}
+                        MINUTE <span className="text-cyan font-bold">{currentMinute}</span> / {maxMinutes}
                     </span>
                 </div>
 
@@ -227,7 +227,7 @@ export default function TowerMapGrid({
                         setIsPlaying(false);
                         setCurrentMinute(Number(e.target.value));
                     }}
-                    className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-[#00D4FF]"
+                    className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-cyan"
                 />
             </div>
         </div>

@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
+import { CHART_COLORS, POSITION_COLORS, POSITION_FALLBACK } from '@/lib/ui/colors';
 import React, { useState } from 'react';
 import TowerMapGrid from './TowerMapGrid';
 import {
@@ -64,13 +65,7 @@ interface AdvantageDataPoint {
     xp: number;
 }
 
-const POS_COLORS: Record<string, string> = {
-    'Pos 1': '#E8384F',
-    'Pos 2': '#2E9BFF',
-    'Pos 3': '#39FF6A',
-    'Pos 4': '#D63CE8',
-    'Pos 5': '#C8CDD4',
-};
+const POS_COLORS = POSITION_COLORS; // K-AV-POLISH: ไฟล์เดียว lib/ui/colors.ts
 
 const HERO_DATA_MAP: Record<number, { name: string; shortName: string }> = {
     1: { name: 'Anti-Mage', shortName: 'antimage' },
@@ -232,7 +227,7 @@ export default function DeepAnalyticsBoard({
     const renderHeroBuildMatrix = (p: AnalyticsPlayer) => {
         const isRadiant = (p.playerSlot || 0) < 128;
         const levels = Array.from({ length: 25 }, (_, i) => i + 1);
-        const posColor = POS_COLORS[p.role ?? ''] ?? '#C8CDD4';
+        const posColor = POS_COLORS[p.role ?? ''] ?? POSITION_FALLBACK;
         const heroImg = getHeroImg(p.heroId);
         const heroDisplayName = HERO_DATA_MAP[p.heroId]?.name || p.heroName || `Hero ${p.heroId}`;
         const abilityDetails = HERO_ABILITY_DETAILS[p.heroId] || [];
@@ -286,7 +281,7 @@ export default function DeepAnalyticsBoard({
         ];
 
         return (
-            <div key={p.playerSlot} className="border border-neutral-800 bg-[#0E0E14] p-4 rounded-sm space-y-3">
+            <div key={p.playerSlot} className="border border-neutral-800 $1-surface-2 p-4 rounded-sm space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-4 border-b border-neutral-800/80 pb-3">
                     <div className="flex items-center gap-3">
                         <div className="h-10 w-16 overflow-hidden border border-neutral-700 bg-neutral-900 shrink-0">
@@ -309,7 +304,7 @@ export default function DeepAnalyticsBoard({
                         </div>
                         <div>
                             <div className="font-orbitron text-xs font-bold text-white flex items-center gap-2">
-                                <span className={isRadiant ? 'text-[#00D4FF]' : 'text-[#C9A84C]'}>{p.playerName}</span>
+                                <span className={isRadiant ? 'text-cyan' : 'text-gold'}>{p.playerName}</span>
                                 <span className="text-neutral-300 font-semibold tracking-wide text-xs">— {heroDisplayName}</span>
                                 <span
                                     className="rounded-xs px-1.5 py-0.5 text-xs font-bold"
@@ -324,7 +319,7 @@ export default function DeepAnalyticsBoard({
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-1 bg-[#07070C] p-1 border border-neutral-800">
+                    <div className="flex items-center gap-1 $1-void p-1 border border-neutral-800">
                         {heroItems.map((itemId, i) => {
                             const itemUrl = getItemImg(itemId);
                             const rawItemName = itemIdToName[Number(itemId)] || '';
@@ -364,7 +359,7 @@ export default function DeepAnalyticsBoard({
                         <div className="grid grid-cols-[130px_repeat(25,1fr)] gap-1 pb-1 text-center font-mono text-xs text-neutral-500">
                             <div className="text-left font-bold text-neutral-600">SKILL / LVL</div>
                             {levels.map((lvl) => (
-                                <div key={lvl} className={`font-semibold ${[6, 12, 18, 10, 15, 20, 25].includes(lvl) ? 'text-[#00D4FF]' : ''}`}>
+                                <div key={lvl} className={`font-semibold ${[6, 12, 18, 10, 15, 20, 25].includes(lvl) ? 'text-cyan' : ''}`}>
                                     {lvl}
                                 </div>
                             ))}
@@ -375,7 +370,7 @@ export default function DeepAnalyticsBoard({
                                 <div key={sIdx} className="grid grid-cols-[130px_repeat(25,1fr)] items-center gap-1">
                                     <div
                                         title={slot.name}
-                                        className="flex h-7 items-center gap-1.5 border border-neutral-800 bg-[#161622] px-1 overflow-hidden"
+                                        className="flex h-7 items-center gap-1.5 border border-neutral-800 $1-surface-2 px-1 overflow-hidden"
                                     >
                                         <div className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden border border-neutral-700 bg-neutral-900">
                                             {slot.isTalent ? (
@@ -403,11 +398,11 @@ export default function DeepAnalyticsBoard({
                                                 key={lvl}
                                                 className={`flex h-7 items-center justify-center border text-xs font-bold transition-all ${isLearned
                                                     ? slot.isTalent
-                                                        ? 'border-yellow-500/60 bg-yellow-500/20 text-yellow-400 shadow-[0_0_8px_rgba(234,179,8,0.2)]'
+                                                        ? 'border-yellow-500/60 bg-yellow-500/20 text-yellow-400 shadow-glow-gold'
                                                         : sIdx === 3
-                                                            ? 'border-[#E8384F]/80 bg-[#E8384F]/20 text-[#E8384F] shadow-[0_0_8px_rgba(232,56,79,0.3)]'
-                                                            : 'border-[#00D4FF]/60 bg-[#00D4FF]/20 text-[#00D4FF] shadow-[0_0_8px_rgba(0,212,255,0.2)]'
-                                                    : 'border-neutral-900 bg-[#0A0A10]/60 text-transparent'
+                                                            ? '$1-dota-dire/80 $1-dota-dire/20 $1-dota-dire shadow-[0_0_$1px_var(--color-dota-dire)]'
+                                                            : 'border-cyan/60 bg-cyan/20 text-cyan shadow-glow-cyan'
+                                                    : 'border-neutral-900 $1-void/60 text-transparent'
                                                     }`}
                                             >
                                                 {isLearned ? lvl : ''}
@@ -433,23 +428,23 @@ export default function DeepAnalyticsBoard({
         <div className="space-y-8 pb-12 font-mono">
             {/* SECTION 1: ADVANTAGE & TRAJECTORY */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <div className="border border-[#00D4FF]/30 bg-[#111118] p-5 shadow-[0_0_25px_rgba(0,212,255,0.05)] flex flex-col justify-between">
+                <div className="border border-cyan/30 bg-surface-2 p-5 shadow-glow-cyan flex flex-col justify-between">
                     <div>
                         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-800 pb-3 mb-4">
                             <div className="flex items-center gap-1.5 font-orbitron text-xs font-bold text-white">
                                 <span>📈</span>
-                                <span className="text-[#00D4FF]">
+                                <span className="text-cyan">
                                     {graphMode === 'advantage' && 'TEAM ADVANTAGES PER MINUTE'}
                                     {graphMode === 'gpm' && 'HERO GPM TRAJECTORY'}
                                     {graphMode === 'xpm' && 'HERO XPM TRAJECTORY'}
                                 </span>
                             </div>
 
-                            <div className="flex items-center rounded-xs bg-[#07070C] p-0.5 border border-neutral-800 text-xs">
+                            <div className="flex items-center rounded-xs $1-void p-0.5 border border-neutral-800 text-xs">
                                 <button
                                     onClick={() => setGraphMode('advantage')}
                                     className={`px-2.5 py-1 rounded-xs transition-all cursor-pointer ${graphMode === 'advantage'
-                                        ? 'bg-[#00D4FF] text-black font-bold shadow-[0_0_10px_rgba(0,212,255,0.5)]'
+                                        ? 'bg-cyan text-black font-bold shadow-glow-cyan'
                                         : 'text-neutral-400 hover:text-white'
                                         }`}
                                 >
@@ -458,7 +453,7 @@ export default function DeepAnalyticsBoard({
                                 <button
                                     onClick={() => setGraphMode('gpm')}
                                     className={`px-2.5 py-1 rounded-xs transition-all cursor-pointer ${graphMode === 'gpm'
-                                        ? 'bg-[#E8384F] text-white font-bold shadow-[0_0_10px_rgba(232,56,79,0.5)]'
+                                        ? '$1-dota-dire text-white font-bold shadow-[0_0_$1px_var(--color-dota-dire)]'
                                         : 'text-neutral-400 hover:text-white'
                                         }`}
                                 >
@@ -467,7 +462,7 @@ export default function DeepAnalyticsBoard({
                                 <button
                                     onClick={() => setGraphMode('xpm')}
                                     className={`px-2.5 py-1 rounded-xs transition-all cursor-pointer ${graphMode === 'xpm'
-                                        ? 'bg-[#2E9BFF] text-white font-bold shadow-[0_0_10px_rgba(46,155,255,0.5)]'
+                                        ? '$1-cyan text-white font-bold shadow-glow-cyan'
                                         : 'text-neutral-400 hover:text-white'
                                         }`}
                                 >
@@ -486,9 +481,9 @@ export default function DeepAnalyticsBoard({
                                             onClick={() => setTeamFilter(team)}
                                             className={`px-2 py-0.5 uppercase rounded-xs border transition-all cursor-pointer ${teamFilter === team
                                                 ? team === 'radiant'
-                                                    ? 'border-[#00D4FF] bg-[#00D4FF]/20 text-[#00D4FF]'
+                                                    ? 'border-cyan bg-cyan/20 text-cyan'
                                                     : team === 'dire'
-                                                        ? 'border-[#C9A84C] bg-[#C9A84C]/20 text-[#C9A84C]'
+                                                        ? 'border-gold bg-gold/20 text-gold'
                                                         : 'border-white bg-white/20 text-white'
                                                 : 'border-neutral-800 text-neutral-500 hover:border-neutral-700'
                                                 }`}
@@ -506,33 +501,33 @@ export default function DeepAnalyticsBoard({
                                     <AreaChart data={advantageData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                         <defs>
                                             <linearGradient id="splitColorDotabuff" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset={off} stopColor="#A4B34C" stopOpacity={0.8} />
-                                                <stop offset={off} stopColor="#D23E33" stopOpacity={0.8} />
+                                                <stop offset={off} stopColor={CHART_COLORS.win} stopOpacity={0.8} />
+                                                <stop offset={off} stopColor={CHART_COLORS.lose} stopOpacity={0.8} />
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#22222E" vertical={false} />
-                                        <XAxis dataKey="minute" stroke="#555" tick={{ fill: '#888' }} />
+                                        <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
+                                        <XAxis dataKey="minute" stroke={CHART_COLORS.muted} tick={{ fill: CHART_COLORS.muted }} />
                                         <YAxis
-                                            stroke="#555"
-                                            tick={{ fill: '#888' }}
+                                            stroke={CHART_COLORS.muted}
+                                            tick={{ fill: CHART_COLORS.muted }}
                                             domain={[-advMaxVal, advMaxVal]}
                                             tickFormatter={(val) => `${(val / 1000).toFixed(0)}k`}
                                         />
                                         <Tooltip
-                                            contentStyle={{ backgroundColor: '#0D0D12', borderColor: '#333' }}
-                                            itemStyle={{ color: '#E0E0E0' }}
-                                            labelStyle={{ color: '#00D4FF' }}
+                                            contentStyle={{ backgroundColor: CHART_COLORS.panel, borderColor: CHART_COLORS.grid }}
+                                            itemStyle={{ color: CHART_COLORS.ink }}
+                                            labelStyle={{ color: CHART_COLORS.cyan }}
                                             formatter={(value: unknown) => [
                                                 Math.abs(Number(value || 0)).toLocaleString(),
                                                 Number(value || 0) >= 0 ? 'Radiant advantage' : 'Dire advantage',
                                             ]}
                                             labelFormatter={(label) => `Minute ${label}`}
                                         />
-                                        <ReferenceLine y={0} stroke="#666" />
+                                        <ReferenceLine y={0} stroke={CHART_COLORS.muted} />
                                         <Area
                                             type="monotone"
                                             dataKey="gold"
-                                            stroke={dataMax > 0 ? '#A4B34C' : '#D23E33'}
+                                            stroke={dataMax > 0 ? CHART_COLORS.win : CHART_COLORS.lose}
                                             strokeWidth={2}
                                             fill="url(#splitColorDotabuff)"
                                         />
@@ -545,16 +540,16 @@ export default function DeepAnalyticsBoard({
                             <div className="h-72 w-full text-xs">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <LineChart data={heroProgressionData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#22222E" vertical={false} />
-                                        <XAxis dataKey="minute" stroke="#555" tick={{ fill: '#888' }} />
-                                        <YAxis stroke="#555" tick={{ fill: '#888' }} domain={[0, 'auto']} />
+                                        <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
+                                        <XAxis dataKey="minute" stroke={CHART_COLORS.muted} tick={{ fill: CHART_COLORS.muted }} />
+                                        <YAxis stroke={CHART_COLORS.muted} tick={{ fill: CHART_COLORS.muted }} domain={[0, 'auto']} />
                                         <Tooltip
-                                            contentStyle={{ backgroundColor: '#0D0D12', borderColor: '#333' }}
+                                            contentStyle={{ backgroundColor: CHART_COLORS.panel, borderColor: CHART_COLORS.grid }}
                                             itemStyle={{ fontSize: '11px' }}
                                             labelFormatter={(label) => `Minute ${label}`}
                                         />
                                         {displayedPlayers.map((p) => {
-                                            const color = POS_COLORS[p.role ?? ''] ?? '#C8CDD4';
+                                            const color = POS_COLORS[p.role ?? ''] ?? POSITION_FALLBACK;
                                             const dataKey = graphMode === 'gpm' ? `gpm_${p.playerSlot}` : `xpm_${p.playerSlot}`;
                                             return (
                                                 <Line
@@ -598,9 +593,9 @@ export default function DeepAnalyticsBoard({
             </div>
 
             {/* SECTION 2: SKILL BUILDS */}
-            <div className="border border-[#00D4FF]/30 bg-[#111118] p-5 shadow-[0_0_25px_rgba(0,212,255,0.05)]">
+            <div className="border border-cyan/30 bg-surface-2 p-5 shadow-glow-cyan">
                 <div className="border-b border-neutral-800 pb-3 mb-6 flex items-center justify-between">
-                    <h3 className="font-orbitron text-xs font-bold uppercase tracking-wider text-[#00D4FF]">
+                    <h3 className="font-orbitron text-xs font-bold uppercase tracking-wider text-cyan">
                         🧬 ABILITY & SKILL BUILDS (LEVEL 1–25)
                     </h3>
                     <span className="text-xs text-neutral-500 font-mono">TIMELINE UPGRADE SEQUENCE</span>
@@ -608,7 +603,7 @@ export default function DeepAnalyticsBoard({
 
                 <div className="space-y-6">
                     <div className="space-y-4">
-                        <div className="text-xs font-orbitron font-bold text-[#00D4FF] border-l-2 border-[#00D4FF] pl-2">
+                        <div className="text-xs font-orbitron font-bold text-cyan border-l-2 border-cyan pl-2">
                             RADIANT BUILDS
                         </div>
                         <div className="space-y-3">
@@ -617,7 +612,7 @@ export default function DeepAnalyticsBoard({
                     </div>
 
                     <div className="space-y-4 pt-4 border-t border-neutral-800">
-                        <div className="text-xs font-orbitron font-bold text-[#C9A84C] border-l-2 border-[#C9A84C] pl-2">
+                        <div className="text-xs font-orbitron font-bold text-gold border-l-2 border-gold pl-2">
                             DIRE BUILDS
                         </div>
                         <div className="space-y-3">

@@ -1,5 +1,6 @@
 'use client';
 
+import { CHART_COLORS } from '@/lib/ui/colors';
 import React from 'react';
 import {
     ResponsiveContainer,
@@ -50,9 +51,9 @@ export default function KPDistributionChart({ players = [] }: KPDistributionChar
     });
 
     return (
-        <div className="border border-[#00D4FF]/30 bg-[#111118] p-4 font-mono">
+        <div className="border border-cyan/30 bg-surface-2 p-4 font-mono">
             <div className="mb-4 flex items-center justify-between border-b border-neutral-800 pb-2">
-                <h3 className="font-orbitron text-xs font-bold uppercase tracking-wider text-[#00D4FF]">
+                <h3 className="font-orbitron text-xs font-bold uppercase tracking-wider text-cyan">
                     📊 MATCH KP DISTRIBUTION (% SHARE)
                 </h3>
                 <span className="text-xs text-neutral-400">
@@ -65,12 +66,12 @@ export default function KPDistributionChart({ players = [] }: KPDistributionChar
                     <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                         <XAxis
                             dataKey="name"
-                            stroke="#666666"
+                            stroke={CHART_COLORS.muted}
                             fontSize={10}
                             tickLine={false}
                         />
                         <YAxis
-                            stroke="#666666"
+                            stroke={CHART_COLORS.muted}
                             fontSize={10}
                             tickLine={false}
                             unit="%"
@@ -81,9 +82,9 @@ export default function KPDistributionChart({ players = [] }: KPDistributionChar
                                 if (active && payload && payload.length) {
                                     const data = payload[0].payload;
                                     return (
-                                        <div className="border border-[#00D4FF]/50 bg-[#0A0A0F] p-2 text-xs font-mono shadow-lg">
+                                        <div className="border border-cyan/50 bg-void p-2 text-xs font-mono shadow-lg">
                                             <p className="font-bold text-white">{data.fullName}</p>
-                                            <p className="text-[#00D4FF]">KP: {data.kp}</p>
+                                            <p className="text-cyan">KP: {data.kp}</p>
                                             <p className="text-neutral-400">Share: {data.share}%</p>
                                         </div>
                                     );
@@ -95,7 +96,7 @@ export default function KPDistributionChart({ players = [] }: KPDistributionChar
                             {chartData.map((entry, index) => (
                                 <Cell
                                     key={`cell-${index}`}
-                                    fill={entry.isRadiant ? '#00D4FF' : '#C9A84C'}
+                                    fill={entry.isRadiant ? CHART_COLORS.cyan : CHART_COLORS.gold}
                                     fillOpacity={0.8}
                                 />
                             ))}

@@ -179,8 +179,8 @@ export default async function MatchDetailPage({
     }
 
     return (
-        <main className="relative min-h-screen bg-[#0A0A0F] text-[#E0E0E0] pb-24 font-inter">
-            <div className="pointer-events-none fixed inset-0 z-50 bg-[radial-gradient(rgba(0,212,255,0.03)_1px,transparent_0)] bg-[size:24px_24px] opacity-40"></div>
+        <main className="relative min-h-screen bg-void text-ink pb-24 font-inter">
+            <div className="pointer-events-none fixed inset-0 z-50 bg-[radial-gradient(color-mix(in_srgb,var(--color-cyan)_3%,transparent)_1px,transparent_0)] bg-[size:24px_24px] opacity-40"></div>
 
             <div className="mx-auto max-w-7xl px-4 pt-6">
                 <MatchHeader
