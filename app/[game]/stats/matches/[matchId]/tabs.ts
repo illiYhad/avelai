@@ -5,7 +5,7 @@ export const MATCH_TABS = [
   { slug: "", label: "Overview", ready: true },
   { slug: "builds", label: "Builds", ready: true }, // K-AV-D5
   { slug: "lanes", label: "Lanes", ready: true }, // K-AV-D5
-  { slug: "combat", label: "Combat", ready: false },
+  { slug: "combat", label: "Combat", ready: true }, // K-AV-D4
   { slug: "kills", label: "Kills", ready: true }, // K-AV-D5
   { slug: "farm", label: "Farm", ready: true }, // K-AV-D5
   { slug: "objectives", label: "Objectives", ready: false },
