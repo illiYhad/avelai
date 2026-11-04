@@ -31,3 +31,6 @@ export const POSITION_COLORS: Record<string, string> = {
   "Pos 5": "#C8CDD4",
 };
 export const POSITION_FALLBACK = "#C8CDD4";
+
+/** สีฝั่งแบบ hex — ใช้เฉพาะที่ต้องต่อท้าย alpha (`${c}40`) เช่น ProfileCard · ที่อื่นใช้ TEAM_COLORS */
+export const TEAM_HEX = { radiant: "#00D4FF", dire: "#C9A84C" } as const;

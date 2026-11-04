@@ -1,6 +1,5 @@
 'use client';
-
-import React from 'react';
+import { TEAM_HEX } from '@/lib/ui/colors';
 
 export interface PlayerData {
   id: string;
@@ -22,7 +21,7 @@ export function ProfileCard({ player, teamType = 'radiant' }: ProfileCardProps) 
   if (!player) return null;
 
   const isRadiant = teamType === 'radiant';
-  const themeAccent = isRadiant ? '#00D4FF' : '#C9A84C';
+  const themeAccent = isRadiant ? TEAM_HEX.radiant : TEAM_HEX.dire; // K-AV-POLISH.2: hex จากไฟล์เดียว (ต่อท้าย alpha)
   const themeBorder = isRadiant ? 'border-cyan/40' : 'border-gold/40';
 
   return (

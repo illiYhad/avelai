@@ -13,7 +13,7 @@ export function PassSlipForm({ action, token }: { action: (prev: PassState, f: F
     <form action={formAction} className="flex flex-col gap-2">
       <input type="hidden" name="idempotency" value={token} />
       <label className="text-sm text-white/80">เกม</label>
-      <select name="game" className="rounded border border-white/20 bg-[#12121A] px-3 py-2 text-sm text-white">{Object.entries(GAMES).map(([k, g]) => <option key={k} value={k}>{g.label}</option>)}</select>
+      <select name="game" className="rounded border border-white/20 bg-surface-2 px-3 py-2 text-sm text-white">{Object.entries(GAMES).map(([k, g]) => <option key={k} value={k}>{g.label}</option>)}</select>
       <label className="text-sm text-white/80">อัปโหลดสลิป (JPEG/PNG/WebP · ≤ 5 MB)</label>
       <input type="file" name="slip" accept="image/jpeg,image/png,image/webp" required className="text-xs text-white/80" />
       <button type="submit" disabled={pending} className="rounded btn-primary px-4 py-2 text-sm disabled:opacity-50">{pending ? "กำลังส่ง…" : "ส่งสลิป"}</button>

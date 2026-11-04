@@ -25,7 +25,7 @@ export function ReadyButton({ action, label }: { action: () => Promise<MatchActi
 
 export function ReportForm({ action, teamA, teamB, bestOf }: { action: (p: MatchActionState, f: FormData) => Promise<MatchActionState>; teamA: { id: string; label: string }; teamB: { id: string; label: string }; bestOf: number }) {
   const [state, formAction, pending] = useActionState(action, initial);
-  const input = "rounded border border-white/20 bg-[#12121A] px-3 py-2 text-sm text-white";
+  const input = "hud-input"; // K-AV-POLISH.2
   return (
     <form action={formAction} className="flex flex-col gap-2 rounded border border-white/15 p-4">
       <p className="text-sm font-semibold text-white/90">ส่งผล (Best of {bestOf}) — ต้องแนบภาพหลักฐานอย่างน้อย 1 รูป</p>
