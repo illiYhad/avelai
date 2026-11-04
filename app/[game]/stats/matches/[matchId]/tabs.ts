@@ -8,11 +8,11 @@ export const MATCH_TABS = [
   { slug: "combat", label: "Combat", ready: true }, // K-AV-D4
   { slug: "kills", label: "Kills", ready: true }, // K-AV-D5
   { slug: "farm", label: "Farm", ready: true }, // K-AV-D5
-  { slug: "objectives", label: "Objectives", ready: false },
-  { slug: "runes", label: "Runes", ready: false },
-  { slug: "vision", label: "Vision", ready: false },
-  { slug: "log", label: "Log", ready: false },
-  { slug: "chat", label: "Chat", ready: false },
+  { slug: "objectives", label: "Objectives", ready: true }, // K-AV-D6
+  { slug: "runes", label: "Runes", ready: true }, // K-AV-D6
+  { slug: "vision", label: "Vision", ready: true }, // K-AV-D6
+  { slug: "log", label: "Log", ready: true }, // K-AV-D6
+  { slug: "chat", label: "Chat", ready: true }, // K-AV-D6
 ] as const;
 
 export type MatchTabSlug = (typeof MATCH_TABS)[number]["slug"];

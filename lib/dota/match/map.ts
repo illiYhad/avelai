@@ -4,6 +4,7 @@
 
 import { kda, num, type DotaMatchPlayer, type DotaPickBan } from "@/lib/dota/opendota";
 import { mapMatchB, mapPlayerB, type MatchB, type PlayerB } from "@/lib/dota/match/b-tabs"; // K-AV-D5
+import { mapMatchEvents, mapPlayerEventLogs, type MatchEvents, type PlayerEventLogs } from "@/lib/dota/match/c-events"; // K-AV-D6
 
 type Obj = Record<string, unknown>;
 const obj = (v: unknown): Obj => (v && typeof v === "object" && !Array.isArray(v) ? (v as Obj) : {});
@@ -30,7 +31,8 @@ export type DotaMatchDetailPlayer = DotaMatchPlayer & {
   damageTaken: Record<string, number> | null;
   /** damage_targets ดิบ: สกิล/ไอเทม → เป้าหมาย → ดาเมจ · ไม่มี = null */
   damageTargets: Record<string, Record<string, number>> | null;
-} & { b: PlayerB }; // K-AV-D5: ข้อมูลแท็บ Builds · Lanes · Farm · Kills (ฟิลด์ย่อยไม่มี = null)
+} & { b: PlayerB } // K-AV-D5: ข้อมูลแท็บ Builds · Lanes · Farm · Kills (ฟิลด์ย่อยไม่มี = null)
+  & PlayerEventLogs; // K-AV-D6: runesLog · obsLog · senLog · obsLeftLog · senLeftLog · killsLog (ไม่มี = null)
 
 export type DotaMatchDetail = {
   matchId: string;
@@ -49,7 +51,8 @@ export type DotaMatchDetail = {
   direTeamName: string | null;
   players: DotaMatchDetailPlayer[];
   picksBans: DotaPickBan[];
-} & { b: MatchB }; // K-AV-D5: ส่วนต่างทอง/XP รายนาที (ไม่มี = null)
+} & { b: MatchB } // K-AV-D5: ส่วนต่างทอง/XP รายนาที (ไม่มี = null)
+  & MatchEvents; // K-AV-D6: objectives · chat (ไม่มี = null)
 
 const flag = (v: unknown): boolean => v === 1 || v === true;
 const posInt = (v: unknown): number | null => {
@@ -95,6 +98,7 @@ function mapPlayer(raw: unknown): DotaMatchDetailPlayer {
     damageTaken: numRecord(p.damage_taken),
     damageTargets: nestedNumRecord(p.damage_targets),
     b: mapPlayerB(p), // K-AV-D5
+    ...mapPlayerEventLogs(p), // K-AV-D6
   };
 }
 
@@ -141,6 +145,7 @@ export function mapMatchDetail(matchId: string, raw: unknown): DotaMatchDetail {
       const o = obj(x);
       return { isPick: o.is_pick === true, heroId: num(o.hero_id), team: num(o.team), order: num(o.order) };
     }),
+    ...mapMatchEvents(m), // K-AV-D6
   };
 }
 
