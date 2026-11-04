@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HeroBackdrop } from '@/components/ui/Art';
 import { requireUser } from "@/lib/auth/roles";
 import { gameLabel, gameFromSlug, slugOf, type GameSlug } from "@/lib/games";
 import { platformRoles } from "@/lib/tournament/access";
@@ -38,7 +39,8 @@ export default async function OrganizerTournamentsPage({ params }: { params: Pro
   ]);
   const staffed = (staffRows ?? []).map((s) => ({ role: s.role as string, t: (Array.isArray(s.tournaments) ? s.tournaments[0] : s.tournaments) as Row | null })).filter((x) => x.t);
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col gap-6 px-6 py-10">
+    <main className="relative mx-auto flex min-h-dvh w-full max-w-2xl flex-col gap-6 px-6 py-10">
+      <HeroBackdrop />
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl text-gold">ผู้จัดการแข่งขัน</h1>
         {roles.includes("ORGANIZER") || roles.includes("ADMIN") ? <Link href={routes.organizerTournamentNew(slug)} className="rounded btn-primary px-3 py-1.5 text-sm">+ สร้างทัวร์</Link> : null}

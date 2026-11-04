@@ -409,3 +409,55 @@ html:not(:has([data-obs-root])) body::before {
 @theme inline {
   --color-epic: #d63ce8;
 }
+
+/* ==========================================================================
+   K-AV-POLISH.2 เฟส 4: ชุดภาพกลาง (CSS ล้วน · ใช้คู่ components/ui/Art.tsx)
+   ========================================================================== */
+@layer components {
+  /* แสงทองซ้ายบน / ฟ้าขวาล่าง ของพื้นฮีโร่ */
+  .art-hero-glow {
+    background-image:
+      radial-gradient(520px 320px at 0% 0%, color-mix(in srgb, var(--color-gold) 16%, transparent), transparent 70%),
+      radial-gradient(560px 360px at 100% 100%, color-mix(in srgb, var(--color-cyan) 14%, transparent), transparent 70%);
+  }
+  /* เส้นกริดจาง 32px */
+  .art-grid {
+    background-image:
+      linear-gradient(color-mix(in srgb, var(--color-cyan) 7%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, var(--color-cyan) 7%, transparent) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: radial-gradient(ellipse at center, #000 40%, transparent 85%);
+  }
+  /* ไล่จางลงพื้น panel ด้านล่าง ให้ข้อความอ่านง่าย */
+  .art-hero-fade {
+    background-image: linear-gradient(180deg, transparent 35%, color-mix(in srgb, var(--color-panel) 85%, transparent));
+  }
+  /* เฟรมรูปทีม: มุมตัด + ขีดมุม */
+  .art-avatar {
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  }
+  .art-avatar-tick {
+    width: 10px;
+    height: 10px;
+    border-top: 2px solid currentColor;
+    border-left: 2px solid currentColor;
+    color: var(--color-gold);
+    opacity: 0.8;
+  }
+}
+@layer components {
+  /* กรอบมุม HUD (HudFrame) — มุม 12px เส้น 2px สีตาม currentColor */
+  .art-corner {
+    width: 12px;
+    height: 12px;
+    border-top: 2px solid currentColor;
+    border-left: 2px solid currentColor;
+    opacity: 0.85;
+  }
+  .art-ticks {
+    width: 36px;
+    height: 2px;
+    background: repeating-linear-gradient(90deg, currentColor 0 6px, transparent 6px 12px);
+    opacity: 0.5;
+  }
+}

@@ -1,4 +1,5 @@
 'use client';
+import { HeroBackdrop } from '@/components/ui/Art';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -89,8 +90,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-void text-white pt-24 pb-12 px-4 md:px-8 flex flex-col items-center relative font-mono selection:bg-cyan selection:text-black">
-      {/* Background Grid Pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(var(--color-cyan)_1px,transparent_1px)] bg-size-[28px_28px] opacity-10 pointer-events-none" />
+      <HeroBackdrop game="dota2" />
 
       {/* Tournament Scope Controller Bar */}
       <aside aria-label="Tournament Scope Bar" className="w-full max-w-6xl mb-6 p-3 bg-surface-2 border border-cyan/30 rounded-xl flex flex-wrap items-center justify-between gap-4 z-20 shadow-glow-cyan">

@@ -1,5 +1,6 @@
 ﻿/* eslint-disable @next/next/no-img-element */
 'use client';
+import { HeroBackdrop } from '@/components/ui/Art';
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -118,7 +119,8 @@ export default function ProfilePage() {
     const tag = `#${profile.id.substring(0, 4).toUpperCase()}`;
 
     return (
-        <div className="min-h-screen bg-void flex items-center justify-center p-4">
+        <div className="relative min-h-screen bg-void flex items-center justify-center overflow-hidden p-4">
+            <HeroBackdrop game="dota2" />
 
             {/* ── Passport Card (3:4 ratio) ─────────────────────────────────────── */}
             <div

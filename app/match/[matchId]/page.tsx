@@ -1,4 +1,6 @@
 import React from 'react';
+import { HeroBackdrop } from '@/components/ui/Art';
+
 import MatchHeader from './components/MatchHeader';
 import MatchDetailView, { type MatchData } from './components/MatchDetailView';
 
@@ -180,6 +182,7 @@ export default async function MatchDetailPage({
 
     return (
         <main className="relative min-h-screen bg-void text-ink pb-24 font-inter">
+            <HeroBackdrop game="dota2" />
             <div className="pointer-events-none fixed inset-0 z-50 bg-[radial-gradient(color-mix(in_srgb,var(--color-cyan)_3%,transparent)_1px,transparent_0)] bg-[size:24px_24px] opacity-40"></div>
 
             <div className="mx-auto max-w-7xl px-4 pt-6">

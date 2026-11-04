@@ -1,6 +1,7 @@
 // หน้า "ทีมของฉัน" — จุดเข้า Team Management (K-AV-R เฟส 2)
 // แนวทางจาก Zodiac app/teams + ปรับธีม AVELAi · env-safe: ไม่มี env = แสดงข้อความแทน
 import Link from "next/link";
+import { HeroBackdrop } from '@/components/ui/Art';
 import { getServerDb } from "@/lib/db/server";
 import { gameLabel, gameFromSlug, slugOf } from "@/lib/games";
 import { routes } from "@/lib/routes";
@@ -42,7 +43,8 @@ export default async function MyTeamsPage({ params }: { params: Promise<{ game: 
   });
 
   return (
-    <main className="min-h-screen bg-void px-4 pt-20 pb-10 text-white">
+    <main className="relative min-h-screen bg-void px-4 pt-20 pb-10 text-white">
+      <HeroBackdrop game={game === "dota2" ? "dota2" : "mlbb"} />
       <div className="mx-auto w-full max-w-2xl">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <div>
