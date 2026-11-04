@@ -26,9 +26,9 @@ export function StaffForm({ action }: { action: (prev: OrgState, f: FormData) =>
   const [state, formAction, pending] = useActionState(action, initial);
   return (
     <form action={formAction} className="flex flex-wrap items-end gap-2">
-      <label className="flex flex-col text-xs text-white/70">username<input name="username" required className="rounded border border-white/20 bg-[#12121A] px-2 py-1 text-sm text-white" /></label>
+      <label className="flex flex-col text-xs text-white/70">username<input name="username" required className="rounded border border-white/20 bg-surface-2 px-2 py-1 text-sm text-white" /></label>
       <label className="flex flex-col text-xs text-white/70">บทบาท
-        <select name="role" className="rounded border border-white/20 bg-[#12121A] px-2 py-1 text-sm text-white"><option value="REFEREE">ผู้ตัดสิน</option><option value="STAFF">staff</option></select>
+        <select name="role" className="rounded border border-white/20 bg-surface-2 px-2 py-1 text-sm text-white"><option value="REFEREE">ผู้ตัดสิน</option><option value="STAFF">staff</option></select>
       </label>
       <button type="submit" disabled={pending} className="rounded border border-white/30 px-3 py-1.5 text-sm text-white/90 disabled:opacity-50">เพิ่ม</button>
       <Msg state={state} />

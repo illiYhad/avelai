@@ -46,18 +46,18 @@ export default async function SponsorsPage({ params }: { params: Promise<{ game:
       </div>
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold text-white/90">URL สำหรับ OBS Browser Source (สาธารณะ · ไม่ต้องล็อกอิน · อัปเดตทุก 5 วินาที)</h2>
+        <h2 className="hud-section-title">URL สำหรับ OBS Browser Source (สาธารณะ · ไม่ต้องล็อกอิน · อัปเดตทุก 5 วินาที)</h2>
         <p className="text-xs text-white/50">แนะนำขนาด 1920×1080 · พื้นหลังโปร่งใส · เติม <code>?theme=DARK|TRANSPARENT|GOLD|CYAN</code> ท้าย URL เพื่อลองธีมโดยไม่บันทึก{t.status === "DRAFT" ? " · ⚠ ทัวร์ยังเป็นร่าง — จอจะแสดง 404 จนกว่าจะเปิดรับสมัคร" : ""}</p>
         <ObsUrlList urls={urls} />
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold text-white/90">ธีมจอ OBS (ปัจจุบัน: {theme})</h2>
+        <h2 className="hud-section-title">ธีมจอ OBS (ปัจจุบัน: {theme})</h2>
         <ThemePicker current={theme} setTheme={setObsThemeAction.bind(null, id)} canEdit={canEdit} />
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold text-white/90">สปอนเซอร์ ({sponsors.length}/30)</h2>
+        <h2 className="hud-section-title">สปอนเซอร์ ({sponsors.length}/30)</h2>
         <SponsorsManager
           sponsors={sponsors}
           canEdit={canEdit}

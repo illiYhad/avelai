@@ -8,8 +8,8 @@ import { THEME_LABEL } from "@/lib/obs/theme";
 import type { SponsorRow, SponsorState } from "./types";
 
 // K-AV-8: ฟอร์มสปอนเซอร์/ธีม/คัดลอก URL OBS ฝั่ง client — action ตรวจสิทธิ์และค่าซ้ำฝั่ง server เสมอ
-const input = "rounded border border-white/20 bg-[#12121A] px-2 py-1 text-sm text-white";
-const btn = "rounded border border-white/30 px-2 py-1 text-xs text-white/80 hover:bg-white/10 disabled:opacity-40";
+const input = "hud-input"; // K-AV-POLISH.2: ช่องกรอกกลาง
+const btn = "btn-ghost rounded px-3 text-xs"; // K-AV-POLISH.2: ปุ่มรองกลาง
 
 type Actions = {
   add: (formData: FormData) => Promise<SponsorState>;

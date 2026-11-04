@@ -9,7 +9,7 @@ import type { OrgState } from "./actions";
 import { routes } from "@/lib/routes";
 
 const initial: OrgState = { ok: false, message: "" };
-const input = "rounded border border-white/20 bg-[#12121A] px-3 py-2 text-sm text-white";
+const input = "hud-input"; // K-AV-POLISH.2: ช่องกรอกกลาง
 const toLocal = (iso: string | null | undefined) => (iso ? new Date(new Date(iso).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "");
 
 export type TournamentFormValues = {

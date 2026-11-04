@@ -36,9 +36,9 @@ export default async function AdminTeamMatchesPage() {
     (teams ?? []).find((t: TeamRef) => t.id === id) ?? { id: id ?? "", name: "ไม่ทราบทีม", tag: "" };
 
   return (
-    <main className="min-h-screen bg-[#0A0A0F] px-4 pt-20 pb-10 text-white">
+    <main className="min-h-screen bg-void px-4 pt-20 pb-10 text-white">
       <div className="mx-auto w-full max-w-3xl">
-        <p className="text-[#00D4FF] font-mono text-xs tracking-widest mb-2">ADMIN</p>
+        <p className="text-cyan font-mono text-xs tracking-widest mb-2">ADMIN</p>
         <h1 className="text-2xl font-bold mb-6">ตรวจผลแมตช์ทีม / ข้อพิพาท</h1>
 
         {(matches ?? []).length === 0 && (
@@ -52,7 +52,7 @@ export default async function AdminTeamMatchesPage() {
             const matchReports = (reports ?? []).filter((r) => r.match_id === m.id);
             const matchDisputes = (disputes ?? []).filter((d) => d.match_id === m.id);
             return (
-              <li key={m.id} className="rounded-lg border border-white/10 bg-[#12121A] p-4">
+              <li key={m.id} className="rounded-lg border border-white/10 bg-surface-2 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-bold">
                     {a.name} {a.tag && `[${a.tag}]`} <span className="text-neutral-500">vs</span> {b.name} {b.tag && `[${b.tag}]`}
@@ -69,13 +69,13 @@ export default async function AdminTeamMatchesPage() {
                 {matchReports.length > 0 && (
                   <div className="mt-3 flex flex-col gap-2">
                     {matchReports.map((r) => (
-                      <div key={r.id} className="rounded border border-white/10 bg-[#0A0A0F] p-2 text-xs">
+                      <div key={r.id} className="rounded border border-white/10 bg-void p-2 text-xs">
                         <p>
                           รายงานโดยทีม {teamOf(r.reported_by_team).name}: ผู้ชนะ {r.winner_team_id ? teamOf(r.winner_team_id).name : "เสมอ"} · {r.score_a}:{r.score_b}
                         </p>
                         <p className="mt-1 text-neutral-400 break-all">
                           หลักฐาน: {(r.evidence_urls as string[]).map((u: string, i: number) => (
-                            <a key={i} href={u} target="_blank" rel="noopener noreferrer" className="text-[#00D4FF] underline mr-2">
+                            <a key={i} href={u} target="_blank" rel="noopener noreferrer" className="text-cyan underline mr-2">
                               รูปที่ {i + 1}
                             </a>
                           ))}
@@ -93,7 +93,7 @@ export default async function AdminTeamMatchesPage() {
                     {(d.evidence_urls as string[])?.length > 0 && (
                       <p className="mt-1 text-neutral-400">
                         หลักฐาน: {(d.evidence_urls as string[]).map((u: string, i: number) => (
-                          <a key={i} href={u} target="_blank" rel="noopener noreferrer" className="text-[#00D4FF] underline mr-2">
+                          <a key={i} href={u} target="_blank" rel="noopener noreferrer" className="text-cyan underline mr-2">
                             รูปที่ {i + 1}
                           </a>
                         ))}

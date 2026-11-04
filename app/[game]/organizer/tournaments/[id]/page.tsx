@@ -68,14 +68,14 @@ export default async function ManageTournamentPage({ params }: { params: Promise
 
       {level === "ORGANIZER" ? (
         <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold text-white/90">สถานะ</h2>
+          <h2 className="hud-section-title">สถานะ</h2>
           <StatusButtons next={next} setStatus={setTournamentStatusAction.bind(null, id)} />
         </section>
       ) : null}
 
       {status === "SEEDING" || status === "RUNNING" ? (
         <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold text-white/90">สาย / รอบ (K-AV-4)</h2>
+          <h2 className="hud-section-title">สาย / รอบ (K-AV-4)</h2>
           <div className="flex flex-wrap items-center gap-3">
             {t.format === "SWISS"
               ? <ActionButton action={generateSwissRoundAction.bind(null, id)} label="สร้างรอบ Swiss ถัดไป" className="rounded btn-primary px-3 py-1.5 text-sm" />
@@ -88,7 +88,7 @@ export default async function ManageTournamentPage({ params }: { params: Promise
       ) : null}
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold text-white/90">ใบสมัคร ({regs.length})</h2>
+        <h2 className="hud-section-title">ใบสมัคร ({regs.length})</h2>
         {regs.length === 0 ? <p className="text-sm text-white/60">ยังไม่มีทีมสมัคร</p> : regs.map((r) => {
           const team = Array.isArray(r.teams) ? r.teams[0] : r.teams;
           const myPays = pays.filter((p) => p.registration_id === r.id);
@@ -114,7 +114,7 @@ export default async function ManageTournamentPage({ params }: { params: Promise
       {level === "ORGANIZER" ? (
         <>
           <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold text-white/90">staff / ผู้ตัดสิน</h2>
+            <h2 className="hud-section-title">staff / ผู้ตัดสิน</h2>
             <ul className="text-sm">
               {(staff ?? []).map((s) => {
                 const u = (Array.isArray(s.users) ? s.users[0] : s.users) as { username: string } | null;
@@ -125,7 +125,7 @@ export default async function ManageTournamentPage({ params }: { params: Promise
           </section>
           {status === "DRAFT" || status === "REGISTRATION" ? (
             <section className="flex flex-col gap-3">
-              <h2 className="text-sm font-semibold text-white/90">แก้รายละเอียด</h2>
+              <h2 className="hud-section-title">แก้รายละเอียด</h2>
               <TournamentForm action={updateTournamentAction.bind(null, id)} values={{ ...t, promptpay_id: await tournamentPromptPay(db, id) }} submitLabel="บันทึก" />
             </section>
           ) : null}

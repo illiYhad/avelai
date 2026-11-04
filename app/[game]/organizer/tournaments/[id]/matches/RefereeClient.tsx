@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Msg } from "@/components/tournaments/ui";
 import type { MatchActionState } from "@/app/[game]/matches/[id]/actions";
 
-const input = "rounded border border-white/20 bg-[#12121A] px-2 py-1 text-sm text-white";
+const input = "hud-input"; // K-AV-POLISH.2: ช่องกรอกกลาง
 
 /** ฟอร์มชี้ขาดผล — Idempotency-Key สร้างตอน mount (ส่งซ้ำ = คำขอเดิม) */
 export function RefereeResultForm({ matchId, teamA, teamB, bestOf, decide, setStatus, setSchedule, scheduledAt }: {

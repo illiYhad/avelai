@@ -43,8 +43,8 @@ export default async function OrganizerTournamentsPage({ params }: { params: Pro
         <h1 className="font-display text-2xl text-gold">ผู้จัดการแข่งขัน</h1>
         {roles.includes("ORGANIZER") || roles.includes("ADMIN") ? <Link href={routes.organizerTournamentNew(slug)} className="rounded btn-primary px-3 py-1.5 text-sm">+ สร้างทัวร์</Link> : null}
       </div>
-      <section><h2 className="mb-2 text-sm font-semibold text-white/90">ทัวร์ที่ฉันจัด</h2>{(mine ?? []).length ? <List rows={(mine ?? []) as Row[]} slug={slug} /> : <p className="text-sm text-white/60">ยังไม่มี</p>}</section>
-      {staffed.length ? <section><h2 className="mb-2 text-sm font-semibold text-white/90">ทัวร์ที่ฉันเป็น staff</h2><List rows={staffed.map((x) => x.t as Row)} slug={slug} /></section> : null}
+      <section><h2 className="hud-section-title mb-2">ทัวร์ที่ฉันจัด</h2>{(mine ?? []).length ? <List rows={(mine ?? []) as Row[]} slug={slug} /> : <p className="text-sm text-white/60">ยังไม่มี</p>}</section>
+      {staffed.length ? <section><h2 className="hud-section-title mb-2">ทัวร์ที่ฉันเป็น staff</h2><List rows={staffed.map((x) => x.t as Row)} slug={slug} /></section> : null}
     </main>
   );
 }

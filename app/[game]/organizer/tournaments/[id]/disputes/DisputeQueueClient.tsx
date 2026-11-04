@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { ActionButton, Msg } from "@/components/tournaments/ui";
 import type { DisputeState } from "@/app/[game]/matches/[id]/dispute/actions";
 
-const input = "rounded border border-white/20 bg-[#12121A] px-2 py-1 text-sm text-white";
+const input = "hud-input"; // K-AV-POLISH.2: ช่องกรอกกลาง
 
 /** ชี้ขาดข้อพิพาท — Idempotency-Key สร้างตอน mount */
 export function ResolveForm({ disputeId, teamA, teamB, bestOf, review, resolve }: {

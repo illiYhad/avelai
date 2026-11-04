@@ -61,7 +61,7 @@ export default async function DisputeQueuePage({ params }: { params: Promise<{ g
         );
       })}
       <section>
-        <h2 className="mb-2 text-sm font-semibold text-white/90">โทษที่ออกในทัวร์นี้</h2>
+        <h2 className="hud-section-title mb-2">โทษที่ออกในทัวร์นี้</h2>
         {(penalties ?? []).length === 0 ? <p className="text-sm text-white/60">ไม่มี</p> : (
           <ul className="divide-y divide-white/10 rounded border border-white/15 text-sm">
             {(penalties ?? []).map((p) => <li key={p.id} className="px-3 py-2">{p.type}{p.value ? ` ${p.value}` : ""}{p.until ? ` ถึง ${new Date(p.until).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}` : ""} · {p.team_id ? `ทีม ${teamLabel(names, p.team_id)}` : `ผู้ใช้ ${String(p.user_id).slice(0, 8)}`} · {p.reason}{p.revoked_at ? " · ยกเลิกแล้ว" : ""}</li>)}

@@ -14,7 +14,7 @@ export default async function AdminPassportPage() {
       <p className="text-sm text-white/70">ใส่รหัสแมตช์ที่อัปเดต ELO/Karma ไม่สำเร็จ แล้วกดรันซ้ำ — แมตช์ที่ทำไปแล้วจะตอบ ALREADY_APPLIED (ไม่คิดซ้ำ)</p>
       <RerunForm />
       <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold text-white/90">รายการที่ล้มเหลวล่าสุด</h2>
+        <h2 className="hud-section-title">รายการที่ล้มเหลวล่าสุด</h2>
         {error ? <p className="text-xs text-white/50">อ่าน audit_logs ไม่ได้จากบัญชีนี้ — ดูใน Supabase (action = PASSPORT_UPDATE_FAILED_RETRY)</p>
           : (fails ?? []).length === 0 ? <p className="text-sm text-white/60">ไม่มี</p>
           : (fails ?? []).map((f, i) => (
