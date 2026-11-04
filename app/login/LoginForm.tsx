@@ -37,6 +37,15 @@ export default function LoginForm({ next }: { next: string }) {
         ) : null}
       </form>
 
+      {/* K-AV-STEAMLOGIN: ปุ่ม Steam สไตล์เดียวกับ Google · <a> ธรรมดา ไม่ prefetch (route ตั้ง cookie แล้ว redirect ไป Steam) */}
+      <a
+        href={`/auth/steam/start?next=${encodeURIComponent(next)}`}
+        className="btn-ghost flex min-h-12 w-full items-center justify-center gap-3 rounded-md px-4 py-2 text-base"
+      >
+        <SteamIcon />
+        เข้าสู่ระบบด้วย Steam
+      </a>
+
       <div className="flex items-center gap-3" aria-hidden>
         <span className="h-px flex-1 bg-line" />
         <span className="font-mono text-sm text-ink-muted">หรือ</span>
@@ -69,6 +78,19 @@ export default function LoginForm({ next }: { next: string }) {
         ) : null}
       </form>
     </div>
+  );
+}
+
+function SteamIcon() {
+  // ไอคอนแบบเรียบ (วงกลม + ลูกสูบ) ในโค้ด ไม่โหลดจากภายนอก
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9.5" />
+      <circle cx="15.5" cy="8.5" r="2.5" />
+      <circle cx="8.5" cy="15" r="2" />
+      <path d="M10.3 13.6 13.7 10.4" />
+      <path d="M2.8 13.2 6.7 14.8" />
+    </svg>
   );
 }
 

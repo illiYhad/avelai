@@ -1,5 +1,6 @@
 import { readClientConfig } from "@/lib/db/config";
 import { safeNext } from "@/lib/auth/validate";
+import { steamLoginMessage } from "@/lib/game-accounts/steam";
 import LoginForm from "./LoginForm";
 import Logo3D from "@/components/ui/Logo3D";
 import HudScan from "@/components/ui/HudScan";
@@ -9,11 +10,13 @@ export const metadata = { title: "เข้าสู่ระบบ — AVELAi" 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; steam_error?: string }>;
 }) {
-  const { next } = await searchParams;
+  const { next, steam_error } = await searchParams;
   const target = safeNext(next);
   const configured = readClientConfig() !== null;
+  // K-AV-STEAMLOGIN: ข้อความจากรายการคงที่เท่านั้น · รหัสที่ไม่รู้จัก = ไม่แสดง
+  const steamError = steamLoginMessage(steam_error);
 
   // K-AV-UX2A: หน้าตาตามหน้า login ชุดเดิม (การ์ดกลาง · เส้นทองบน · สโลแกน · บรรทัดสถานะ) — ลอจิกเดิมทั้งหมด
   return (
@@ -36,6 +39,11 @@ export default async function LoginPage({
         </div>
         <div aria-hidden className="mb-6 h-px bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
         <h2 className="mb-4 text-center text-lg font-semibold text-ink">เข้าสู่ระบบ</h2>
+        {steamError ? (
+          <p role="alert" className="mb-4 rounded border border-gold/40 px-4 py-3 text-sm text-white/80">
+            {steamError}
+          </p>
+        ) : null}
         {configured ? (
           <LoginForm next={target} />
         ) : (

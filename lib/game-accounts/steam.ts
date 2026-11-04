@@ -16,6 +16,12 @@ export const STATE_COOKIE_PATH = "/link/steam";
 
 export const RETURN_PATH = "/link/steam/return";
 
+// K-AV-STEAMLOGIN: ล็อกอิน/สร้างบัญชีด้วย Steam (ไม่ต้องมี session ก่อน) · ใช้ชุดตรวจเดียวกับการผูก แต่ return path และ cookie แยกกัน
+export const LOGIN_RETURN_PATH = "/auth/steam/return";
+export const LOGIN_STATE_COOKIE = "steam_login_state";
+export const LOGIN_STATE_COOKIE_PATH = "/auth/steam";
+export const STEAM_LOGIN_EMAIL_DOMAIN = "steam.avelai.org";
+
 /** SITE_URL ก่อนเสมอ (กัน host header poisoning) · ไม่มี = dev เท่านั้นที่ใช้ origin ของ request · production ไม่มี = null (ปิดฟีเจอร์) */
 export function resolveSiteUrl(env: Record<string, string | undefined>, requestUrl: string): string | null {
   const configured = env.SITE_URL?.trim().replace(/\/+$/, "");
@@ -25,8 +31,8 @@ export function resolveSiteUrl(env: Record<string, string | undefined>, requestU
 }
 
 /** return_to ที่เซ็นโดย Steam · state สุ่มอยู่ในนี้ จึงถูกป้องกันการแก้ */
-export function returnToWithState(siteUrl: string, state: string): string {
-  return `${siteUrl}${RETURN_PATH}?state=${state}`;
+export function returnToWithState(siteUrl: string, state: string, returnPath: string = RETURN_PATH): string {
+  return `${siteUrl}${returnPath}?state=${state}`;
 }
 
 /** ค่า cookie = `<state>.<userId>` — ผูกกับ session ผู้ใช้ที่เริ่มกระบวนการ */
@@ -57,13 +63,13 @@ export function singleValued(params: URLSearchParams): Map<string, string> | nul
   return out;
 }
 
-export function buildStartUrl(siteUrl: string, state: string): string {
+export function buildStartUrl(siteUrl: string, state: string, returnPath: string = RETURN_PATH): string {
   const p = new URLSearchParams({
     "openid.ns": OPENID_NS,
     "openid.mode": "checkid_setup",
     "openid.claimed_id": IDENTIFIER_SELECT,
     "openid.identity": IDENTIFIER_SELECT,
-    "openid.return_to": returnToWithState(siteUrl, state),
+    "openid.return_to": returnToWithState(siteUrl, state, returnPath),
     "openid.realm": siteUrl,
   });
   return `${STEAM_OPENID_ENDPOINT}?${p.toString()}`;
@@ -92,12 +98,12 @@ export function nonceFresh(nonce: string | undefined, now: Date = new Date()): b
 }
 
 /** เช็กพารามิเตอร์ที่ Steam ส่งกลับ ก่อนถาม Steam · รับ map ค่าเดียวจาก singleValued() */
-export function checkReturnParams(p: Map<string, string>, siteUrl: string, state: string | null, now: Date = new Date()): boolean {
+export function checkReturnParams(p: Map<string, string>, siteUrl: string, state: string | null, now: Date = new Date(), returnPath: string = RETURN_PATH): boolean {
   if (!state) return false;
   if (p.get("openid.ns") !== OPENID_NS) return false;
   if (p.get("openid.mode") !== "id_res") return false;
   if (p.get("openid.op_endpoint") !== STEAM_OPENID_ENDPOINT) return false;
-  if (p.get("openid.return_to") !== returnToWithState(siteUrl, state)) return false;
+  if (p.get("openid.return_to") !== returnToWithState(siteUrl, state, returnPath)) return false;
   const claimed = p.get("openid.claimed_id");
   if (!claimed || p.get("openid.identity") !== claimed) return false;
   if (!nonceFresh(p.get("openid.response_nonce"), now)) return false;
@@ -158,3 +164,115 @@ export const LINK_MESSAGES = {
     failed: "ผูกบัญชีไม่สำเร็จ กรุณาลองใหม่อีกครั้ง",
   } satisfies Record<SteamLinkError, string>,
 };
+
+// ============================================================================
+// K-AV-STEAMLOGIN: ล็อกอิน/สร้างบัญชีด้วย Steam — pure · DB/Auth ทั้งหมดฉีดผ่าน deps (เทสได้ ไม่ยิงจริง)
+// ลำดับหลัง Steam ตรวจผ่าน (ตามใบ): (1) มี session อยู่แล้ว → route ส่งไป /link/steam/start (ไม่ถึงฟังก์ชันนี้)
+//   (2) เจอแถว DOTA2+account_id+VERIFIED+STEAM_OPENID → เข้าบัญชีนั้น (3) ไม่เจอ → สร้างบัญชี แล้ว link_steam_verified ก่อนตั้ง session
+//   (4) สร้างได้แต่ผูกไม่ได้ → ลบเฉพาะบัญชีที่เพิ่งสร้าง · STEAM_ALREADY_LINKED (กดพร้อมกัน) → กลับไป (2) · อย่างอื่น = ไม่ให้เข้า
+// ============================================================================
+
+export type SteamLoginError = "invalid" | "suspended" | "unavailable" | "failed";
+
+/** cookie ล็อกอิน = `<state>.<next>` · next ต้องผ่าน safeNext ของผู้เรียกก่อนเก็บ
+ *  (ไม่ encode เอง — NextResponse.cookies.set ทำ percent-encoding ให้ทั้งค่า · readLoginStateCookie ถอดกลับครั้งเดียว) */
+export function loginStateCookieValue(state: string, next: string): string {
+  return `${state}.${next}`;
+}
+
+/** อ่าน cookie ล็อกอิน · รูปแบบผิด = null · next ที่ได้ยังเป็นค่าดิบ ผู้เรียกต้องผ่าน safeNext อีกครั้ง */
+export function readLoginStateCookie(cookieHeader: string | null | undefined): { state: string; next: string } | null {
+  for (const part of (cookieHeader ?? "").split(";")) {
+    const [name, ...rest] = part.trim().split("=");
+    if (name !== LOGIN_STATE_COOKIE) continue;
+    const m = /^([0-9a-f]{32})\.(.*)$/.exec(rest.join("="));
+    if (!m) return null;
+    try { return { state: m[1], next: decodeURIComponent(m[2]) }; } catch { return null; }
+  }
+  return null;
+}
+
+/** อีเมลภายในของบัญชีที่สร้างจาก Steam · ไม่ใช่อีเมลจริง ห้ามส่งเมล/แสดงในโปรไฟล์ */
+export function steamLoginEmail(steamId64: string): string {
+  return `steam-${steamId64}@${STEAM_LOGIN_EMAIL_DOMAIN}`;
+}
+
+/** ชุดตรวจเดียวกับการผูก (singleValued → checkReturnParams → parseClaimedId → verifyAssertion → toDotaAccountId) · ไม่แตะ DB
+ *  ผ่าน = { steam64, accountId } · ไม่ผ่านข้อใดข้อหนึ่ง = null */
+export async function verifySteamLoginReturn(a: {
+  params: URLSearchParams; siteUrl: string; expectedState: string | null; fetchFn?: typeof fetch; now?: Date;
+}): Promise<{ steam64: string; accountId: string } | null> {
+  const p = singleValued(a.params);
+  if (!p || !checkReturnParams(p, a.siteUrl, a.expectedState, a.now, LOGIN_RETURN_PATH)) return null;
+  const steam64 = parseClaimedId(p.get("openid.claimed_id"));
+  if (!steam64) return null;
+  if (!(await verifyAssertion(p, a.fetchFn))) return null;
+  const accountId = toDotaAccountId(steam64);
+  if (!accountId) return null;
+  return { steam64, accountId };
+}
+
+export type SteamLoginDeps = {
+  /** แถว game_accounts: DOTA2 + external_id + VERIFIED + STEAM_OPENID → user_id · ไม่เจอ = null · อ่านไม่ได้ = undefined */
+  findVerifiedUserId: (accountId: string) => Promise<string | null | undefined>;
+  /** auth.admin.createUser (email_confirm · ไม่มีรหัสผ่าน · ไม่ส่งเมล) → user id · ล้ม = null */
+  createUser: (email: string) => Promise<string | null>;
+  /** rpc link_steam_verified (service role) */
+  linkSteam: (userId: string, accountId: string) => Promise<{ error: { message?: string } | null }>;
+  /** auth.admin.deleteUser — ใช้เฉพาะกับบัญชีที่เพิ่งสร้างในคำขอนี้ */
+  deleteUser: (userId: string) => Promise<void>;
+  /** users.suspended_until > now (fail closed) */
+  isSuspended: (userId: string) => Promise<boolean>;
+  /** ตั้ง session ให้ userId (getUserById → generateLink magiclink → verifyOtp) · ล้ม = false */
+  signIn: (userId: string) => Promise<boolean>;
+};
+
+/** ตรรกะล็อกอินหลัง Steam ตรวจผ่านแล้ว · deps = null แปลว่าไม่มี admin (ปิดฟีเจอร์) */
+export async function processSteamLogin(a: {
+  params: URLSearchParams; siteUrl: string; expectedState: string | null; deps: SteamLoginDeps | null;
+  fetchFn?: typeof fetch; now?: Date;
+}): Promise<{ ok: true; userId: string } | { ok: false; error: SteamLoginError }> {
+  const fail = (error: SteamLoginError) => ({ ok: false as const, error });
+  const verified = await verifySteamLoginReturn(a);
+  if (!verified) return fail("invalid");
+  const d = a.deps;
+  if (!d) return fail("unavailable");
+
+  const enter = async (userId: string) => {
+    if (await d.isSuspended(userId)) return fail("suspended");
+    return (await d.signIn(userId)) ? { ok: true as const, userId } : fail("failed");
+  };
+
+  // (2) Steam ที่ผูกแล้ว → เข้าบัญชีเดิม ไม่สร้างใหม่
+  const existing = await d.findVerifiedUserId(verified.accountId);
+  if (existing === undefined) return fail("failed");
+  if (existing) return enter(existing);
+
+  // (3) Steam ใหม่ → สร้างบัญชี แล้วผูกก่อนตั้ง session
+  const created = await d.createUser(steamLoginEmail(verified.steam64));
+  if (!created) return fail("failed");
+  const { error } = await d.linkSteam(created, verified.accountId);
+  if (error) {
+    // (4) ผูกไม่สำเร็จ → ลบเฉพาะบัญชีที่เพิ่งสร้าง · ชนกับคนที่กดพร้อมกัน → กลับไป (2)
+    await d.deleteUser(created);
+    if ((error.message ?? "").includes("STEAM_ALREADY_LINKED")) {
+      const winner = await d.findVerifiedUserId(verified.accountId);
+      return winner ? enter(winner) : fail("failed");
+    }
+    return fail("failed");
+  }
+  return enter(created);
+}
+
+export const LOGIN_MESSAGES: Record<SteamLoginError, string> = {
+  invalid: "ยืนยันกับ Steam ไม่ผ่าน กรุณาลองใหม่",
+  suspended: "บัญชีของคุณถูกระงับชั่วคราว ไม่สามารถเข้าสู่ระบบได้",
+  unavailable: "ล็อกอินด้วย Steam ยังไม่เปิดใช้งาน ใช้อีเมลหรือ Google แทนได้",
+  failed: "เข้าสู่ระบบด้วย Steam ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง",
+};
+
+/** รหัส error จาก query ต้องอยู่ในรายการคงที่เท่านั้น · อย่างอื่น = null (ไม่สะท้อนข้อความดิบ) */
+export function steamLoginMessage(code: unknown): string | null {
+  // Object.hasOwn: กัน "toString"/"constructor" หลุดผ่าน prototype
+  return typeof code === "string" && Object.hasOwn(LOGIN_MESSAGES, code) ? LOGIN_MESSAGES[code as SteamLoginError] : null;
+}
