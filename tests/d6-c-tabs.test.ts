@@ -168,16 +168,17 @@ describe("แชต", () => {
 });
 
 describe("แท็บ", () => {
-  it("tabs.ts: Overview + ชุด C เปิด · Builds/Lanes/Combat/Kills/Farm ยังปิด (ของ D4/D5)", () => {
+  it("tabs.ts: Overview + Combat (D4) + ชุด C เปิด · Builds/Lanes/Kills/Farm ยังปิด (K-AV-D6.1: D6 ต่อจาก D4)", () => {
     const ready = MATCH_TABS.filter((t) => t.ready).map((t) => t.slug);
-    expect(ready).toEqual(["", "objectives", "runes", "vision", "log", "chat"]);
-    expect(MATCH_TABS.filter((t) => !t.ready).map((t) => t.slug)).toEqual(["builds", "lanes", "combat", "kills", "farm"]);
+    expect(ready).toEqual(["", "combat", "objectives", "runes", "vision", "log", "chat"]);
+    expect(MATCH_TABS.filter((t) => !t.ready).map((t) => t.slug)).toEqual(["builds", "lanes", "kills", "farm"]);
   });
-  it("ไฟล์ใหม่ชุด C ขึ้นต้น c- หรืออยู่ในเส้นทางแท็บของตัวเอง · ไม่แตะแท็บของ D4/D5", () => {
+  it("ไฟล์ใหม่ชุด C ขึ้นต้น c- หรืออยู่ในเส้นทางแท็บของตัวเอง · ไม่แตะแท็บของ D4/D5 (Combat เป็นหน้าจริงของ D4 แล้ว)", () => {
     const names = readdirSync(join(process.cwd(), "lib", "dota", "match")).filter((f) => f.startsWith("c-"));
     expect(names).toEqual(["c-events.ts"]);
     const base = join(process.cwd(), "app", "[game]", "stats", "matches", "[matchId]");
-    for (const s of ["builds", "lanes", "combat", "kills", "farm"]) {
+    expect(readFileSync(join(base, "combat", "page.tsx"), "utf8")).toContain("K-AV-D4");
+    for (const s of ["builds", "lanes", "kills", "farm"]) {
       expect(readFileSync(join(base, s, "page.tsx"), "utf8")).toContain("NotReadyTab");
     }
   });
