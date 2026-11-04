@@ -275,3 +275,126 @@ html:not(:has([data-obs-root])) body::before {
     cursor: not-allowed;
   }
 }
+
+/* ==========================================================================
+   K-AV-POLISH เฟส 2: token สถานะที่ยังขาด + ชุดยูทิลิตี้กลาง (เพิ่มอย่างเดียว ไม่แก้ค่าเดิม)
+   ความต่างสีข้อความบน void/surface-3 (วัดในใบตอบ): win 10.05/8.37 · lose 7.18/5.98 · warn 11.57/9.64
+   ========================================================================== */
+@theme inline {
+  --color-win: #34d399;
+  --color-lose: #fb7185;
+  --color-warn: #fbbf24;
+  --color-info: var(--color-cyan);
+  /* สีฝั่งคงที่ทั้งเว็บ: Radiant/ทีม A = ฟ้า · Dire/ทีม B = ทอง */
+  --color-radiant: var(--color-cyan);
+  --color-dire: var(--color-gold);
+}
+
+@layer components {
+  /* ตาราง HUD — เลื่อนในกรอบตัวเอง · หัวตาราง display 12px ฟ้า · ตัวเลขใช้ .font-numeric ที่เซลล์ */
+  .hud-table-wrap {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    border: 1px solid var(--color-hud-edge);
+    border-radius: 0.5rem;
+    background-color: var(--color-panel);
+  }
+  .hud-table {
+    width: 100%;
+    min-width: max-content;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+  .hud-table th {
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-cyan);
+    background-color: var(--color-surface-1);
+    border-bottom: 1px solid var(--color-hud-edge);
+    padding: 0.75rem;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .hud-table td {
+    padding: 0.625rem 0.75rem;
+    border-bottom: 1px solid var(--color-line);
+    vertical-align: middle;
+  }
+  .hud-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  .hud-table tbody tr:hover td {
+    background-color: rgba(0, 212, 255, 0.04);
+  }
+
+  /* ช่องกรอก/เลือก — สูง ≥44px · พื้น surface-2 · โฟกัสขอบฟ้า · ตัวอักษร 14px */
+  .hud-input {
+    min-height: 44px;
+    width: 100%;
+    border: 1px solid var(--color-line);
+    border-radius: 0.375rem;
+    background-color: var(--color-surface-2);
+    color: var(--color-ink);
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    transition: border-color 150ms, box-shadow 150ms;
+  }
+  .hud-input::placeholder {
+    color: var(--color-ink-muted);
+  }
+  .hud-input:focus-visible {
+    outline: none;
+    border-color: var(--color-cyan);
+    box-shadow: var(--shadow-glow-cyan);
+  }
+  .hud-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* หัวข้อส่วน — Orbitron 14px มีขีดฟ้าหน้า */
+  .hud-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--font-display);
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+  }
+  .hud-section-title::before {
+    content: "";
+    width: 3px;
+    height: 1em;
+    border-radius: 2px;
+    background: var(--color-cyan);
+    box-shadow: var(--shadow-glow-cyan);
+  }
+
+  /* ชิปสถานะ (ต่อยอด .hud-chip): ชนะ/แพ้/เตือน/เงียบ */
+  .hud-chip-win {
+    border-color: rgba(52, 211, 153, 0.45);
+    background: rgba(52, 211, 153, 0.1);
+    color: var(--color-win);
+  }
+  .hud-chip-lose {
+    border-color: rgba(251, 113, 133, 0.45);
+    background: rgba(251, 113, 133, 0.1);
+    color: var(--color-lose);
+  }
+  .hud-chip-warn {
+    border-color: rgba(251, 191, 36, 0.45);
+    background: rgba(251, 191, 36, 0.1);
+    color: var(--color-warn);
+  }
+  .hud-chip-muted {
+    border-color: var(--color-line);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--color-ink-muted);
+  }
+}
