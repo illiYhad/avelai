@@ -35,6 +35,8 @@ export const HUB_REDIRECTS = [{ source: "/tournament", destination: "/mlbb/tourn
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  agentRules: false, // K-AV-POLISH: next dev สร้าง AGENTS.md/CLAUDE.md เองใน repo — ปิด
+
   devIndicators: false,
   async headers() {
     return [{ source: "/(.*)", headers: SECURITY_HEADERS }];
