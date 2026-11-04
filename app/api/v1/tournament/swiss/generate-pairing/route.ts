@@ -2,6 +2,7 @@ import { FEATURES, FEATURE_DISABLED_MESSAGE } from '@/lib/featureFlags';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generateSwissPairings, PlayerHistory } from '@/lib/tournament/swissPairing';
+import { PARTICIPANT_COLUMNS, participantToPlayerHistory } from '@/lib/tournament/participantRow';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
 
     const { data: participants, error: participantErr } = await supabase
       .from('tournament_participants')
-      .select('player_id, score, has_received_bye, previous_opponent_ids')
+      .select(PARTICIPANT_COLUMNS)
       .eq('tournament_id', weeklyTournamentId)
       .eq('has_weekly_pass', true);
 
@@ -47,21 +48,8 @@ export async function POST(req: Request) {
       );
     }
 
-    type ParticipantRow = {
-      player_id?: string; userId?: string; id?: string; score?: unknown;
-      has_received_bye?: unknown; hasReceivedBye?: unknown; previous_opponent_ids?: unknown; opponentsFaced?: unknown;
-    };
-    const playersForEngine: PlayerHistory[] = participants.map((p: ParticipantRow) => ({
-      userId: String(p.player_id || p.userId || p.id),
-      hasWeeklyPass: true,
-      score: typeof p.score === 'number' ? p.score : 0,
-      hasReceivedBye: Boolean(p.has_received_bye ?? p.hasReceivedBye ?? false),
-      opponentsFaced: Array.isArray(p.previous_opponent_ids)
-        ? p.previous_opponent_ids
-        : Array.isArray(p.opponentsFaced)
-          ? p.opponentsFaced
-          : [],
-    }));
+    // K-AV-POLISH.2 A1: mapping เดียวกับ finalize-top8 (lib/tournament/participantRow.ts)
+    const playersForEngine: PlayerHistory[] = participants.map(participantToPlayerHistory);
 
     const pairings = generateSwissPairings(playersForEngine, roundNumber);
 

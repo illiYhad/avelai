@@ -1,7 +1,8 @@
 import { FEATURES, FEATURE_DISABLED_MESSAGE } from '@/lib/featureFlags';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getTop8Qualifiers, type TiebreakerResult } from '@/lib/tournament/swissPairing';
+import { getTop8Qualifiers } from '@/lib/tournament/swissPairing';
+import { PARTICIPANT_COLUMNS, participantToPlayerHistory, type ParticipantRow } from '@/lib/tournament/participantRow';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
 
     const { data: players } = await supabase
       .from('tournament_participants')
-      .select('*')
+      .select(PARTICIPANT_COLUMNS)
       .eq('tournament_id', weeklyTournamentId)
       .eq('has_weekly_pass', true);
 
@@ -25,11 +26,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No players found' }, { status: 400 });
     }
 
-    const top8 = getTop8Qualifiers(players);
+    // K-AV-POLISH.2 A1: แปลงแถว DB → PlayerHistory ก่อนเข้าเอนจิน (เดิมส่งแถวดิบ → userId undefined · reduce พัง)
+    const top8 = getTop8Qualifiers((players as ParticipantRow[]).map(participantToPlayerHistory));
 
-    const bracketSlotsPayload = top8.map((player: TiebreakerResult & { id?: string }, index: number) => ({
+    const bracketSlotsPayload = top8.map((player, index) => ({
       tournament_id: weeklyTournamentId,
-      player_id: player.id,
+      player_id: player.userId,
       seed_rank: index + 1,
       slot_type: 'QUARTER_FINAL_SEEDING',
     }));
