@@ -5,6 +5,7 @@ import { signOutAction } from "@/app/auth/actions";
 import ProfileForm from "./ProfileForm";
 import GameAccountsCard, { type DotaAccount, type MlbbAccount } from "./GameAccountsCard";
 import { routes } from "@/lib/routes";
+import { isSteamLoginEmail } from "@/lib/game-accounts/steam";
 import Logo3D from "@/components/ui/Logo3D";
 import HudScan from "@/components/ui/HudScan";
 
@@ -86,6 +87,7 @@ export default async function MePage({ searchParams }: { searchParams: Promise<{
         linked={sp.linked ?? null}
         linkError={sp.link_error ?? null}
         unavailable={accError}
+        steamLogin={isSteamLoginEmail(user.email)}
       />
 
       <section className="flex items-center gap-4">

@@ -57,7 +57,7 @@ function adminDb() {
 
 import {
   buildStartUrl, checkReturnParams, returnToWithState, singleValued, processSteamLogin, readLoginStateCookie, loginStateCookieValue,
-  steamLoginEmail, steamLoginMessage, verifySteamLoginReturn, LOGIN_RETURN_PATH, LOGIN_STATE_COOKIE, RETURN_PATH, STEAM_OPENID_ENDPOINT,
+  steamLoginEmail, isSteamLoginEmail, steamLoginMessage, verifySteamLoginReturn, LOGIN_RETURN_PATH, LOGIN_STATE_COOKIE, RETURN_PATH, STEAM_OPENID_ENDPOINT,
   type SteamLoginDeps,
 } from "@/lib/game-accounts/steam";
 import { GET as startGET } from "@/app/auth/steam/start/route";
@@ -67,6 +67,13 @@ import { GET as linkStartGET } from "@/app/link/steam/start/route";
 const SITE = "https://avelai.example";
 const STEAM64 = "76561197960287930"; // → account_id 22202
 const STATE = "0123456789abcdef0123456789abcdef";
+// K-AV-STEAMLOGIN.1: อีเมลภายในเป็น UUID สุ่ม · ต้องไม่มี steam64 ปนอยู่
+const STEAM_EMAIL_RE = /^steam-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}@steam\.avelai\.org$/;
+const expectCreatedRandom = (created: string[]) => {
+  expect(created).toHaveLength(1);
+  expect(created[0]).toMatch(STEAM_EMAIL_RE);
+  expect(created[0]).not.toContain(STEAM64);
+};
 const nowNonce = () => new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
 const goodParams = (over: Record<string, string> = {}) =>
   new URLSearchParams({
@@ -122,8 +129,20 @@ describe("return path แยกจากการผูก · ของเดิ
     expect(readLoginStateCookie(`steam_link_state=${STATE}.u`)).toBeNull();
     expect(readLoginStateCookie(null)).toBeNull();
   });
-  it("อีเมลภายใน + ข้อความ error จากรายการคงที่เท่านั้น", () => {
-    expect(steamLoginEmail(STEAM64)).toBe(`steam-${STEAM64}@steam.avelai.org`);
+  it("อีเมลภายใน (K-AV-STEAMLOGIN.1: UUID สุ่ม · ไม่มี SteamID · เรียกสองครั้งไม่ซ้ำ) + ข้อความ error จากรายการคงที่เท่านั้น", () => {
+    const a = steamLoginEmail();
+    const b = steamLoginEmail();
+    expect(a).toMatch(STEAM_EMAIL_RE);
+    expect(b).toMatch(STEAM_EMAIL_RE);
+    expect(a).not.toBe(b);
+    expect(a).not.toContain(STEAM64);
+    expect(a).not.toContain("22202");
+    expect(isSteamLoginEmail(a)).toBe(true);
+    expect(isSteamLoginEmail("STEAM-X@STEAM.AVELAI.ORG")).toBe(true);
+    expect(isSteamLoginEmail("kolt@gmail.com")).toBe(false);
+    expect(isSteamLoginEmail("x@steam.avelai.org.evil.com")).toBe(false);
+    expect(isSteamLoginEmail(null)).toBe(false);
+    expect(isSteamLoginEmail(undefined)).toBe(false);
     expect(steamLoginMessage("invalid")).toMatch(/Steam/);
     expect(steamLoginMessage("suspended")).toMatch(/ระงับ/);
     expect(steamLoginMessage("<script>alert(1)</script>")).toBeNull();
@@ -165,7 +184,7 @@ describe("processSteamLogin", () => {
     h.rows = [{ user_id: "u-fake", status: "UNVERIFIED", verified_via: null }];
     const r = await processSteamLogin({ ...base(), deps: deps() });
     expect(r).toEqual({ ok: true, userId: "new-1" });
-    expect(h.created).toEqual([`steam-${STEAM64}@steam.avelai.org`]);
+    expectCreatedRandom(h.created);
   });
 
   it("Steam ใหม่ → สร้าง 1 บัญชี + ผูก VERIFIED ก่อนตั้ง session + เข้าได้", async () => {
@@ -284,7 +303,7 @@ describe("route /auth/steam/return", () => {
   it("Steam ใหม่ → createUser(email_confirm) → rpc link → generateLink → verifyOtp(hashed_token, magiclink) → ไป next จาก cookie", async () => {
     const res = await call(goodParams(), cookieHeader("/dota2/me"));
     expect(res.headers.get("location")).toBe(`${SITE}/dota2/me`);
-    expect(h.created).toEqual([`steam-${STEAM64}@steam.avelai.org`]);
+    expectCreatedRandom(h.created);
     expect(h.rpcCalls).toEqual([{ fn: "link_steam_verified", args: { p_user_id: "new-1", p_account_id: "22202" } }]);
     expect(h.verifyOtpCalls).toEqual([{ token_hash: "HASHED", type: "magiclink" }]);
     cleared(res);

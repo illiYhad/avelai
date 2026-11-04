@@ -21,6 +21,8 @@ export const LOGIN_RETURN_PATH = "/auth/steam/return";
 export const LOGIN_STATE_COOKIE = "steam_login_state";
 export const LOGIN_STATE_COOKIE_PATH = "/auth/steam";
 export const STEAM_LOGIN_EMAIL_DOMAIN = "steam.avelai.org";
+/** K-AV-STEAMLOGIN.1: ข้อความเมื่อบัญชีที่เข้าด้วย Steam พยายามยกเลิกการผูก (ไฟล์ "use server" export ค่าคงที่ไม่ได้ จึงอยู่ที่นี่) */
+export const STEAM_LOGIN_UNLINK_MESSAGE = "บัญชีนี้เข้าสู่ระบบด้วย Steam จึงยกเลิกการผูกไม่ได้";
 
 /** SITE_URL ก่อนเสมอ (กัน host header poisoning) · ไม่มี = dev เท่านั้นที่ใช้ origin ของ request · production ไม่มี = null (ปิดฟีเจอร์) */
 export function resolveSiteUrl(env: Record<string, string | undefined>, requestUrl: string): string | null {
@@ -192,9 +194,15 @@ export function readLoginStateCookie(cookieHeader: string | null | undefined): {
   return null;
 }
 
-/** อีเมลภายในของบัญชีที่สร้างจาก Steam · ไม่ใช่อีเมลจริง ห้ามส่งเมล/แสดงในโปรไฟล์ */
-export function steamLoginEmail(steamId64: string): string {
-  return `steam-${steamId64}@${STEAM_LOGIN_EMAIL_DOMAIN}`;
+/** อีเมลภายในของบัญชีที่สร้างจาก Steam · ไม่ใช่อีเมลจริง ห้ามส่งเมล/แสดงในโปรไฟล์
+ *  K-AV-STEAMLOGIN.1: ค่าสุ่ม (ไม่มี SteamID ในอีเมล) · ระบบหาบัญชีจาก game_accounts เท่านั้น ไม่ใช่จากอีเมล */
+export function steamLoginEmail(): string {
+  return `steam-${globalThis.crypto.randomUUID()}@${STEAM_LOGIN_EMAIL_DOMAIN}`;
+}
+
+/** บัญชีที่สร้างจาก Steam (อีเมลภายใน) · Steam เป็นทางเข้าทางเดียว ห้ามยกเลิกการผูก ไม่งั้นกลับเข้าบัญชีเดิมไม่ได้ */
+export function isSteamLoginEmail(email: string | null | undefined): boolean {
+  return (email ?? "").toLowerCase().endsWith(`@${STEAM_LOGIN_EMAIL_DOMAIN}`);
 }
 
 /** ชุดตรวจเดียวกับการผูก (singleValued → checkReturnParams → parseClaimedId → verifyAssertion → toDotaAccountId) · ไม่แตะ DB
@@ -249,7 +257,7 @@ export async function processSteamLogin(a: {
   if (existing) return enter(existing);
 
   // (3) Steam ใหม่ → สร้างบัญชี แล้วผูกก่อนตั้ง session
-  const created = await d.createUser(steamLoginEmail(verified.steam64));
+  const created = await d.createUser(steamLoginEmail());
   if (!created) return fail("failed");
   const { error } = await d.linkSteam(created, verified.accountId);
   if (error) {

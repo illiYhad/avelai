@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
 // K-AV-D1: Dota 2 เป็นตัวเลือกเกม + ผูกบัญชี Dota — ไม่ยิงเครือข่าย · MLBB ต้องได้ผลเดิม
 
@@ -6,7 +8,7 @@ type Filters = Record<string, unknown>;
 type Call = { table: string; op: string; filters: Filters; row?: Record<string, unknown> };
 
 const h = vi.hoisted(() => ({
-  user: null as { id: string } | null,
+  user: null as { id: string; email?: string } | null,
   suspendedUntil: null as string | null,
   calls: [] as Call[],
   adminCalls: 0,
@@ -67,6 +69,8 @@ import { fetchLiquipediaAction } from "@/app/[game]/teams/[teamId]/scout/actions
 import { unlinkDotaAccountAction } from "@/app/me/dota-actions";
 import * as dotaActions from "@/app/me/dota-actions";
 import { getMyDotaAccount } from "@/lib/dota/my-account";
+import GameAccountsCard from "@/app/me/GameAccountsCard";
+import { STEAM_LOGIN_UNLINK_MESSAGE } from "@/lib/game-accounts/steam";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const NO_STATE = { ok: false, message: "" };
@@ -205,6 +209,56 @@ describe("บัญชี Dota ในหน้า /me (หลัง K-AV-LINK.1)
     const del = h.calls.find((c) => c.table === "game_accounts");
     expect(del).toMatchObject({ op: "delete", filters: { user_id: "u1", game: "DOTA2" } });
     expect(h.adminCalls).toBe(0);
+  });
+});
+
+// K-AV-STEAMLOGIN.1: บัญชีที่สร้างจาก Steam (อีเมลภายใน @steam.avelai.org) มี Steam เป็นทางเข้าทางเดียว → ยกเลิกการผูกไม่ได้
+describe("ยกเลิกการผูก: บัญชีที่เข้าด้วย Steam (K-AV-STEAMLOGIN.1)", () => {
+  it("อีเมลภายใน @steam.avelai.org → ปฏิเสธด้วยข้อความคงที่ · ไม่ลบแถว", async () => {
+    h.user = { id: "u-steam", email: "steam-0f4b2a9e-1c3d-4e5f-8a6b-7c8d9e0f1a2b@steam.avelai.org" };
+    expect(await unlinkDotaAccountAction(NO_STATE, new FormData())).toEqual({ ok: false, message: "บัญชีนี้เข้าสู่ระบบด้วย Steam จึงยกเลิกการผูกไม่ได้" });
+    expect(STEAM_LOGIN_UNLINK_MESSAGE).toBe("บัญชีนี้เข้าสู่ระบบด้วย Steam จึงยกเลิกการผูกไม่ได้");
+    expect(h.calls.some((c) => c.table === "game_accounts")).toBe(false);
+    expect(h.adminCalls).toBe(0);
+  });
+
+  it("ตัวพิมพ์ใหญ่ในโดเมนก็ถือเป็นบัญชี Steam · โดเมนที่ลงท้ายคล้ายกันไม่ใช่", async () => {
+    h.user = { id: "u-steam", email: "steam-x@STEAM.AVELAI.ORG" };
+    expect((await unlinkDotaAccountAction(NO_STATE, new FormData())).ok).toBe(false);
+    expect(h.calls.some((c) => c.table === "game_accounts")).toBe(false);
+
+    h.calls = [];
+    h.user = { id: "u2", email: "me@steam.avelai.org.example.com" };
+    expect((await unlinkDotaAccountAction(NO_STATE, new FormData())).ok).toBe(true);
+    expect(h.calls.find((c) => c.table === "game_accounts")).toMatchObject({ op: "delete", filters: { user_id: "u2", game: "DOTA2" } });
+  });
+
+  it("บัญชีอีเมลจริง → ยกเลิกได้เหมือนเดิม", async () => {
+    h.user = { id: "u-mail", email: "kolt@example.com" };
+    expect(await unlinkDotaAccountAction(NO_STATE, new FormData())).toEqual({ ok: true, message: "ยกเลิกการผูกแล้ว" });
+    expect(h.calls.find((c) => c.table === "game_accounts")).toMatchObject({ op: "delete", filters: { user_id: "u-mail", game: "DOTA2" } });
+  });
+});
+
+describe("GameAccountsCard: ปุ่มยกเลิกการผูก (K-AV-STEAMLOGIN.1)", () => {
+  const dota = { external_id: "22202", verified: true, viaSteam: true };
+  const render = (props: Record<string, unknown>) =>
+    renderToStaticMarkup(createElement(GameAccountsCard, { dota, mlbb: null, linked: null, linkError: null, unavailable: false, ...props }));
+
+  it("บัญชี Steam (steamLogin=true) → ไม่มีปุ่มยกเลิกการผูก · ยังแสดงเลขบัญชี + ป้ายยืนยัน", () => {
+    const html = render({ steamLogin: true });
+    expect(html).not.toContain("ยกเลิกการผูก");
+    expect(html).toContain("22202");
+    expect(html).toContain("ยืนยันแล้ว (Steam)");
+  });
+
+  it("บัญชีอีเมลจริง (steamLogin=false / ไม่ส่ง) → มีปุ่มยกเลิกการผูก", () => {
+    expect(render({ steamLogin: false })).toContain("ยกเลิกการผูก");
+    expect(render({})).toContain("ยกเลิกการผูก");
+  });
+
+  it("ไม่มีแถว Dota → ไม่มีปุ่มไม่ว่า steamLogin เป็นอะไร (เหมือนเดิม)", () => {
+    expect(render({ dota: null, steamLogin: false })).not.toContain("ยกเลิกการผูก");
   });
 });
 
