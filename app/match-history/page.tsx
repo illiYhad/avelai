@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { POSITION_COLORS, POSITION_FALLBACK } from '@/lib/ui/colors';
 import { createBrowserClient } from '@supabase/ssr';
 
 interface PlayerStat {
@@ -28,13 +29,8 @@ interface MatchRecord {
     match_players: PlayerStat[];
 }
 
-const ROLE_COLORS: Record<string, string> = {
-    'Pos 1': '#E8384F',
-    'Pos 2': '#2E9BFF',
-    'Pos 3': '#39FF6A',
-    'Pos 4': '#D63CE8',
-    'Pos 5': '#C8CDD4',
-};
+// K-AV-POLISH: สีตำแหน่งย้ายไป lib/ui/colors.ts (ไฟล์เดียวทั้งเว็บ)
+const ROLE_COLORS = POSITION_COLORS;
 
 export default function MatchHistoryPage() {
     const [matches, setMatches] = useState<MatchRecord[]>([]);
@@ -119,21 +115,21 @@ export default function MatchHistoryPage() {
     }, [matches, searchTerm, filterResult, filterRole]);
 
     return (
-        <div className="min-h-screen bg-[#0A0A0F] text-white px-4 md:px-8 pb-12 pt-24 md:pt-28 relative overflow-hidden font-mono">
+        <div className="min-h-screen bg-void text-white px-4 md:px-8 pb-12 pt-24 md:pt-28 relative overflow-hidden font-mono">
             {/* Cyber Scanline */}
             <div
                 className="absolute inset-0 pointer-events-none z-0"
                 style={{
                     backgroundImage:
-                        'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 212, 255, 0.03) 2px, rgba(0, 212, 255, 0.03) 4px)',
+                        'repeating-linear-gradient(0deg, transparent, transparent 2px, color-mix(in srgb, var(--color-cyan) 3%, transparent) 2px, color-mix(in srgb, var(--color-cyan) 3%, transparent) 4px)',
                 }}
             />
 
             <div className="max-w-7xl mx-auto z-10 relative">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-[#00D4FF]/20 pb-6 gap-4">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-cyan/20 pb-6 gap-4">
                     <div>
-                        <h1 className="text-2xl md:text-3xl text-[#00D4FF] tracking-wider font-bold">
+                        <h1 className="text-2xl md:text-3xl text-cyan tracking-wider font-bold">
                             [ MATCH ARCHIVE ]
                         </h1>
                         <p className="text-xs text-gray-400 mt-1">
@@ -149,12 +145,12 @@ export default function MatchHistoryPage() {
                         placeholder="Search Match ID / Player..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="bg-black/60 border border-gray-800 focus:border-[#00D4FF] px-4 py-2 rounded text-white outline-none w-full sm:w-64"
+                        className="bg-black/60 border border-gray-800 focus:border-cyan px-4 py-2 rounded text-white outline-none w-full sm:w-64"
                     />
                     <select
                         value={filterResult}
                         onChange={(e) => setFilterResult(e.target.value)}
-                        className="bg-black/60 border border-gray-800 focus:border-[#00D4FF] px-3 py-2 rounded text-gray-300 outline-none"
+                        className="bg-black/60 border border-gray-800 focus:border-cyan px-3 py-2 rounded text-gray-300 outline-none"
                     >
                         <option value="all">All Results</option>
                         <option value="win">Radiant Victory</option>
@@ -163,7 +159,7 @@ export default function MatchHistoryPage() {
                     <select
                         value={filterRole}
                         onChange={(e) => setFilterRole(e.target.value)}
-                        className="bg-black/60 border border-gray-800 focus:border-[#00D4FF] px-3 py-2 rounded text-gray-300 outline-none"
+                        className="bg-black/60 border border-gray-800 focus:border-cyan px-3 py-2 rounded text-gray-300 outline-none"
                     >
                         <option value="all">All Roles</option>
                         <option value="Pos 1">Pos 1 (Carry)</option>
@@ -194,13 +190,13 @@ export default function MatchHistoryPage() {
                                         key={m.match_id}
                                         onClick={() => setSelectedMatch(m)}
                                         className={`p-4 rounded-lg border cursor-pointer transition-all ${selectedMatch?.match_id === m.match_id
-                                            ? 'border-[#00D4FF] bg-[#00D4FF]/10 shadow-[0_0_15px_rgba(0,212,255,0.15)]'
+                                            ? 'border-cyan bg-cyan/10 shadow-glow-cyan'
                                             : 'border-gray-800 bg-gray-950/40 hover:bg-gray-900/40'
                                             }`}
                                     >
                                         <div className="flex justify-between items-center">
                                             <span
-                                                className={`text-xs font-bold ${m.radiant_win ? 'text-[#00D4FF]' : 'text-[#EF4444]'
+                                                className={`text-xs font-bold ${m.radiant_win ? 'text-cyan' : 'text-lose'
                                                     }`}
                                             >
                                                 {m.radiant_win ? 'RADIANT WIN' : 'DIRE WIN'} • #{m.match_id}
@@ -213,7 +209,7 @@ export default function MatchHistoryPage() {
                                             <div className="flex justify-between items-center mt-2 text-xs text-gray-400">
                                                 <span
                                                     style={{
-                                                        color: ROLE_COLORS[leadPlayer.role] || '#C8CDD4',
+                                                        color: ROLE_COLORS[leadPlayer.role] || POSITION_FALLBACK,
                                                     }}
                                                     className="font-bold"
                                                 >
@@ -222,7 +218,7 @@ export default function MatchHistoryPage() {
                                                 <span>
                                                     {leadPlayer.kills}/{leadPlayer.deaths}/{leadPlayer.assists}
                                                 </span>
-                                                <span className="text-[#C9A84C] font-bold">
+                                                <span className="text-gold font-bold">
                                                     {leadPlayer.total_score || 0} pts
                                                 </span>
                                             </div>
@@ -234,7 +230,7 @@ export default function MatchHistoryPage() {
 
                         {/* Right Inspector */}
                         {selectedMatch && (
-                            <div className="lg:col-span-7 border border-[#00D4FF]/30 bg-gray-950/80 rounded-lg p-6 flex flex-col justify-between backdrop-blur-sm shadow-xl">
+                            <div className="lg:col-span-7 border border-cyan/30 bg-gray-950/80 rounded-lg p-6 flex flex-col justify-between backdrop-blur-sm shadow-xl">
                                 <div>
                                     <div className="flex justify-between items-start border-b border-gray-800 pb-4">
                                         <div>
@@ -247,8 +243,8 @@ export default function MatchHistoryPage() {
                                         </div>
                                         <div
                                             className={`px-3 py-1 rounded text-xs font-bold ${selectedMatch.radiant_win
-                                                ? 'bg-[#00D4FF]/20 text-[#00D4FF]'
-                                                : 'bg-[#EF4444]/20 text-[#EF4444]'
+                                                ? 'bg-cyan/20 text-cyan'
+                                                : 'bg-lose/20 text-lose'
                                                 }`}
                                         >
                                             {selectedMatch.radiant_win ? 'RADIANT VICTORY' : 'DIRE VICTORY'}
@@ -264,13 +260,13 @@ export default function MatchHistoryPage() {
                                         </div>
                                         <div className="bg-black/50 p-3 rounded border border-gray-900">
                                             <div className="text-xs text-gray-500 uppercase">Total KP Pool</div>
-                                            <div className="text-lg font-bold text-[#00D4FF] mt-1">
+                                            <div className="text-lg font-bold text-cyan mt-1">
                                                 {selectedMatch.match_players?.reduce((acc, p) => acc + (p.base_kp || 0), 0)}
                                             </div>
                                         </div>
                                         <div className="bg-black/50 p-3 rounded border border-gray-900">
                                             <div className="text-xs text-gray-500 uppercase">Avg Score</div>
-                                            <div className="text-lg font-bold text-[#C9A84C] mt-1">
+                                            <div className="text-lg font-bold text-gold mt-1">
                                                 {(
                                                     selectedMatch.match_players?.reduce((acc, p) => acc + (p.total_score || 0), 0) /
                                                     Math.max(selectedMatch.match_players?.length || 1, 1)
@@ -279,7 +275,7 @@ export default function MatchHistoryPage() {
                                         </div>
                                     </div>
 
-                                    <h3 className="text-xs text-[#00D4FF] mb-3 uppercase tracking-wider font-bold">
+                                    <h3 className="text-xs text-cyan mb-3 uppercase tracking-wider font-bold">
                                         Player Breakdown
                                     </h3>
                                     <div className="flex flex-col gap-2">
@@ -293,7 +289,7 @@ export default function MatchHistoryPage() {
                                                 </span>
                                                 <span
                                                     style={{
-                                                        color: ROLE_COLORS[p.role] || '#C8CDD4',
+                                                        color: ROLE_COLORS[p.role] || POSITION_FALLBACK,
                                                     }}
                                                     className="font-bold"
                                                 >
@@ -302,7 +298,7 @@ export default function MatchHistoryPage() {
                                                 <span className="text-gray-400">
                                                     {p.kills} / <span className="text-red-400">{p.deaths}</span> / {p.assists}
                                                 </span>
-                                                <span className="text-[#C9A84C] font-bold">
+                                                <span className="text-gold font-bold">
                                                     {p.total_score || 0}
                                                 </span>
                                             </div>

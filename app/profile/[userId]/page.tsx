@@ -32,9 +32,9 @@ type PresenceState = 'AVE_ONLINE' | 'ARENA_READY' | 'IN_GAME' | 'OFFLINE';
 
 // ─── 4-State LED Config ───────────────────────────────────────────────────────
 const LED: Record<PresenceState, { label: string; dot: string; ring: string; pulse: boolean }> = {
-    AVE_ONLINE: { label: 'AVE ONLINE', dot: 'bg-[#00D4FF]', ring: 'shadow-[0_0_8px_#00D4FF]', pulse: true },
-    ARENA_READY: { label: 'ARENA READY', dot: 'bg-[#C9A84C]', ring: 'shadow-[0_0_8px_#C9A84C]', pulse: false },
-    IN_GAME: { label: 'IN GAME', dot: 'bg-orange-500', ring: 'shadow-[0_0_8px_#f97316]', pulse: true },
+    AVE_ONLINE: { label: 'AVE ONLINE', dot: 'bg-cyan', ring: 'shadow-glow-cyan', pulse: true },
+    ARENA_READY: { label: 'ARENA READY', dot: 'bg-gold', ring: 'shadow-glow-gold', pulse: false },
+    IN_GAME: { label: 'IN GAME', dot: 'bg-orange-500', ring: 'shadow-glow-gold', pulse: true },
     OFFLINE: { label: 'OFFLINE', dot: 'bg-zinc-600', ring: '', pulse: false },
 };
 
@@ -96,10 +96,10 @@ export default function ProfilePage() {
 
     // ── Loading ────────────────────────────────────────────────────────────────
     if (loading) return (
-        <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
+        <div className="min-h-screen bg-void flex items-center justify-center">
             <div className="flex flex-col items-center gap-3">
-                <div className="w-8 h-8 border-2 border-[#00D4FF] border-t-transparent rounded-full animate-spin" />
-                <span className="text-[#00D4FF] font-mono text-xs tracking-[0.2em] animate-pulse">
+                <div className="w-8 h-8 border-2 border-cyan border-t-transparent rounded-full animate-spin" />
+                <span className="text-cyan font-mono text-xs tracking-[0.2em] animate-pulse">
                     LOADING PASSPORT...
                 </span>
             </div>
@@ -107,7 +107,7 @@ export default function ProfilePage() {
     );
 
     if (!profile) return (
-        <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
+        <div className="min-h-screen bg-void flex items-center justify-center">
             <span className="text-zinc-500 font-mono text-sm">PLAYER NOT FOUND</span>
         </div>
     );
@@ -118,32 +118,32 @@ export default function ProfilePage() {
     const tag = `#${profile.id.substring(0, 4).toUpperCase()}`;
 
     return (
-        <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center p-4">
+        <div className="min-h-screen bg-void flex items-center justify-center p-4">
 
             {/* ── Passport Card (3:4 ratio) ─────────────────────────────────────── */}
             <div
-                className="relative w-full max-w-105 rounded-2xl overflow-hidden border border-[#C9A84C]/40"
+                className="relative w-full max-w-105 rounded-2xl overflow-hidden border border-gold/40"
                 style={{
                     aspectRatio: '3/4',
-                    background: 'linear-gradient(160deg, #12121A 0%, #0A0A0F 60%, #0D0D14 100%)',
-                    boxShadow: '0 0 40px rgba(0,212,255,0.08), 0 0 80px rgba(201,168,76,0.05)',
+                    background: 'linear-gradient(160deg, var(--color-surface-2) 0%, var(--color-void) 60%, var(--color-void) 100%)',
+                    boxShadow: 'var(--shadow-glow-cyan), var(--shadow-glow-gold)',
                 }}
             >
                 {/* Scanline overlay */}
                 <div
                     className="absolute inset-0 pointer-events-none z-10 opacity-[0.03]"
-                    style={{ backgroundImage: 'repeating-linear-gradient(0deg, #fff 0px, #fff 1px, transparent 1px, transparent 3px)' }}
+                    style={{ backgroundImage: 'repeating-linear-gradient(0deg, var(--color-ink) 0px, var(--color-ink) 1px, transparent 1px, transparent 3px)' }}
                 />
 
                 {/* Corner accents */}
-                <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-[#C9A84C]/60 rounded-tl-2xl z-20" />
-                <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-[#C9A84C]/60 rounded-tr-2xl z-20" />
-                <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-[#C9A84C]/60 rounded-bl-2xl z-20" />
-                <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-[#C9A84C]/60 rounded-br-2xl z-20" />
+                <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-gold/60 rounded-tl-2xl z-20" />
+                <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-gold/60 rounded-tr-2xl z-20" />
+                <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-gold/60 rounded-bl-2xl z-20" />
+                <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-gold/60 rounded-br-2xl z-20" />
 
                 {/* Header bar */}
                 <div className="relative z-20 flex items-center justify-between px-4 pt-4 pb-2">
-                    <span className="font-mono text-xs text-[#00D4FF]/60 tracking-[0.25em]">AVELAI // ESPORTS PASSPORT</span>
+                    <span className="font-mono text-xs text-cyan/60 tracking-[0.25em]">AVELAI // ESPORTS PASSPORT</span>
                     {/* 4-State LED */}
                     <div className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${led.dot} ${led.ring} ${led.pulse ? 'animate-pulse' : ''}`} />
@@ -152,7 +152,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Divider */}
-                <div className="mx-4 h-px bg-linear-to-r from-transparent via-[#C9A84C]/30 to-transparent" />
+                <div className="mx-4 h-px bg-linear-to-r from-transparent via-gold/30 to-transparent" />
 
                 {/* ── Main body: Left 3/5 + Right 2/5 ─────────────────────────────── */}
                 <div className="relative z-20 flex h-[55%]">
@@ -171,9 +171,9 @@ export default function ProfilePage() {
                                 style={{ filter: 'brightness(0.85) contrast(1.1)' }}
                             />
                             {/* Gradient fade right */}
-                            <div className="absolute inset-0 bg-linear-to-r from-transparent via-transparent to-[#0A0A0F]" />
+                            <div className="absolute inset-0 bg-linear-to-r from-transparent via-transparent to-void" />
                             {/* Gradient fade bottom */}
-                            <div className="absolute inset-0 bg-linear-to-t from-[#0A0A0F] via-[#0A0A0F]/20 to-transparent" />
+                            <div className="absolute inset-0 bg-linear-to-t from-void via-void/20 to-transparent" />
                         </div>
 
                         {/* Name + tag over avatar bottom */}
@@ -182,7 +182,7 @@ export default function ProfilePage() {
                                 <span className="font-black text-white text-lg leading-none" style={{ fontFamily: 'Orbitron, sans-serif' }}>
                                     {profile.display_name}
                                 </span>
-                                <span className="font-mono text-xs text-[#C9A84C]/80">{tag}</span>
+                                <span className="font-mono text-xs text-gold/80">{tag}</span>
                             </div>
                         </div>
                     </div>
@@ -194,24 +194,24 @@ export default function ProfilePage() {
                         <div className="flex flex-col gap-0.5">
                             <span className="font-mono text-xs text-zinc-500 tracking-[0.2em]">ELO RATING</span>
                             <span
-                                className="font-black text-2xl text-[#00D4FF] leading-none"
-                                style={{ fontFamily: 'Orbitron, sans-serif', textShadow: '0 0 12px rgba(0,212,255,0.5)' }}
+                                className="font-black text-2xl text-cyan leading-none"
+                                style={{ fontFamily: 'var(--font-display)', textShadow: 'var(--shadow-glow-cyan)' }}
                             >
                                 {profile.current_elo.toLocaleString()}
                             </span>
                         </div>
 
-                        <div className="h-px bg-[#C9A84C]/15" />
+                        <div className="h-px bg-gold/15" />
 
                         {/* Win Rate */}
                         <div className="flex flex-col gap-0.5">
                             <span className="font-mono text-xs text-zinc-500 tracking-[0.2em]">WIN RATE</span>
-                            <span className="font-black text-xl text-[#C9A84C] leading-none" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+                            <span className="font-black text-xl text-gold leading-none" style={{ fontFamily: 'Orbitron, sans-serif' }}>
                                 {winRate}
                             </span>
                         </div>
 
-                        <div className="h-px bg-[#C9A84C]/15" />
+                        <div className="h-px bg-gold/15" />
 
                         {/* Karma */}
                         {profile.karma_score !== undefined ? (
@@ -237,11 +237,11 @@ export default function ProfilePage() {
                 </div>
                 {/* Tier + Tickets + Points — ข้อมูลส่วนตัว ไม่อยู่ใน public_profiles_v (K-AV-FIX2) → แสดงเมื่อมีค่าเท่านั้น */}
                 {profile.subscription_tier !== undefined ? (<>
-                <div className="h-px bg-[#C9A84C]/15" />
+                <div className="h-px bg-gold/15" />
                 <div className="flex flex-col gap-0.5">
                     <span className="font-mono text-xs text-zinc-500 tracking-[0.2em]">ARENA PASS</span>
                     <div className="flex items-center gap-2">
-                        <span className={`text-xs font-mono px-2 py-0.5 rounded font-bold ${profile.subscription_tier === 'pro' ? 'bg-[#C9A84C]/20 text-[#C9A84C] border border-[#C9A84C]/50' : 'bg-zinc-800 text-zinc-400 border border-zinc-700'}`}>
+                        <span className={`text-xs font-mono px-2 py-0.5 rounded font-bold ${profile.subscription_tier === 'pro' ? 'bg-gold/20 text-gold border border-gold/50' : 'bg-zinc-800 text-zinc-400 border border-zinc-700'}`}>
                             {profile.subscription_tier === 'pro' ? 'PRO' : 'FREE'}
                         </span>
                         <span className="font-mono text-xs text-zinc-500">{profile.arena_tickets ?? 0} TICKETS</span>
@@ -251,7 +251,7 @@ export default function ProfilePage() {
                 </>) : null}
 
                 {/* Divider */}
-                <div className="mx-4 h-px bg-linear-to-r from-transparent via-[#C9A84C]/20 to-transparent" />
+                <div className="mx-4 h-px bg-linear-to-r from-transparent via-gold/20 to-transparent" />
 
                 {/* ── Badge Slots ──────────────────────────────────────────────────── */}
                 <div className="relative z-20 px-4 py-4">
@@ -261,7 +261,7 @@ export default function ProfilePage() {
                             badge ? (
                                 <div
                                     key={i}
-                                    className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl border border-[#C9A84C]/30 bg-[#C9A84C]/5"
+                                    className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl border border-gold/30 bg-gold/5"
                                 >
                                     <span className="text-2xl">{badge.icon}</span>
                                     <span className="font-mono text-xs text-zinc-400 text-center leading-tight">{badge.label}</span>

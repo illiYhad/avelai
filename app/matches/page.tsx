@@ -39,15 +39,15 @@ export default function MatchHistoryPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#07090E] text-white pt-24 pb-12 px-4 md:px-8 flex flex-col items-center font-mono selection:bg-[#00D4FF] selection:text-black">
+    <div className="min-h-screen bg-void text-white pt-24 pb-12 px-4 md:px-8 flex flex-col items-center font-mono selection:bg-cyan selection:text-black">
       {/* Background Grid */}
-      <div className="absolute inset-0 bg-[radial-gradient(#00D4FF_1px,transparent_1px)] bg-size-[28px_28px] opacity-10 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(var(--color-cyan)_1px,transparent_1px)] bg-size-[28px_28px] opacity-10 pointer-events-none" />
 
-      <header className="w-full max-w-6xl border-b border-[#00D4FF]/20 pb-4 mb-6 z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <header className="w-full max-w-6xl border-b border-cyan/20 pb-4 mb-6 z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#00D4FF] animate-pulse" />
-            <span className="text-[#00D4FF] text-xs tracking-widest uppercase font-bold">DECRYPTED TELEMETRY LOGS</span>
+            <span className="w-2 h-2 rounded-full bg-cyan animate-pulse" />
+            <span className="text-cyan text-xs tracking-widest uppercase font-bold">DECRYPTED TELEMETRY LOGS</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-black tracking-wider text-white mt-1">
             MATCH ARCHIVE & SEARCH
@@ -55,11 +55,11 @@ export default function MatchHistoryPage() {
         </div>
 
         {/* View Mode Switcher */}
-        <div className="flex items-center gap-2 bg-[#12121A] p-1.5 rounded-xl border border-[#00D4FF]/30 shadow-[0_0_15px_rgba(0,212,255,0.1)]">
+        <div className="flex items-center gap-2 bg-surface-2 p-1.5 rounded-xl border border-cyan/30 shadow-glow-cyan">
           <button
             onClick={() => setViewMode('card')}
             className={`cursor-pointer px-3 py-1.5 text-xs rounded-lg font-bold transition-all ${
-              viewMode === 'card' ? 'bg-[#00D4FF] text-black shadow-[0_0_10px_#00D4FF]' : 'text-gray-400 hover:text-white'
+              viewMode === 'card' ? 'bg-cyan text-black shadow-glow-cyan' : 'text-gray-400 hover:text-white'
             }`}
           >
             Tactical Cards
@@ -67,7 +67,7 @@ export default function MatchHistoryPage() {
           <button
             onClick={() => setViewMode('table')}
             className={`cursor-pointer px-3 py-1.5 text-xs rounded-lg font-bold transition-all ${
-              viewMode === 'table' ? 'bg-[#00D4FF] text-black shadow-[0_0_10px_#00D4FF]' : 'text-gray-400 hover:text-white'
+              viewMode === 'table' ? 'bg-cyan text-black shadow-glow-cyan' : 'text-gray-400 hover:text-white'
             }`}
           >
             Data Matrix (Table)
@@ -76,14 +76,14 @@ export default function MatchHistoryPage() {
       </header>
 
       {/* Filter & Search Bar */}
-      <div className="w-full max-w-6xl bg-[#12121A] border border-[#00D4FF]/30 p-4 rounded-xl mb-6 z-10 flex flex-wrap items-center justify-between gap-4 shadow-[0_0_15px_rgba(0,212,255,0.05)]">
+      <div className="w-full max-w-6xl bg-surface-2 border border-cyan/30 p-4 rounded-xl mb-6 z-10 flex flex-wrap items-center justify-between gap-4 shadow-glow-cyan">
         <div className="flex-1 min-w-65">
           <input
             type="text"
             placeholder="Search Match ID, Player Name, or Hero..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-[#07090E] border border-gray-800 focus:border-[#00D4FF] px-4 py-2 rounded-lg text-xs text-white placeholder-gray-500 outline-none transition-all"
+            className="w-full bg-void border border-gray-800 focus:border-cyan px-4 py-2 rounded-lg text-xs text-white placeholder-gray-500 outline-none transition-all"
           />
         </div>
 
@@ -91,7 +91,7 @@ export default function MatchHistoryPage() {
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="bg-[#07090E] border border-gray-800 px-3 py-2 rounded-lg text-xs text-gray-300 outline-none focus:border-[#00D4FF]"
+            className="bg-void border border-gray-800 px-3 py-2 rounded-lg text-xs text-gray-300 outline-none focus:border-cyan"
           >
             <option value="ALL">All Roles</option>
             <option value="Carry">Carry</option>
@@ -103,7 +103,7 @@ export default function MatchHistoryPage() {
           <select
             value={resultFilter}
             onChange={(e) => setResultFilter(e.target.value)}
-            className="bg-[#07090E] border border-gray-800 px-3 py-2 rounded-lg text-xs text-gray-300 outline-none focus:border-[#00D4FF]"
+            className="bg-void border border-gray-800 px-3 py-2 rounded-lg text-xs text-gray-300 outline-none focus:border-cyan"
           >
             <option value="ALL">All Results</option>
             <option value="WIN">Victory Only</option>
@@ -119,14 +119,14 @@ export default function MatchHistoryPage() {
             {filteredMatches.map((m) => (
               <div
                 key={m.id}
-                className={`p-4 bg-[#12121A] rounded-xl border transition-all ${
+                className={`p-4 bg-surface-2 rounded-xl border transition-all ${
                   m.result === 'WIN' ? 'border-green-500/30 hover:border-green-500' : 'border-red-500/30 hover:border-red-500'
                 }`}
               >
                 <div className="flex justify-between items-center border-b border-gray-800 pb-2 mb-3">
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-400 font-bold">{m.id}</span>
-                    <span className="text-xs bg-[#00D4FF]/10 text-[#00D4FF] border border-[#00D4FF]/30 px-1.5 py-0.5 rounded uppercase font-bold">
+                    <span className="text-xs bg-cyan/10 text-cyan border border-cyan/30 px-1.5 py-0.5 rounded uppercase font-bold">
                       {m.heroRole}
                     </span>
                   </div>
@@ -139,7 +139,7 @@ export default function MatchHistoryPage() {
                   <div>
                     <div className="text-sm font-bold text-white">{m.hero}</div>
                     <div className="text-xs text-gray-400">
-                      Operator: <span className="text-[#00D4FF] font-bold">{m.player}</span>
+                      Operator: <span className="text-cyan font-bold">{m.player}</span>
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
                       ⏱ {m.duration} • {m.date}
@@ -148,17 +148,17 @@ export default function MatchHistoryPage() {
                   <div className="text-right">
                     <div className="text-xs text-gray-400">K/D/A</div>
                     <div className="text-sm font-black text-white">{m.kda}</div>
-                    <div className="text-xs text-[#C9A84C] font-bold mt-0.5">{m.score}</div>
+                    <div className="text-xs text-gold font-bold mt-0.5">{m.score}</div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="bg-[#12121A] border border-[#00D4FF]/30 rounded-xl overflow-x-auto shadow-[0_0_15px_rgba(0,212,255,0.05)]">
+          <div className="bg-surface-2 border border-cyan/30 rounded-xl overflow-x-auto shadow-glow-cyan">
             <table className="w-full text-xs text-left">
               <thead>
-                <tr className="text-gray-400 border-b border-gray-800 bg-[#07090E]/80">
+                <tr className="text-gray-400 border-b border-gray-800 bg-void/80">
                   <th className="p-3.5">MATCH ID</th>
                   <th className="p-3.5">OPERATOR</th>
                   <th className="p-3.5">HERO & ROLE</th>
@@ -172,7 +172,7 @@ export default function MatchHistoryPage() {
                 {filteredMatches.map((m) => (
                   <tr key={m.id} className="hover:bg-white/2">
                     <td className="p-3.5 text-gray-400 font-bold">{m.id}</td>
-                    <td className="p-3.5 text-[#00D4FF] font-bold">{m.player}</td>
+                    <td className="p-3.5 text-cyan font-bold">{m.player}</td>
                     <td className="p-3.5 text-white font-bold">
                       {m.hero} <span className="text-xs text-gray-400 font-normal font-mono">({m.heroRole})</span>
                     </td>
