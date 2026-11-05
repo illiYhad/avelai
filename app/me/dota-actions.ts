@@ -2,9 +2,11 @@
 
 // K-AV-D1: ยกเลิกการผูกบัญชี Dota 2 ในหน้า /me — ใช้ client ของผู้ใช้เอง (RLS ของ game_accounts: เจ้าของแถว)
 // K-AV-LINK.1: เอาทางกรอกเลข Dota เองออกแล้ว (linkDotaAccountAction) · ผูกได้ทาง Steam (/link/steam/start) อย่างเดียว
+// K-AV-STEAMLOGIN.1: กันเฉพาะทางหน้าเว็บ · ผู้ใช้ยังลบแถว game_accounts ผ่าน RLS เจ้าของแถวได้โดยตรง (ไม่เพิ่ม migration ในใบนี้)
 import { revalidatePath } from "next/cache";
 import { getServerDb } from "@/lib/db/server";
 import { isUserSuspended } from "@/lib/auth/suspension";
+import { isSteamLoginEmail, STEAM_LOGIN_UNLINK_MESSAGE } from "@/lib/game-accounts/steam";
 
 export type DotaLinkState = { ok: boolean; message: string };
 
@@ -14,12 +16,14 @@ async function currentUser() {
   const { data } = await db.auth.getUser();
   if (!data.user) return { error: "กรุณาเข้าสู่ระบบก่อน" } as const;
   if (await isUserSuspended(db, data.user.id)) return { error: "บัญชีของคุณถูกระงับชั่วคราว ไม่สามารถแก้ไขข้อมูลได้" } as const;
-  return { db, userId: data.user.id } as const;
+  return { db, userId: data.user.id, email: data.user.email ?? null } as const;
 }
 
 export async function unlinkDotaAccountAction(_prev: DotaLinkState, _formData: FormData): Promise<DotaLinkState> {
   const ctx = await currentUser();
   if (!ctx.db) return { ok: false, message: ctx.error ?? "ทำรายการไม่สำเร็จ" };
+  // K-AV-STEAMLOGIN.1: บัญชีที่สร้างจาก Steam (อีเมลภายใน @steam.avelai.org) มี Steam เป็นทางเข้าทางเดียว → ห้ามยกเลิก
+  if (isSteamLoginEmail(ctx.email)) return { ok: false, message: STEAM_LOGIN_UNLINK_MESSAGE };
   const { error } = await ctx.db.from("game_accounts").delete().eq("user_id", ctx.userId).eq("game", "DOTA2");
   if (error) return { ok: false, message: "ยกเลิกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง" };
   revalidatePath("/me");

@@ -21,9 +21,11 @@ function Badge({ tone, children }: { tone: "ok" | "wait"; children: React.ReactN
 }
 
 export default function GameAccountsCard({
-  dota, mlbb, linked, linkError, unavailable,
+  dota, mlbb, linked, linkError, unavailable, steamLogin = false,
 }: {
   dota: DotaAccount; mlbb: MlbbAccount; linked: string | null; linkError: string | null; unavailable: boolean;
+  /** K-AV-STEAMLOGIN.1: บัญชีที่เข้าด้วย Steam (อีเมลภายใน) · Steam เป็นทางเข้าทางเดียว จึงไม่มีปุ่มยกเลิกการผูก */
+  steamLogin?: boolean;
 }) {
   const [state, action, pending] = useActionState(linkMlbb, initial);
   const [unlinkState, unlinkAction, unlinking] = useActionState(unlinkDotaAccountAction, initial as DotaLinkState);
@@ -57,8 +59,8 @@ export default function GameAccountsCard({
                 <a href="/link/steam/start" className="rounded btn-primary px-4 py-2">ผูกบัญชี Steam</a>
               </div>
             )}
-            {/* K-AV-LINK.1: ยกเลิกการผูก (ทั้งแถวที่ยืนยันแล้วและแถวเก่าที่กรอกมือ) */}
-            {dota ? (
+            {/* K-AV-LINK.1: ยกเลิกการผูก (ทั้งแถวที่ยืนยันแล้วและแถวเก่าที่กรอกมือ) · K-AV-STEAMLOGIN.1: ซ่อนสำหรับบัญชีที่เข้าด้วย Steam */}
+            {dota && !steamLogin ? (
               <form action={unlinkAction}>
                 <button type="submit" disabled={unlinking} className="min-h-11 rounded border border-white/30 px-4 text-sm text-white/80 disabled:opacity-50">
                   {unlinking ? "กำลังยกเลิก…" : "ยกเลิกการผูก"}
