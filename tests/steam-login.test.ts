@@ -64,16 +64,15 @@ import { GET as startGET } from "@/app/auth/steam/start/route";
 import { GET as returnGET } from "@/app/auth/steam/return/route";
 import { GET as linkStartGET } from "@/app/link/steam/start/route";
 
+import { readPending } from "@/lib/game-accounts/steam-pending"; // K-AV-STEAMLOGIN.2
+
 const SITE = "https://avelai.example";
+const PENDING_SECRET = "test-only-pending-secret-0123456789abcdef"; // K-AV-STEAMLOGIN.2: ค่าเทสเท่านั้น ไม่ใช่ secret จริง
 const STEAM64 = "76561197960287930"; // → account_id 22202
 const STATE = "0123456789abcdef0123456789abcdef";
 // K-AV-STEAMLOGIN.1: อีเมลภายในเป็น UUID สุ่ม · ต้องไม่มี steam64 ปนอยู่
 const STEAM_EMAIL_RE = /^steam-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}@steam\.avelai\.org$/;
-const expectCreatedRandom = (created: string[]) => {
-  expect(created).toHaveLength(1);
-  expect(created[0]).toMatch(STEAM_EMAIL_RE);
-  expect(created[0]).not.toContain(STEAM64);
-};
+// K-AV-STEAMLOGIN.2: ตัวช่วย expectCreatedRandom ถูกลบ (route ไม่สร้างบัญชีแล้ว) · การตรวจอีเมลสุ่มของบัญชีใหม่อยู่ใน tests/steam-login-choose.test.ts
 const nowNonce = () => new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
 const goodParams = (over: Record<string, string> = {}) =>
   new URLSearchParams({
@@ -108,6 +107,7 @@ beforeEach(() => {
   h.user = null; h.admin = true; h.rows = []; h.created = []; h.deleted = []; h.rpcCalls = []; h.rpcError = null;
   h.suspended = false; h.verifyOtpCalls = []; h.verifyOtpError = null; h.generateLinkError = null;
   vi.stubEnv("SITE_URL", SITE);
+  vi.stubEnv("STEAM_PENDING_SECRET", PENDING_SECRET); // K-AV-STEAMLOGIN.2
   vi.stubGlobal("fetch", steamSays("is_valid:true"));
 });
 
@@ -180,45 +180,27 @@ describe("processSteamLogin", () => {
     expect(signed).toEqual(["u-old"]);
   });
 
-  it("แถว UNVERIFIED ไม่นับว่าผูกแล้ว → สร้างบัญชีใหม่", async () => {
+  // K-AV-STEAMLOGIN.2: Steam ที่ไม่รู้จัก = ไม่สร้างบัญชีที่นี่แล้ว · คืน pending ให้ route พาไปหน้าเลือก
+  // (เทสสร้างบัญชี · ผูกไม่สำเร็จ · กดพร้อมกัน ย้ายไป tests/steam-login-choose.test.ts ของ createFromPending)
+  it("แถว UNVERIFIED ไม่นับว่าผูกแล้ว → pending · ไม่สร้างบัญชี", async () => {
     h.rows = [{ user_id: "u-fake", status: "UNVERIFIED", verified_via: null }];
     const r = await processSteamLogin({ ...base(), deps: deps() });
-    expect(r).toEqual({ ok: true, userId: "new-1" });
-    expectCreatedRandom(h.created);
+    expect(r).toEqual({ ok: "pending", steam64: STEAM64, accountId: "22202" });
+    expect(h.created).toEqual([]);
   });
 
-  it("Steam ใหม่ → สร้าง 1 บัญชี + ผูก VERIFIED ก่อนตั้ง session + เข้าได้", async () => {
-    const order: string[] = [];
+  it("Steam ใหม่ → pending · ไม่เรียก createUser / linkSteam / signIn เลย", async () => {
+    const calls: string[] = [];
     const d = deps({
-      linkSteam: async (userId, accountId) => { order.push(`link:${userId}:${accountId}`); return { error: null }; },
-      signIn: async (id) => { order.push(`signin:${id}`); return true; },
+      createUser: async () => { calls.push("create"); return "x"; },
+      linkSteam: async () => { calls.push("link"); return { error: null }; },
+      deleteUser: async () => { calls.push("delete"); },
+      signIn: async () => { calls.push("signin"); return true; },
     });
-    expect(await processSteamLogin({ ...base(), deps: d })).toEqual({ ok: true, userId: "new-1" });
-    expect(h.created).toHaveLength(1);
-    expect(order).toEqual(["link:new-1:22202", "signin:new-1"]);
-    expect(h.deleted).toEqual([]);
-  });
-
-  it("ผูกไม่สำเร็จ → ลบบัญชีที่เพิ่งสร้าง · ไม่ตั้ง session", async () => {
-    h.rpcError = { message: "boom" };
-    const signed: string[] = [];
-    const r = await processSteamLogin({ ...base(), deps: deps({ signIn: async (id) => { signed.push(id); return true; } }) });
-    expect(r).toEqual({ ok: false, error: "failed" });
-    expect(h.deleted).toEqual(["new-1"]);
-    expect(signed).toEqual([]);
-  });
-
-  it("STEAM_ALREADY_LINKED (กดพร้อมกัน) → ลบบัญชีใหม่ แล้วเข้าบัญชีที่ผูกอยู่ · ไม่เกิดบัญชีซ้ำ", async () => {
-    h.rpcError = { message: "STEAM_ALREADY_LINKED" };
-    let lookups = 0;
-    const d = deps({
-      findVerifiedUserId: async () => (++lookups === 1 ? null : "u-winner"), // รอบแรกยังไม่เจอ · หลัง rpc ชน เจอผู้ชนะ
-      linkSteam: async () => { h.rows = [{ user_id: "u-winner", status: "VERIFIED", verified_via: "STEAM_OPENID" }]; return { error: h.rpcError }; },
-    });
-    expect(await processSteamLogin({ ...base(), deps: d })).toEqual({ ok: true, userId: "u-winner" });
-    expect(h.created).toHaveLength(1);
-    expect(h.deleted).toEqual(["new-1"]);
-    expect(lookups).toBe(2);
+    expect(await processSteamLogin({ ...base(), deps: d })).toEqual({ ok: "pending", steam64: STEAM64, accountId: "22202" });
+    expect(calls).toEqual([]);
+    expect(h.created).toEqual([]);
+    expect(h.rpcCalls).toEqual([]);
   });
 
   it("บัญชีถูกระงับ → suspended · ไม่ตั้ง session", async () => {
@@ -300,13 +282,39 @@ describe("route /auth/steam/return", () => {
     expect(res.headers.get("location")).toBe(`${SITE}/login?steam_error=invalid`);
     expect(h.created).toEqual([]);
   });
-  it("Steam ใหม่ → createUser(email_confirm) → rpc link → generateLink → verifyOtp(hashed_token, magiclink) → ไป next จาก cookie", async () => {
+  // K-AV-STEAMLOGIN.2: เดิมข้อนี้คือ "Steam ใหม่ → createUser → rpc link → verifyOtp → ไป next" · ตอนนี้ต้องไม่สร้างอะไรเลย
+  it("Steam ใหม่ → ไม่ createUser ไม่ rpc ไม่ verifyOtp · ตั้ง cookie pending (HttpOnly · Lax · Secure · path /login/steam · 600s) → /login/steam/choose", async () => {
     const res = await call(goodParams(), cookieHeader("/dota2/me"));
-    expect(res.headers.get("location")).toBe(`${SITE}/dota2/me`);
-    expectCreatedRandom(h.created);
-    expect(h.rpcCalls).toEqual([{ fn: "link_steam_verified", args: { p_user_id: "new-1", p_account_id: "22202" } }]);
-    expect(h.verifyOtpCalls).toEqual([{ token_hash: "HASHED", type: "magiclink" }]);
+    expect(res.headers.get("location")).toBe(`${SITE}/login/steam/choose`);
+    expect(h.created).toEqual([]);
+    expect(h.rpcCalls).toEqual([]);
+    expect(h.verifyOtpCalls).toEqual([]);
     cleared(res);
+    const pendingCookie = res.headers.getSetCookie().find((c) => c.startsWith("steam_pending="))!;
+    expect(pendingCookie).toMatch(/HttpOnly/i);
+    expect(pendingCookie).toMatch(/SameSite=Lax/i);
+    expect(pendingCookie).toMatch(/Secure/i);
+    expect(pendingCookie).toMatch(/Path=\/login\/steam(;|$)/);
+    expect(pendingCookie).toMatch(/Max-Age=600/);
+    const value = pendingCookie.split(";")[0].slice("steam_pending=".length);
+    expect(readPending(value, PENDING_SECRET)).toMatchObject({ steam64: STEAM64, accountId: "22202" });
+  });
+  it("Steam ใหม่ แต่ไม่มี STEAM_PENDING_SECRET (หรือสั้นเกิน) → unavailable · ไม่ตั้ง cookie pending · ไม่สร้างบัญชี (fail closed)", async () => {
+    for (const bad of ["", "short-secret"]) {
+      vi.stubEnv("STEAM_PENDING_SECRET", bad);
+      const res = await call(goodParams());
+      expect(res.headers.get("location")).toBe(`${SITE}/login?steam_error=unavailable`);
+      expect(res.headers.getSetCookie().some((c) => c.startsWith("steam_pending="))).toBe(false);
+      expect(h.created).toEqual([]);
+      cleared(res);
+    }
+  });
+  it("ไม่มี STEAM_PENDING_SECRET แต่ Steam ที่ผูกแล้ว → ยังเข้าบัญชีเดิมได้ (ทางเดิมไม่ถูกปิด)", async () => {
+    vi.stubEnv("STEAM_PENDING_SECRET", "");
+    h.rows = [{ user_id: "u-old", status: "VERIFIED", verified_via: "STEAM_OPENID" }];
+    const res = await call(goodParams());
+    expect(res.headers.get("location")).toBe(`${SITE}/me`);
+    expect(h.verifyOtpCalls).toHaveLength(1);
   });
   it("Steam ที่ผูกแล้ว → ไม่ createUser · verifyOtp ของบัญชีเดิม", async () => {
     h.rows = [{ user_id: "u-old", status: "VERIFIED", verified_via: "STEAM_OPENID" }];
@@ -315,17 +323,13 @@ describe("route /auth/steam/return", () => {
     expect(h.created).toEqual([]);
     expect(h.verifyOtpCalls).toHaveLength(1);
   });
+  // K-AV-STEAMLOGIN.2: ข้อนี้เดิมใช้ Steam ใหม่ (สร้างบัญชีแล้วไป next) · เปลี่ยนเป็น Steam ที่ผูกแล้ว เพราะ Steam ใหม่ไม่ไป next อีกต่อไป
   it("next ในคุกกี้เป็นลิงก์นอกเว็บ → ไป /me", async () => {
+    h.rows = [{ user_id: "u-old", status: "VERIFIED", verified_via: "STEAM_OPENID" }];
     const res = await call(goodParams(), `${LOGIN_STATE_COOKIE}=${STATE}.${encodeURIComponent("https://evil.com")}`);
     expect(res.headers.get("location")).toBe(`${SITE}/me`);
   });
-  it("ผูกไม่สำเร็จ → ลบบัญชีใหม่ · ไม่ verifyOtp · failed", async () => {
-    h.rpcError = { message: "boom" };
-    const res = await call(goodParams());
-    expect(res.headers.get("location")).toBe(`${SITE}/login?steam_error=failed`);
-    expect(h.deleted).toEqual(["new-1"]);
-    expect(h.verifyOtpCalls).toEqual([]);
-  });
+  // K-AV-STEAMLOGIN.2: ข้อ "ผูกไม่สำเร็จ → ลบบัญชีใหม่ · failed" ของ route ถูกลบ (route ไม่สร้างบัญชีแล้ว) · ครอบใน createFromPending แทน
   it("ระงับ → suspended · ไม่ verifyOtp", async () => {
     h.rows = [{ user_id: "u-bad", status: "VERIFIED", verified_via: "STEAM_OPENID" }];
     h.suspended = true;

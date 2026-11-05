@@ -170,8 +170,8 @@ export const LINK_MESSAGES = {
 // ============================================================================
 // K-AV-STEAMLOGIN: ล็อกอิน/สร้างบัญชีด้วย Steam — pure · DB/Auth ทั้งหมดฉีดผ่าน deps (เทสได้ ไม่ยิงจริง)
 // ลำดับหลัง Steam ตรวจผ่าน (ตามใบ): (1) มี session อยู่แล้ว → route ส่งไป /link/steam/start (ไม่ถึงฟังก์ชันนี้)
-//   (2) เจอแถว DOTA2+account_id+VERIFIED+STEAM_OPENID → เข้าบัญชีนั้น (3) ไม่เจอ → สร้างบัญชี แล้ว link_steam_verified ก่อนตั้ง session
-//   (4) สร้างได้แต่ผูกไม่ได้ → ลบเฉพาะบัญชีที่เพิ่งสร้าง · STEAM_ALREADY_LINKED (กดพร้อมกัน) → กลับไป (2) · อย่างอื่น = ไม่ให้เข้า
+//   (2) เจอแถว DOTA2+account_id+VERIFIED+STEAM_OPENID → เข้าบัญชีนั้น
+//   (3) K-AV-STEAMLOGIN.2: ไม่เจอ → ไม่สร้างบัญชี · ไปหน้า /login/steam/choose ให้ผู้ใช้เลือกเอง (ดู steam-pending.ts)
 // ============================================================================
 
 export type SteamLoginError = "invalid" | "suspended" | "unavailable" | "failed";
@@ -239,37 +239,24 @@ export type SteamLoginDeps = {
 export async function processSteamLogin(a: {
   params: URLSearchParams; siteUrl: string; expectedState: string | null; deps: SteamLoginDeps | null;
   fetchFn?: typeof fetch; now?: Date;
-}): Promise<{ ok: true; userId: string } | { ok: false; error: SteamLoginError }> {
+}): Promise<{ ok: true; userId: string } | { ok: false; error: SteamLoginError } | { ok: "pending"; steam64: string; accountId: string }> {
   const fail = (error: SteamLoginError) => ({ ok: false as const, error });
   const verified = await verifySteamLoginReturn(a);
   if (!verified) return fail("invalid");
   const d = a.deps;
   if (!d) return fail("unavailable");
 
-  const enter = async (userId: string) => {
-    if (await d.isSuspended(userId)) return fail("suspended");
-    return (await d.signIn(userId)) ? { ok: true as const, userId } : fail("failed");
-  };
-
-  // (2) Steam ที่ผูกแล้ว → เข้าบัญชีเดิม ไม่สร้างใหม่
+  // (2) Steam ที่ผูกแล้ว → เข้าบัญชีเดิม ไม่สร้างใหม่ (ทางนี้ไม่เปลี่ยนจาก K-AV-STEAMLOGIN)
   const existing = await d.findVerifiedUserId(verified.accountId);
   if (existing === undefined) return fail("failed");
-  if (existing) return enter(existing);
-
-  // (3) Steam ใหม่ → สร้างบัญชี แล้วผูกก่อนตั้ง session
-  const created = await d.createUser(steamLoginEmail());
-  if (!created) return fail("failed");
-  const { error } = await d.linkSteam(created, verified.accountId);
-  if (error) {
-    // (4) ผูกไม่สำเร็จ → ลบเฉพาะบัญชีที่เพิ่งสร้าง · ชนกับคนที่กดพร้อมกัน → กลับไป (2)
-    await d.deleteUser(created);
-    if ((error.message ?? "").includes("STEAM_ALREADY_LINKED")) {
-      const winner = await d.findVerifiedUserId(verified.accountId);
-      return winner ? enter(winner) : fail("failed");
-    }
-    return fail("failed");
+  if (existing) {
+    if (await d.isSuspended(existing)) return fail("suspended");
+    return (await d.signIn(existing)) ? { ok: true as const, userId: existing } : fail("failed");
   }
-  return enter(created);
+
+  // (3) K-AV-STEAMLOGIN.2: Steam ที่ไม่รู้จัก → ห้ามสร้างบัญชีที่นี่ · คืน pending ให้ route ตั้ง cookie มีลายเซ็นแล้วพาไปหน้าเลือก
+  //     การสร้างบัญชีย้ายไป createFromPending ใน lib/game-accounts/steam-pending.ts (เรียกจากปุ่ม "ฉันเป็นผู้เล่นใหม่" เท่านั้น)
+  return { ok: "pending" as const, steam64: verified.steam64, accountId: verified.accountId };
 }
 
 export const LOGIN_MESSAGES: Record<SteamLoginError, string> = {
