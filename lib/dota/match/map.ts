@@ -4,6 +4,7 @@
 
 import { kda, num, type DotaMatchPlayer, type DotaPickBan } from "@/lib/dota/opendota";
 import { mapMatchB, mapPlayerB, type MatchB, type PlayerB } from "@/lib/dota/match/b-tabs"; // K-AV-D5
+import { mapMatchEvents, mapPlayerEventLogs, type MatchEvents, type PlayerEventLogs } from "@/lib/dota/match/c-events"; // K-AV-D6
 
 type Obj = Record<string, unknown>;
 const obj = (v: unknown): Obj => (v && typeof v === "object" && !Array.isArray(v) ? (v as Obj) : {});
@@ -19,7 +20,19 @@ export type DotaMatchDetailPlayer = DotaMatchPlayer & {
   neutralItem: number | null;
   hasScepter: boolean;
   hasShard: boolean;
-} & { b: PlayerB }; // K-AV-D5: ข้อมูลแท็บ Builds · Lanes · Farm · Kills (ฟิลด์ย่อยไม่มี = null)
+  // K-AV-D4: ฟิลด์วิเคราะห์ (มีเฉพาะแมตช์ที่ parse แล้ว) — ขาด = null ห้ามเป็น 0
+  lane: number | null;
+  laneRole: number | null;
+  /** เวลาควบคุม (วินาที) จาก stuns */
+  stuns: number | null;
+  obsPlaced: number | null;
+  senPlaced: number | null;
+  /** damage_taken ดิบ: ผู้ทำดาเมจ (npc_dota_hero_* / *_tower* / อื่น ๆ) → ดาเมจ · ยังไม่วิเคราะห์ = null */
+  damageTaken: Record<string, number> | null;
+  /** damage_targets ดิบ: สกิล/ไอเทม → เป้าหมาย → ดาเมจ · ไม่มี = null */
+  damageTargets: Record<string, Record<string, number>> | null;
+} & { b: PlayerB } // K-AV-D5: ข้อมูลแท็บ Builds · Lanes · Farm · Kills (ฟิลด์ย่อยไม่มี = null)
+  & PlayerEventLogs; // K-AV-D6: runesLog · obsLog · senLog · obsLeftLog · senLeftLog · killsLog (ไม่มี = null)
 
 export type DotaMatchDetail = {
   matchId: string;
@@ -38,7 +51,8 @@ export type DotaMatchDetail = {
   direTeamName: string | null;
   players: DotaMatchDetailPlayer[];
   picksBans: DotaPickBan[];
-} & { b: MatchB }; // K-AV-D5: ส่วนต่างทอง/XP รายนาที (ไม่มี = null)
+} & { b: MatchB } // K-AV-D5: ส่วนต่างทอง/XP รายนาที (ไม่มี = null)
+  & MatchEvents; // K-AV-D6: objectives · chat (ไม่มี = null)
 
 const flag = (v: unknown): boolean => v === 1 || v === true;
 const posInt = (v: unknown): number | null => {
@@ -76,8 +90,36 @@ function mapPlayer(raw: unknown): DotaMatchDetailPlayer {
     neutralItem: posInt(p.item_neutral),
     hasScepter: flag(p.aghanims_scepter),
     hasShard: flag(p.aghanims_shard),
+    lane: num(p.lane),
+    laneRole: num(p.lane_role),
+    stuns: num(p.stuns),
+    obsPlaced: num(p.obs_placed),
+    senPlaced: num(p.sen_placed),
+    damageTaken: numRecord(p.damage_taken),
+    damageTargets: nestedNumRecord(p.damage_targets),
     b: mapPlayerB(p), // K-AV-D5
+    ...mapPlayerEventLogs(p), // K-AV-D6
   };
+}
+
+// K-AV-D4: อ่าน object ตัวเลขจาก JSON — ไม่ใช่ object = null · ค่าที่ไม่ใช่ตัวเลขถูกข้าม (ไม่แต่งเป็น 0)
+function numRecord(v: unknown): Record<string, number> | null {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return null;
+  const out: Record<string, number> = {};
+  for (const [k, x] of Object.entries(v as Obj)) {
+    const n = num(x);
+    if (n !== null) out[k] = n;
+  }
+  return out;
+}
+function nestedNumRecord(v: unknown): Record<string, Record<string, number>> | null {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return null;
+  const out: Record<string, Record<string, number>> = {};
+  for (const [k, x] of Object.entries(v as Obj)) {
+    const inner = numRecord(x);
+    if (inner) out[k] = inner;
+  }
+  return out;
 }
 
 /** แปลง JSON ของ /matches/{id} เป็นชนิดข้อมูลที่หน้าเว็บใช้
@@ -103,6 +145,7 @@ export function mapMatchDetail(matchId: string, raw: unknown): DotaMatchDetail {
       const o = obj(x);
       return { isPick: o.is_pick === true, heroId: num(o.hero_id), team: num(o.team), order: num(o.order) };
     }),
+    ...mapMatchEvents(m), // K-AV-D6
   };
 }
 

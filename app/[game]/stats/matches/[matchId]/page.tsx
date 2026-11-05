@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Surface from "@/components/ui/Surface";
 import { dash, heroLookup } from "@/lib/dota/display";
 import { getMatchDetail, type DotaMatchDetailPlayer } from "@/lib/dota/match";
+import { laneLabel } from "@/lib/dota/match/a-combat";
 import { isValidMatchId } from "@/lib/dota/opendota";
 import { getItemImageUrl } from "@/lib/dotaAssets";
 import { guardPublicMatchView } from "@/lib/dota/match/guard";
@@ -80,6 +81,7 @@ function TeamTable({
           <thead>
             <tr className="border-b border-line text-left font-mono text-xs tracking-wider text-ink-muted">
               <th scope="col" className="py-2 pr-3">ผู้เล่น</th>
+              <th scope="col" className="py-2 pr-3">เลน / บทบาท</th>
               <th scope="col" className="py-2 pr-3">LV</th>
               <th scope="col" className="py-2 pr-3">K / D / A</th>
               <th scope="col" className="py-2 pr-3">KDA</th>
@@ -109,6 +111,8 @@ function TeamTable({
                       {p.hasShard ? <Tag>SH</Tag> : null}
                     </span>
                   </th>
+                  {/* K-AV-D4: เลน/บทบาทจาก lane · lane_role ของ OpenDota (มีเฉพาะแมตช์ที่วิเคราะห์แล้ว) */}
+                  <td className="py-2 pr-3 font-mono">{laneLabel(p.lane, p.laneRole)}</td>
                   <td className="py-2 pr-3 font-mono">{dash(p.level)}</td>
                   <td className="py-2 pr-3 font-mono">{dash(p.kills)} / {dash(p.deaths)} / {dash(p.assists)}</td>
                   <td className="py-2 pr-3 font-mono text-gold">{dash(p.kda)}</td>
