@@ -131,39 +131,41 @@ describe("Form Index", () => {
   it("11) ครบ 5 นัด: ถ่วงน้ำหนัก 1.5 / 1.3 / 1.1 / 1.0 / 0.9", () => {
     // [5, 4, 3, 2, 1] → 5×1.5 + 4×1.3 + 3×1.1 + 2×1.0 + 1×0.9 = 7.5 + 5.2 + 3.3 + 2 + 0.9 = 18.9
     // 18.9 / 5.8 = 3.2586… → ปัด 2 ตำแหน่ง = 3.26 → Level 13 (3.25–3.44)
-    const r = computeFormIndex([5, 4, 3, 2, 1], "partial");
+    const r = computeFormIndex([5, 4, 3, 2, 1]);
     expect(r).toEqual({ value: 3.26, used: 5, source: "weighted", nullAt: [] });
-    expect(computeFormIndex([5, 4, 3, 2, 1], "baseline").value).toBe(3.26); // ครบ 5 แล้ว สองแบบได้เท่ากัน
     expect(formLevel(r.value)).toEqual({ level: 13, tier: "A", searchTolerance: 3 });
   });
 
   it("12) มีเกิน 5 นัด: ใช้ 5 นัดแรก (ล่าสุด) เท่านั้น", () => {
-    expect(computeFormIndex([5, 4, 3, 2, 1, 0, 0], "partial").value).toBe(3.26);
+    expect(computeFormIndex([5, 4, 3, 2, 1, 0, 0]).value).toBe(3.26);
   });
 
-  it("13) ไม่ครบ 5 นัด: ผลขึ้นกับนโยบายที่ผู้เรียกระบุ (ข้อสงสัยข้อ 8 ยังไม่ตัดสิน)", () => {
-    // partial [4, 2] → (4×1.5 + 2×1.3) / (1.5 + 1.3) = 8.6 / 2.8 = 3.0714… → 3.07 → Level 12
-    expect(computeFormIndex([4, 2], "partial")).toEqual({ value: 3.07, used: 2, source: "weighted", nullAt: [] });
-    expect(formLevel(3.07)?.level).toBe(12);
-    // baseline → คงที่ 2.75 = Level 10
-    expect(computeFormIndex([4, 2], "baseline")).toEqual({ value: 2.75, used: 0, source: "baseline", nullAt: [] });
+  it("13) มี 1–4 นัด: คงที่ 2.75 เสมอ ไม่ว่าคะแนนที่มีจะสูงหรือต่ำ (คำตัดสินพี่ศิลา 2026-11-05 · K-AV-S1.1)", () => {
+    const baseline = { value: 2.75, used: 0, source: "baseline", nullAt: [] };
+    expect(computeFormIndex([5])).toEqual(baseline);
+    expect(computeFormIndex([4, 2])).toEqual(baseline);
+    expect(computeFormIndex([0, 0, 0])).toEqual(baseline);
+    expect(computeFormIndex([5, 5, 5, 5])).toEqual(baseline);
+    // ยังไม่ครบ 5 นัด แม้มีนัดที่เป็น null ก็ยังเป็นค่าคงที่ (ยังไม่ถึงขั้นคำนวณ)
+    expect(computeFormIndex([4, null])).toEqual(baseline);
+    // ครบ 5 เมื่อไรจึงเริ่มคิดตามน้ำหนัก: [5,5,5,5,5] = 5
+    expect(computeFormIndex([5, 5, 5, 5, 5]).value).toBe(5);
   });
 
-  it("14) ไม่มีนัดเลย = 2.75 ทั้งสองนโยบาย (สเปกระบุชัด)", () => {
-    expect(computeFormIndex([], "partial").value).toBe(2.75);
-    expect(computeFormIndex([], "baseline").value).toBe(2.75);
+  it("14) ไม่มีนัดเลย = 2.75 = Level 10", () => {
+    expect(computeFormIndex([])).toEqual({ value: 2.75, used: 0, source: "baseline", nullAt: [] });
     expect(formLevel(2.75)).toEqual({ level: 10, tier: "B", searchTolerance: 3 });
   });
 
   it("15) มีนัดที่ Match Score เป็น null: คำนวณไม่ได้ คืน null พร้อมตำแหน่ง ไม่ข้ามและไม่ถือเป็น 0", () => {
-    expect(computeFormIndex([4, null, 3, null, 2], "partial")).toEqual({ value: null, used: 0, source: "unavailable", nullAt: [1, 3] });
+    expect(computeFormIndex([4, null, 3, null, 2])).toEqual({ value: null, used: 0, source: "unavailable", nullAt: [1, 3] });
     // null อยู่นอก 5 นัดแรก ไม่กระทบ
-    expect(computeFormIndex([5, 4, 3, 2, 1, null], "partial").value).toBe(3.26);
+    expect(computeFormIndex([5, 4, 3, 2, 1, null]).value).toBe(3.26);
   });
 
   it("16) ค่านอกช่วง 0–5 ถูกจำกัดก่อนถ่วงน้ำหนัก (ตามโค้ดในสเปก)", () => {
     // [9, −3, 5, 5, 5] → [5, 0, 5, 5, 5] → 7.5 + 0 + 5.5 + 5 + 4.5 = 22.5 / 5.8 = 3.8793… → 3.88
-    expect(computeFormIndex([9, -3, 5, 5, 5], "partial").value).toBe(3.88);
+    expect(computeFormIndex([9, -3, 5, 5, 5]).value).toBe(3.88);
   });
 });
 

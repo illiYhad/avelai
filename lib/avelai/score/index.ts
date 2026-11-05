@@ -159,17 +159,10 @@ export function computeMatchScore(input: PlayerMatchInput): MatchScoreResult {
 
 // ---------- Form Index และ Level ----------
 
-/**
- * วิธีคิดเมื่อมีนัดไม่ครบ 5 — ข้อสงสัยข้อ 8 ใน RANK_01 ยังรอพี่ศิลา โมดูลนี้จึงไม่เลือกให้ ผู้เรียกต้องระบุเอง
- * - "baseline": คงที่ 2.75 จนกว่าจะครบ 5 นัด
- * - "partial": คำนวณจากนัดเท่าที่มี ด้วยน้ำหนักชุดเดียวกันตามลำดับ (แบบโค้ดในสเปก v2)
- */
-export type IncompletePolicy = "baseline" | "partial";
-
 export type FormIndexResult = {
   /** ปัด 2 ตำแหน่งตามสเปก · คำนวณไม่ได้ = null */
   value: Num;
-  /** จำนวนนัดที่ใช้คำนวณจริง (0 = ใช้ค่าเริ่มต้น) */
+  /** จำนวนนัดที่ใช้คำนวณจริง (0 = ใช้ค่าเริ่มต้น หรือคำนวณไม่ได้) */
   used: number;
   source: "weighted" | "baseline" | "unavailable";
   /** ตำแหน่ง (0 = นัดล่าสุด) ของนัดที่ Match Score เป็น null จนคำนวณไม่ได้ */
@@ -179,14 +172,14 @@ export type FormIndexResult = {
 /**
  * Form Index = Σ(Match Score × w) / Σw ของ 5 นัดล่าสุด · น้ำหนัก 1.5 / 1.3 / 1.1 / 1.0 / 0.9
  * @param matchScores เรียงจากนัดล่าสุดไปเก่า · ใช้ไม่เกิน 5 ตัวแรก
- * ไม่มีนัดเลย = 2.75 (สเปกระบุชัด) · นัดใดในช่วงที่ใช้เป็น null = คำนวณไม่ได้ คืน null (ไม่ข้าม ไม่ถือเป็น 0)
+ * มีนัดน้อยกว่า 5 (รวมไม่มีเลย) = คงที่ 2.75 เสมอ — คำตัดสินพี่ศิลา 2026-11-05 (RANK_01 หมวด ช.) · K-AV-S1.1
+ * ครบ 5 นัดแล้วมีนัดใดเป็น null = คำนวณไม่ได้ คืน null พร้อมตำแหน่ง (ไม่ข้าม ไม่ถือเป็น 0)
  */
-export function computeFormIndex(matchScores: Num[], incomplete: IncompletePolicy): FormIndexResult {
+export function computeFormIndex(matchScores: Num[]): FormIndexResult {
   const f = SCORE_CONFIG.form;
   const n = f.weights.length;
   const recent = matchScores.slice(0, n);
-  if (recent.length === 0) return { value: f.baseline, used: 0, source: "baseline", nullAt: [] };
-  if (recent.length < n && incomplete === "baseline") return { value: f.baseline, used: 0, source: "baseline", nullAt: [] };
+  if (recent.length < n) return { value: f.baseline, used: 0, source: "baseline", nullAt: [] };
 
   const nullAt = recent.map((s, i) => (isNum(s) ? -1 : i)).filter((i) => i >= 0);
   if (nullAt.length > 0) return { value: null, used: 0, source: "unavailable", nullAt };
