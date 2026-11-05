@@ -75,6 +75,7 @@ const fixture = {
       items: [null, null, null, null, null, null],
       hasScepter: false,
       hasShard: false,
+      b: { purchaseLog: null, itemUses: null }, // K-AV-D5: แมตช์ยังไม่วิเคราะห์ = ฟิลด์ชุด B เป็น null
     },
   ],
 };

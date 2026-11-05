@@ -3,11 +3,11 @@
 
 export const MATCH_TABS = [
   { slug: "", label: "Overview", ready: true },
-  { slug: "builds", label: "Builds", ready: false },
-  { slug: "lanes", label: "Lanes", ready: false },
+  { slug: "builds", label: "Builds", ready: true }, // K-AV-D5
+  { slug: "lanes", label: "Lanes", ready: true }, // K-AV-D5
   { slug: "combat", label: "Combat", ready: false },
-  { slug: "kills", label: "Kills", ready: false },
-  { slug: "farm", label: "Farm", ready: false },
+  { slug: "kills", label: "Kills", ready: true }, // K-AV-D5
+  { slug: "farm", label: "Farm", ready: true }, // K-AV-D5
   { slug: "objectives", label: "Objectives", ready: false },
   { slug: "runes", label: "Runes", ready: false },
   { slug: "vision", label: "Vision", ready: false },
