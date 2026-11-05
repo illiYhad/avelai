@@ -150,9 +150,9 @@ describe("ป้ายแสดงผล", () => {
 });
 
 describe("แท็บ Combat", () => {
-  it("tabs.ts: Overview กับ Combat เปิด · ชุด C เปิดโดย D6 · ที่เหลือยังปิด (K-AV-D6.1: D6 ต่อจาก D4)", () => {
+  it("tabs.ts: Overview กับ Combat เปิด · ชุด B เปิดโดย D5 · ชุด C เปิดโดย D6 (K-AV-D6.2: ฐานใหม่มี D5)", () => {
     const ready = MATCH_TABS.filter((t) => t.ready).map((t) => t.slug);
-    expect(ready).toEqual(["", "combat", "objectives", "runes", "vision", "log", "chat"]);
+    expect(ready).toEqual(["", "builds", "lanes", "combat", "kills", "farm", "objectives", "runes", "vision", "log", "chat"]);
   });
   it("หน้า Combat/Overview ไม่มี KP · Total Score · MVP · Form Index · ไม่มีข้อมูลจำลอง · ไม่ดึง Dotabuff", () => {
     const base = join(process.cwd(), "app", "[game]", "stats", "matches", "[matchId]");
