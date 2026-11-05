@@ -110,7 +110,7 @@ describe("แท็บ", () => {
       "Overview", "Builds", "Lanes", "Combat", "Kills", "Farm", "Objectives", "Runes", "Vision", "Log", "Chat",
     ]);
     expect(MATCH_TABS[0].slug).toBe("");
-    expect(MATCH_TABS.filter((t) => t.ready).map((t) => t.label)).toEqual(["Overview"]);
+    expect(MATCH_TABS.filter((t) => t.ready).map((t) => t.label)).toEqual(["Overview", "Builds", "Lanes", "Kills", "Farm"]); // K-AV-D5 เปิดชุด B
   });
 
   it("ทุกแท็บลิงก์ตรงได้ และมีไฟล์เส้นทางจริง", async () => {
@@ -127,7 +127,7 @@ describe("แท็บ", () => {
   it("แท็บที่ยังไม่เปิดไม่มีข้อมูลจำลองในไฟล์", async () => {
     const { readFileSync } = await import("node:fs");
     const base = "app/[game]/stats/matches/[matchId]";
-    for (const t of MATCH_TABS.filter((x) => x.slug)) {
+    for (const t of MATCH_TABS.filter((x) => x.slug && !x.ready)) { // K-AV-D5: แท็บที่เปิดแล้วมีเทสของตัวเอง
       const src = readFileSync(`${base}/${t.slug}/page.tsx`, "utf8");
       expect(src).toContain("NotReadyTab");
       expect(src).not.toMatch(/\d{3,}/); // ไม่มีตัวเลขข้อมูลปลอมหลงอยู่
