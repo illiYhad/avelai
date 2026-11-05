@@ -1,0 +1,238 @@
+// K-AV-S1: โมดูลคำนวณคะแนนรายแมตช์ของ AVELAi — ฟังก์ชันล้วนทั้งไฟล์ (ไม่มี I/O · ไม่มีเวลา · ไม่มีสุ่ม · ไม่ import อะไร)
+// ที่มาของสูตร (ต้นฉบับชนะเมื่อขัดกัน):
+//   1. D:\Balehm_Studio\02_Products\AVELAi\01_Spec\RANK_01_คำตัดสินและข้อสงสัย_2026-11-03.md (คำตัดสิน R5–R8)
+//   2. avelai_kp_formula.md (Google Drive ของพี่หยัด) — Base KP · Role Bonus · ตัวอย่าง A/B/C
+//   3. D:\md\ranked_scrim_form_index_spec-v2.md v2.0.1 — Form Index และ Level 1–20
+// กติกา: ข้อมูลขาดหรือ null = ผลเป็น null พร้อมชื่อฟิลด์ที่ขาด · ห้ามถือเป็น 0 · เก็บทศนิยมจริง ไม่ปัด (ยกเว้น Form Index ที่สเปกสั่งปัด 2 ตำแหน่ง)
+// ยังไม่ผูกกับหน้าเว็บหรือฐานข้อมูล · ไม่มี Daily / Weekly / Season / CP / Integrity Score ในไฟล์นี้
+
+/** ค่าคงที่ทุกตัวอยู่ที่นี่จุดเดียว — ปรับสูตรให้แก้ตรงนี้ */
+export const SCORE_CONFIG = {
+  outcomeWin: 25,
+  outcomeLose: -10,
+  kp: { kill: 1.0, death: 0.5, assist: 0.3, tower: 2.0, floor: -10 },
+  /** R6: คูณเฉพาะทีมแพ้และ Base KP เป็นบวก */
+  loserPositiveMultiplier: 0.5,
+  role: {
+    wardsPer: 2, wardsWeight: 1.0,
+    healPer: 3000, healWeight: 0.5,
+    stunsPer: 15, stunsWeight: 0.5,
+    dmgTakenPer: 15000, dmgTakenWeight: 1.0,
+  },
+  /** R8 (ข้อเสนอพี่ศิลา): Match Score = (Total Score + offset) / divisor จำกัด min–max */
+  matchScore: { offset: 20, divisor: 16, min: 0, max: 5 },
+  form: { weights: [1.5, 1.3, 1.1, 1.0, 0.9], baseline: 2.75, decimals: 2 },
+} as const;
+
+export type Num = number | null;
+
+/** ค่ารายผู้เล่นหนึ่งแมตช์ที่ map มาแล้ว · ไม่รู้ค่า = null (ห้ามส่ง 0 แทนค่าที่ไม่มี) */
+export type PlayerMatchInput = {
+  /** ทีมของผู้เล่นชนะหรือไม่ */
+  won: boolean | null;
+  kills: Num;
+  deaths: Num;
+  assists: Num;
+  /** T ในสูตร = จำนวนป้อมที่ผู้เล่นทำลาย (ต้นฉบับ: "Towers = จำนวนป้อมที่ทำลาย" · ตัวอย่าง Viper "Tower 1") */
+  towers: Num;
+  obsPlaced: Num;
+  senPlaced: Num;
+  heroHealing: Num;
+  /** เวลาควบคุมรวม (วินาที) */
+  stuns: Num;
+  /** ดาเมจที่รับรวม */
+  damageTaken: Num;
+};
+
+export type InputField = keyof PlayerMatchInput;
+
+const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+
+function missingOf(input: PlayerMatchInput, fields: InputField[]): InputField[] {
+  return fields.filter((f) => (f === "won" ? typeof input.won !== "boolean" : !isNum(input[f])));
+}
+
+// ---------- Base KP ----------
+
+export type BaseKpResult = {
+  /** หลังใช้ขั้นต่ำ −10 · คำนวณไม่ได้ = null */
+  value: Num;
+  /** ก่อนใช้ขั้นต่ำ */
+  raw: Num;
+  floored: boolean;
+  missing: InputField[];
+};
+
+/** Base KP = K×1.0 − D×0.5 + A×0.3 + T×2.0 · ต่ำสุด −10 */
+export function computeBaseKp(input: PlayerMatchInput): BaseKpResult {
+  const missing = missingOf(input, ["kills", "deaths", "assists", "towers"]);
+  if (missing.length > 0) return { value: null, raw: null, floored: false, missing };
+  const c = SCORE_CONFIG.kp;
+  const raw =
+    (input.kills as number) * c.kill - (input.deaths as number) * c.death + (input.assists as number) * c.assist + (input.towers as number) * c.tower;
+  const value = Math.max(raw, c.floor);
+  return { value, raw, floored: raw < c.floor, missing };
+}
+
+// ---------- Role Bonus ----------
+
+export type RoleBonusResult = {
+  value: Num;
+  parts: { wards: Num; heal: Num; stuns: Num; dmgTaken: Num };
+  missing: InputField[];
+};
+
+/** Role Bonus = Wards/2×1.0 + Heal/3000×0.5 + Stuns/15×0.5 + DmgTaken/15000×1.0 · Wards = obs + sen
+ *  ส่วนที่คิดได้ยังคืนใน parts แม้ผลรวมจะเป็น null เพราะส่วนอื่นขาด */
+export function computeRoleBonus(input: PlayerMatchInput): RoleBonusResult {
+  const c = SCORE_CONFIG.role;
+  const part = (v: Num, per: number, weight: number): Num => (isNum(v) ? (v / per) * weight : null);
+  const wardsTotal = isNum(input.obsPlaced) && isNum(input.senPlaced) ? input.obsPlaced + input.senPlaced : null;
+  const parts = {
+    wards: part(wardsTotal, c.wardsPer, c.wardsWeight),
+    heal: part(input.heroHealing, c.healPer, c.healWeight),
+    stuns: part(input.stuns, c.stunsPer, c.stunsWeight),
+    dmgTaken: part(input.damageTaken, c.dmgTakenPer, c.dmgTakenWeight),
+  };
+  const missing = missingOf(input, ["obsPlaced", "senPlaced", "heroHealing", "stuns", "damageTaken"]);
+  if (missing.length > 0) return { value: null, parts, missing };
+  return { value: (parts.wards as number) + (parts.heal as number) + (parts.stuns as number) + (parts.dmgTaken as number), parts, missing };
+}
+
+// ---------- Total Score และ Match Score ----------
+
+export type MatchScoreResult = {
+  /** Total Score = Outcome + Base KP × Multiplier + Role Bonus · คำนวณไม่ได้ = null */
+  totalScore: Num;
+  /** (Total Score + 20) / 16 จำกัด 0–5 · คำนวณไม่ได้ = null */
+  matchScore: Num;
+  /** Match Score ก่อนจำกัดช่วง — ไว้ตรวจว่าชนเพดานหรือพื้นหรือไม่ */
+  matchScoreUnclamped: Num;
+  outcome: Num;
+  baseKp: BaseKpResult;
+  multiplier: Num;
+  /** Base KP × Multiplier */
+  kpAfterMultiplier: Num;
+  roleBonus: RoleBonusResult;
+  /** ฟิลด์ทั้งหมดที่ทำให้คำนวณ Total Score ไม่ได้ (ว่าง = คำนวณได้) */
+  missing: InputField[];
+};
+
+/** แปลง Total Score เป็น Match Score · null เข้า = null ออก */
+export function toMatchScore(totalScore: Num): Num {
+  if (!isNum(totalScore)) return null;
+  const c = SCORE_CONFIG.matchScore;
+  return Math.min(c.max, Math.max(c.min, (totalScore + c.offset) / c.divisor));
+}
+
+export function computeMatchScore(input: PlayerMatchInput): MatchScoreResult {
+  const baseKp = computeBaseKp(input);
+  const roleBonus = computeRoleBonus(input);
+  const wonMissing = missingOf(input, ["won"]);
+  const missing = [...wonMissing, ...baseKp.missing, ...roleBonus.missing];
+
+  const outcome = wonMissing.length > 0 ? null : input.won ? SCORE_CONFIG.outcomeWin : SCORE_CONFIG.outcomeLose;
+  // ตัวคูณขึ้นกับผลแพ้ชนะและเครื่องหมายของ Base KP — ขาดอย่างใดอย่างหนึ่ง = null
+  const multiplier =
+    wonMissing.length > 0 || baseKp.value === null
+      ? null
+      : input.won === false && baseKp.value > 0
+        ? SCORE_CONFIG.loserPositiveMultiplier
+        : 1;
+  const kpAfterMultiplier = baseKp.value === null || multiplier === null ? null : baseKp.value * multiplier;
+
+  const totalScore =
+    outcome === null || kpAfterMultiplier === null || roleBonus.value === null ? null : outcome + kpAfterMultiplier + roleBonus.value;
+  const c = SCORE_CONFIG.matchScore;
+  return {
+    totalScore,
+    matchScore: toMatchScore(totalScore),
+    matchScoreUnclamped: totalScore === null ? null : (totalScore + c.offset) / c.divisor,
+    outcome,
+    baseKp,
+    multiplier,
+    kpAfterMultiplier,
+    roleBonus,
+    missing,
+  };
+}
+
+// ---------- Form Index และ Level ----------
+
+/**
+ * วิธีคิดเมื่อมีนัดไม่ครบ 5 — ข้อสงสัยข้อ 8 ใน RANK_01 ยังรอพี่ศิลา โมดูลนี้จึงไม่เลือกให้ ผู้เรียกต้องระบุเอง
+ * - "baseline": คงที่ 2.75 จนกว่าจะครบ 5 นัด
+ * - "partial": คำนวณจากนัดเท่าที่มี ด้วยน้ำหนักชุดเดียวกันตามลำดับ (แบบโค้ดในสเปก v2)
+ */
+export type IncompletePolicy = "baseline" | "partial";
+
+export type FormIndexResult = {
+  /** ปัด 2 ตำแหน่งตามสเปก · คำนวณไม่ได้ = null */
+  value: Num;
+  /** จำนวนนัดที่ใช้คำนวณจริง (0 = ใช้ค่าเริ่มต้น) */
+  used: number;
+  source: "weighted" | "baseline" | "unavailable";
+  /** ตำแหน่ง (0 = นัดล่าสุด) ของนัดที่ Match Score เป็น null จนคำนวณไม่ได้ */
+  nullAt: number[];
+};
+
+/**
+ * Form Index = Σ(Match Score × w) / Σw ของ 5 นัดล่าสุด · น้ำหนัก 1.5 / 1.3 / 1.1 / 1.0 / 0.9
+ * @param matchScores เรียงจากนัดล่าสุดไปเก่า · ใช้ไม่เกิน 5 ตัวแรก
+ * ไม่มีนัดเลย = 2.75 (สเปกระบุชัด) · นัดใดในช่วงที่ใช้เป็น null = คำนวณไม่ได้ คืน null (ไม่ข้าม ไม่ถือเป็น 0)
+ */
+export function computeFormIndex(matchScores: Num[], incomplete: IncompletePolicy): FormIndexResult {
+  const f = SCORE_CONFIG.form;
+  const n = f.weights.length;
+  const recent = matchScores.slice(0, n);
+  if (recent.length === 0) return { value: f.baseline, used: 0, source: "baseline", nullAt: [] };
+  if (recent.length < n && incomplete === "baseline") return { value: f.baseline, used: 0, source: "baseline", nullAt: [] };
+
+  const nullAt = recent.map((s, i) => (isNum(s) ? -1 : i)).filter((i) => i >= 0);
+  if (nullAt.length > 0) return { value: null, used: 0, source: "unavailable", nullAt };
+
+  const m = SCORE_CONFIG.matchScore;
+  let weighted = 0;
+  let weights = 0;
+  recent.forEach((s, i) => {
+    const score = Math.min(m.max, Math.max(m.min, s as number));
+    weighted += score * f.weights[i];
+    weights += f.weights[i];
+  });
+  return { value: Number((weighted / weights).toFixed(f.decimals)), used: recent.length, source: "weighted", nullAt: [] };
+}
+
+export type FormLevel = { level: number; tier: string; searchTolerance: number };
+
+/** ขอบล่างของแต่ละ Level ตามตารางสเปก v2.0.1 (Level 10 = 2.65–2.84 · 2.75 อยู่กลางช่วง) เรียงจากสูงไปต่ำ */
+const LEVELS: readonly (FormLevel & { min: number })[] = [
+  { min: 4.65, level: 20, tier: "SSS+", searchTolerance: 1 },
+  { min: 4.45, level: 19, tier: "SSS", searchTolerance: 1 },
+  { min: 4.25, level: 18, tier: "SS+", searchTolerance: 2 },
+  { min: 4.05, level: 17, tier: "SS", searchTolerance: 2 },
+  { min: 3.85, level: 16, tier: "S+", searchTolerance: 2 },
+  { min: 3.65, level: 15, tier: "S", searchTolerance: 2 },
+  { min: 3.45, level: 14, tier: "A+", searchTolerance: 3 },
+  { min: 3.25, level: 13, tier: "A", searchTolerance: 3 },
+  { min: 3.05, level: 12, tier: "A-", searchTolerance: 3 },
+  { min: 2.85, level: 11, tier: "B+", searchTolerance: 3 },
+  { min: 2.65, level: 10, tier: "B", searchTolerance: 3 },
+  { min: 2.45, level: 9, tier: "B-", searchTolerance: 3 },
+  { min: 2.25, level: 8, tier: "C+", searchTolerance: 3 },
+  { min: 2.05, level: 7, tier: "C", searchTolerance: 3 },
+  { min: 1.85, level: 6, tier: "C-", searchTolerance: 3 },
+  { min: 1.65, level: 5, tier: "D+", searchTolerance: 4 },
+  { min: 1.45, level: 4, tier: "D", searchTolerance: 4 },
+  { min: 1.25, level: 3, tier: "D-", searchTolerance: 4 },
+  { min: 1.05, level: 2, tier: "E", searchTolerance: 5 },
+  { min: 0, level: 1, tier: "Calibrating", searchTolerance: 5 },
+];
+
+/** Form Index → Level 1–20 · null เข้า = null ออก · ค่านอกช่วง 0–5 ถูกจำกัดก่อนเทียบ (ตามโค้ดในสเปก) */
+export function formLevel(formIndex: Num): FormLevel | null {
+  if (!isNum(formIndex)) return null;
+  const m = SCORE_CONFIG.matchScore;
+  const score = Math.min(m.max, Math.max(m.min, formIndex));
+  const hit = LEVELS.find((l) => score >= l.min) ?? LEVELS[LEVELS.length - 1];
+  return { level: hit.level, tier: hit.tier, searchTolerance: hit.searchTolerance };
+}
