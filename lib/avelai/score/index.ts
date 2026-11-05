@@ -229,3 +229,88 @@ export function formLevel(formIndex: Num): FormLevel | null {
   const hit = LEVELS.find((l) => score >= l.min) ?? LEVELS[LEVELS.length - 1];
   return { level: hit.level, tier: hit.tier, searchTolerance: hit.searchTolerance };
 }
+
+// ---------- ตัวแปลงจาก OpenDota (K-AV-S1.1) ----------
+// คำตัดสิน 2026-11-05 (RANK_01 หมวด ช. และคำตัดสินเพิ่ม 18:10):
+//   Towers = tower_kills · Wards = obs_placed + sen_placed · Heal = hero_healing · Stuns = stuns
+//   DmgTaken = ผลรวม damage_taken เฉพาะคีย์ของ "ฮีโร่ฝั่งตรงข้าม" (การแทงค์ในทีมไฟต์)
+//              ไม่นับดาเมจที่ทำใส่ตัวเอง · จากเพื่อนร่วมทีม · ป้อม · ครีป · นิวทรัล
+// ฟิลด์ไหนไม่มี (แมตช์ยังไม่วิเคราะห์) = null ห้ามเป็น 0
+//
+// TECHNICAL DEBT (พี่ศิลาสั่งให้บันทึก ยังไม่แก้รอบนี้): ตัวอัญเชิญและภาพลวงตา
+//   แมตช์ตัวอย่าง 8214277203 มี Beastmaster · Invoker · Morphling แต่ไม่พบคีย์ตัวอัญเชิญหรือภาพลวงตาแยกใน damage_taken
+//   จึงยังพิสูจน์ไม่ได้ว่า OpenDota รวมดาเมจพวกนี้เข้าคีย์ฮีโร่เจ้าของ ทิ้งไป หรือใช้คีย์อื่นที่ไม่ขึ้นต้น npc_dota_hero_
+//   ถ้าเป็นคีย์อื่น ตัวแปลงนี้จะไม่นับ ต้องตรวจกับแมตช์ที่มีคีย์แบบนั้นจริงก่อนแก้
+
+type Raw = Record<string, unknown>;
+const rawObj = (v: unknown): Raw | null => (v && typeof v === "object" && !Array.isArray(v) ? (v as Raw) : null);
+const rawNum = (v: unknown): Num => (isNum(v) ? v : null);
+
+export type OpenDotaContext = {
+  /** ทีมของผู้เล่นชนะหรือไม่ · ไม่รู้ = null */
+  won: boolean | null;
+  /** คีย์ npc_dota_hero_* ของฮีโร่ฝั่งตรงข้ามทั้งหมด · หาไม่ครบ = null (DmgTaken จะเป็น null ไม่เดา) */
+  enemyHeroKeys: readonly string[] | null;
+};
+
+/**
+ * DmgTaken ของผู้เล่นหนึ่งคน = ผลรวม damage_taken จากคีย์ฮีโร่ฝั่งตรงข้าม
+ * - ไม่มี damage_taken หรือไม่รู้รายชื่อฝั่งตรงข้าม (null หรือว่าง) = null
+ * - ฮีโร่ฝั่งตรงข้ามที่ไม่มีคีย์ในตาราง = ไม่ได้ทำดาเมจใส่ผู้เล่นคนนี้ นับ 0 ของตัวนั้น (ค่าจริง)
+ * - ค่าใต้คีย์ฮีโร่ฝั่งตรงข้ามไม่ใช่ตัวเลข = null ทั้งก้อน (ข้อมูลเชื่อไม่ได้)
+ */
+export function enemyHeroDamageTaken(damageTaken: unknown, enemyHeroKeys: readonly string[] | null): Num {
+  const table = rawObj(damageTaken);
+  if (table === null || enemyHeroKeys === null || enemyHeroKeys.length === 0) return null;
+  let sum = 0;
+  for (const key of new Set(enemyHeroKeys)) {
+    if (!(key in table)) continue;
+    const v = table[key];
+    if (!isNum(v)) return null;
+    sum += v;
+  }
+  return sum;
+}
+
+/** ผู้เล่นหนึ่งคนจาก players[] ของ OpenDota → ค่าเข้าโมดูลคะแนน */
+export function fromOpenDotaPlayer(player: unknown, ctx: OpenDotaContext): PlayerMatchInput {
+  const p = rawObj(player) ?? {};
+  return {
+    won: typeof ctx.won === "boolean" ? ctx.won : null,
+    kills: rawNum(p.kills),
+    deaths: rawNum(p.deaths),
+    assists: rawNum(p.assists),
+    towers: rawNum(p.tower_kills),
+    obsPlaced: rawNum(p.obs_placed),
+    senPlaced: rawNum(p.sen_placed),
+    heroHealing: rawNum(p.hero_healing),
+    stuns: rawNum(p.stuns),
+    damageTaken: enemyHeroDamageTaken(p.damage_taken, ctx.enemyHeroKeys),
+  };
+}
+
+export type OpenDotaPlayerInput = { playerSlot: Num; heroId: Num; isRadiant: boolean | null; input: PlayerMatchInput };
+
+/**
+ * ทั้งแมตช์จาก GET /matches/{id} ของ OpenDota → ค่าเข้าโมดูลคะแนนรายผู้เล่น
+ * @param heroKeyById แปลง hero_id เป็นคีย์ npc_dota_hero_* (ส่งตัวแปลงที่มีอยู่แล้วเข้ามา โมดูลนี้ไม่มีตารางฮีโร่เอง) · ไม่รู้จัก = null
+ * ฮีโร่ฝั่งตรงข้ามคนใดหาคีย์ไม่ได้ หรือไม่รู้ฝั่งของผู้เล่น = DmgTaken ของผู้เล่นคนนั้นเป็น null
+ */
+export function fromOpenDotaMatch(match: unknown, heroKeyById: (heroId: number) => string | null): OpenDotaPlayerInput[] {
+  const m = rawObj(match) ?? {};
+  const radiantWin = typeof m.radiant_win === "boolean" ? m.radiant_win : null;
+  const players = (Array.isArray(m.players) ? m.players : []).map((raw: unknown) => {
+    const p = rawObj(raw) ?? {};
+    const playerSlot = rawNum(p.player_slot);
+    const heroId = rawNum(p.hero_id);
+    const isRadiant = typeof p.isRadiant === "boolean" ? p.isRadiant : playerSlot === null ? null : playerSlot < 128;
+    return { raw, playerSlot, heroId, isRadiant, heroKey: heroId === null ? null : heroKeyById(heroId) };
+  });
+  return players.map((me) => {
+    const enemies = me.isRadiant === null ? [] : players.filter((o) => o.isRadiant !== null && o.isRadiant !== me.isRadiant);
+    const keys = enemies.map((e) => e.heroKey);
+    const enemyHeroKeys = enemies.length === 0 || keys.some((k) => k === null) ? null : (keys as string[]);
+    const won = me.isRadiant === null || radiantWin === null ? null : me.isRadiant === radiantWin;
+    return { playerSlot: me.playerSlot, heroId: me.heroId, isRadiant: me.isRadiant, input: fromOpenDotaPlayer(me.raw, { won, enemyHeroKeys }) };
+  });
+}

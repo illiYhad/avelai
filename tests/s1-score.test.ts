@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  computeBaseKp, computeFormIndex, computeMatchScore, computeRoleBonus, formLevel, SCORE_CONFIG, toMatchScore,
+  computeBaseKp, computeFormIndex, computeMatchScore, computeRoleBonus, enemyHeroDamageTaken, formLevel, fromOpenDotaMatch,
+  fromOpenDotaPlayer, SCORE_CONFIG, toMatchScore,
   type PlayerMatchInput,
 } from "@/lib/avelai/score";
+import { heroKeyById } from "@/lib/avelai/score/hero-keys";
 
 // K-AV-S1: เทสโมดูลคำนวณคะแนน — ตัวเลขคาดหวังทุกตัวคิดมือไว้ในคอมเมนต์เหนือแต่ละกรณี
 // ตัวอย่าง A/B/C มาจาก avelai_kp_formula.md · B ใช้กติกา R6 (RANK_01) จึงได้ −8.025 ไม่ใช่ −6.925 ของเอกสารเดิม
@@ -201,5 +203,101 @@ describe("ค่าคงที่", () => {
     expect(SCORE_CONFIG.kp).toEqual({ kill: 1.0, death: 0.5, assist: 0.3, tower: 2.0, floor: -10 });
     expect(SCORE_CONFIG.matchScore).toEqual({ offset: 20, divisor: 16, min: 0, max: 5 });
     expect(SCORE_CONFIG.form.weights).toEqual([1.5, 1.3, 1.1, 1.0, 0.9]);
+  });
+});
+
+describe("ตัวแปลงจาก OpenDota (K-AV-S1.1)", () => {
+  const ENEMIES = ["npc_dota_hero_sniper", "npc_dota_hero_mars"];
+  // โครงย่อจากผู้เล่น slot 4 (Tusk) ของแมตช์ 8214277203: ฮีโร่ฝั่งตรงข้าม + ตัวเอง + เพื่อน + ป้อม + ครีป + นิวทรัล + โรชาน
+  const MIXED = {
+    npc_dota_hero_sniper: 2961,
+    npc_dota_hero_mars: 2150,
+    npc_dota_hero_tusk: 375, // ตัวเอง
+    npc_dota_hero_lion: 40, // เพื่อนร่วมทีม
+    npc_dota_badguys_tower4: 872,
+    npc_dota_creep_badguys_melee: 41,
+    npc_dota_neutral_centaur_khan: 35,
+    npc_dota_roshan: 185,
+    npc_dota_miniboss: 773,
+  };
+
+  it("21) DmgTaken นับเฉพาะฮีโร่ฝั่งตรงข้าม: ไม่นับตัวเอง เพื่อนร่วมทีม ป้อม ครีป นิวทรัล", () => {
+    // 2961 + 2150 = 5111 (ทั้งตาราง = 7432 · คีย์ npc_dota_hero_* ทั้งหมด = 5526)
+    expect(enemyHeroDamageTaken(MIXED, ENEMIES)).toBe(5111);
+    // ฮีโร่ฝั่งตรงข้ามที่ไม่ได้ทำดาเมจใส่เราเลย = นับ 0 ของตัวนั้น (ค่าจริง) ไม่ใช่ null
+    expect(enemyHeroDamageTaken(MIXED, [...ENEMIES, "npc_dota_hero_abaddon"])).toBe(5111);
+    expect(enemyHeroDamageTaken({ npc_dota_creep_badguys_melee: 41 }, ENEMIES)).toBe(0);
+    // ชื่อซ้ำในรายชื่อไม่ทำให้นับซ้ำ
+    expect(enemyHeroDamageTaken(MIXED, [...ENEMIES, "npc_dota_hero_mars"])).toBe(5111);
+  });
+
+  it("22) ไม่มี damage_taken · ไม่รู้ฝั่งตรงข้าม · ค่าเพี้ยน = null ไม่ใช่ 0", () => {
+    expect(enemyHeroDamageTaken(undefined, ENEMIES)).toBeNull();
+    expect(enemyHeroDamageTaken(null, ENEMIES)).toBeNull();
+    expect(enemyHeroDamageTaken([1, 2], ENEMIES)).toBeNull();
+    expect(enemyHeroDamageTaken(MIXED, null)).toBeNull();
+    expect(enemyHeroDamageTaken(MIXED, [])).toBeNull();
+    expect(enemyHeroDamageTaken({ npc_dota_hero_sniper: "2961" }, ENEMIES)).toBeNull();
+  });
+
+  it("23) fromOpenDotaPlayer: map ครบทุกฟิลด์ · Towers = tower_kills (ไม่ใช่ tower_damage)", () => {
+    const input = fromOpenDotaPlayer(
+      { kills: 5, deaths: 2, assists: 16, tower_kills: 0, tower_damage: 999, obs_placed: 9, sen_placed: 15, hero_healing: 320, stuns: 25, damage_taken: MIXED },
+      { won: true, enemyHeroKeys: ENEMIES },
+    );
+    expect(input).toEqual({
+      won: true, kills: 5, deaths: 2, assists: 16, towers: 0, obsPlaced: 9, senPlaced: 15, heroHealing: 320, stuns: 25, damageTaken: 5111,
+    });
+    // Base KP = 5 − 1 + 4.8 + 0 = 8.8
+    // Role = 24/2 + 320/3000×0.5 + 25/15×0.5 + 5111/15000 = 12 + 0.05333 + 0.83333 + 0.34073 = 13.2274
+    // Total = 25 + 8.8 + 13.2274 = 47.0274
+    expect(computeMatchScore(input).totalScore).toBeCloseTo(47.0274, 4);
+  });
+
+  it("24) แมตช์ยังไม่วิเคราะห์: ไม่มี tower_kills · วอร์ด · stuns · damage_taken = null ทุกช่อง และ Total เป็น null", () => {
+    const input = fromOpenDotaPlayer({ kills: 5, deaths: 2, assists: 16, hero_healing: 320, tower_damage: 999 }, { won: false, enemyHeroKeys: ENEMIES });
+    expect(input).toEqual({
+      won: false, kills: 5, deaths: 2, assists: 16, towers: null, obsPlaced: null, senPlaced: null, heroHealing: 320, stuns: null, damageTaken: null,
+    });
+    const r = computeMatchScore(input);
+    expect(r.totalScore).toBeNull();
+    expect(r.missing).toEqual(["towers", "obsPlaced", "senPlaced", "stuns", "damageTaken"]);
+    // ผู้เล่นไม่ใช่ object เลย ไม่พัง
+    expect(fromOpenDotaPlayer(null, { won: null, enemyHeroKeys: null }).kills).toBeNull();
+  });
+
+  it("25) fromOpenDotaMatch: หาฝั่งตรงข้ามและผลแพ้ชนะจากทั้งแมตช์ · ฮีโร่ที่ตารางไม่รู้จัก = DmgTaken null เฉพาะฝั่งที่ต้องใช้", () => {
+    const match = {
+      radiant_win: true,
+      players: [
+        { player_slot: 0, hero_id: 100, kills: 1, damage_taken: MIXED }, // Tusk (Radiant)
+        { player_slot: 1, hero_id: 26, kills: 2, damage_taken: { npc_dota_hero_sniper: 100, npc_dota_hero_tusk: 7 } }, // Lion (Radiant)
+        { player_slot: 128, hero_id: 35, kills: 3, damage_taken: { npc_dota_hero_tusk: 500, npc_dota_hero_lion: 300, npc_dota_hero_sniper: 20 } }, // Sniper (Dire)
+        { player_slot: 129, hero_id: 129, kills: 4, damage_taken: { npc_dota_hero_lion: 50 } }, // Mars (Dire)
+      ],
+    };
+    const rows = fromOpenDotaMatch(match, heroKeyById);
+    expect(rows.map((r) => [r.playerSlot, r.isRadiant, r.input.won, r.input.damageTaken])).toEqual([
+      [0, true, true, 5111], // sniper 2961 + mars 2150
+      [1, true, true, 100], // sniper 100 · ไม่นับ tusk 7 (เพื่อน)
+      [128, false, false, 800], // tusk 500 + lion 300 · ไม่นับตัวเอง 20
+      [129, false, false, 50],
+    ]);
+
+    // ฮีโร่ id 999999 ไม่มีในตาราง → ฝั่งตรงข้ามของมัน (Radiant) คิด DmgTaken ไม่ได้ · ฝั่ง Dire ยังคิดได้
+    const unknown = { ...match, players: [...match.players.slice(0, 3), { player_slot: 129, hero_id: 999999, damage_taken: { npc_dota_hero_lion: 50 } }] };
+    expect(fromOpenDotaMatch(unknown, heroKeyById).map((r) => r.input.damageTaken)).toEqual([null, null, 800, 50]);
+  });
+
+  it("26) fromOpenDotaMatch: ไม่รู้ผลแมตช์ หรือ JSON เพี้ยน ไม่พังและไม่เดา", () => {
+    const rows = fromOpenDotaMatch({ players: [{ player_slot: 0, hero_id: 100, damage_taken: {} }, { hero_id: 35 }, "x"] }, heroKeyById);
+    expect(rows.map((r) => [r.isRadiant, r.input.won, r.input.damageTaken])).toEqual([
+      [true, null, null], // ไม่มีผู้เล่นฝั่งตรงข้ามที่รู้ฝั่ง
+      [null, null, null],
+      [null, null, null],
+    ]);
+    expect(fromOpenDotaMatch(null, heroKeyById)).toEqual([]);
+    expect(heroKeyById(26)).toBe("npc_dota_hero_lion");
+    expect(heroKeyById(999999)).toBeNull();
   });
 });
