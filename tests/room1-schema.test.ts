@@ -229,11 +229,14 @@ describe("K-AV-ROOM.1 · 214/215 บนฐานจำลอง", () => {
     await expect(as("authenticated", ADMIN, () => inv(TEAM_C, " "))).rejects.toThrow(/REASON_REQUIRED/);
     await expect(as("authenticated", ADMIN, () => inv(TEAM_A, "จบซีซัน"))).rejects.toThrow(/TEAM_IN_ACTIVE_TOURNAMENT/);
     expect((await q<{ is_roster_locked: boolean }>(`SELECT is_roster_locked FROM public.teams WHERE id = '${TEAM_A}'`))[0].is_roster_locked).toBe(true);
-    expect(await as("authenticated", ADMIN, () => inv(TEAM_C, "จบซีซัน"))).toBe(2);
+    expect(await as("authenticated", ADMIN, () => inv(TEAM_C, "จบซีซัน"))).toBe(1); // เฉพาะรุ่นล่าสุด
     const team = await q(`SELECT is_roster_locked FROM public.teams WHERE id = '${TEAM_C}'`);
     expect(team).toEqual([{ is_roster_locked: false }]);
-    const snaps = await q(`SELECT status, invalidated_by, invalidated_reason FROM public.roster_snapshots WHERE team_id = '${TEAM_C}'`);
-    expect(snaps).toEqual(Array(2).fill({ status: "INVALIDATED", invalidated_by: u(ADMIN), invalidated_reason: "จบซีซัน" }));
+    const snaps = await q(`SELECT status, invalidated_by, invalidated_reason FROM public.roster_snapshots WHERE team_id = '${TEAM_C}' ORDER BY status`);
+    expect(snaps).toEqual([
+      { status: "ACTIVE", invalidated_by: null, invalidated_reason: null },
+      { status: "INVALIDATED", invalidated_by: u(ADMIN), invalidated_reason: "จบซีซัน" },
+    ]);
     const audit = await q(`SELECT performed_by, reason FROM public.audit_logs WHERE action = 'TEAM_ROSTER_INVALIDATE' AND record_id = '${TEAM_C}'`);
     expect(audit).toEqual([{ performed_by: u(ADMIN), reason: "จบซีซัน" }]);
     // ล็อกทีมใหม่ (โค้ดเดิมไม่ส่ง version) → ได้รุ่นถัดไป และเป็น ACTIVE

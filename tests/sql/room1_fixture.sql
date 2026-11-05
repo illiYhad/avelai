@@ -127,6 +127,7 @@ CREATE TABLE public.tournaments (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     organizer_id uuid NOT NULL REFERENCES public.users(id),
     name text NOT NULL, game text NOT NULL DEFAULT 'DOTA2',
+    team_size smallint NOT NULL DEFAULT 5,
     status text NOT NULL DEFAULT 'RUNNING'
 );
 CREATE TABLE public.tournament_staff (

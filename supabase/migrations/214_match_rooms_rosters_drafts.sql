@@ -10,6 +10,7 @@
 --   · กัปตัน INSERT ตรงไม่ได้ → ผ่าน RPC SECURITY DEFINER + search_path = ''
 --   · ตัวจริงและ events เพิ่มอย่างเดียว: trigger forbid_mutation (001) กัน UPDATE/DELETE/TRUNCATE แม้เป็น service role
 --   · Steam ID อ่านจาก game_accounts ที่ VERIFIED ในฟังก์ชันเท่านั้น ไม่รับจากผู้เรียก
+-- แก้ตามผล G3 (K-AV-ROOM.1.1): invalidate เฉพาะรุ่นล็อกทีมล่าสุดที่ไม่ผูกทัวร์ · uq_match_rooms_active · บังคับจำนวนตัวจริง
 -- ชื่อที่อลิสเสนอ ยังไม่ผ่านพี่ศิลา: mix_lobby_id · draft_player_pool · captain_radiant_id · captain_dire_id
 -- ข้อที่โคลท์ต้องเลือกเพื่อให้รันได้ (รอตัดสิน — ดูใบตอบ): ชื่อสถานะห้อง · turn_seconds · นิยาม "ทัวร์ที่ยังแข่ง"
 -- ============================================================================
@@ -76,6 +77,10 @@ CREATE TABLE IF NOT EXISTS public.match_rooms (
 );
 CREATE INDEX IF NOT EXISTS idx_match_rooms_match ON public.match_rooms (match_id, game_number);
 CREATE INDEX IF NOT EXISTS idx_match_rooms_mix ON public.match_rooms (mix_lobby_id, game_number);
+-- ห้องที่ยังทำงานมีได้ห้องเดียวต่อขอบเขต (แมตช์หรือห้องรวม) และเกม · ห้องที่จบ/ปิด/ล้ม/ยกเลิกแล้วไม่นับ
+CREATE UNIQUE INDEX IF NOT EXISTS uq_match_rooms_active
+    ON public.match_rooms ((COALESCE(match_id, mix_lobby_id)), game_number)
+    WHERE status NOT IN ('FINISHED', 'CLOSED', 'FAILED', 'CANCELLED');
 DROP TRIGGER IF EXISTS set_match_rooms_updated_at ON public.match_rooms;
 CREATE TRIGGER set_match_rooms_updated_at
     BEFORE UPDATE ON public.match_rooms
@@ -452,6 +457,7 @@ GRANT SELECT ON public.draft_player_board_public_v TO anon, authenticated;
 -- 6.1 lock_match_roster — ล็อกตัวจริงของฝั่งหนึ่ง · คืนเลขรุ่น
 --     ครั้งแรก (รุ่น 1): กัปตันฝั่งตัวเอง · สตาฟ · หรือระบบ (service role ตอนดราฟต์จบ)
 --     รุ่นถัดไป (เปลี่ยนตัว): สตาฟหรือระบบ + ต้องมีเหตุผล
+--     จำนวน: เท่ากับ tournaments.team_size (ห้องรวม 5 คน) · สตาฟ/ระบบส่งน้อยกว่าได้เฉพาะเมื่อมีเหตุผล
 --     แมตช์ทัวร์: ผู้เล่นต้องอยู่ใน tournament_rosters ของใบสมัครทีมนั้น (B3.2)
 --     ห้องรวม: ผู้เล่นต้องเป็นกัปตันหรือถูกเลือกเข้าฝั่งนั้นในดราฟต์ที่ COMPLETED
 --     Dota 2: ทุกคนต้องมี game_accounts ที่ VERIFIED — Steam ID อ่านจากตารางเท่านั้น
@@ -470,6 +476,7 @@ DECLARE
   v_n integer := COALESCE(cardinality(p_player_ids), 0);
   v_match record;
   v_game text := 'DOTA2';
+  v_size integer := 5;
   v_draft record;
   v_bad integer;
 BEGIN
@@ -493,11 +500,12 @@ BEGIN
   WHERE r.scope_id = v_scope AND r.game_number = p_game_number AND r.side = p_side;
 
   IF p_match_id IS NOT NULL THEN
-    SELECT m.id, m.tournament_id, m.team_a_id, m.team_b_id, t.game INTO v_match
+    SELECT m.id, m.tournament_id, m.team_a_id, m.team_b_id, t.game, t.team_size INTO v_match
     FROM public.tournament_matches m JOIN public.tournaments t ON t.id = m.tournament_id
     WHERE m.id = p_match_id;
     IF NOT FOUND THEN RAISE EXCEPTION 'NOT_FOUND' USING ERRCODE = 'no_data_found'; END IF;
     v_game := v_match.game;
+    v_size := v_match.team_size;
     IF p_team_id IS NULL OR (p_team_id IS DISTINCT FROM v_match.team_a_id
                              AND p_team_id IS DISTINCT FROM v_match.team_b_id) THEN
       RAISE EXCEPTION 'TEAM_NOT_IN_MATCH' USING ERRCODE = 'check_violation';
@@ -535,7 +543,11 @@ BEGIN
     IF v_bad > 0 THEN RAISE EXCEPTION 'PLAYER_NOT_IN_ROSTER' USING ERRCODE = 'check_violation'; END IF;
   END IF;
 
-  IF v_cur > 0 AND (p_reason IS NULL OR btrim(p_reason) = '') THEN
+  -- จำนวนตัวจริง: ต้องเท่ากับ team_size ของทัวร์ (ห้องรวม = 5) · สตาฟ/ระบบส่งน้อยกว่าได้เมื่อมีเหตุผล
+  IF v_n > v_size OR (v_n < v_size AND NOT v_staff) THEN
+    RAISE EXCEPTION 'ROSTER_SIZE_MISMATCH' USING ERRCODE = 'check_violation';
+  END IF;
+  IF (v_cur > 0 OR v_n < v_size) AND (p_reason IS NULL OR btrim(p_reason) = '') THEN
     RAISE EXCEPTION 'REASON_REQUIRED' USING ERRCODE = 'check_violation';
   END IF;
 
@@ -553,7 +565,7 @@ BEGIN
          (SELECT a.external_id FROM public.game_accounts a
           WHERE a.user_id = x.id AND a.game = 'DOTA2' AND a.status = 'VERIFIED' AND v_game = 'DOTA2'),
          CASE WHEN p_positions IS NULL THEN NULL ELSE p_positions[x.ord] END,
-         v_uid, CASE WHEN v_cur > 0 THEN btrim(p_reason) ELSE NULL END
+         v_uid, NULLIF(btrim(p_reason), '')
   FROM unnest(p_player_ids) WITH ORDINALITY AS x(id, ord);
 
   PERFORM public._audit(
@@ -561,7 +573,7 @@ BEGIN
     'match_roster_snapshots', v_scope,
     jsonb_build_object('game_number', p_game_number, 'side', p_side, 'version', v_cur + 1,
                        'team_id', p_team_id, 'player_ids', to_jsonb(p_player_ids)),
-    NULL, CASE WHEN v_cur > 0 THEN btrim(p_reason) ELSE NULL END, v_uid);
+    NULL, NULLIF(btrim(p_reason), ''), v_uid);
 
   RETURN v_cur + 1;
 END;
@@ -642,7 +654,8 @@ $$;
 REVOKE ALL ON FUNCTION public.draft_player_pick(uuid, uuid, integer) FROM public, anon;
 GRANT EXECUTE ON FUNCTION public.draft_player_pick(uuid, uuid, integer) TO authenticated, service_role;
 
--- 6.3 invalidate_team_roster — แอดมินยกเลิกรายชื่อทีมที่ล็อก (ไม่ลบ) + ปลด teams.is_roster_locked · คืนจำนวนรุ่นที่ยกเลิก
+-- 6.3 invalidate_team_roster — แอดมินยกเลิกรายชื่อทีมที่ล็อก (ไม่ลบ) + ปลด teams.is_roster_locked · คืนจำนวนรุ่นที่ยกเลิก (0 หรือ 1)
+--     ยกเลิกเฉพาะรุ่นปัจจุบันของการล็อกทีม = แถวล่าสุดที่ tournament_id IS NULL · snapshot ที่ผูกทัวร์ไม่เปลี่ยน
 --     ห้ามเมื่อทีมมีทัวร์ที่ยังแข่ง:
 --       · registrations (140) สถานะ PENDING_PAYMENT/CONFIRMED/CHECKED_IN ในทัวร์ที่ไม่ใช่ COMPLETED/CANCELLED
 --       · tournament_registrations (110) ที่ไม่ใช่ REJECTED ใน tournament_instances สถานะ active
@@ -674,7 +687,10 @@ BEGIN
 
   UPDATE public.roster_snapshots
   SET status = 'INVALIDATED', invalidated_by = v_uid, invalidated_at = now(), invalidated_reason = btrim(p_reason)
-  WHERE team_id = p_team_id AND status = 'ACTIVE';
+  WHERE status = 'ACTIVE'
+    AND id = (SELECT s.id FROM public.roster_snapshots s
+              WHERE s.team_id = p_team_id AND s.tournament_id IS NULL
+              ORDER BY s.version DESC, s.created_at DESC, s.id DESC LIMIT 1);
   GET DIAGNOSTICS v_count = ROW_COUNT;
 
   UPDATE public.teams SET is_roster_locked = false, locked_until = NULL WHERE id = p_team_id;
