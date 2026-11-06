@@ -5,6 +5,7 @@
 import { kda, num, type DotaMatchPlayer, type DotaPickBan } from "@/lib/dota/opendota";
 import { mapMatchB, mapPlayerB, type MatchB, type PlayerB } from "@/lib/dota/match/b-tabs"; // K-AV-D5
 import { mapMatchEvents, mapPlayerEventLogs, type MatchEvents, type PlayerEventLogs } from "@/lib/dota/match/c-events"; // K-AV-D6
+import { mapMatchD, mapPlayerD, type MatchD, type PlayerD } from "@/lib/dota/match/d-full"; // K-AV-DOTABUFF.1
 
 type Obj = Record<string, unknown>;
 const obj = (v: unknown): Obj => (v && typeof v === "object" && !Array.isArray(v) ? (v as Obj) : {});
@@ -31,7 +32,7 @@ export type DotaMatchDetailPlayer = DotaMatchPlayer & {
   damageTaken: Record<string, number> | null;
   /** damage_targets ดิบ: สกิล/ไอเทม → เป้าหมาย → ดาเมจ · ไม่มี = null */
   damageTargets: Record<string, Record<string, number>> | null;
-} & { b: PlayerB } // K-AV-D5: ข้อมูลแท็บ Builds · Lanes · Farm · Kills (ฟิลด์ย่อยไม่มี = null)
+} & { b: PlayerB; d: PlayerD } // K-AV-D5: ข้อมูลแท็บ Builds · Lanes · Farm · Kills (ฟิลด์ย่อยไม่มี = null)
   & PlayerEventLogs; // K-AV-D6: runesLog · obsLog · senLog · obsLeftLog · senLeftLog · killsLog (ไม่มี = null)
 
 export type DotaMatchDetail = {
@@ -51,7 +52,7 @@ export type DotaMatchDetail = {
   direTeamName: string | null;
   players: DotaMatchDetailPlayer[];
   picksBans: DotaPickBan[];
-} & { b: MatchB } // K-AV-D5: ส่วนต่างทอง/XP รายนาที (ไม่มี = null)
+} & { b: MatchB; d: MatchD } // K-AV-D5: ส่วนต่างทอง/XP รายนาที (ไม่มี = null)
   & MatchEvents; // K-AV-D6: objectives · chat (ไม่มี = null)
 
 const flag = (v: unknown): boolean => v === 1 || v === true;
@@ -98,6 +99,7 @@ function mapPlayer(raw: unknown): DotaMatchDetailPlayer {
     damageTaken: numRecord(p.damage_taken),
     damageTargets: nestedNumRecord(p.damage_targets),
     b: mapPlayerB(p), // K-AV-D5
+    d: mapPlayerD(p), // K-AV-DOTABUFF.1
     ...mapPlayerEventLogs(p), // K-AV-D6
   };
 }
@@ -141,6 +143,7 @@ export function mapMatchDetail(matchId: string, raw: unknown): DotaMatchDetail {
     direTeamName: str(obj(m.dire_team).name),
     players: arr(m.players).slice(0, 10).map(mapPlayer),
     b: mapMatchB(m), // K-AV-D5
+    d: mapMatchD(m), // K-AV-DOTABUFF.1
     picksBans: arr(m.picks_bans).map((x): DotaPickBan => {
       const o = obj(x);
       return { isPick: o.is_pick === true, heroId: num(o.hero_id), team: num(o.team), order: num(o.order) };

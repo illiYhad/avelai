@@ -254,7 +254,7 @@ describe("แคช", () => {
   it("getDotaConstant รับเฉพาะ allowlist · ค่านอกรายการไม่ยิงเครือข่าย", async () => {
     const f = mockFetch(() => ({ body: {} }));
     vi.stubGlobal("fetch", f);
-    expect(DOTA_CONSTANTS).toEqual(["heroes", "items", "abilities", "hero_abilities"]);
+    expect(DOTA_CONSTANTS).toEqual(["heroes", "items", "abilities", "hero_abilities", "ability_ids", "permanent_buffs"]);
     expect(isDotaConstant("heroes")).toBe(true);
     expect(isDotaConstant("../../players/1")).toBe(false);
     const bad = await getDotaConstant("patch" as never);
