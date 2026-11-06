@@ -1,3 +1,4 @@
+import "server-only";
 // K-AV-STEAMLOGIN.3: ดึงชื่อเล่น/รูปจาก Steam Web API (ISteamUser/GetPlayerSummaries/v2)
 // - ล้มทุกแบบ (ไม่มี key · เครือข่าย · ตอบผิดรูป · เกิน 3 วินาที) → คืน null ไม่ throw
 // - ไม่ log ค่า key หรือ URL ที่มี key (ไฟล์นี้ไม่ log อะไรเลย)

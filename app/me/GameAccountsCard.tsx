@@ -53,10 +53,6 @@ export default function GameAccountsCard({
             ) : (
               <div className="flex flex-wrap items-center gap-3 text-sm">
                 {dota ? <><span className="font-numeric text-white">{dota.external_id}</span><Badge tone="wait">ยังไม่ยืนยัน</Badge></> : <span className="text-white/60">ยังไม่ผูกบัญชี</span>}
-                {/* ลิงก์ธรรมดา (ไม่ใช่ Link) — เป็น route handler ที่ redirect ไปนอกเว็บ ไม่ใช่หน้า */}
-                {/* ต้องเป็น <a>: เป็น route handler ที่ redirect ไป Steam (Link จะ prefetch/soft-navigate ไปนอกเว็บ) */}
-                {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-                <a href="/link/steam/start" className="rounded btn-primary px-4 py-2">ผูกบัญชี Steam</a>
               </div>
             )}
             {/* K-AV-LINK.1: ยกเลิกการผูก (ทั้งแถวที่ยืนยันแล้วและแถวเก่าที่กรอกมือ) · K-AV-STEAMLOGIN.1: ซ่อนสำหรับบัญชีที่เข้าด้วย Steam */}

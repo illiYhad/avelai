@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getAdminDb } from "@/lib/db/admin";
 import { getServerDb } from "@/lib/db/server";
 import type { SteamLinkError } from "@/lib/game-accounts/steam";
-import { buildLinkPendingDeps, buildSteamLoginDeps } from "@/lib/game-accounts/steam-deps";
+import { buildLinkPendingDeps, buildPersonaDeps, buildSteamLoginDeps } from "@/lib/game-accounts/steam-deps";
 import {
   createFromPending, linkPendingToUser, pendingSecret, readPending,
   CHOOSE_MESSAGES, OTP_BAD_CODE_MESSAGE, OTP_BAD_EMAIL_MESSAGE, OTP_RESEND_SEC, OTP_SENT_COOKIE, OTP_SENT_MESSAGE, OTP_WAIT_MESSAGE,
@@ -37,7 +37,7 @@ export async function newPlayerAction(_prev: ChooseState, _formData: FormData): 
   void _formData;
   const jar = await cookies();
   const pending = pendingFrom(jar);
-  const result = await createFromPending({ pending, deps: buildSteamLoginDeps(await getServerDb(), getAdminDb()) });
+  const result = await createFromPending({ pending, deps: buildSteamLoginDeps(await getServerDb(), getAdminDb()), persona: buildPersonaDeps(getAdminDb()) });
   if (!result.ok) {
     // ใช้ไม่ได้แล้ว (หมดอายุ หรือ Steam ถูกผูกไปแล้ว) = ลบ cookie · ล้มชั่วคราว = เก็บไว้ให้ลองใหม่ได้ภายในอายุเดิม
     if (result.error === "expired" || result.error === "taken") clearPending(jar);

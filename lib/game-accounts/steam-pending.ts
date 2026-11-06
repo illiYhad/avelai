@@ -1,6 +1,7 @@
 import "server-only";
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { steamLoginEmail, toDotaAccountId, type SteamLoginDeps } from "@/lib/game-accounts/steam";
+import type { SteamPersona } from "@/lib/game-accounts/steam-persona";
 
 // K-AV-STEAMLOGIN.2: ล็อกอิน Steam ครั้งแรก "ถามก่อนสร้างบัญชี"
 // Steam ตรวจผ่านแล้วแต่ไม่รู้จัก Steam ID → จำ Steam ID ไว้ใน cookie มีลายเซ็น 10 นาที แล้วให้ผู้ใช้เลือกที่ /login/steam/choose
@@ -92,7 +93,13 @@ const alreadyLinked = (e: { message?: string }) => (e.message ?? "").includes("S
  * ทาง ก. "ฉันเป็นผู้เล่นใหม่" — โค้ดสร้างบัญชีเดิมของ K-AV-STEAMLOGIN ย้ายมาเรียกจากที่นี่
  * Steam ID ถูกผูกไปแล้ว (ก่อนหรือระหว่างทำ) = ปฏิเสธ ไม่เข้าบัญชีนั้นให้ · ผูกไม่สำเร็จ = ลบเฉพาะบัญชีที่เพิ่งสร้าง
  */
-export async function createFromPending(a: { pending: Pending | null; deps: SteamLoginDeps | null }): Promise<ChooseResult> {
+/** K-AV-STEAMLOGIN.4: ตั้งชื่อเล่น/รูปตั้งต้นจาก Steam หลังสร้างบัญชีทาง ก. · เลือกใส่ · ล้มได้โดยไม่กระทบการสร้างบัญชี */
+export type PersonaDeps = {
+  fetchPersona: (steam64: string) => Promise<SteamPersona | null>;
+  setProfile: (userId: string, p: SteamPersona) => Promise<void>;
+};
+
+export async function createFromPending(a: { pending: Pending | null; deps: SteamLoginDeps | null; persona?: PersonaDeps | null }): Promise<ChooseResult> {
   if (!a.pending) return fail("expired");
   const d = a.deps;
   if (!d) return fail("unavailable");
@@ -101,14 +108,21 @@ export async function createFromPending(a: { pending: Pending | null; deps: Stea
   if (existing === undefined) return fail("failed");
   if (existing) return fail("taken");
 
-  // TODO(K-AV-STEAMLOGIN.3): เมื่อ lib/game-accounts/steam-persona.ts ของโคลท์ตัวเขียวเข้า main แล้ว
-  //   ให้เรียก fetchSteamPersona(a.pending.steam64) ตรงนี้เพื่อตั้งชื่อเล่นและรูปตั้งต้น · ดึงไม่ได้ต้องไม่ทำให้ขั้นตอนนี้ล้ม
   const created = await d.createUser(steamLoginEmail());
   if (!created) return fail("failed");
   const { error } = await d.linkSteam(created, a.pending.accountId);
   if (error) {
     await d.deleteUser(created);
     return fail(alreadyLinked(error) ? "taken" : "failed");
+  }
+  // K-AV-STEAMLOGIN.4: ชื่อเล่น/รูปตั้งต้นจาก Steam · ไม่มี persona · ดึงไม่ได้ · เขียนไม่ได้ · throw = ข้ามเงียบ ๆ (ห้าม log)
+  if (a.persona) {
+    try {
+      const p = await a.persona.fetchPersona(a.pending.steam64);
+      if (p) await a.persona.setProfile(created, p);
+    } catch {
+      // ตั้งใจข้าม: บัญชีต้องสร้างและล็อกอินต่อได้เหมือนเดิม
+    }
   }
   if (await d.isSuspended(created)) return fail("suspended");
   return (await d.signIn(created)) ? { ok: true, userId: created } : fail("failed");
