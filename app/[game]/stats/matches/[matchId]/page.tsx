@@ -141,7 +141,7 @@ function TeamTable({
                   <td className="py-2 pr-3 font-mono">{dash(p.heroHealing)}</td>
                   <td className="py-2 pr-3 font-mono">{dash(p.towerDamage)}</td>
                   <td className="py-2">
-                    <span className="flex items-start gap-1">
+                    <span className="grid w-max grid-cols-3 gap-1">
                       {p.items.map((it, idx) =>
                         it === null ? (
                           <span key={idx} className="h-6 w-8 rounded border border-line/60" />

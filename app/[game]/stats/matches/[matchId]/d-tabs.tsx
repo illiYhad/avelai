@@ -103,8 +103,15 @@ export async function FarmD({ m }: { m: DotaMatchDetail }) {
   return (
     <>
       <Surface>
-        <h2 className={H2}>ทองรายนาที (gold_t)</h2>
-        {gold.length ? <MultiLine series={gold} label="ทองรายนาทีต่อผู้เล่น" height={200} /> : <p className="mt-2 text-sm text-ink">ไม่มีข้อมูลในแมตช์นี้</p>}
+        <h2 className={H2}>ทองรายนาทีต่อผู้เล่น (gold_t)</h2>
+        {gold.length ? (
+          <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-5">
+            {gold.map((g) => <Spark key={g.name} {...g} />)}
+          </ul>
+        ) : (
+          <p className="mt-2 text-sm text-ink">ไม่มีข้อมูลในแมตช์นี้</p>
+        )}
+        <SourceNote>แต่ละกราฟใช้สเกลของผู้เล่นคนนั้นเอง · ตัวเลข = ทองนาทีสุดท้าย · ผู้เล่นที่ไม่มี gold_t ไม่วาด</SourceNote>
       </Surface>
       <Surface>
         <h2 className={H2}>LH รายนาที (lh_t)</h2>
@@ -220,6 +227,7 @@ export async function VisionD({ m, range, basePath }: { m: DotaMatchDetail; rang
                   key={x.id}
                   href={x.id === "all" ? basePath : `${basePath}?w=${encodeURIComponent(x.id)}`}
                   scroll={false}
+                  prefetch={false}
                   className={`rounded border px-2 py-1 font-mono text-xs ${x.id === r.id ? "border-cyan text-cyan" : "border-line text-ink-muted"}`}
                 >
                   {x.label}{x.id === "all" ? "" : " นาที"}
@@ -234,5 +242,29 @@ export async function VisionD({ m, range, basePath }: { m: DotaMatchDetail; rang
         )}
       </Surface>
     </>
+  );
+}
+
+// 1a ข้อ 5: กราฟเล็กแยกผู้เล่น วาด SVG ฝั่งเซิร์ฟเวอร์ · ช่องที่เป็น null ตัดเส้น (ไม่แต่งเป็น 0)
+function Spark({ name, color, values }: { name: string; color: string; values: (number | null)[] }) {
+  const nums = values.filter((v): v is number => v !== null);
+  const max = Math.max(1, ...nums);
+  const n = Math.max(1, values.length - 1);
+  const segs: string[] = [];
+  let cur = "";
+  values.forEach((v, i) => {
+    if (v === null) { if (cur) segs.push(cur); cur = ""; return; }
+    cur += `${cur ? "L" : "M"}${((i / n) * 100).toFixed(1)} ${(38 - (v / max) * 36).toFixed(1)} `;
+  });
+  if (cur) segs.push(cur);
+  const last = [...values].reverse().find((v) => v !== null) ?? null;
+  return (
+    <li className="rounded border border-line/60 p-2">
+      <p className="truncate font-mono text-xs" style={{ color }}>{name}</p>
+      <svg viewBox="0 0 100 40" preserveAspectRatio="none" className="mt-1 h-10 w-full" role="img" aria-label={`ทองรายนาทีของ ${name}`}>
+        {segs.map((d, i) => <path key={i} d={d} fill="none" stroke={color} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />)}
+      </svg>
+      <p className="font-mono text-xs text-ink">{val(last)}</p>
+    </li>
   );
 }

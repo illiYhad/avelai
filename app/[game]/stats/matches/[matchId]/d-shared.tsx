@@ -1,6 +1,7 @@
 // ใบ 28 รายการ (2026-11-06): ของใช้ร่วมของรายการที่เติม (ลำดับสกิล · บัฟ · ข้อความ "ไม่มีข้อมูล") — ฝั่งเซิร์ฟเวอร์
 import { getDotaConstant } from "@/lib/dota/match";
 import type { DotaMatchDetailPlayer } from "@/lib/dota/match";
+import { isTalentTemplate, talentText } from "./d-text";
 import { H2, HEAD_ROW, PlayerCell, SCROLL, TABLE, TD, TH, type BLookups } from "./b-shared";
 
 type Obj = Record<string, unknown>;
@@ -26,7 +27,7 @@ export async function dLookups(): Promise<DLookups> {
     const d = asObj(abMap[key]).dname;
     if (typeof d !== "string" || !d.trim()) return key.replaceAll("_", " ");
     // ทาเลนต์มีแม่แบบ {s:...} ที่ต้องเติมค่าจากเกม → ตัดแม่แบบออก ไม่เดาตัวเลข
-    return d.includes("{s:") ? `ทาเลนต์: ${d.replace(/\{s:[^}]*\}/g, "").replace(/\s+/g, " ").trim()}` : d;
+    return isTalentTemplate(d) ? `ทาเลนต์: ${talentText(d)}` : d;
   };
   return {
     abilityName: (id) => {
@@ -70,7 +71,7 @@ export function SkillOrder({ players, L, D }: { players: DotaMatchDetailPlayer[]
                 {Array.from({ length: maxLv }, (_, lv) => {
                   const id = p.d.abilityUpgrades![lv];
                   return (
-                    <td key={lv} className={`${TD} max-w-20 whitespace-normal text-xs`}>
+                    <td key={lv} className={`${TD} w-24 min-w-24 max-w-24 whitespace-normal break-words text-xs`}>
                       {id === undefined ? "–" : D.abilityName(id)}
                     </td>
                   );

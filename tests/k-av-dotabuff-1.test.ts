@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 import raw from "./fixtures-k-av-dotabuff-1.json";
+import { talentText } from "@/app/[game]/stats/matches/[matchId]/d-text";
 import { mapMatchDetail } from "@/lib/dota/match/map";
 import { laneSummaries } from "@/lib/dota/match/b-tabs";
 import {
@@ -89,5 +90,23 @@ describe("K-AV-DOTABUFF.1 · ฟิลด์ขาด = null ไม่ใช่ 
     expect(killMatrix([{ killed: {} }], ["npc_dota_hero_lion"])).toEqual([[0]]);
     expect(lastPurchaseTime([{ time: 100, key: "blink", charges: null }, { time: 900, key: "blink", charges: null }], "blink")).toBe(900);
     expect(runeCounts([[{ key: "5" }, { key: "5" }], null])).toEqual({ "5": 2 });
+  });
+});
+
+describe("K-AV-DOTABUFF.1a · ชื่อทาเลนต์ไม่เหลือเศษแม่แบบ", () => {
+  it("ตัดเครื่องหมายและหน่วยที่ติดกับ {s:...} · ไม่เติมตัวเลข", () => {
+    const cases: [string, string][] = [
+      ["+{s:bonus_duration}s Walrus Punch Stun Duration", "Walrus Punch Stun Duration"],
+      ["+{s:bonus_damage} Headshot Damage", "Headshot Damage"],
+      ["+{s:value}% Magic Resistance", "Magic Resistance"],
+      ["-{s:value}s Boulder Smash Cooldown", "Boulder Smash Cooldown"],
+      ["+{s:a}/{s:b} Agility Gain", "Agility Gain"],
+      ["{s:value}x Duel Damage", "Duel Damage"],
+    ];
+    for (const [raw, want] of cases) {
+      const out = talentText(raw);
+      expect(out).toBe(want);
+      expect(out).not.toMatch(/\{s:|^\+s |^\+ |\d/);
+    }
   });
 });

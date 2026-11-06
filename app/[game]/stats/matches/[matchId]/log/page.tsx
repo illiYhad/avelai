@@ -51,6 +51,7 @@ export default async function LogPage({
             key={k ?? "all"}
             href={k ? `${base}?kind=${k}` : base}
             scroll={false}
+            prefetch={false}
             className={`rounded border px-2 py-1 font-mono text-xs ${k === kind ? "border-cyan text-cyan" : "border-line text-ink-muted"}`}
           >
             {k ? KIND_LABEL[k] : "ทั้งหมด"} ({k ? events.filter((e) => e.kind === k).length : events.length})

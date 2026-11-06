@@ -5,7 +5,7 @@ import { atMinute, laneLabel, laneRoleLabel, laneSummaries } from "@/lib/dota/ma
 import { guardPublicMatchView } from "@/lib/dota/match/guard";
 import { isValidMatchId } from "@/lib/dota/opendota";
 import { blockedNotice } from "../BlockedNotice";
-import { LANE_OUTCOME_MIN_RATIO, LANE_OUTCOME_MINUTE, laneOutcome, lhAtMinutes, LH_MINUTES, type LaneOutcome } from "@/lib/dota/match/d-full";
+import { LANE_OUTCOME_MIN_RATIO, LANE_OUTCOME_MINUTE, laneOutcome, LH_MINUTES, type LaneOutcome } from "@/lib/dota/match/d-full";
 import { SourceNote } from "../d-shared";
 import { bLookups, H2, HEAD_ROW, NoDataB, PlayerCell, SCROLL, SIDE_TEXT, TABLE, TD, TeamHeading, teams, TH, val } from "../b-shared";
 
@@ -15,6 +15,8 @@ import { bLookups, H2, HEAD_ROW, NoDataB, PlayerCell, SCROLL, SIDE_TEXT, TABLE, 
 export const dynamic = "force-dynamic";
 
 const LANE_MINUTE = LANE_OUTCOME_MINUTE;
+// 1a ข้อ 6: LH เรียงนาที 4 · 5 · 8 · 10 · 12
+const LH_ORDER = [...new Set([...LH_MINUTES, 5, LANE_MINUTE])].sort((a, b) => a - b);
 const OUTCOME_TEXT: Record<LaneOutcome, string> = {
   radiant: "Radiant ชนะ",
   dire: "Dire ชนะ",
@@ -52,11 +54,9 @@ export default async function LanesPage({ params }: { params: Promise<{ game: st
                   <th scope="col" className={TH}>บทบาท</th>
                   <th scope="col" className={TH}>โรม</th>
                   <th scope="col" className={TH}>ประสิทธิภาพเลน</th>
-                  {LH_MINUTES.map((mn) => (
+                  {LH_ORDER.map((mn) => (
                     <th key={mn} scope="col" className={TH}>LH นาที {mn}</th>
                   ))}
-                  <th scope="col" className={TH}>LH นาที 5</th>
-                  <th scope="col" className={TH}>LH นาที 10</th>
                   <th scope="col" className={TH}>DN นาที 10</th>
                   <th scope="col" className={TH}>ทอง นาที 10</th>
                   <th scope="col" className="py-2">XP นาที 10</th>
@@ -70,11 +70,9 @@ export default async function LanesPage({ params }: { params: Promise<{ game: st
                     <td className={TD}>{laneRoleLabel(p.b.laneRole) ?? "–"}</td>
                     <td className="py-2 pr-3">{p.b.isRoaming === null ? "–" : p.b.isRoaming ? "ใช่" : "ไม่"}</td>
                     <td className={TD}>{p.b.laneEfficiencyPct === null ? "–" : `${p.b.laneEfficiencyPct}%`}</td>
-                    {lhAtMinutes(p.b.lhT).map((v, k) => (
-                      <td key={k} className={TD}>{val(v)}</td>
+                    {LH_ORDER.map((mn) => (
+                      <td key={mn} className={TD}>{val(atMinute(p.b.lhT, mn))}</td>
                     ))}
-                    <td className={TD}>{val(atMinute(p.b.lhT, 5))}</td>
-                    <td className={TD}>{val(atMinute(p.b.lhT, LANE_MINUTE))}</td>
                     <td className={TD}>{val(atMinute(p.b.dnT, LANE_MINUTE))}</td>
                     <td className={TD}>{val(atMinute(p.b.goldT, LANE_MINUTE))}</td>
                     <td className="py-2 font-mono">{val(atMinute(p.b.xpT, LANE_MINUTE))}</td>
