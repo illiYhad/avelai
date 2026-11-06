@@ -10,6 +10,7 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock("server-only", () => ({}));
+vi.mock("next/cache", async () => (await import("./_fake-next-cache")).fakeNextCache); // K-AV-QUOTA.1
 vi.mock("@/lib/db/server", () => ({
   getServerDb: async () => ({
     auth: { getUser: async () => ({ data: { user: h.user } }) },
@@ -20,6 +21,8 @@ vi.mock("@/lib/db/server", () => ({
   }),
 }));
 
+import { resetQuotaState } from "@/lib/dota/quota";
+import { fakeCacheStore } from "./_fake-next-cache";
 import { getMatchSummary, getPlayerCard, isValidMatchId, kda, mapMatch, mapPlayerCard, OPENDOTA_TIMEOUT_MS } from "@/lib/dota/opendota";
 import { allowRequest, dotaRequestLog, DOTA_USER_LIMIT, MINUTE_MS } from "@/lib/dota/user-rate-limit";
 import { GET as getMe } from "@/app/api/games/dota2/me/route";
@@ -76,6 +79,8 @@ const playerRoutes = (id: string): Route => ({
 });
 
 beforeEach(() => {
+  resetQuotaState(); // K-AV-QUOTA.1: 429 ของเทสหนึ่งต้องไม่ค้างโหมดประหยัดไปเทสถัดไป
+  fakeCacheStore.clear();
   calls = []; lastInit = undefined;
   h.user = null; h.account = null; h.accountError = null;
   dotaRequestLog.clear();
@@ -157,11 +162,12 @@ describe("เรียก OpenDota (fetch mock)", () => {
     expect(await getPlayerCard("11111111")).toMatchObject({ ok: false, status: 404 });
   });
 
-  it("429 → ลองใหม่ภายหลัง", async () => {
+  // K-AV-QUOTA.1: 429 จาก OpenDota = โควตาหมด → ข้อความโหมดประหยัดตามใบอลิส (เดิม "ลองใหม่ภายหลัง")
+  it("429 → โหมดประหยัดโควตา", async () => {
     stubFetch({ ...playerRoutes("11111111"), "/players/11111111/wl": { status: 429 } });
     const r = await getPlayerCard("11111111");
     expect(r).toMatchObject({ ok: false, status: 429 });
-    expect(!r.ok && r.message).toContain("ลองใหม่ภายหลัง");
+    expect(!r.ok && r.message).toBe("ข้อมูลแมตช์ใหม่จะอัปเดตอีกครั้งพรุ่งนี้");
   });
 
   it("JSON เพี้ยน → 502 ไม่สะท้อนข้อความดิบ", async () => {

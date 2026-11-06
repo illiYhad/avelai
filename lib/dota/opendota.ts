@@ -1,4 +1,5 @@
 import "server-only";
+import { noteQuotaExceeded, noteQuotaHeaders, quotaLow } from "@/lib/dota/quota";
 
 // K-AV-D2: client OpenDota ฝั่ง server — คืนเฉพาะฟิลด์ที่ map แล้ว ห้ามส่ง JSON ดิบต่อให้ client
 // แสดงสถิติดิบเท่านั้น (W/L · K/D/A · LH/DN · GPM/XPM · ดาเมจ · ฮีล) — ไม่มี "คะแนน AVELAi" จนกว่าพี่ศิลาเคาะสูตร
@@ -16,11 +17,17 @@ export const ERR = {
   timeout: { ok: false, status: 504, message: "OpenDota ตอบช้าเกินไป ลองใหม่ภายหลัง" },
   upstream: { ok: false, status: 502, message: "ดึงข้อมูลจาก OpenDota ไม่สำเร็จ ลองใหม่ภายหลัง" },
   badJson: { ok: false, status: 502, message: "ข้อมูลจาก OpenDota อ่านไม่ได้ ลองใหม่ภายหลัง" },
+  // K-AV-QUOTA.1: โหมดประหยัดโควตา (ข้อความจากใบอลิส ห้ามเปลี่ยน) · ใช้แทน rateLimited เมื่อ OpenDota ตอบ 429
+  quotaLow: { ok: false, status: 429, message: "ข้อมูลแมตช์ใหม่จะอัปเดตอีกครั้งพรุ่งนี้" },
 } as const satisfies Record<string, DotaError>;
+
+/** K-AV-QUOTA.1: โหมดประหยัดบล็อกทุก path ยกเว้น /constants/ (ชื่อฮีโร่/ไอเทมของแมตช์ที่แคชไว้ยังต้องแสดงได้) */
+const blockedByQuota = (path: string): boolean => !path.startsWith("/constants/") && quotaLow(Date.now());
 
 /** เรียก OpenDota หนึ่ง path · K-AV-D3: เปิดให้ lib/dota/match ใช้ซ้ำ จะได้ไม่เขียน error handling ใหม่
  *  revalidateSec = อายุแคชข้อมูลของ Next (ค่าเดิม 600 วินาที) */
 export async function fetchOpenDota(path: string, revalidateSec = 600): Promise<DotaResult<unknown>> {
+  if (blockedByQuota(path)) return ERR.quotaLow;
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), OPENDOTA_TIMEOUT_MS);
   const key = process.env.OPENDOTA_API_KEY;
@@ -30,8 +37,12 @@ export async function fetchOpenDota(path: string, revalidateSec = 600): Promise<
       headers: { Accept: "application/json", ...(key ? { Authorization: `Bearer ${key}` } : {}) },
       next: { revalidate: revalidateSec },
     } as RequestInit);
+    noteQuotaHeaders(res.headers, Date.now());
     if (res.status === 404) return ERR.notFound;
-    if (res.status === 429) return ERR.rateLimited;
+    if (res.status === 429) {
+      noteQuotaExceeded(Date.now());
+      return ERR.quotaLow;
+    }
     if (!res.ok) return ERR.upstream;
     try {
       return { ok: true, data: await res.json() };
@@ -48,6 +59,7 @@ export async function fetchOpenDota(path: string, revalidateSec = 600): Promise<
 /** K-AV-D3: POST ไป OpenDota (ใช้กับ /request เท่านั้น) — ใช้ชุด error เดียวกับ GET ไม่เขียนใหม่
  *  ไม่แคช เพราะเป็นการสั่งงาน ไม่ใช่การอ่าน */
 export async function postOpenDota(path: string): Promise<DotaResult<unknown>> {
+  if (blockedByQuota(path)) return ERR.quotaLow;
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), OPENDOTA_TIMEOUT_MS);
   const key = process.env.OPENDOTA_API_KEY;
@@ -58,8 +70,12 @@ export async function postOpenDota(path: string): Promise<DotaResult<unknown>> {
       headers: { Accept: "application/json", ...(key ? { Authorization: `Bearer ${key}` } : {}) },
       cache: "no-store",
     } as RequestInit);
+    noteQuotaHeaders(res.headers, Date.now());
     if (res.status === 404) return ERR.notFound;
-    if (res.status === 429) return ERR.rateLimited;
+    if (res.status === 429) {
+      noteQuotaExceeded(Date.now());
+      return ERR.quotaLow;
+    }
     if (!res.ok) return ERR.upstream;
     try {
       return { ok: true, data: await res.json() };
