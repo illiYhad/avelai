@@ -106,10 +106,10 @@ export function mapPlayerEventLogs(rawPlayer: unknown): PlayerEventLogs {
 
 // ---------- ป้ายแสดงผล ----------
 
-/** รหัสรูนของ OpenDota (constants/runes) · รหัสที่ไม่รู้จัก = "รูน #n" ไม่เดา */
+/** รหัสรูนตาม rune_n ใน https://raw.githubusercontent.com/odota/web/master/src/lang/en-US.json · รหัสที่ไม่รู้จัก = "รูน #n" ไม่เดา */
 const RUNES: Record<string, string> = {
   "0": "Double Damage", "1": "Haste", "2": "Illusion", "3": "Invisibility", "4": "Regeneration",
-  "5": "Bounty", "6": "Arcane", "7": "Water", "8": "Shield",
+  "5": "Bounty", "6": "Arcane", "7": "Water", "8": "Wisdom", "9": "Shield",
 };
 export const runeName = (key: string | null): string => (key === null ? "–" : RUNES[key] ?? `รูน #${key}`);
 
