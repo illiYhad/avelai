@@ -6,6 +6,7 @@ import { isValidMatchId } from "@/lib/dota/opendota";
 import { guardPublicMatchView } from "@/lib/dota/match/guard";
 import { blockedNotice } from "../BlockedNotice";
 import { cLookups, NoDataNotice, SIDE_CLASS } from "../c-shared";
+import { VisionD } from "../d-tabs"; // K-AV-DOTABUFF.1 ข้อ 23-26
 
 // K-AV-D6 · แท็บ Vision — obs_log / sen_log (วาง · มีพิกัด x,y) และ obs_left_log / sen_left_log (ถูกทำลาย/หมดอายุ · มี attackername ถ้าถูกทำลาย)
 // ไม่มีฟิลด์ (ยังไม่วิเคราะห์) = บอกว่าไม่มีข้อมูล · ดัสต์/สโมก/เจม ไม่มีใน log นี้ จึงไม่แสดง
@@ -13,8 +14,16 @@ export const dynamic = "force-dynamic";
 
 type Row = { time: number | null; slot: number | null; kind: string; pos: string; by: string | null };
 
-export default async function VisionPage({ params }: { params: Promise<{ game: string; matchId: string }> }) {
+export default async function VisionPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ game: string; matchId: string }>;
+  searchParams: Promise<{ w?: string | string[] }>;
+}) {
   const { game, matchId } = await params;
+  const sp = await searchParams;
+  const w = typeof sp.w === "string" ? sp.w : undefined; // ช่วงนาทีของแผนที่วอร์ด (ข้อ 26) · ค่าที่ไม่รู้จัก = ทั้งเกม
   if (game !== "dota2" || !isValidMatchId(matchId)) notFound();
   if (!(await guardPublicMatchView())) return blockedNotice();
   const r = await getMatchDetail(matchId);
@@ -101,6 +110,7 @@ export default async function VisionPage({ params }: { params: Promise<{ game: s
           </table>
         </div>
       </Surface>
+      <VisionD m={m} range={w} basePath={`/${game}/stats/matches/${matchId}/vision`} />
     </div>
   );
 }
