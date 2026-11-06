@@ -6,11 +6,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 const h = vi.hoisted(() => ({ user: null as { id: string } | null }));
 
 vi.mock("server-only", () => ({}));
+vi.mock("next/cache", async () => (await import("./_fake-next-cache")).fakeNextCache); // K-AV-QUOTA.1
 vi.mock("@/lib/db/server", () => ({
   getServerDb: async () => ({ auth: { getUser: async () => ({ data: { user: h.user } }) } }),
 }));
 
 import { mapMatchDetail, regionLabel } from "@/lib/dota/match/map";
+import { resetQuotaState } from "@/lib/dota/quota";
+import { fakeCacheStore } from "./_fake-next-cache";
 import {
   clearParsedCache,
   getDotaConstant,
@@ -91,6 +94,8 @@ function mockFetch(handler: (url: string, init?: RequestInit) => { status?: numb
 
 beforeEach(() => {
   h.user = null;
+  resetQuotaState();
+  fakeCacheStore.clear();
   clearParsedCache();
   parseRequestLog.clear();
   dotaParseLog.clear();
@@ -246,8 +251,9 @@ describe("แคช", () => {
     expect(g).toHaveBeenCalledTimes(2);
   });
 
-  it("ตั้งอายุแคชตามใบ: วิเคราะห์แล้ว 24 ชม. · ยังไม่วิเคราะห์ 10 นาที", () => {
-    expect(PARSED_TTL_MS).toBe(24 * 60 * 60 * 1000);
+  // K-AV-QUOTA.1 (พี่หยัดอนุมัติ 19:02): แมตช์ที่วิเคราะห์แล้วเก็บ 7 วัน (เดิม 24 ชม.)
+  it("ตั้งอายุแคชตามใบ: วิเคราะห์แล้ว 7 วัน · ยังไม่วิเคราะห์ 10 นาที", () => {
+    expect(PARSED_TTL_MS).toBe(7 * 24 * 60 * 60 * 1000);
     expect(UNPARSED_REVALIDATE_SEC).toBe(600);
   });
 
