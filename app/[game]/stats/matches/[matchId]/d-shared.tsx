@@ -1,4 +1,4 @@
-// K-AV-DOTABUFF.1: ของใช้ร่วมของรายการที่เติม (ลำดับสกิล · บัฟ · ข้อความ "ไม่มีข้อมูล") — ฝั่งเซิร์ฟเวอร์
+// ใบ 28 รายการ (2026-11-06): ของใช้ร่วมของรายการที่เติม (ลำดับสกิล · บัฟ · ข้อความ "ไม่มีข้อมูล") — ฝั่งเซิร์ฟเวอร์
 import { getDotaConstant } from "@/lib/dota/match";
 import type { DotaMatchDetailPlayer } from "@/lib/dota/match";
 import { H2, HEAD_ROW, PlayerCell, SCROLL, TABLE, TD, TH, type BLookups } from "./b-shared";

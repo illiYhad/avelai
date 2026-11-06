@@ -6,7 +6,7 @@ import { guardPublicMatchView } from "@/lib/dota/match/guard";
 import { isValidMatchId } from "@/lib/dota/opendota";
 import { blockedNotice } from "../BlockedNotice";
 import { bLookups, H2, HEAD_ROW, NoDataB, PlayerCell, SCROLL, sideText, TABLE, TD, TeamHeading, teams, TH, val, type BLookups } from "../b-shared";
-import { KillsD } from "../d-tabs"; // K-AV-DOTABUFF.1 ข้อ 14-17
+import { KillsD } from "../d-tabs"; // ใบ 28 รายการ (2026-11-06) ข้อ 14-17
 
 // K-AV-D5 · แท็บ Kills — players[].kills_log {time,key} · killed · buyback_log · multi_kills · kill_streaks · life_state_dead
 // ไม่มี KP / คะแนน / MVP ในแท็บนี้ · พิกัดจุดตายไม่มีใน kills_log จึงไม่แสดงแผนที่

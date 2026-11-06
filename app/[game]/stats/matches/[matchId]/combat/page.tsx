@@ -8,7 +8,7 @@ import { laneLabel, seconds, sortedDamageEntries, sourceLabel, splitDamageTaken 
 import { isValidMatchId } from "@/lib/dota/opendota";
 import { guardPublicMatchView } from "@/lib/dota/match/guard";
 import { blockedNotice } from "../BlockedNotice";
-import { CombatD } from "../d-tabs"; // K-AV-DOTABUFF.1 ข้อ 13
+import { CombatD } from "../d-tabs"; // ใบ 28 รายการ (2026-11-06) ข้อ 13
 
 // K-AV-D4 · แท็บ Combat — ดาเมจที่ทำ/รับ · แทงค์ให้ทีม/ป้อม/อื่น ๆ · ฮีล · เวลาควบคุม · วอร์ด จาก OpenDota เท่านั้น
 // ยังไม่วิเคราะห์ = "–" และบอกว่ายังไม่มีข้อมูล (ปุ่มขอวิเคราะห์อยู่ใน layout) · ห้ามแสดง 0 แทน null · ไม่มีคะแนนรวมหรือการจัดอันดับใด ๆ

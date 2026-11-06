@@ -6,7 +6,7 @@ import { isValidMatchId } from "@/lib/dota/opendota";
 import { guardPublicMatchView } from "@/lib/dota/match/guard";
 import { blockedNotice } from "../BlockedNotice";
 import { cLookups, NoDataNotice, SIDE_CLASS } from "../c-shared";
-import { RunesD } from "../d-tabs"; // K-AV-DOTABUFF.1 ข้อ 21-22
+import { RunesD } from "../d-tabs"; // ใบ 28 รายการ (2026-11-06) ข้อ 21-22
 
 // K-AV-D6 · แท็บ Runes — players[].runes_log {time,key} ของ OpenDota · ไม่มีฟิลด์ (ยังไม่วิเคราะห์) = บอกว่าไม่มีข้อมูล
 // OpenDota ให้เฉพาะ "รูนที่เก็บ" ไม่ให้รูนที่เกิด/ตำแหน่ง → ไม่แสดงสิ่งที่ไม่มี

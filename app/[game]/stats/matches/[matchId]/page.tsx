@@ -29,7 +29,7 @@ export default async function OverviewPage({ params }: { params: Promise<{ game:
   if (!r.ok) return null; // layout แสดงข้อความผิดพลาดให้แล้ว ไม่แสดงซ้ำ
 
   const m = r.data;
-  // K-AV-DOTABUFF.1 ข้อ 1: เวลาซื้อล่าสุดของไอเทมแต่ละช่อง (key จากค่าคงที่ items · ไม่รู้จัก/ไม่มี log = "–")
+  // ใบ 28 รายการ (2026-11-06) ข้อ 1: เวลาซื้อล่าสุดของไอเทมแต่ละช่อง (key จากค่าคงที่ items · ไม่รู้จัก/ไม่มี log = "–")
   const [L, D] = await Promise.all([bLookups(m), dLookups()]);
   const itemTime = (p: DotaMatchDetailPlayer, id: number | null) =>
     id === null ? null : lastPurchaseTime(p.b.purchaseLog, L.itemKeyById(id));

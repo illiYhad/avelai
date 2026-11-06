@@ -9,7 +9,7 @@ import { cLookups, NoDataNotice } from "../c-shared";
 import { buildTimeline } from "@/lib/dota/match/c-events";
 
 // K-AV-D6 · แท็บ Chat — match.chat ของ OpenDota · ข้อความเป็น plain text (escape โดย React) · ไม่มีฟิลด์ = บอกว่าไม่มีข้อมูล
-// K-AV-DOTABUFF.1 ข้อ 28: แทรก objective และการฆ่าจาก buildTimeline เป็นเหตุการณ์ประกอบ แยกสีจากข้อความแชต
+// ใบ 28 รายการ (2026-11-06) ข้อ 28: แทรก objective และการฆ่าจาก buildTimeline เป็นเหตุการณ์ประกอบ แยกสีจากข้อความแชต
 export const dynamic = "force-dynamic";
 
 export default async function ChatPage({ params }: { params: Promise<{ game: string; matchId: string }> }) {

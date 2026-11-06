@@ -10,7 +10,7 @@ import { cLookups, NoDataNotice, SIDE_CLASS } from "../c-shared";
 
 // K-AV-D6 · แท็บ Log — ไทม์ไลน์รวม (ฆ่า · objective · รูน · วอร์ด) จาก kills_log · objectives · runes_log · obs/sen log
 // ทุกแหล่งไม่มี (ยังไม่วิเคราะห์) = บอกว่าไม่มีข้อมูล · แชตอยู่แท็บของตัวเอง
-// K-AV-DOTABUFF.1 ข้อ 27: ตัวกรองตาม kind ผ่าน ?kind= (ลิงก์ธรรมดา ไม่มี client JS) · ค่าที่ไม่รู้จัก = ทั้งหมด
+// ใบ 28 รายการ (2026-11-06) ข้อ 27: ตัวกรองตาม kind ผ่าน ?kind= (ลิงก์ธรรมดา ไม่มี client JS) · ค่าที่ไม่รู้จัก = ทั้งหมด
 export const dynamic = "force-dynamic";
 
 const KIND_LABEL: Record<TimelineEvent["kind"], string> = {

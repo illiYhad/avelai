@@ -9,7 +9,7 @@ import { dLookups, SkillOrder } from "../d-shared";
 import { bLookups, ItemIcon, Missing, NoDataB, PlayerCell, TeamHeading, teams } from "../b-shared";
 
 // K-AV-D5 · แท็บ Builds — players[].purchase_log {time,key,charges?} และ item_uses ของ OpenDota
-// K-AV-DOTABUFF.1 ข้อ 9: ลำดับสกิลจาก ability_upgrades_arr แปลงด้วยค่าคงที่ ability_ids (คอมโพเนนต์เดียวกับ Overview)
+// ใบ 28 รายการ (2026-11-06) ข้อ 9: ลำดับสกิลจาก ability_upgrades_arr แปลงด้วยค่าคงที่ ability_ids (คอมโพเนนต์เดียวกับ Overview)
 export const dynamic = "force-dynamic";
 
 export default async function BuildsPage({ params }: { params: Promise<{ game: string; matchId: string }> }) {

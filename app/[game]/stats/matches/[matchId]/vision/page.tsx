@@ -6,7 +6,7 @@ import { isValidMatchId } from "@/lib/dota/opendota";
 import { guardPublicMatchView } from "@/lib/dota/match/guard";
 import { blockedNotice } from "../BlockedNotice";
 import { cLookups, NoDataNotice, SIDE_CLASS } from "../c-shared";
-import { VisionD } from "../d-tabs"; // K-AV-DOTABUFF.1 ข้อ 23-26
+import { VisionD } from "../d-tabs"; // ใบ 28 รายการ (2026-11-06) ข้อ 23-26
 
 // K-AV-D6 · แท็บ Vision — obs_log / sen_log (วาง · มีพิกัด x,y) และ obs_left_log / sen_left_log (ถูกทำลาย/หมดอายุ · มี attackername ถ้าถูกทำลาย)
 // ไม่มีฟิลด์ (ยังไม่วิเคราะห์) = บอกว่าไม่มีข้อมูล · ดัสต์/สโมก/เจม ไม่มีใน log นี้ จึงไม่แสดง

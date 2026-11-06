@@ -10,7 +10,7 @@ import { SourceNote } from "../d-shared";
 import { bLookups, H2, HEAD_ROW, NoDataB, PlayerCell, SCROLL, SIDE_TEXT, TABLE, TD, TeamHeading, teams, TH, val } from "../b-shared";
 
 // K-AV-D5 · แท็บ Lanes — players[].lane · lane_role · is_roaming · lane_efficiency_pct และอนุกรมรายนาที (lh_t · dn_t · gold_t · xp_t)
-// OpenDota ไม่มีฟิลด์ "ใครชนะเลน" → K-AV-DOTABUFF.1 ข้อ 10 ตัดสินด้วยเกณฑ์ของ AVELAi (laneOutcome ใน lib/dota/match/d-full.ts)
+// OpenDota ไม่มีฟิลด์ "ใครชนะเลน" → ใบ 28 รายการ (2026-11-06) ข้อ 10 ตัดสินด้วยเกณฑ์ของ AVELAi (laneOutcome ใน lib/dota/match/d-full.ts)
 // เป็นการแสดงผลเท่านั้น ห้ามส่งต่อไปคะแนน · ข้อ 11 ความแม่น LH ไม่มีใน OpenDota · ข้อ 12 LH นาที 4/8/12
 export const dynamic = "force-dynamic";
 

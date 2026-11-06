@@ -70,7 +70,7 @@ export const getMatchDetail = cache(loadMatchDetail);
 // ---------- ค่าคงที่ ----------
 
 /** allowlist เท่านั้น — ห้ามรับชื่อ resource จากผู้ใช้ */
-export const DOTA_CONSTANTS = ["heroes", "items", "abilities", "hero_abilities", "ability_ids", "permanent_buffs"] as const; // K-AV-DOTABUFF.1 เพิ่ม 2 ตัวท้าย
+export const DOTA_CONSTANTS = ["heroes", "items", "abilities", "hero_abilities", "ability_ids", "permanent_buffs"] as const; // ใบ 28 รายการ (2026-11-06) เพิ่ม 2 ตัวท้าย
 export type DotaConstantName = (typeof DOTA_CONSTANTS)[number];
 
 export function isDotaConstant(v: unknown): v is DotaConstantName {

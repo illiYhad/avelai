@@ -5,7 +5,7 @@
 import { kda, num, type DotaMatchPlayer, type DotaPickBan } from "@/lib/dota/opendota";
 import { mapMatchB, mapPlayerB, type MatchB, type PlayerB } from "@/lib/dota/match/b-tabs"; // K-AV-D5
 import { mapMatchEvents, mapPlayerEventLogs, type MatchEvents, type PlayerEventLogs } from "@/lib/dota/match/c-events"; // K-AV-D6
-import { mapMatchD, mapPlayerD, type MatchD, type PlayerD } from "@/lib/dota/match/d-full"; // K-AV-DOTABUFF.1
+import { mapMatchD, mapPlayerD, type MatchD, type PlayerD } from "@/lib/dota/match/d-full"; // ใบ 28 รายการ (2026-11-06)
 
 type Obj = Record<string, unknown>;
 const obj = (v: unknown): Obj => (v && typeof v === "object" && !Array.isArray(v) ? (v as Obj) : {});
@@ -99,7 +99,7 @@ function mapPlayer(raw: unknown): DotaMatchDetailPlayer {
     damageTaken: numRecord(p.damage_taken),
     damageTargets: nestedNumRecord(p.damage_targets),
     b: mapPlayerB(p), // K-AV-D5
-    d: mapPlayerD(p), // K-AV-DOTABUFF.1
+    d: mapPlayerD(p), // ใบ 28 รายการ (2026-11-06)
     ...mapPlayerEventLogs(p), // K-AV-D6
   };
 }
@@ -143,7 +143,7 @@ export function mapMatchDetail(matchId: string, raw: unknown): DotaMatchDetail {
     direTeamName: str(obj(m.dire_team).name),
     players: arr(m.players).slice(0, 10).map(mapPlayer),
     b: mapMatchB(m), // K-AV-D5
-    d: mapMatchD(m), // K-AV-DOTABUFF.1
+    d: mapMatchD(m), // ใบ 28 รายการ (2026-11-06)
     picksBans: arr(m.picks_bans).map((x): DotaPickBan => {
       const o = obj(x);
       return { isPick: o.is_pick === true, heroId: num(o.hero_id), team: num(o.team), order: num(o.order) };

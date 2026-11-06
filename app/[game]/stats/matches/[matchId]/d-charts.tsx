@@ -1,5 +1,5 @@
 "use client";
-// K-AV-DOTABUFF.1: กราฟของหน้าแมตช์ทุกแท็บ (recharts) — client component ไฟล์เดียวใช้ร่วม
+// ใบ 28 รายการ (2026-11-06): กราฟของหน้าแมตช์ทุกแท็บ (recharts) — client component ไฟล์เดียวใช้ร่วม
 // รับเฉพาะ array ที่ map แล้วจากฝั่งเซิร์ฟเวอร์ ไม่รับ JSON ดิบ · ค่า null = ไม่วาดจุดนั้น (ไม่แต่งเป็น 0)
 import {
   Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ReferenceDot, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,

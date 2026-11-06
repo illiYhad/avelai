@@ -1,4 +1,4 @@
-// K-AV-DOTABUFF.1 · ส่วนเติมของแท็บ Combat (13) · Kills (14-17) · Farm (18-20) · Runes (21-22) · Vision (23-26)
+// ใบ 28 รายการ (2026-11-06) · ส่วนเติมของแท็บ Combat (13) · Kills (14-17) · Farm (18-20) · Runes (21-22) · Vision (23-26)
 // ฝั่งเซิร์ฟเวอร์ · ส่งเฉพาะ array ที่ map แล้วเข้า client chart · ค่าที่ไม่มี = "–" หรือข้อความว่าไม่มีข้อมูล
 import Link from "next/link";
 import Surface from "@/components/ui/Surface";
