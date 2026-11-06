@@ -6,15 +6,24 @@ import { isValidMatchId } from "@/lib/dota/opendota";
 import { guardPublicMatchView } from "@/lib/dota/match/guard";
 import { blockedNotice } from "../BlockedNotice";
 import { cLookups, NoDataNotice, SIDE_CLASS } from "../c-shared";
+import { VisionD } from "../d-tabs"; // ใบ 28 รายการ (2026-11-06) ข้อ 23-26
 
 // K-AV-D6 · แท็บ Vision — obs_log / sen_log (วาง · มีพิกัด x,y) และ obs_left_log / sen_left_log (ถูกทำลาย/หมดอายุ · มี attackername ถ้าถูกทำลาย)
-// ไม่มีฟิลด์ (ยังไม่วิเคราะห์) = บอกว่าไม่มีข้อมูล · ดัสต์/สโมก/เจม ไม่มีใน log นี้ จึงไม่แสดง
+// ไม่มีฟิลด์ (ยังไม่วิเคราะห์) = บอกว่าไม่มีข้อมูล · ดัสต์/สโมก/เจม และแผนที่วอร์ดตามช่วงนาทีอยู่ใน VisionD (d-tabs.tsx)
 export const dynamic = "force-dynamic";
 
 type Row = { time: number | null; slot: number | null; kind: string; pos: string; by: string | null };
 
-export default async function VisionPage({ params }: { params: Promise<{ game: string; matchId: string }> }) {
+export default async function VisionPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ game: string; matchId: string }>;
+  searchParams: Promise<{ w?: string | string[] }>;
+}) {
   const { game, matchId } = await params;
+  const sp = await searchParams;
+  const w = typeof sp.w === "string" ? sp.w : undefined; // ช่วงนาทีของแผนที่วอร์ด (ข้อ 26) · ค่าที่ไม่รู้จัก = ทั้งเกม
   if (game !== "dota2" || !isValidMatchId(matchId)) notFound();
   if (!(await guardPublicMatchView())) return blockedNotice();
   const r = await getMatchDetail(matchId);
@@ -72,7 +81,7 @@ export default async function VisionPage({ params }: { params: Promise<{ game: s
       </Surface>
       <Surface>
         <h2 className="font-display text-base font-black tracking-wide text-ink">ประวัติวอร์ด</h2>
-        <p className="mt-1 text-xs text-ink-muted">{rows.length} เหตุการณ์ · พิกัดเป็นค่าตารางของ OpenDota (x, y) · ยังไม่มีแผนที่</p>
+        <p className="mt-1 text-xs text-ink-muted">{rows.length} เหตุการณ์ · พิกัดเป็นค่าตารางของ OpenDota (x, y)</p>
         <div className="-mx-4 mt-3 max-h-[70vh] overflow-auto px-4 sm:mx-0 sm:px-0">
           <table className="w-max min-w-full border-collapse text-xs sm:text-sm">
             <thead>
@@ -101,6 +110,7 @@ export default async function VisionPage({ params }: { params: Promise<{ game: s
           </table>
         </div>
       </Surface>
+      <VisionD m={m} range={w} basePath={`/${game}/stats/matches/${matchId}/vision`} />
     </div>
   );
 }

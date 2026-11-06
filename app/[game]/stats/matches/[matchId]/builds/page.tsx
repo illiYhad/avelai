@@ -5,10 +5,11 @@ import { gameClock, isConsumable } from "@/lib/dota/match/b-tabs";
 import { guardPublicMatchView } from "@/lib/dota/match/guard";
 import { isValidMatchId } from "@/lib/dota/opendota";
 import { blockedNotice } from "../BlockedNotice";
+import { dLookups, SkillOrder } from "../d-shared";
 import { bLookups, ItemIcon, Missing, NoDataB, PlayerCell, TeamHeading, teams } from "../b-shared";
 
 // K-AV-D5 · แท็บ Builds — players[].purchase_log {time,key,charges?} และ item_uses ของ OpenDota
-// ลำดับสกิล (ability_upgrades_arr) ยังไม่แสดง: ต้องใช้ค่าคงที่ ability_ids ซึ่งอยู่นอก allowlist ของ lib/dota/match (ไฟล์ร่วม)
+// ใบ 28 รายการ (2026-11-06) ข้อ 9: ลำดับสกิลจาก ability_upgrades_arr แปลงด้วยค่าคงที่ ability_ids (คอมโพเนนต์เดียวกับ Overview)
 export const dynamic = "force-dynamic";
 
 export default async function BuildsPage({ params }: { params: Promise<{ game: string; matchId: string }> }) {
@@ -21,7 +22,7 @@ export default async function BuildsPage({ params }: { params: Promise<{ game: s
   if (!m.players.some((p) => p.b.purchaseLog !== null || p.b.itemUses !== null)) {
     return <NoDataB what="การซื้อไอเทม" isParsed={m.isParsed} />;
   }
-  const L = await bLookups(m);
+  const [L, D] = await Promise.all([bLookups(m), dLookups()]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -108,7 +109,11 @@ export default async function BuildsPage({ params }: { params: Promise<{ game: s
           </ul>
         </Surface>
       ))}
-      <p className="text-xs text-ink-muted">เวลาติดลบ = ซื้อก่อนเสียงแตรเริ่มเกม · ลำดับสกิลยังไม่เปิดในแท็บนี้</p>
+      <Surface>
+        <SkillOrder players={m.players} L={L} D={D} />
+        {m.players.every((p) => p.d.abilityUpgrades === null) ? <p className="text-sm text-ink">ไม่มีข้อมูลลำดับสกิลในแมตช์นี้</p> : null}
+      </Surface>
+      <p className="text-xs text-ink-muted">เวลาติดลบ = ซื้อก่อนเสียงแตรเริ่มเกม</p>
     </div>
   );
 }
