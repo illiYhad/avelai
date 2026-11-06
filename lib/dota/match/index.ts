@@ -21,7 +21,9 @@ const PARSED_CACHE_MAX = 200; // กันหน่วยความจำบ�
  * ตัวตอบของ /matches/{id} หนักราว 240 KB ต่อแมตช์ และเราไม่รู้ว่า "วิเคราะห์แล้วหรือยัง"
  * จนกว่าจะอ่านคำตอบ จึงตั้ง revalidate ของ fetch ล่วงหน้าตามสถานะไม่ได้
  * ทางที่ใช้: ให้ fetch ใช้ 10 นาทีเสมอ (ชั้นแคชข้อมูลของ Next · เล็กกว่าเพดาน 2 MB ต่อรายการ)
- * แล้วเก็บ "ผลที่ map แล้ว" ของแมตช์ที่วิเคราะห์แล้วไว้ในหน่วยความจำ 24 ชม. อีกชั้น
+ * K-AV-QUOTA.1a: fetch นี้ต้องอยู่นอก callback ของ unstable_cache — ข้างในนั้น Next บังคับ force-no-store
+ * (next/dist/server/lib/patch-fetch.js) เลข 10 นาทีจะไม่มีผล
+ * แล้วเก็บ "ผลที่ map แล้ว" ของแมตช์ที่วิเคราะห์แล้วไว้ในหน่วยความจำอีกชั้น (เดิม 24 ชม. · K-AV-QUOTA.1 เป็น 7 วัน)
  * ผลที่ map แล้วมีขนาดไม่กี่ KB จึงไม่ชนเพดานขนาดแคช
  * ข้อจำกัด: ชั้นหน่วยความจำอยู่ในแต่ละอินสแตนซ์ serverless (ไม่ข้ามอินสแตนซ์)
  * K-AV-QUOTA.1: เพิ่มชั้น unstable_cache 7 วันที่อยู่ข้ามอินสแตนซ์ (ดู cachedParsedMatch) · หน่วยความจำเปลี่ยนเป็น 7 วันด้วย
@@ -52,27 +54,63 @@ function writeParsedCache(matchId: string, data: DotaMatchDetail, nowMs: number)
   parsedCache.set(matchId, { at: nowMs, data });
 }
 
-/** ผลที่ห้ามเก็บในแคช 7 วัน (ยังไม่วิเคราะห์ · ดึงไม่ได้ · โหมดประหยัด) — โยนออกจาก unstable_cache แล้วคืนค่าเดิมนอกแคช
- *  unstable_cache ไม่เก็บผลเมื่อฟังก์ชันข้างใน throw */
+/** ผลที่ห้ามเก็บในแคช 7 วัน (ยังไม่วิเคราะห์ · ดึงไม่ได้ · โหมดประหยัด) — คืนค่าเดิมโดยไม่ผ่าน unstable_cache */
 class NotCacheable extends Error {
   constructor(readonly result: DotaResult<DotaMatchDetail>) {
     super("not-cacheable");
   }
 }
 
-async function fetchParsedOrThrow(matchId: string): Promise<DotaMatchDetail> {
+/** callback ของ unstable_cache ไม่มีของให้เก็บ → throw (unstable_cache ไม่เก็บผลเมื่อ callback throw) */
+class CacheMiss extends Error {
+  constructor() {
+    super("cache-miss");
+  }
+}
+
+/** K-AV-QUOTA.1a: ผลที่ map แล้วซึ่งรอส่งเข้า unstable_cache · มีอยู่แค่ช่วงสั้น ๆ ระหว่าง storeParsed */
+const pendingStore = new Map<string, DotaMatchDetail>();
+
+/** callback อ่านอย่างเดียว ห้ามยิงเครือข่าย — ใน callback นี้ Next ตั้ง fetch เป็น force-no-store
+ *  มีของรอเก็บ (มาจาก storeParsed) = คืนเพื่อให้ unstable_cache เก็บ · ไม่มี = CacheMiss */
+async function parsedFromPending(matchId: string): Promise<DotaMatchDetail> {
+  const data = pendingStore.get(matchId);
+  if (!data) throw new CacheMiss();
+  return data;
+}
+
+/** K-AV-QUOTA.1: แมตช์ที่วิเคราะห์แล้วเก็บ 7 วัน · โหมดประหยัด: อยู่ในแคช = เปิดได้โดยไม่ยิง OpenDota */
+const cachedParsedMatch = unstable_cache(parsedFromPending, [PARSED_CACHE_KEY], { revalidate: PARSED_REVALIDATE_SEC });
+
+/** อ่านแคช 7 วัน · ไม่มี = null (ไม่ยิงเครือข่าย) */
+async function readParsedStore(matchId: string): Promise<DotaMatchDetail | null> {
+  try {
+    return await cachedParsedMatch(matchId);
+  } catch (e) {
+    if (e instanceof CacheMiss) return null;
+    throw e;
+  }
+}
+
+/** ส่งผลที่ map แล้วเข้า unstable_cache ตัวเดิม (คีย์เดียวกับตอนอ่าน) */
+async function storeParsed(matchId: string, data: DotaMatchDetail): Promise<void> {
+  pendingStore.set(matchId, data);
+  try {
+    await cachedParsedMatch(matchId);
+  } finally {
+    pendingStore.delete(matchId);
+  }
+}
+
+/** ยิง OpenDota นอก unstable_cache → revalidate 10 นาทีของ fetch มีผลจริง (แมตช์ยังไม่วิเคราะห์เปิดซ้ำไม่ยิง) */
+async function fetchAndMap(matchId: string): Promise<DotaMatchDetail> {
   const r = await fetchMatchRaw(matchId, UNPARSED_REVALIDATE_SEC);
   if (!r.ok) throw new NotCacheable(r);
   // ตอบ 200 แต่ไม่มี players = ไม่ใช่แมตช์ที่ใช้ได้
   const raw = r.data as Record<string, unknown> | null;
   if (!raw || typeof raw !== "object" || !Array.isArray(raw.players)) throw new NotCacheable(ERR.notFound);
-  const data = mapMatchDetail(matchId, raw);
-  if (!data.isParsed) throw new NotCacheable({ ok: true, data }); // ยังไม่วิเคราะห์ → อายุ 10 นาทีตามเดิม (แคชของ fetch)
-  return data;
+  return mapMatchDetail(matchId, raw);
 }
-
-/** K-AV-QUOTA.1: แมตช์ที่วิเคราะห์แล้วเก็บ 7 วัน · โหมดประหยัด: อยู่ในแคช = เปิดได้โดยไม่ยิง OpenDota */
-const cachedParsedMatch = unstable_cache(fetchParsedOrThrow, [PARSED_CACHE_KEY], { revalidate: PARSED_REVALIDATE_SEC });
 
 async function loadMatchDetail(matchId: string): Promise<DotaResult<DotaMatchDetail>> {
   if (!isValidMatchId(matchId)) return ERR.notFound;
@@ -81,12 +119,21 @@ async function loadMatchDetail(matchId: string): Promise<DotaResult<DotaMatchDet
   if (cached) return { ok: true, data: cached };
 
   try {
-    const data = await cachedParsedMatch(matchId);
+    const stored = await readParsedStore(matchId);
+    if (stored) {
+      writeParsedCache(matchId, stored, Date.now());
+      return { ok: true, data: stored };
+    }
+    const data = await fetchAndMap(matchId);
+    if (!data.isParsed) return { ok: true, data }; // ยังไม่วิเคราะห์ → ไม่เข้าแคช 7 วัน · อายุ 10 นาทีอยู่ที่แคชของ fetch
+    await storeParsed(matchId, data);
     writeParsedCache(matchId, data, Date.now());
     return { ok: true, data };
   } catch (e) {
     if (e instanceof NotCacheable) return e.result;
-    return ERR.upstream; // ห้ามมี fallback: ผิดพลาดอื่น = ดึงไม่ได้
+    // ห้ามมี fallback: ผิดพลาดอื่น = ดึงไม่ได้ · log แค่ชื่อ error + matchId (ห้าม log ข้อมูลแมตช์หรือ key)
+    console.error(`[dota/match] ${e instanceof Error ? e.name : typeof e} matchId=${matchId}`);
+    return ERR.upstream;
   }
 }
 

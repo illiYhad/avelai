@@ -6,12 +6,24 @@ import { join } from "node:path";
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", async () => (await import("./_fake-next-cache")).fakeNextCache);
+// K-AV-QUOTA.1a: สวิตช์ให้ mapMatchDetail throw (จำลองบั๊กในตัว map) · ปิดอยู่ = ใช้ของจริง
+const mapBoom = vi.hoisted(() => ({ on: false }));
+vi.mock("@/lib/dota/match/map", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/lib/dota/match/map")>();
+  return {
+    ...real,
+    mapMatchDetail: (...a: Parameters<typeof real.mapMatchDetail>) => {
+      if (mapBoom.on) throw new TypeError("boom");
+      return real.mapMatchDetail(...a);
+    },
+  };
+});
 
 import { dayReserve, noteQuotaExceeded, noteQuotaHeaders, quotaLow, resetQuotaState, DEFAULT_DAY_RESERVE, SAVER_MS } from "@/lib/dota/quota";
 import { ERR, fetchOpenDota, postOpenDota } from "@/lib/dota/opendota";
 import { clearParsedCache, getDotaConstant, getMatchDetail, PARSED_CACHE_KEY, PARSED_REVALIDATE_SEC } from "@/lib/dota/match";
 import { mapMatchDetail } from "@/lib/dota/match/map";
-import { fakeCacheDefs, fakeCacheStore } from "./_fake-next-cache";
+import { fakeCacheDefs, fakeCacheStore, fakeInCacheCallback } from "./_fake-next-cache";
 
 const T0 = Date.parse("2026-11-06T12:00:00Z");
 const MATCH = "8214277203";
@@ -166,7 +178,7 @@ describe("แคชแมตช์ที่วิเคราะห์แล้�
     expect(f).toHaveBeenCalledTimes(1);
   });
 
-  it("ยังไม่วิเคราะห์: ไม่ถูกเก็บ ยิงใหม่ทุกครั้ง", async () => {
+  it("ยังไม่วิเคราะห์: ไม่เข้าแคช 7 วัน (อายุ 10 นาทีอยู่ที่แคช fetch ของ Next ซึ่ง mock นี้ไม่มี)", async () => {
     const f = mockFetch(unparsedRaw);
     vi.stubGlobal("fetch", f);
     const r = await getMatchDetail(MATCH);
@@ -174,6 +186,38 @@ describe("แคชแมตช์ที่วิเคราะห์แล้�
     await getMatchDetail(MATCH);
     expect(f).toHaveBeenCalledTimes(2);
     expect(fakeCacheStore.size).toBe(0);
+  });
+
+  // K-AV-QUOTA.1a: ใน callback ของ unstable_cache Next ตั้ง fetch เป็น force-no-store → revalidate 600 ไม่มีผล
+  for (const [label, raw] of [["วิเคราะห์แล้ว", parsedRaw], ["ยังไม่วิเคราะห์", unparsedRaw]] as const) {
+    it(`${label}: fetch ต้องไม่ถูกเรียกขณะอยู่ใน callback ของ unstable_cache`, async () => {
+      const inCb: boolean[] = [];
+      const base = mockFetch(raw);
+      vi.stubGlobal("fetch", vi.fn(async (...a: unknown[]) => {
+        inCb.push(fakeInCacheCallback());
+        return (base as unknown as (...x: unknown[]) => Promise<Response>)(...a);
+      }));
+      const r = await getMatchDetail(MATCH);
+      expect(r.ok).toBe(true);
+      expect(inCb.length).toBeGreaterThan(0);
+      expect(inCb).not.toContain(true);
+    });
+  }
+
+  it("error อื่น (mapMatchDetail throw) → ERR.upstream และ console.error บอกชื่อ error + matchId", async () => {
+    vi.stubGlobal("fetch", mockFetch(parsedRaw));
+    mapBoom.on = true;
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      expect(await getMatchDetail(MATCH)).toEqual(ERR.upstream);
+      expect(spy).toHaveBeenCalled();
+      const line = spy.mock.calls.map((c) => c.map(String).join(" ")).join(" | ");
+      expect(line).toContain(MATCH);
+      expect(line).toMatch(/TypeError/);
+    } finally {
+      spy.mockRestore();
+      mapBoom.on = false;
+    }
   });
 
   it("ดึงไม่ได้ (502 / 404) ไม่ถูกเก็บ", async () => {
