@@ -89,6 +89,8 @@ describe("ป้ายแสดงผล", () => {
     expect(runeName("0")).toBe("Double Damage");
     expect(runeName("42")).toBe("รูน #42");
     expect(runeName(null)).toBe("–");
+    expect(runeName("8")).toBe("Wisdom");
+    expect(runeName("9")).toBe("Shield");
   });
   it("buildingName: ป้อม/บาร์แร็ค/ป้อมหลัก · ชื่ออื่นแสดงดิบ", () => {
     expect(buildingName("npc_dota_goodguys_tower1_mid")).toBe("ป้อม Radiant T1 กลาง");
