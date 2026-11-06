@@ -6,8 +6,10 @@ import { guardPublicMatchView } from "@/lib/dota/match/guard";
 import { blockedNotice } from "../BlockedNotice";
 import ChatList from "../ChatList";
 import { cLookups, NoDataNotice } from "../c-shared";
+import { buildTimeline } from "@/lib/dota/match/c-events";
 
 // K-AV-D6 · แท็บ Chat — match.chat ของ OpenDota · ข้อความเป็น plain text (escape โดย React) · ไม่มีฟิลด์ = บอกว่าไม่มีข้อมูล
+// K-AV-DOTABUFF.1 ข้อ 28: แทรก objective และการฆ่าจาก buildTimeline เป็นเหตุการณ์ประกอบ แยกสีจากข้อความแชต
 export const dynamic = "force-dynamic";
 
 export default async function ChatPage({ params }: { params: Promise<{ game: string; matchId: string }> }) {
@@ -18,13 +20,15 @@ export default async function ChatPage({ params }: { params: Promise<{ game: str
   if (!r.ok) return null;
   const m = r.data;
   if (m.chat === null) return <NoDataNotice what="แชต" isParsed={m.isParsed} />;
-  const { bySlot } = await cLookups(m);
+  const { bySlot, heroNpc } = await cLookups(m);
+  const events = (buildTimeline({ objectives: m.objectives, chat: m.chat }, m.players.map((p) => ({ slot: p.slot, logs: p })), heroNpc) ?? [])
+    .filter((e) => e.kind === "kill" || e.kind === "objective");
   return (
     <Surface>
       <h2 className="font-display text-base font-black tracking-wide text-ink">CHAT</h2>
-      <p className="mt-1 text-xs text-ink-muted">ข้อความ {m.chat.length} รายการ · แสดงตามที่ผู้เล่นพิมพ์ ไม่แปลง HTML · ชาตวีลแสดงเป็นรหัส</p>
+      <p className="mt-1 text-xs text-ink-muted">ข้อความ {m.chat.length} รายการ · แสดงตามที่ผู้เล่นพิมพ์ ไม่แปลง HTML · ชาตวีลแสดงเป็นรหัส · แถวสีเทาตัวเอียง = เหตุการณ์ประกอบ (ฆ่า · objective) {events.length} รายการ</p>
       <div className="mt-3 max-h-[70vh] overflow-y-auto">
-        <ChatList lines={m.chat} bySlot={bySlot} />
+        <ChatList lines={m.chat} bySlot={bySlot} events={events} />
       </div>
     </Surface>
   );
