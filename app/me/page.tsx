@@ -4,6 +4,7 @@ import { requireUser, activeRoles, isSuspended } from "@/lib/auth/roles";
 import { signOutAction } from "@/app/auth/actions";
 import ProfileForm from "./ProfileForm";
 import GameAccountsCard, { type DotaAccount, type MlbbAccount } from "./GameAccountsCard";
+import SteamLinkBanner from "./SteamLinkBanner";
 import { routes } from "@/lib/routes";
 import { isSteamLoginEmail } from "@/lib/game-accounts/steam";
 import Logo3D from "@/components/ui/Logo3D";
@@ -79,6 +80,9 @@ export default async function MePage({ searchParams }: { searchParams: Promise<{
           บัญชีถูกระงับถึง {thaiTime(profile.suspended_until)}
         </p>
       ) : null}
+
+      {/* K-AV-STEAMLOGIN.3: แถบชวนผูก Steam · หายเองเมื่อมีแถว DOTA2 ที่ยืนยันด้วย Steam */}
+      <SteamLinkBanner dota={dotaAccount} unavailable={accError} />
 
       {/* K-AV-LINK.1: การ์ดบัญชีเกมเป็นการ์ดแรก · Dota 2 ผูกผ่าน Steam อย่างเดียว (ฟอร์มกรอกเลข Dota เอาออกแล้ว) */}
       <GameAccountsCard
