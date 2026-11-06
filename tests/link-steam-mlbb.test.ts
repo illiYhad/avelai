@@ -215,13 +215,15 @@ describe("route /link/steam/return", () => {
 // K-AV-LINK.1: /me ไม่มีทางกรอกเลข Dota เองแล้ว (เหลือปุ่มผูก Steam + MLBB กรอกเอง)
 describe("หน้า /me ไม่มีช่องกรอก Dota ID", () => {
   const root = join(__dirname, "..");
-  it("ไม่มีฟอร์ม/ช่อง dota_id · การ์ดบัญชีเกมมีปุ่ม Steam", () => {
+  it("ไม่มีฟอร์ม/ช่อง dota_id · ปุ่ม Steam อยู่ในแถบชวนผูกที่เดียว", () => {
     expect(existsSync(join(root, "app/me/DotaAccountForm.tsx"))).toBe(false);
     for (const f of ["app/me/page.tsx", "app/me/GameAccountsCard.tsx"]) {
       const src = readFileSync(join(root, f), "utf8");
       expect(src).not.toMatch(/dota_id|DotaAccountForm/);
     }
-    expect(readFileSync(join(root, "app/me/GameAccountsCard.tsx"), "utf8")).toContain('href="/link/steam/start"');
+    // K-AV-STEAMLOGIN.4: ปุ่มผูก Steam เหลือปุ่มเดียวในแถบ SteamLinkBanner · การ์ดบัญชีเกมไม่มีปุ่มซ้ำแล้ว
+    expect(readFileSync(join(root, "app/me/GameAccountsCard.tsx"), "utf8")).not.toContain('href="/link/steam/start"');
+    expect(readFileSync(join(root, "app/me/SteamLinkBanner.tsx"), "utf8")).toContain('href="/link/steam/start"');
   });
 });
 

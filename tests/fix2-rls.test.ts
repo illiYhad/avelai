@@ -139,6 +139,7 @@ const USERS_READ_ALLOWED = new Set([
   "app/subscribe/page.tsx", // แถวตัวเอง (ปิดด้วย feature flag)
   "app/tournament/daily/page.tsx", // แถวตัวเอง
   "lib/auth/suspension.ts", // แถวตัวเอง
+  "lib/game-accounts/steam-deps.ts", // K-AV-STEAMLOGIN.4: service role เขียน display_name/avatar_url ของบัญชีที่เพิ่งสร้างจาก Steam (ไม่อ่านแถวคนอื่น)
 ]);
 
 describe("โค้ดเว็บ (ข)", () => {

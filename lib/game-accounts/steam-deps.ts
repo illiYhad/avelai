@@ -2,7 +2,8 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isUserSuspended } from "@/lib/auth/suspension";
 import type { SteamLoginDeps } from "@/lib/game-accounts/steam";
-import type { LinkPendingDeps } from "@/lib/game-accounts/steam-pending";
+import type { LinkPendingDeps, PersonaDeps } from "@/lib/game-accounts/steam-pending";
+import { fetchSteamPersona } from "@/lib/game-accounts/steam-persona";
 
 // K-AV-STEAMLOGIN.2: ตัวต่อ DB/Auth ของทางล็อกอิน Steam — ย้ายออกจาก app/auth/steam/return/route.ts ให้หน้าเลือกใช้ชุดเดียวกัน
 // ⚠ service role (admin) ใช้เฉพาะหลัง Steam ตรวจผ่านแล้วเท่านั้น: จาก /auth/steam/return โดยตรง หรือจาก cookie pending ที่ลายเซ็นถูกต้อง
@@ -73,6 +74,19 @@ export function buildLinkPendingDeps(admin: SupabaseClient | null): LinkPendingD
         .maybeSingle();
       if (error) return undefined;
       return (data as { external_id: string } | null)?.external_id ?? null;
+    },
+  };
+}
+
+/** K-AV-STEAMLOGIN.4: ชุดตั้งชื่อเล่น/รูปตั้งต้นจาก Steam ของบัญชีใหม่ทาง ก. · ไม่มี admin = null · ไม่แตะ username */
+export function buildPersonaDeps(admin: SupabaseClient | null): PersonaDeps | null {
+  if (!admin) return null;
+  return {
+    fetchPersona: (steam64) => fetchSteamPersona(steam64),
+    setProfile: async (userId, p) => {
+      const patch: { display_name: string; avatar_url?: string } = { display_name: p.personaName };
+      if (p.avatarUrl !== null) patch.avatar_url = p.avatarUrl;
+      await admin.from("users").update(patch).eq("id", userId);
     },
   };
 }

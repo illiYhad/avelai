@@ -219,6 +219,60 @@ describe("ทาง ก. createFromPending (ผู้เล่นใหม่)",
     expect(await createFromPending({ pending: PENDING, deps: deps({ createUser: async () => null }) })).toEqual({ ok: false, error: "failed" });
     expect(await createFromPending({ pending: PENDING, deps: deps({ signIn: async () => false }) })).toEqual({ ok: false, error: "failed" });
   });
+
+  // K-AV-STEAMLOGIN.4: ชื่อเล่น/รูปตั้งต้นจาก Steam — เลือกใส่ · ล้มได้โดยบัญชียังสร้างและล็อกอินต่อได้
+  const PERSONA = { personaName: "Ave Player", avatarUrl: "https://avatars.steamstatic.com/a_full.jpg" };
+
+  it("ได้ persona → setProfile ถูกเรียกด้วย id บัญชีใหม่ หลังผูก Steam และก่อนตั้ง session", async () => {
+    const order: string[] = [];
+    const r = await createFromPending({
+      pending: PENDING,
+      deps: deps({
+        linkSteam: async () => { order.push("link"); return { error: null }; },
+        signIn: async () => { order.push("signin"); return true; },
+      }),
+      persona: {
+        fetchPersona: async (s) => { order.push(`fetch:${s}`); return PERSONA; },
+        setProfile: async (u, p) => { order.push(`set:${u}:${p.personaName}`); },
+      },
+    });
+    expect(r).toEqual({ ok: true, userId: "new-1" });
+    expect(order).toEqual(["link", `fetch:${STEAM64}`, "set:new-1:Ave Player", "signin"]);
+  });
+
+  it("fetchPersona คืน null → ไม่เรียก setProfile · ผล ok", async () => {
+    const setProfile = vi.fn(async () => {});
+    const r = await createFromPending({ pending: PENDING, deps: deps(), persona: { fetchPersona: async () => null, setProfile } });
+    expect(r).toEqual({ ok: true, userId: "new-1" });
+    expect(setProfile).not.toHaveBeenCalled();
+  });
+
+  it("fetchPersona throw หรือ setProfile throw → ผล ok และ signIn ยังถูกเรียก · ไม่ลบบัญชี · ไม่ log", async () => {
+    const spies = (["log", "warn", "error", "info"] as const).map((m) => vi.spyOn(console, m).mockImplementation(() => {}));
+    const signed: string[] = [];
+    const d = () => deps({ signIn: async (u) => { signed.push(u); return true; } });
+    const r1 = await createFromPending({ pending: PENDING, deps: d(), persona: { fetchPersona: async () => { throw new Error("net"); }, setProfile: async () => {} } });
+    const r2 = await createFromPending({ pending: PENDING, deps: d(), persona: { fetchPersona: async () => PERSONA, setProfile: async () => { throw new Error("db"); } } });
+    expect(r1).toEqual({ ok: true, userId: "new-1" });
+    expect(r2).toEqual({ ok: true, userId: "new-2" });
+    expect(signed).toEqual(["new-1", "new-2"]);
+    expect(h.deleted).toEqual([]);
+    for (const sp of spies) { expect(sp).not.toHaveBeenCalled(); sp.mockRestore(); }
+  });
+
+  it("ไม่ส่ง persona (หรือ null) → ผล ok เหมือนเดิม", async () => {
+    expect(await createFromPending({ pending: PENDING, deps: deps() })).toEqual({ ok: true, userId: "new-1" });
+    expect(await createFromPending({ pending: PENDING, deps: deps(), persona: null })).toEqual({ ok: true, userId: "new-2" });
+  });
+
+  it("linkSteam ล้ม → ไม่เรียก fetchPersona · ลบบัญชีที่เพิ่งสร้าง", async () => {
+    h.rpcError = { message: "boom" };
+    const fetchPersona = vi.fn(async () => PERSONA);
+    const r = await createFromPending({ pending: PENDING, deps: deps(), persona: { fetchPersona, setProfile: async () => {} } });
+    expect(r).toEqual({ ok: false, error: "failed" });
+    expect(fetchPersona).not.toHaveBeenCalled();
+    expect(h.deleted).toEqual(["new-1"]);
+  });
 });
 
 describe("ทาง ข. linkPendingToUser (ผูกเข้าบัญชีเดิม)", () => {

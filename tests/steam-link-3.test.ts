@@ -6,6 +6,8 @@ import { join } from "node:path";
 import { fetchSteamPersona, safeSteamAvatarUrl, STEAM_PERSONA_ENDPOINT } from "@/lib/game-accounts/steam-persona";
 import SteamLinkBanner, { shouldShowSteamBanner, STEAM_BANNER_TEXT } from "@/app/me/SteamLinkBanner";
 
+vi.mock("server-only", () => ({}));
+
 // K-AV-STEAMLOGIN.3 — ไม่ยิง Steam จริง (fetch ฉีดเข้าเองทุกข้อ)
 
 const ID = "76561198000000001";
