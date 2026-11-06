@@ -8,6 +8,11 @@ import { isValidMatchId } from "@/lib/dota/opendota";
 import { getItemImageUrl } from "@/lib/dotaAssets";
 import { guardPublicMatchView } from "@/lib/dota/match/guard";
 import { blockedNotice } from "./BlockedNotice";
+import { bLookups } from "./b-shared";
+import { gameClock } from "@/lib/dota/match/b-tabs";
+import { lastPurchaseTime } from "@/lib/dota/match/d-full";
+import { OverviewD } from "./d-overview";
+import { dLookups } from "./d-shared";
 
 // K-AV-D3 · แท็บ Overview — ตารางผู้เล่นและ pick/ban จากข้อมูลจริงของ OpenDota เท่านั้น
 // ไม่มีคะแนน KP · ไม่มีตำแหน่งที่เดาจากช่องผู้เล่น · ไม่มีข้อมูลตัวอย่าง
@@ -24,6 +29,10 @@ export default async function OverviewPage({ params }: { params: Promise<{ game:
   if (!r.ok) return null; // layout แสดงข้อความผิดพลาดให้แล้ว ไม่แสดงซ้ำ
 
   const m = r.data;
+  // K-AV-DOTABUFF.1 ข้อ 1: เวลาซื้อล่าสุดของไอเทมแต่ละช่อง (key จากค่าคงที่ items · ไม่รู้จัก/ไม่มี log = "–")
+  const [L, D] = await Promise.all([bLookups(m), dLookups()]);
+  const itemTime = (p: DotaMatchDetailPlayer, id: number | null) =>
+    id === null ? null : lastPurchaseTime(p.b.purchaseLog, L.itemKeyById(id));
   const radiant = m.players.filter((p) => p.isRadiant === true);
   const dire = m.players.filter((p) => p.isRadiant === false);
   const unknownSide = m.players.filter((p) => p.isRadiant === null);
@@ -32,10 +41,10 @@ export default async function OverviewPage({ params }: { params: Promise<{ game:
 
   return (
     <div className="flex flex-col gap-6">
-      <TeamTable title="Radiant" won={m.radiantWin === true} players={radiant} hero={hero} />
-      <TeamTable title="Dire" won={m.radiantWin === false} players={dire} hero={hero} />
+      <TeamTable title="Radiant" won={m.radiantWin === true} players={radiant} hero={hero} itemTime={itemTime} />
+      <TeamTable title="Dire" won={m.radiantWin === false} players={dire} hero={hero} itemTime={itemTime} />
       {unknownSide.length > 0 ? (
-        <TeamTable title="ไม่ทราบฝั่ง" won={false} players={unknownSide} hero={hero} />
+        <TeamTable title="ไม่ทราบฝั่ง" won={false} players={unknownSide} hero={hero} itemTime={itemTime} />
       ) : null}
 
       {m.picksBans.length === 0 ? (
@@ -51,6 +60,8 @@ export default async function OverviewPage({ params }: { params: Promise<{ game:
           </div>
         </Surface>
       )}
+
+      <OverviewD m={m} L={L} D={D} />
     </div>
   );
 }
@@ -62,11 +73,13 @@ function TeamTable({
   won,
   players,
   hero,
+  itemTime,
 }: {
   title: string;
   won: boolean;
   players: DotaMatchDetailPlayer[];
   hero: HeroFn;
+  itemTime: (p: DotaMatchDetailPlayer, id: number | null) => number | null;
 }) {
   if (players.length === 0) return null;
   return (
@@ -124,12 +137,15 @@ function TeamTable({
                   <td className="py-2 pr-3 font-mono">{dash(p.heroHealing)}</td>
                   <td className="py-2 pr-3 font-mono">{dash(p.towerDamage)}</td>
                   <td className="py-2">
-                    <span className="flex gap-1">
+                    <span className="flex items-start gap-1">
                       {p.items.map((it, idx) =>
                         it === null ? (
                           <span key={idx} className="h-6 w-8 rounded border border-line/60" />
                         ) : (
-                          <img key={idx} src={getItemImageUrl(it)} alt="" width={32} height={24} className="h-6 w-8 rounded" />
+                          <span key={idx} className="flex flex-col items-center">
+                            <img src={getItemImageUrl(it)} alt="" width={32} height={24} className="h-6 w-8 rounded" />
+                            <span className="font-mono text-xs text-ink-muted">{gameClock(itemTime(p, it))}</span>
+                          </span>
                         ),
                       )}
                     </span>
