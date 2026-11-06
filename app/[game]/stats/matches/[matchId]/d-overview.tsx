@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 // K-AV-DOTABUFF.1 · ส่วนเติมของแท็บ Overview: บัฟ (2) · กราฟส่วนต่างทอง/XP (3-4) · จุดเหตุการณ์ (5) · แผนที่ป้อม (6) · ใครฆ่าใคร (7) · ลำดับสกิล (8)
 import Surface from "@/components/ui/Surface";
 import type { DotaMatchDetail } from "@/lib/dota/match";
