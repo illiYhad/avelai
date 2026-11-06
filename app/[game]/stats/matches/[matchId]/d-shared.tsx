@@ -24,7 +24,9 @@ export async function dLookups(): Promise<DLookups> {
   const buffMap = buffs.ok ? asObj(buffs.data) : {};
   const keyName = (key: string): string => {
     const d = asObj(abMap[key]).dname;
-    return typeof d === "string" && d.trim() ? d : key.replaceAll("_", " ");
+    if (typeof d !== "string" || !d.trim()) return key.replaceAll("_", " ");
+    // ทาเลนต์มีแม่แบบ {s:...} ที่ต้องเติมค่าจากเกม → ตัดแม่แบบออก ไม่เดาตัวเลข
+    return d.includes("{s:") ? `ทาเลนต์: ${d.replace(/\{s:[^}]*\}/g, "").replace(/\s+/g, " ").trim()}` : d;
   };
   return {
     abilityName: (id) => {

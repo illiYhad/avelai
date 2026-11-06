@@ -41,10 +41,10 @@ export default async function OverviewPage({ params }: { params: Promise<{ game:
 
   return (
     <div className="flex flex-col gap-6">
-      <TeamTable title="Radiant" won={m.radiantWin === true} players={radiant} hero={hero} itemTime={itemTime} />
-      <TeamTable title="Dire" won={m.radiantWin === false} players={dire} hero={hero} itemTime={itemTime} />
+      <TeamTable title="Radiant" won={m.radiantWin === true} players={radiant} hero={hero} itemTime={itemTime} itemKey={L.itemKeyById} itemName={L.itemName} />
+      <TeamTable title="Dire" won={m.radiantWin === false} players={dire} hero={hero} itemTime={itemTime} itemKey={L.itemKeyById} itemName={L.itemName} />
       {unknownSide.length > 0 ? (
-        <TeamTable title="ไม่ทราบฝั่ง" won={false} players={unknownSide} hero={hero} itemTime={itemTime} />
+        <TeamTable title="ไม่ทราบฝั่ง" won={false} players={unknownSide} hero={hero} itemTime={itemTime} itemKey={L.itemKeyById} itemName={L.itemName} />
       ) : null}
 
       {m.picksBans.length === 0 ? (
@@ -74,12 +74,16 @@ function TeamTable({
   players,
   hero,
   itemTime,
+  itemKey,
+  itemName,
 }: {
   title: string;
   won: boolean;
   players: DotaMatchDetailPlayer[];
   hero: HeroFn;
   itemTime: (p: DotaMatchDetailPlayer, id: number | null) => number | null;
+  itemKey: (id: number) => string | null;
+  itemName: (key: string) => string;
 }) {
   if (players.length === 0) return null;
   return (
@@ -143,7 +147,14 @@ function TeamTable({
                           <span key={idx} className="h-6 w-8 rounded border border-line/60" />
                         ) : (
                           <span key={idx} className="flex flex-col items-center">
-                            <img src={getItemImageUrl(it)} alt="" width={32} height={24} className="h-6 w-8 rounded" />
+                            {getItemImageUrl(it) ? (
+                              <img src={getItemImageUrl(it)} alt="" width={32} height={24} className="h-6 w-8 rounded" />
+                            ) : (
+                              // ตารางรูปของ dotaAssets ไม่มี id นี้ → แสดงชื่อจากค่าคงที่ items แทนรูปแตก
+                              <span className="flex h-6 max-w-16 items-center truncate rounded border border-line/60 px-1 font-mono text-xs text-ink">
+                                {(() => { const k = itemKey(it); return k ? itemName(k) : `#${it}`; })()}
+                              </span>
+                            )}
                             <span className="font-mono text-xs text-ink-muted">{gameClock(itemTime(p, it))}</span>
                           </span>
                         ),

@@ -14,7 +14,9 @@ export function OverviewD({ m, L, D }: { m: DotaMatchDetail; L: BLookups; D: DLo
   const xp = adv(m.b.radiantXpAdv);
   const radiant = m.players.filter((p) => p.isRadiant === true);
   const dire = m.players.filter((p) => p.isRadiant === false);
-  const towers = { r: decodeTowers(m.d.towerStatusRadiant), d: decodeTowers(m.d.towerStatusDire) };
+  // ทั้งสองฝั่งเป็น 0 = ไม่มีข้อมูลจริง (เช่นแมตช์ที่ไม่มีข้อมูลเกม) · ไม่วาดว่าแตกหมด
+  const noBuildings = m.d.towerStatusRadiant === 0 && m.d.towerStatusDire === 0;
+  const towers = noBuildings ? { r: null, d: null } : { r: decodeTowers(m.d.towerStatusRadiant), d: decodeTowers(m.d.towerStatusDire) };
   const buffs = m.players.filter((p) => p.d.permanentBuffs && p.d.permanentBuffs.length > 0);
 
   return (
