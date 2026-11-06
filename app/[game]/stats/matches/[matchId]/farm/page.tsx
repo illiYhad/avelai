@@ -6,6 +6,7 @@ import { guardPublicMatchView } from "@/lib/dota/match/guard";
 import { isValidMatchId } from "@/lib/dota/opendota";
 import { blockedNotice } from "../BlockedNotice";
 import { bLookups, H2, HEAD_ROW, NoDataB, PlayerCell, SCROLL, SIDE_TEXT, TABLE, TD, TeamHeading, teams, TH, val } from "../b-shared";
+import { FarmD } from "../d-tabs"; // K-AV-DOTABUFF.1 ข้อ 18-20
 
 // K-AV-D5 · แท็บ Farm — GPM/XPM/LH/DN (มีทุกแมตช์) · total_gold · gold_spent · actions_per_min · gold_t / lh_t รายนาที
 // ส่วนต่างทีมจาก radiant_gold_adv / radiant_xp_adv ของ OpenDota โดยตรง (ไม่คำนวณเอง)
@@ -121,6 +122,7 @@ export default async function FarmPage({ params }: { params: Promise<{ game: str
           </div>
         </Surface>
       )}
+      <FarmD m={m} />
     </div>
   );
 }
