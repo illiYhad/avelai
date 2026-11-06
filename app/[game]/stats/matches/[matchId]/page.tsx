@@ -97,18 +97,18 @@ function TeamTable({
         <table className="w-max min-w-full border-collapse text-xs sm:text-sm">
           <thead>
             <tr className="border-b border-line text-left font-mono text-xs tracking-wider text-ink-muted">
-              <th scope="col" className="py-2 pr-3">ผู้เล่น</th>
-              <th scope="col" className="py-2 pr-3">เลน / บทบาท</th>
-              <th scope="col" className="py-2 pr-3">LV</th>
-              <th scope="col" className="py-2 pr-3">K / D / A</th>
-              <th scope="col" className="py-2 pr-3">KDA</th>
-              <th scope="col" className="py-2 pr-3">LH / DN</th>
-              <th scope="col" className="py-2 pr-3">GPM</th>
-              <th scope="col" className="py-2 pr-3">XPM</th>
-              <th scope="col" className="py-2 pr-3">NW</th>
-              <th scope="col" className="py-2 pr-3">ดาเมจฮีโร่</th>
-              <th scope="col" className="py-2 pr-3">ฮีล</th>
-              <th scope="col" className="py-2 pr-3">ดาเมจป้อม</th>
+              <th scope="col" className="py-2 pr-2">ผู้เล่น</th>
+              <th scope="col" className="py-2 pr-2">เลน / บทบาท</th>
+              <th scope="col" className="py-2 pr-2">LV</th>
+              <th scope="col" className="py-2 pr-2">K / D / A</th>
+              <th scope="col" className="py-2 pr-2">KDA</th>
+              <th scope="col" className="py-2 pr-2">LH / DN</th>
+              <th scope="col" className="py-2 pr-2">GPM</th>
+              <th scope="col" className="py-2 pr-2">XPM</th>
+              <th scope="col" className="py-2 pr-2">NW</th>
+              <th scope="col" className="py-2 pr-2">ดาเมจฮีโร่</th>
+              <th scope="col" className="py-2 pr-2">ฮีล</th>
+              <th scope="col" className="py-2 pr-2">ดาเมจป้อม</th>
               <th scope="col" className="py-2">ไอเทม</th>
             </tr>
           </thead>
@@ -117,11 +117,11 @@ function TeamTable({
               const h = hero(p.heroId);
               return (
                 <tr key={`${p.slot ?? i}`} className="border-b border-line/50 align-middle">
-                  <th scope="row" className="py-2 pr-3 text-left font-normal">
+                  <th scope="row" className="py-2 pr-2 text-left font-normal">
                     <span className="flex items-center gap-2">
                       {h.img ? <img src={h.img} alt="" width={32} height={18} className="rounded" /> : null}
-                      <span className="flex flex-col">
-                        <span className="text-xs text-ink sm:text-sm">{p.name}</span>
+                      <span className="flex min-w-0 flex-col">
+                        <span className="block max-w-32 truncate text-xs text-ink sm:text-sm" title={p.name}>{p.name}</span>
                         <span className="font-mono text-xs text-ink-muted">{h.label}</span>
                       </span>
                       {p.hasScepter ? <Tag>AG</Tag> : null}
@@ -129,17 +129,17 @@ function TeamTable({
                     </span>
                   </th>
                   {/* K-AV-D4: เลน/บทบาทจาก lane · lane_role ของ OpenDota (มีเฉพาะแมตช์ที่วิเคราะห์แล้ว) */}
-                  <td className="py-2 pr-3 font-mono">{laneLabel(p.lane, p.laneRole)}</td>
-                  <td className="py-2 pr-3 font-mono">{dash(p.level)}</td>
-                  <td className="py-2 pr-3 font-mono">{dash(p.kills)} / {dash(p.deaths)} / {dash(p.assists)}</td>
-                  <td className="py-2 pr-3 font-mono text-gold">{dash(p.kda)}</td>
-                  <td className="py-2 pr-3 font-mono">{dash(p.lastHits)} / {dash(p.denies)}</td>
-                  <td className="py-2 pr-3 font-mono">{dash(p.gpm)}</td>
-                  <td className="py-2 pr-3 font-mono">{dash(p.xpm)}</td>
-                  <td className="py-2 pr-3 font-mono">{dash(p.netWorth)}</td>
-                  <td className="py-2 pr-3 font-mono">{dash(p.heroDamage)}</td>
-                  <td className="py-2 pr-3 font-mono">{dash(p.heroHealing)}</td>
-                  <td className="py-2 pr-3 font-mono">{dash(p.towerDamage)}</td>
+                  <td className="py-2 pr-2 font-mono">{laneLabel(p.lane, p.laneRole)}</td>
+                  <td className="py-2 pr-2 font-mono">{dash(p.level)}</td>
+                  <td className="py-2 pr-2 font-mono">{dash(p.kills)} / {dash(p.deaths)} / {dash(p.assists)}</td>
+                  <td className="py-2 pr-2 font-mono text-gold">{dash(p.kda)}</td>
+                  <td className="py-2 pr-2 font-mono">{dash(p.lastHits)} / {dash(p.denies)}</td>
+                  <td className="py-2 pr-2 font-mono">{dash(p.gpm)}</td>
+                  <td className="py-2 pr-2 font-mono">{dash(p.xpm)}</td>
+                  <td className="py-2 pr-2 font-mono">{dash(p.netWorth)}</td>
+                  <td className="py-2 pr-2 font-mono">{dash(p.heroDamage)}</td>
+                  <td className="py-2 pr-2 font-mono">{dash(p.heroHealing)}</td>
+                  <td className="py-2 pr-2 font-mono">{dash(p.towerDamage)}</td>
                   <td className="py-2">
                     <span className="grid w-max grid-cols-3 gap-1">
                       {p.items.map((it, idx) =>
