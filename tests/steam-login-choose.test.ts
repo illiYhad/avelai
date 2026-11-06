@@ -76,7 +76,7 @@ function adminDb() {
   };
 }
 
-import type { SteamLoginDeps } from "@/lib/game-accounts/steam";
+import { LINK_MESSAGES, type SteamLoginDeps } from "@/lib/game-accounts/steam";
 import {
   cookieValue, createFromPending, linkPendingToUser, pendingSecret, readPending, signPending,
   CHOOSE_MESSAGES, OTP_BAD_CODE_MESSAGE, OTP_SENT_COOKIE, OTP_SENT_MESSAGE, OTP_WAIT_MESSAGE, PENDING_COOKIE, PENDING_TTL_SEC,
@@ -350,17 +350,63 @@ describe("action ของหน้า /login/steam/choose", () => {
     expect(h.rpcCalls).toHaveLength(1);
   });
 
-  it("Q4 และ Steam ถูกผูกไปแล้ว ผ่าน action → ปฏิเสธ ไม่เรียก RPC · ลบ cookie", async () => {
+  // K-AV-STEAMLOGIN.2a: หลัง verifyOtp ผ่าน ผู้ใช้มี session แล้ว — ปฏิเสธต้องจบที่ /me ไม่ตอบกลับเข้าฟอร์ม
+  // (ตอบเข้าฟอร์ม = หน้า choose render ใหม่ เห็น session แล้วพาไป /link/steam/start ซึ่งทับ Steam เดิมได้)
+  it("Q4 และ Steam ถูกผูกไปแล้ว ผ่าน action → ไป /me?link_error=… ไม่เรียก RPC · ลบ cookie", async () => {
     setPending();
+    h.jar.set(OTP_SENT_COOKIE, "1");
     h.otpUser = { id: "u-me" };
     h.rows = [verified("u-me", "99999")];
-    expect(await run(verifyCodeAction(init, form({ email: "me@example.com", code: "123456" })))).toMatchObject({ ok: false, message: CHOOSE_MESSAGES.other_steam });
+    expect(await run(verifyCodeAction(init, form({ email: "me@example.com", code: "123456" })))).toBe("/me?link_error=other_steam");
+    expect(h.jar.has(PENDING_COOKIE)).toBe(false);
+    expect(h.jar.has(OTP_SENT_COOKIE)).toBe(false);
     setPending();
     h.rows = [verified("u-other")];
-    expect(await run(verifyCodeAction(init, form({ email: "me@example.com", code: "123456" })))).toMatchObject({ ok: false, message: CHOOSE_MESSAGES.taken });
+    expect(await run(verifyCodeAction(init, form({ email: "me@example.com", code: "123456" })))).toBe("/me?link_error=already");
     expect(h.rpcCalls).toEqual([]);
     expect(h.jar.has(PENDING_COOKIE)).toBe(false);
-    expect(h.redirects).toEqual([]);
+    expect(h.redirects).toEqual(["/me?link_error=other_steam", "/me?link_error=already"]);
+  });
+
+  it("ระงับ → /me?link_error=suspended · ไม่มี admin → unavailable · RPC ล้ม → failed · ลบ cookie ทุกกรณี ไม่ไป /link/steam/start", async () => {
+    h.otpUser = { id: "u-me" };
+    const verify = () => run(verifyCodeAction(init, form({ email: "me@example.com", code: "123456" })));
+
+    setPending();
+    h.suspended = true;
+    expect(await verify()).toBe("/me?link_error=suspended");
+    expect(h.jar.has(PENDING_COOKIE)).toBe(false);
+    expect(h.rpcCalls).toEqual([]);
+    h.suspended = false;
+
+    setPending();
+    h.admin = false;
+    expect(await verify()).toBe("/me?link_error=unavailable");
+    expect(h.jar.has(PENDING_COOKIE)).toBe(false);
+    expect(h.rpcCalls).toEqual([]);
+    h.admin = true;
+
+    // ล้มตอนเขียน (ไม่ใช่ STEAM_ALREADY_LINKED) → failed · ชนตอนเขียน → already · ทั้งคู่ไม่มีแถวถูกเขียน
+    setPending();
+    h.rpcError = { message: "boom" };
+    expect(await verify()).toBe("/me?link_error=failed");
+    expect(h.jar.has(PENDING_COOKIE)).toBe(false);
+    setPending();
+    h.rpcError = { message: "STEAM_ALREADY_LINKED" };
+    expect(await verify()).toBe("/me?link_error=already");
+    expect(h.jar.has(PENDING_COOKIE)).toBe(false);
+    expect(h.rows).toEqual([]);
+
+    expect(h.redirects.every((to) => to.startsWith("/me?link_error="))).toBe(true);
+    // ใช้ cookie เดิมไม่ได้อีก
+    expect((await verifyCodeAction(init, form({ email: "me@example.com", code: "123456" }))).message).toBe(CHOOSE_MESSAGES.expired);
+  });
+
+  it("LINK_MESSAGES.errors มี other_steam และข้อความตรงกับ CHOOSE_MESSAGES.other_steam · ทุกรหัสที่ action ส่งไป /me มีข้อความ", () => {
+    expect(LINK_MESSAGES.errors.other_steam).toBe(CHOOSE_MESSAGES.other_steam);
+    for (const code of ["other_steam", "already", "suspended", "unavailable", "failed"] as const) {
+      expect(LINK_MESSAGES.errors[code]).toBeTruthy();
+    }
   });
 
   it("ผู้เล่นใหม่ → createUser + rpc link + ตั้ง session → ลบ cookie → /me · ใช้ cookie เดิมซ้ำ (แม้ยังไม่หมดอายุ) → taken ไม่สร้างบัญชีที่สอง", async () => {

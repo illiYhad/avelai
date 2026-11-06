@@ -4,11 +4,12 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getAdminDb } from "@/lib/db/admin";
 import { getServerDb } from "@/lib/db/server";
+import type { SteamLinkError } from "@/lib/game-accounts/steam";
 import { buildLinkPendingDeps, buildSteamLoginDeps } from "@/lib/game-accounts/steam-deps";
 import {
   createFromPending, linkPendingToUser, pendingSecret, readPending,
   CHOOSE_MESSAGES, OTP_BAD_CODE_MESSAGE, OTP_BAD_EMAIL_MESSAGE, OTP_RESEND_SEC, OTP_SENT_COOKIE, OTP_SENT_MESSAGE, OTP_WAIT_MESSAGE,
-  PENDING_COOKIE, PENDING_COOKIE_PATH, type Pending,
+  PENDING_COOKIE, PENDING_COOKIE_PATH, type ChooseError, type Pending,
 } from "@/lib/game-accounts/steam-pending";
 
 // K-AV-STEAMLOGIN.2: action ของหน้า /login/steam/choose
@@ -86,11 +87,19 @@ export async function verifyCodeAction(_prev: ChooseState, formData: FormData): 
 
   // userId มาจาก session ที่ verifyOtp เพิ่งตั้งเท่านั้น — ไม่รับจากฟอร์ม
   const result = await linkPendingToUser({ pending, userId, deps: buildLinkPendingDeps(getAdminDb()) });
-  if (!result.ok) {
-    // ผู้ใช้ยืนยันอีเมลแล้วจึงล็อกอินบัญชีเดิมอยู่ · แค่ไม่ผูก Steam ให้ · ปฏิเสธถาวร = ลบ cookie pending
-    if (result.error !== "failed" && result.error !== "unavailable") clearPending(jar);
-    return { ok: false, message: CHOOSE_MESSAGES[result.error] };
-  }
+  // K-AV-STEAMLOGIN.2a: ถึงตรงนี้ verifyOtp ตั้ง session แล้ว — ถ้าตอบกลับเข้าฟอร์ม หน้า choose จะ render ใหม่
+  // เห็น session แล้วพาไป /link/steam/start ซึ่งเขียนทับ Steam เดิมได้ (ขัด Q4) · จึงลบ cookie pending ทุกกรณีแล้วจบที่ /me
   clearPending(jar);
+  if (!result.ok) redirect(`/me?link_error=${REFUSED_TO_LINK_ERROR[result.error]}`);
   redirect("/me?linked=steam");
 }
+
+/** ผลปฏิเสธจาก linkPendingToUser → รหัส link_error ที่ /me แสดงข้อความ (LINK_MESSAGES.errors) */
+const REFUSED_TO_LINK_ERROR: Record<ChooseError, SteamLinkError> = {
+  other_steam: "other_steam",
+  taken: "already",
+  suspended: "suspended",
+  unavailable: "unavailable",
+  failed: "failed",
+  expired: "failed",
+};

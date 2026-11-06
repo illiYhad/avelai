@@ -132,7 +132,7 @@ export async function verifyAssertion(p: Map<string, string>, fetchFn: typeof fe
   }
 }
 
-export type SteamLinkError = "invalid" | "already" | "unavailable" | "suspended" | "failed";
+export type SteamLinkError = "invalid" | "already" | "other_steam" | "unavailable" | "suspended" | "failed";
 export type RpcClient = { rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ error: { message?: string } | null }> };
 
 /** ขั้นตอนหลังกลับจาก Steam → path ปลายทางใน /me · userId ต้องมาจาก session ฝั่ง server เท่านั้น */
@@ -161,6 +161,8 @@ export const LINK_MESSAGES = {
   errors: {
     invalid: "ยืนยันกับ Steam ไม่ผ่าน กรุณาลองใหม่",
     already: "บัญชี Steam นี้ผูกกับบัญชีอื่นแล้ว",
+    // K-AV-STEAMLOGIN.2a: ข้อความเดียวกับ CHOOSE_MESSAGES.other_steam (steam-pending.ts) · เทสล็อกให้ตรงกัน
+    other_steam: "บัญชีนี้ผูก Steam อื่นไว้แล้ว ถ้าต้องการเปลี่ยน ให้เข้าไปเปลี่ยนเองที่หน้าบัญชีของฉัน",
     unavailable: "ฟีเจอร์ยังไม่เปิดใช้งาน",
     suspended: "บัญชีของคุณถูกระงับชั่วคราว ไม่สามารถผูกบัญชีได้",
     failed: "ผูกบัญชีไม่สำเร็จ กรุณาลองใหม่อีกครั้ง",
