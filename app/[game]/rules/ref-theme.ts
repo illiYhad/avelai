@@ -39,11 +39,11 @@ export const REF = {
   // สีกราฟ
   radarSwissFill: "#00D4FF40", // :636 rgba(0,212,255,0.25)
   radarQueueFill: "#C9A84C40", // :644 rgba(201,168,76,0.25)
-  roleColors: ["#00D4FF", "#3b82f6", "#10b981", "#C9A84C", "#f59e0b"], // :687
+  roleColors: ["#00D4FF", "#3b82f6", "#10b981", "#C9A84C", "#f59e0b"], // :679 (errata 18:31)
   scoreOutcome: "#00D4FF", // :726
   scoreKp: "#3b82f6", // :731
   scoreRole: "#C9A84C", // :736
-  penaltyColors: ["#f59e0b", "#f43f5e", "#e11d48", "#9f1239"], // :777
+  penaltyColors: ["#f59e0b", "#f43f5e", "#e11d48", "#9f1239"], // :769 (errata 18:31)
   axisText: "#94a3b8", // :608 Chart.defaults.color
 } as const;
 

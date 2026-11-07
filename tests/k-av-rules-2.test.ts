@@ -1,6 +1,6 @@
 // K-AV-RULES.2 — หน้า /dota2/rules ยึดต้นแบบ 1:1: ลำดับหมวด/แท็บ · ข้อมูลกราฟ · Live Simulator · ข้อความตรงตัว · ไม่มี <img>
 // ไม่ใช้ env · ไม่ต่อเน็ต · ต้นแบบ: D:\Balehm_Studio\02_Products\AVELAi\01_Spec\REF_ultimate_solo_อัปเดต_2026-11-07.html
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createElement } from "react";
 import { renderToString } from "react-dom/server";
@@ -61,7 +61,18 @@ describe("K-AV-RULES.2", () => {
     expect(box).toContain(AVE.greet2);
   });
 
-  it("e) ไม่มี <img ในไฟล์ใต้ app/[game]/rules (กันรูปแตก)", () => {
-    for (const f of readdirSync(DIR).filter((x) => /\.(ts|tsx)$/.test(x))) expect(src(f), f).not.toMatch(/<img/i);
+  // ใบเสริม 2 (18:44): ไม่มี <img · ทุก src ของ <Image> ขึ้นต้น /brand/rules/ และไฟล์มีอยู่จริงใน public/brand/rules/
+  it("e) ไม่มี <img · <Image> ทุกตัวชี้ไฟล์จริงใน public/brand/rules/ (กันรูปแตก)", () => {
+    const srcs: string[] = [];
+    for (const f of readdirSync(DIR).filter((x) => /\.(ts|tsx)$/.test(x))) {
+      const s = src(f);
+      expect(s, f).not.toMatch(/<img/i);
+      for (const m of s.matchAll(/<Image[^>]*\ssrc="([^"]+)"/g)) srcs.push(m[1]);
+    }
+    expect(srcs.sort()).toEqual(["/brand/rules/avelai-logo-256.png", "/brand/rules/ave-avatar-256.jpg", "/brand/rules/ultimate-solo-hero-900.jpg"].sort());
+    for (const s of srcs) {
+      expect(s.startsWith("/brand/rules/")).toBe(true);
+      expect(existsSync(join(__dirname, "..", "public", s)), s).toBe(true);
+    }
   });
 });

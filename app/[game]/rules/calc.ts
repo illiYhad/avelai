@@ -54,7 +54,7 @@ export type CalcView =
       total: string;
       match: string;
       level: string;
-      /** K-AV-RULES.2: เลข Level อย่างเดียว · บรรทัดสรุปแบบต้นแบบ :839 */
+      /** K-AV-RULES.2: เลข Level อย่างเดียว · บรรทัดสรุปแบบต้นแบบ :834–835 (errata 18:31) */
       levelNum: number | null;
       breakdown: string;
     };

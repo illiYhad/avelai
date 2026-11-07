@@ -81,7 +81,7 @@ export const MATCHMAKING = {
 /** โดนัท Pos 1–5 (:672–705) */
 export const ROLE_DONUT = {
   labels: ["Pos 1 Carry", "Pos 2 Mid", "Pos 3 Offlane", "Pos 4 Soft Sup", "Pos 5 Hard Sup"], // :672
-  data: [20, 20, 20, 20, 20], // :685
+  data: [20, 20, 20, 20, 20], // :678 (errata 18:31)
 };
 
 // ---------- 3. #scoring (:296–443) ----------
@@ -194,8 +194,8 @@ export const RISK = {
 };
 /** แท่งแนวนอน Penalty Severity (:756–795) */
 export const PENALTY = {
-  labels: ["Stream Ghosting 1st", "Disconnect Before 5m", "Griefing / Toxic Behavior", "Match Fixing / Cheating"], // :757–760
-  data: [-10, -30, -50, -100], // :764
+  labels: ["Stream Ghosting 1st", "Disconnect Before 5m", "Griefing / Toxic Behavior", "Match Fixing / Cheating"], // :756–760 (errata 18:31)
+  data: [-10, -30, -50, -100], // :768 (errata 18:31) · มุมโค้ง :770
   series: "คะแนนหัก / สถานะบทลงโทษ", // :763
 };
 

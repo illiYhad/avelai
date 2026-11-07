@@ -1,11 +1,10 @@
 // K-AV-RULES.1 → K-AV-RULES.2: หน้ากติกา Ultimate Solo ยึดต้นแบบ 1:1 (หน้าตา + ฟังก์ชัน)
 // ต้นแบบ: D:\Balehm_Studio\02_Products\AVELAi\01_Spec\REF_ultimate_solo_อัปเดต_2026-11-07.html
 // static (● SSG) · ไม่อ่าน cookies/headers/searchParams · ไม่เรียก API · ข้อความทั้งหมดอยู่ที่ rules-content.ts
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Surface from "@/components/ui/Surface";
-import HudScan from "@/components/ui/HudScan";
-import Logo3D from "@/components/ui/Logo3D";
 import { gameFromSlug, slugOf } from "@/lib/games";
 import { routes } from "@/lib/routes";
 import { SCORE_CONFIG } from "@/lib/avelai/score";
@@ -69,7 +68,8 @@ export default async function RulesPage({ params }: { params: Promise<{ game: st
       <header className="sticky top-14 z-40 border-b border-[var(--ref-border)] bg-[var(--ref-card-80)] backdrop-blur md:top-16">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-3 md:flex-row">
           <div className="flex items-center gap-3">
-            <span aria-hidden className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[var(--ref-gold)] font-display text-xs font-black text-[var(--ref-gold)] shadow-[var(--ref-glow-gold)]">Ai</span>
+            {/* :87 โลโก้วงกลม (ใบเสริม 2) */}
+            <Image src="/brand/rules/avelai-logo-256.png" alt="โลโก้ AVELAi" width={256} height={256} priority className="h-12 w-12 rounded-full border-2 border-[var(--ref-gold)] object-cover shadow-[var(--ref-glow-gold)]" />
             <div>
               <h1 className="bg-gradient-to-r from-[var(--ref-cyan)] to-[var(--ref-gold)] bg-clip-text font-display text-lg font-extrabold tracking-wider text-transparent md:text-2xl">{HEADER.title}</h1>
               <p className="font-mono text-xs tracking-widest text-[var(--ref-gold)]">{HEADER.motto}</p>
@@ -111,21 +111,20 @@ export default async function RulesPage({ params }: { params: Promise<{ game: st
                 {HERO_CARDS.map((c) => (
                   <div key={c.label} className="rounded-xl border border-[var(--ref-gold-30)] bg-[var(--ref-s800-80)] p-4 text-center">
                     <p className="text-xs font-medium uppercase text-[var(--ref-s400)]">{c.label}</p>
-                    <p className="mt-1 break-words text-xl font-black md:text-2xl" style={{ color: c.color }}>{c.value}</p>
+                    <p className="mt-1 text-lg font-black md:text-xl" style={{ color: c.color }}>{c.value}</p>
                     <p className="mt-0.5 text-xs text-[var(--ref-s500)]">{c.note}</p>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="lg:col-span-5">
-              <Surface glow="gold" className="relative flex min-h-56 items-center justify-center overflow-hidden rounded-2xl">
-                <HudScan />
-                <Logo3D />
-                <div className="absolute bottom-4 right-4 z-20 flex items-center gap-2 rounded-lg border border-[var(--ref-cyan-50)] bg-[var(--ref-dark-90)] px-3 py-1.5">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--ref-cyan)]" />
-                  <span className="font-mono text-xs font-bold tracking-wider text-[var(--ref-cyan)]">{HERO.online}</span>
-                </div>
-              </Surface>
+            {/* :153–161 รูปมาสคอต + ไล่ดำจากล่าง + ป้าย AVE ONLINE (ใบเสริม 2 · แทน Logo3D) */}
+            <div className="relative lg:col-span-5">
+              <div aria-hidden className="absolute inset-0 z-10 rounded-2xl bg-gradient-to-t from-[var(--ref-dark)] via-transparent to-transparent" />
+              <Image src="/brand/rules/ultimate-solo-hero-900.jpg" alt="มาสคอต AVELAi Ultimate Solo" width={900} height={1273} priority sizes="(min-width: 1024px) 40vw, 100vw" className="h-auto w-full rounded-2xl border border-[var(--ref-gold-50)] object-cover shadow-[var(--ref-glow-gold)]" />
+              <div className="absolute bottom-4 right-4 z-20 flex items-center gap-2 rounded-lg border border-[var(--ref-cyan-50)] bg-[var(--ref-dark-90)] px-3 py-1.5">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--ref-cyan)]" />
+                <span className="font-mono text-xs font-bold tracking-wider text-[var(--ref-cyan)]">{HERO.online}</span>
+              </div>
             </div>
           </div>
         </section>
