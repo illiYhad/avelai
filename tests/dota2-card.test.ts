@@ -71,11 +71,13 @@ function stubFetch(routes: Route) {
     } as Response;
   }));
 }
+// K-AV-PASSDOTA.1: wl/heroes/matches นับทุกประเภทแมตช์ (significant=0) · /recentMatches เลิกใช้
+const MATCHES_QS = "significant=0&limit=20&" + ["match_id", "player_slot", "radiant_win", "duration", "start_time", "game_mode", "lobby_type", "hero_id", "kills", "deaths", "assists"].map((f) => `project=${f}`).join("&");
 const playerRoutes = (id: string): Route => ({
   [`/players/${id}`]: { body: PROFILE },
-  [`/players/${id}/wl`]: { body: WL },
-  [`/players/${id}/heroes`]: { body: HEROES },
-  [`/players/${id}/recentMatches`]: { body: RECENT },
+  [`/players/${id}/wl?significant=0`]: { body: WL },
+  [`/players/${id}/heroes?significant=0`]: { body: HEROES },
+  [`/players/${id}/matches?${MATCHES_QS}`]: { body: RECENT },
 });
 
 beforeEach(() => {
@@ -164,7 +166,7 @@ describe("เรียก OpenDota (fetch mock)", () => {
 
   // K-AV-QUOTA.1: 429 จาก OpenDota = โควตาหมด → ข้อความโหมดประหยัดตามใบอลิส (เดิม "ลองใหม่ภายหลัง")
   it("429 → โหมดประหยัดโควตา", async () => {
-    stubFetch({ ...playerRoutes("11111111"), "/players/11111111/wl": { status: 429 } });
+    stubFetch({ ...playerRoutes("11111111"), "/players/11111111/wl?significant=0": { status: 429 } });
     const r = await getPlayerCard("11111111");
     expect(r).toMatchObject({ ok: false, status: 429 });
     expect(!r.ok && r.message).toBe("ข้อมูลแมตช์ใหม่จะอัปเดตอีกครั้งพรุ่งนี้");
