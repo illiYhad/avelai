@@ -41,6 +41,7 @@ export function navFor(signedIn: boolean, game: GameSlug = DEFAULT_GAME_SLUG, op
   const links: NavItem[] = [
     { href: routes.tournaments(game), label: "ทัวร์นาเมนต์" },
     { href: routes.teams(game), label: "ทีม" },
+    { href: routes.rules(game), label: "กติกา" }, // K-AV-RULES.1
   ];
   if (opts.username) links.push({ href: routes.passport(game, opts.username), label: "Passport" });
   const account: AccountItem[] = [

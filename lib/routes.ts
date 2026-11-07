@@ -10,6 +10,7 @@ export const routes = {
   tournamentSwiss: (g: GameSlug, id: string) => `/${g}/tournaments/${id}/swiss`,
   tournamentReceipt: (g: GameSlug, id: string, paymentId: string) => `/${g}/tournaments/${id}/receipt/${paymentId}`,
   teams: (g: GameSlug) => `/${g}/teams`,
+  rules: (g: GameSlug) => `/${g}/rules`, // K-AV-RULES.1: หน้ากติกา (อ่านได้ไม่ต้องล็อกอิน)
   teamCreate: (g: GameSlug) => `/${g}/teams/create`,
   team: (g: GameSlug, teamId: string) => `/${g}/teams/${teamId}`,
   teamSchedule: (g: GameSlug, teamId: string) => `/${g}/teams/${teamId}/schedule`,
