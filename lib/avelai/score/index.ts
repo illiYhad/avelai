@@ -236,6 +236,11 @@ export function formLevel(formIndex: Num): FormLevel | null {
 //   DmgTaken = ผลรวม damage_taken เฉพาะคีย์ของ "ฮีโร่ฝั่งตรงข้าม" (การแทงค์ในทีมไฟต์)
 //              ไม่นับดาเมจที่ทำใส่ตัวเอง · จากเพื่อนร่วมทีม · ป้อม · ครีป · นิวทรัล
 // ฟิลด์ไหนไม่มี (แมตช์ยังไม่วิเคราะห์) = null ห้ามเป็น 0
+// K-AV-S1.2 · คำตัดสินพี่ศิลา 2026-11-07 (FROM_SILA_20261107_S1_Damage_Policy) · Pending Parsing:
+//   แมตช์ยังไม่ parse (od_data.has_parsed === false หรือ damage_taken หาย/{}/0 ทุกคน) → DmgTaken = null ทุกคน ห้ามนับ 0
+//   หน้าเว็บแสดง PENDING_PARSING_LABEL · ตัดสินที่ openDotaParseStatus ระดับแมตช์ ไม่ใช่รายผู้เล่น
+//   baseline จริง (_checks/k-av-s1-2/baseline.md ในกล่อง Studio): แมตช์ยังไม่วิเคราะห์ไม่มี tower_kills/วอร์ด/stuns/damage_taken เลย (หาย → null อยู่แล้ว)
+//   0 จริงในแมตช์ที่วิเคราะห์แล้ว (เช่นไม่โดนฝั่งตรงข้ามตีเลย) ยังเป็น 0
 //
 // TECHNICAL DEBT (พี่ศิลาสั่งให้บันทึก ยังไม่แก้รอบนี้): ตัวอัญเชิญและภาพลวงตา
 //   แมตช์ตัวอย่าง 8214277203 มี Beastmaster · Invoker · Morphling แต่ไม่พบคีย์ตัวอัญเชิญหรือภาพลวงตาแยกใน damage_taken
@@ -272,6 +277,28 @@ export function enemyHeroDamageTaken(damageTaken: unknown, enemyHeroKeys: readon
   return sum;
 }
 
+/** K-AV-S1.2: ข้อความที่หน้าเว็บแสดงแทนคะแนนเมื่อแมตช์ยังไม่วิเคราะห์ */
+export const PENDING_PARSING_LABEL = "รอการวิเคราะห์เชิงลึก (Pending Parsing)";
+export type ParseStatus = "parsed" | "pending";
+
+/** damage_taken ไม่มีข้อมูล = หาย · ไม่ใช่ object · {} · มีแต่ค่า 0 */
+function damageTableEmpty(v: unknown): boolean {
+  const t = rawObj(v);
+  return t === null || Object.values(t).every((x) => x === 0);
+}
+
+/**
+ * K-AV-S1.2: สถานะการวิเคราะห์ของแมตช์ OpenDota (ฟังก์ชันล้วน)
+ * pending เมื่อ (ก) od_data.has_parsed === false หรือ (ข) ผู้เล่นทุกคนที่เป็น object ไม่มีข้อมูล damage_taken
+ * od_data หายไปเฉย ๆ ไม่ถือเป็น pending · ไม่มีผู้เล่นที่เป็น object เลย = pending (ไม่มีดาเมจให้ใช้)
+ */
+export function openDotaParseStatus(match: unknown): ParseStatus {
+  const m = rawObj(match) ?? {};
+  if (rawObj(m.od_data)?.has_parsed === false) return "pending";
+  const players = (Array.isArray(m.players) ? m.players : []).map(rawObj).filter((p): p is Raw => p !== null);
+  return players.every((p) => damageTableEmpty(p.damage_taken)) ? "pending" : "parsed";
+}
+
 /** ผู้เล่นหนึ่งคนจาก players[] ของ OpenDota → ค่าเข้าโมดูลคะแนน */
 export function fromOpenDotaPlayer(player: unknown, ctx: OpenDotaContext): PlayerMatchInput {
   const p = rawObj(player) ?? {};
@@ -289,16 +316,18 @@ export function fromOpenDotaPlayer(player: unknown, ctx: OpenDotaContext): Playe
   };
 }
 
-export type OpenDotaPlayerInput = { playerSlot: Num; heroId: Num; isRadiant: boolean | null; input: PlayerMatchInput };
+export type OpenDotaPlayerInput = { playerSlot: Num; heroId: Num; isRadiant: boolean | null; input: PlayerMatchInput; parseStatus: ParseStatus };
 
 /**
  * ทั้งแมตช์จาก GET /matches/{id} ของ OpenDota → ค่าเข้าโมดูลคะแนนรายผู้เล่น
  * @param heroKeyById แปลง hero_id เป็นคีย์ npc_dota_hero_* (ส่งตัวแปลงที่มีอยู่แล้วเข้ามา โมดูลนี้ไม่มีตารางฮีโร่เอง) · ไม่รู้จัก = null
  * ฮีโร่ฝั่งตรงข้ามคนใดหาคีย์ไม่ได้ หรือไม่รู้ฝั่งของผู้เล่น = DmgTaken ของผู้เล่นคนนั้นเป็น null
+ * K-AV-S1.2: แมตช์ pending (openDotaParseStatus) → DmgTaken = null ทุกคน · ทุกแถวมี parseStatus
  */
 export function fromOpenDotaMatch(match: unknown, heroKeyById: (heroId: number) => string | null): OpenDotaPlayerInput[] {
   const m = rawObj(match) ?? {};
   const radiantWin = typeof m.radiant_win === "boolean" ? m.radiant_win : null;
+  const parseStatus = openDotaParseStatus(match);
   const players = (Array.isArray(m.players) ? m.players : []).map((raw: unknown) => {
     const p = rawObj(raw) ?? {};
     const playerSlot = rawNum(p.player_slot);
@@ -311,6 +340,8 @@ export function fromOpenDotaMatch(match: unknown, heroKeyById: (heroId: number) 
     const keys = enemies.map((e) => e.heroKey);
     const enemyHeroKeys = enemies.length === 0 || keys.some((k) => k === null) ? null : (keys as string[]);
     const won = me.isRadiant === null || radiantWin === null ? null : me.isRadiant === radiantWin;
-    return { playerSlot: me.playerSlot, heroId: me.heroId, isRadiant: me.isRadiant, input: fromOpenDotaPlayer(me.raw, { won, enemyHeroKeys }) };
+    const input = fromOpenDotaPlayer(me.raw, { won, enemyHeroKeys });
+    if (parseStatus === "pending") input.damageTaken = null; // ห้ามนับ 0 (คำตัดสินพี่ศิลา 2026-11-07)
+    return { playerSlot: me.playerSlot, heroId: me.heroId, isRadiant: me.isRadiant, input, parseStatus };
   });
 }
