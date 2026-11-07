@@ -54,6 +54,9 @@ export type CalcView =
       total: string;
       match: string;
       level: string;
+      /** K-AV-RULES.2: เลข Level อย่างเดียว · บรรทัดสรุปแบบต้นแบบ :839 */
+      levelNum: number | null;
+      breakdown: string;
     };
 
 /** ผลที่หน้าแสดง · Total 2 ตำแหน่ง · Match Score 3 ตำแหน่ง (เลี่ยง toFixed(2) ปัด 3.825 เป็น 3.82) */
@@ -82,5 +85,7 @@ export function calcView(f: CalcFields): CalcView {
     total: fix(r.totalScore, 2),
     match: fix(r.matchScore, 3),
     level: lv ? `Level ${lv.level} (${lv.tier})` : "—",
+    levelNum: lv ? lv.level : null,
+    breakdown: `Outcome (${r.outcome}) + KP (${fix(r.kpAfterMultiplier, 1)}) + Role Bonus (${fix(r.roleBonus.value, 1)})`,
   };
 }
