@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 import { getServerDb } from '@/lib/db/server';
+import { parseChatInput } from '@/lib/ave/chat-input';
+import { AVE_SYSTEM_PROMPT } from '@/lib/ave/system-prompt';
 
 export const dynamic = 'force-dynamic';
+
+const AVE_UNAVAILABLE = 'AVE ตอบไม่ได้ในตอนนี้ ลองใหม่อีกครั้ง';
 
 export async function POST(req: Request) {
   // K-AV-H2: ต้องล็อกอินก่อนเรียก Groq (กันคนนอกเผาโควตา) · ไม่แตะ DB นอกจากเช็ก session
@@ -11,22 +15,33 @@ export async function POST(req: Request) {
   const { data: { user } } = await db.auth.getUser();
   if (!user) return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อนใช้งาน' }, { status: 401 });
 
+  // K-AV-AVE.1: ไม่มี key = ยังไม่พร้อม · ไม่สร้าง Groq
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) return NextResponse.json({ error: 'AVE ยังไม่พร้อมใช้งาน' }, { status: 503 });
+
+  let body: unknown;
   try {
-    const groq = new Groq({
-      apiKey: process.env.GROQ_API_KEY || '',
-    });
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'รูปแบบคำขอไม่ถูกต้อง' }, { status: 400 });
+  }
+  const input = parseChatInput(body);
+  if (!input.ok) return NextResponse.json({ error: input.error }, { status: 400 });
 
-    const { messages } = await req.json();
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  try {
+    const groq = new Groq({ apiKey });
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
-      messages: messages,
+      messages: [{ role: 'system', content: AVE_SYSTEM_PROMPT }, ...input.messages],
+      temperature: 0.3,
+      max_tokens: 600,
     });
-
-    //  แบบมาตรฐาน:
-} catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal Server Error';
-    return NextResponse.json({ error: message }, { status: 500 });
-}
+    const reply = completion.choices[0]?.message?.content?.trim();
+    if (!reply) return NextResponse.json({ error: AVE_UNAVAILABLE }, { status: 502 });
+    return NextResponse.json({ reply });
+  } catch (error: unknown) {
+    // รายละเอียดอยู่ฝั่ง server เท่านั้น ห้ามส่ง error.message ให้ผู้ใช้
+    console.error('[ave/chat] Groq error', error);
+    return NextResponse.json({ error: AVE_UNAVAILABLE }, { status: 502 });
+  }
 }
