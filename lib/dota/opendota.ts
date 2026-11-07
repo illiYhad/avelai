@@ -294,13 +294,24 @@ const isAccountId = (v: string) => /^\d{1,10}$/.test(v);
 
 // ---------- เรียกจริง ----------
 
+/** K-AV-PASSDOTA.1: นับทุกประเภทแมตช์ (OpenDota ค่าเริ่มต้นกรองแมตช์ "ไม่สำคัญ" เช่น lobby 4/12/14 ออก) · ใส่ทุก path ของผู้เล่น ยกเว้นโปรไฟล์ */
+const ALL_MATCHES = "significant=0";
+
+/** K-AV-PASSDOTA.1: ป้ายแหล่งข้อมูลให้ใบ ② ใช้ (ข้อความตามคำตัดสินพี่ศิลา Q1 ห้ามเปลี่ยน) */
+export const DOTA_STATS_SOURCE_LABEL = "สถิติ Public Match จาก OpenDota (รวมทุกประเภทแมตช์ · significant=0) · ไม่นำมาคำนวณ ELO";
+
+/** K-AV-PASSDOTA.1: แทน /recentMatches (ซึ่งกรองแมตช์ไม่สำคัญออก) · project เฉพาะฟิลด์ที่ mapRecentMatch ใช้ */
+const RECENT_PROJECT = ["match_id", "player_slot", "radiant_win", "duration", "start_time", "game_mode", "lobby_type", "hero_id", "kills", "deaths", "assists"]
+  .map((f) => `project=${f}`)
+  .join("&");
+
 export async function getPlayerCard(accountId: string): Promise<DotaResult<DotaPlayerCard>> {
   if (!isAccountId(accountId)) return ERR.notFound;
   const [profile, wl, heroes, recent] = await Promise.all([
     fetchOpenDota(`/players/${accountId}`),
-    fetchOpenDota(`/players/${accountId}/wl`),
-    fetchOpenDota(`/players/${accountId}/heroes`),
-    fetchOpenDota(`/players/${accountId}/recentMatches`),
+    fetchOpenDota(`/players/${accountId}/wl?${ALL_MATCHES}`),
+    fetchOpenDota(`/players/${accountId}/heroes?${ALL_MATCHES}`),
+    fetchOpenDota(`/players/${accountId}/matches?${ALL_MATCHES}&limit=20&${RECENT_PROJECT}`),
   ]);
   for (const r of [profile, wl, heroes, recent]) if (!r.ok) return r;
   // OpenDota ตอบ 200 แต่ไม่มี profile = บัญชีไม่มี/ไม่เปิดข้อมูล
