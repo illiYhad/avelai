@@ -54,7 +54,7 @@ export async function registerTeamAction(tournamentId: string, _prev: RegState, 
   if (t.entry_type === "FREE") { status = "CONFIRMED"; paid_via = "FREE"; }
   else if (t.entry_type === "WEEKLY_PASS") {
     const { data: passes } = await g.ctx.db.from("passes").select("game, starts_at, ends_at").eq("user_id", g.ctx.userId);
-    if (!hasActivePass((passes ?? []) as { game: string; starts_at: string; ends_at: string }[], t.game)) return fail("ทัวร์นี้ต้องมี Weekly Pass ของเกมนี้ที่ยังไม่หมดอายุ — ซื้อได้ที่หน้า /pass");
+    if (!hasActivePass((passes ?? []) as { game: string; starts_at: string; ends_at: string }[], t.game)) return fail("ทัวร์นี้ต้องมี Arena Pass ของเกมนี้ที่ยังไม่หมดอายุ — ซื้อได้ที่หน้า /pass");
     status = "CONFIRMED"; paid_via = "WEEKLY_PASS";
   }
   const { data: reg, error } = await g.ctx.db.from("registrations").insert({ tournament_id: tournamentId, team_id: teamId, registered_by: g.ctx.userId, status, paid_via }).select("id").single();
