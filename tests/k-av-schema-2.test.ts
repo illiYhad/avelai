@@ -43,7 +43,7 @@ GRANT EXECUTE ON FUNCTION auth.uid(), auth.role(), auth.jwt() TO anon, authentic
 
 const id = (n: number) => `${String(n).padStart(8, "0")}-0000-0000-0000-000000000000`;
 const A = id(1), B = id(2), ORG = id(53), ADM = id(51);
-const TA = id(101), TB = id(102), T = id(201), M = id(301), PAY = id(401), SES = id(501);
+const TA = id(101), TB = id(102), T = id(201), M = id(301), PAY = id(401);
 const PRECHECK = "D:/Balehm_Studio/03_Mailbox/04_ACTIVE_THREAD/_checks/k-av-schema-1/precheck_prod.sql";
 const NEW_ACTIONS = ["grant", "spend", "purchase", "transfer_out", "transfer_in", "burn_prediction", "bonus_champion", "expire"];
 const NEW_SOURCES = ["subscription", "reward_points", "purchase", "transfer", "prediction", "champion_reward", "system_expiry"];
