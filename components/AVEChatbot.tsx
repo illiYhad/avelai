@@ -11,7 +11,7 @@ interface Message {
 export default function AVEChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: 'สวัสดีครับ! ผมคือ AVE ผู้ช่วย AI ประจำ AVELAi มีอะไรให้ผมช่วยเหลือเรื่องคะแนน กฎกติกา หรือทัวร์นาเมนต์ไหมครับ?' }
+    { role: 'assistant', content: 'สวัสดีค่ะ! ฉันคือ AVE (อีฟ) ผู้ช่วย AI ประจำ AVELAi มีอะไรให้ช่วยเรื่องคะแนน กฎกติกา หรือทัวร์นาเมนต์ไหมคะ?' }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -47,7 +47,7 @@ export default function AVEChatbot() {
       if (data.reply) {
         setMessages((prev) => [...prev, { role: 'assistant', content: data.reply }]);
       } else {
-        setMessages((prev) => [...prev, { role: 'assistant', content: 'ขออภัยครับ ระบบประมวลผลขัดข้องชั่วคราว' }]);
+        setMessages((prev) => [...prev, { role: 'assistant', content: 'ขออภัยค่ะ ระบบประมวลผลขัดข้องชั่วคราว' }]);
       }
     } catch {
       setMessages((prev) => [...prev, { role: 'assistant', content: 'เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย' }]);
