@@ -69,7 +69,7 @@ describe("K-AV-RULES.2", () => {
       expect(s, f).not.toMatch(/<img/i);
       for (const m of s.matchAll(/<Image[^>]*\ssrc="([^"]+)"/g)) srcs.push(m[1]);
     }
-    expect(srcs.sort()).toEqual(["/brand/rules/avelai-logo-256.png", "/brand/rules/ave-avatar-256.jpg", "/brand/rules/ultimate-solo-hero-900.jpg"].sort());
+    expect(srcs.sort()).toEqual(["/brand/rules/avelai-logo-256.png", "/brand/rules/ave-avatar-256.jpg", "/brand/rules/ave-hero-900.jpg"].sort()); // K-AV-RULES.3a: Hero = AVE
     for (const s of srcs) {
       expect(s.startsWith("/brand/rules/")).toBe(true);
       expect(existsSync(join(__dirname, "..", "public", s)), s).toBe(true);

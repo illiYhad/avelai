@@ -117,10 +117,10 @@ export default async function RulesPage({ params }: { params: Promise<{ game: st
                 ))}
               </div>
             </div>
-            {/* :153–161 รูปมาสคอต + ไล่ดำจากล่าง + ป้าย AVE ONLINE (ใบเสริม 2 · แทน Logo3D) */}
+            {/* :153–161 รูปมาสคอต AVE (ผมสีเงิน · K-AV-RULES.3a แทนรูป AVEL ที่ตัดผิดตัว) + ไล่ดำจากล่าง + ป้าย AVE ONLINE */}
             <div className="relative lg:col-span-5">
               <div aria-hidden className="absolute inset-0 z-10 rounded-2xl bg-gradient-to-t from-[var(--ref-dark)] via-transparent to-transparent" />
-              <Image src="/brand/rules/ultimate-solo-hero-900.jpg" alt="มาสคอต AVELAi Ultimate Solo" width={900} height={1273} priority sizes="(min-width: 1024px) 40vw, 100vw" className="h-auto w-full rounded-2xl border border-[var(--ref-gold-50)] object-cover shadow-[var(--ref-glow-gold)]" />
+              <Image src="/brand/rules/ave-hero-900.jpg" alt="AVE มาสคอตประจำอารีนา" width={900} height={1273} priority sizes="(min-width: 1024px) 40vw, 100vw" className="h-auto w-full rounded-2xl border border-[var(--ref-gold-50)] object-cover shadow-[var(--ref-glow-gold)]" />
               <div className="absolute bottom-4 right-4 z-20 flex items-center gap-2 rounded-lg border border-[var(--ref-cyan-50)] bg-[var(--ref-dark-90)] px-3 py-1.5">
                 <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--ref-cyan)]" />
                 <span className="font-mono text-xs font-bold tracking-wider text-[var(--ref-cyan)]">{HERO.online}</span>
