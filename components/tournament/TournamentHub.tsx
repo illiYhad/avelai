@@ -94,7 +94,7 @@ export default function TournamentHub({ viewer, showLinkGame }: { viewer: HubVie
               <span className="font-mono text-xs tracking-wider text-ink-muted">CASCADE PROGRESSION</span>
               <h3 className="text-base font-bold text-ink">สถานะการคัดเลือกลีกประจำสัปดาห์</h3>
             </div>
-            <span className="rounded-full border border-line px-3 py-1 font-mono text-sm text-ink-muted">Weekly Pass: —</span>
+            <span className="rounded-full border border-line px-3 py-1 font-mono text-sm text-ink-muted">Arena Pass: —</span>
           </div>
 
           <div id="mercenary-section" data-section="mercenary" className="flex flex-1 flex-col justify-between hud-panel ci-corners rounded-2xl p-5 md:p-6">
