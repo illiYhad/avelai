@@ -9,6 +9,29 @@ import Stat from "@/components/ui/Stat";
 import GameTag from "@/components/ui/GameTag";
 import EmptyState from "@/components/ui/EmptyState";
 import { gameFromSlug, slugOf } from "@/lib/games";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { getMyDotaAccount } from "@/lib/dota/my-account";
+import DotaPublicStatsPanel, { DotaPanelNote } from "@/components/dota/DotaPublicStatsPanel";
+
+// K-AV-PASSDOTA.2: กรอบ Dota 2 Public Match เฉพาะเจ้าของดูหน้า dota2 ของตัวเอง · คนอื่นดู = PASSDOTA.3 (ยังไม่ทำ)
+// เรียกคอมโพเนนต์แบบ async function เพื่อให้หน้าเรนเดอร์ครบในที่เดียว
+async function ownDotaSection(db: SupabaseClient, viewerId: string): Promise<React.ReactNode> {
+  const account = await getMyDotaAccount(db, viewerId);
+  if (account === "unavailable") return null;
+  if (account === "unverified") {
+    return (
+      <DotaPanelNote>
+        บัญชี Dota 2 ยังไม่ยืนยัน —{" "}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+        <a href="/link/steam/start" className="text-cyan underline">ผูกบัญชี Steam</a>
+      </DotaPanelNote>
+    );
+  }
+  if (!account) {
+    return <DotaPanelNote>ยังไม่ได้ผูกบัญชี Dota 2 — <Link href="/me" className="text-cyan underline">ไปผูกที่หน้าโปรไฟล์</Link></DotaPanelNote>;
+  }
+  return DotaPublicStatsPanel({ accountId: account.externalId });
+}
 
 // K-AV-7: Passport สาธารณะ (ผู้ล็อกอิน) — อ่านจาก view passport_v (security_invoker · เฉพาะข้อมูลสาธารณะ) + elo_history (เฉพาะแมตช์ COMPLETED)
 // Win rate คำนวณสด · ข้อมูล Dota (D1/D2 game_accounts) ไม่ปนใน ELO
@@ -36,6 +59,7 @@ export default async function PassportPage({ params }: { params: Promise<{ game:
   const { data: histRaw } = await db.from("elo_history").select("match_id, game, before, after, k, won, created_at, tournament_matches(stage, round, status, tournaments(name))").eq("user_id", userId).eq("game", code).order("created_at", { ascending: false }).limit(30);
   const hist = ((histRaw ?? []) as unknown as Hist[]).filter((h) => { const m = Array.isArray(h.tournament_matches) ? h.tournament_matches[0] : h.tournament_matches; return m?.status === "COMPLETED"; });
   const karma = rows[0].karma;
+  const dotaSection = slug === "dota2" && userId === user.id ? await ownDotaSection(db, user.id) : null;
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
@@ -65,6 +89,8 @@ export default async function PassportPage({ params }: { params: Promise<{ game:
           </Surface>
         ))}
       </section>
+
+      {dotaSection}
 
       <section className="flex flex-col gap-3">
         <h2 className="font-mono text-sm tracking-[0.2em] text-ink-muted">{"// ประวัติแมตช์"} (ล่าสุด {hist.length})</h2>
