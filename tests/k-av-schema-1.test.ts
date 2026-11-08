@@ -113,8 +113,9 @@ describe("K-AV-SCHEMA.1 · สายจริง + 216", () => {
     expect(reasonConstraint).toEqual(["karma_events_reason_check"]);
   });
 
-  it("a) แถว passes เดิมได้ ticket_quota = 1 และ tier = 'ARENA'", async () => {
-    expect(await q("SELECT ticket_quota, tier FROM public.passes")).toEqual([{ ticket_quota: 1, tier: "ARENA" }]);
+  // K-AV-SCHEMA.2: tier เปลี่ยนเป็น STANDARD/PRO ตามซอง 022 ข้อ b (เดิม 'ARENA')
+  it("a) แถว passes เดิมได้ ticket_quota = 1 และ tier = 'STANDARD'", async () => {
+    expect(await q("SELECT ticket_quota, tier FROM public.passes")).toEqual([{ ticket_quota: 1, tier: "STANDARD" }]);
     await expect(q(`UPDATE public.passes SET ticket_quota = -1`)).rejects.toThrow();
   });
 
