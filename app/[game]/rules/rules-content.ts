@@ -158,7 +158,7 @@ export const SIM = {
   totalLabel: "คะแนนรวมแมตช์นี้ (Total Score):", // :423
   pts: "PTS", // :430
   caster: "✨ ให้ AI Caster พากย์สรุปผลงานของคุณ", // :437
-  casterSoon: "เปิดใช้เร็ว ๆ นี้", // ใบ K-AV-RULES.2 ข้อ 5 (ต่อระบบใน RULES.3)
+  casterSoon: "เปิดใช้เฟสสุดท้าย", // K-AV-RULES.3 ข้อ 2: AI Caster คง disabled · AVELAi = เฟสสุดท้าย (ซอง 020)
 };
 
 // ---------- 4. #finals (:446–459) ----------
@@ -209,6 +209,6 @@ export const AVE = {
   greet2: "มีข้อสงสัยเกี่ยวกับการคิดคะแนน Killpoint, วิธีการจับคู่ Snake Draft, หรือกฎ Tie-breaker ถามฉันมาได้เลยค่ะ!", // :556 (ข้อความล้วน · ตัวเอียงอยู่ที่หน้า)
   placeholder: "พิมพ์คำถามถึง AVE ที่นี่...", // :562
   send: "ส่งคำถาม ➤", // :565
-  loginNote: "เข้าสู่ระบบเพื่อคุยกับ AVE", // ใบ K-AV-RULES.2 ข้อ 6 (ยังไม่ส่งข้อความจริง)
+  loginNote: "เข้าสู่ระบบเพื่อคุยกับ AVE", // K-AV-RULES.3: แสดงเฉพาะตอนได้ 401 (ดู ave-chat.ts)
   loginHref: "/login?next=%2Fdota2%2Frules%23ai-oracle",
 };

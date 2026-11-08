@@ -71,7 +71,7 @@ describe("K-AV-RULES.1 · ข้อความ · Snake · ไฟล์ · เ�
   it("h) snakeOrder(10) = [1,4,5,8,9] / [2,3,6,7,10]", () => {
     expect(snakeOrder(10)).toEqual([[1, 4, 5, 8, 9], [2, 3, 6, 7, 10]]);
   });
-  // K-AV-RULES.2 แก้เฉพาะข้อนี้: สี hex มีได้เฉพาะ ref-theme.ts · ELO/MMR มีได้เฉพาะประโยคต้นแบบ :252 · ห้าม fetch( · ห้าม 10px/11px
+  // K-AV-RULES.2 แก้เฉพาะข้อนี้: สี hex มีได้เฉพาะ ref-theme.ts · ELO/MMR มีได้เฉพาะประโยคต้นแบบ :252 · ห้าม fetch( (RULES.3: ยกเว้น AveBox.tsx → /api/ave/chat) · ห้าม 10px/11px
   it("i) ไฟล์ใต้ app/[game]/rules ไม่มีคำต้องห้าม · hex เฉพาะ ref-theme.ts · ELO/MMR เฉพาะประโยค RANK_01", () => {
     const dir = join(__dirname, "..", "app", "[game]", "rules");
     const files = readdirSync(dir).filter((f) => /\.(ts|tsx)$/.test(f));
@@ -79,8 +79,16 @@ describe("K-AV-RULES.1 · ข้อความ · Snake · ไฟล์ · เ�
     const ALLOWED = "ไม่ใช้ MMR/ELO ตาม RANK_01";
     for (const f of files) {
       const s = readFileSync(join(dir, f), "utf8");
-      for (const bad of [/gemini/i, /generativelanguage/i, /cdn\./i, /chart\.js/i, /fetch\(/, /text-\[10px\]/, /text-\[11px\]/]) {
+      for (const bad of [/gemini/i, /generativelanguage/i, /cdn\./i, /chart\.js/i, /text-\[10px\]/, /text-\[11px\]/]) {
         expect(bad.test(s), `${f} มี ${bad}`).toBe(false);
+      }
+      // K-AV-RULES.3: fetch( ได้เฉพาะ AveBox.tsx และต้องยิง AVE_CHAT_URL (= /api/ave/chat) เท่านั้น
+      if (f === "AveBox.tsx") {
+        const calls = s.match(/fetch\(([^,)]*)/g) ?? [];
+        expect(calls.length, f).toBeGreaterThan(0);
+        for (const c of calls) expect(c, f).toBe("fetch(AVE_CHAT_URL");
+      } else {
+        expect(/fetch\(/.test(s), `${f} มี fetch(`).toBe(false);
       }
       if (f !== "ref-theme.ts") expect(/#[0-9a-f]{6}\b/i.test(s), `${f} มีสี hex`).toBe(false);
       const rest = s.split(ALLOWED).join("");
