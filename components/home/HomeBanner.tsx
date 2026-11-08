@@ -52,7 +52,7 @@ export default function HomeBanner() {
                 alt={s.image.alt}
                 priority={i === 0}
                 sizes="(min-width: 1024px) 300px, 230px"
-                className="h-full w-auto object-contain object-bottom"
+                className={`h-full w-auto object-contain object-bottom ${s.glow === "gold" ? "drop-shadow-[0_0_24px_var(--color-gold)]" : ""}`}
               />
             </div>
             <div className="relative z-10 flex h-full max-w-full flex-col justify-center gap-3 px-6 pb-12 pt-6 sm:max-w-[58%] sm:px-10">

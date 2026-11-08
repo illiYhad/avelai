@@ -62,6 +62,13 @@ describe("b) แบนเนอร์ 2 สไลด์", () => {
     );
     expect(HOME_SLIDES[1].body).not.toContain("บาท/เดือน");
   });
+
+  it("(1b) รูป: สไลด์ 1 = AVELAi · สไลด์ ARENA PASS = AVEL (ทอง) ไม่ใช่ AVE · public มีแค่ 2 รูปนี้", () => {
+    expect(HOME_SLIDES[0].image.src).toBe("/brand/home/avelai-full-640.png");
+    expect(HOME_SLIDES[1].image.src).toBe("/brand/home/avel-half-480.png");
+    expect(HOME_SLIDES[1].glow).toBe("gold");
+    expect(readdirSync(join(root, "public", "brand", "home")).sort()).toEqual(["avel-half-480.png", "avelai-full-640.png"]);
+  });
 });
 
 // ---------- c) HomeView ----------

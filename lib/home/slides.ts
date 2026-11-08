@@ -11,6 +11,8 @@ export type HomeSlide = {
   body: string;
   cta: { label: string; href: string };
   image: { src: string; width: number; height: number; alt: string };
+  /** เงาเรืองรอบตัวละคร (สีประจำตัวละคร · AVEL = ทอง --color-gold) */
+  glow?: "gold";
 };
 
 export const HOME_SLIDES: readonly HomeSlide[] = [
@@ -33,7 +35,9 @@ export const HOME_SLIDES: readonly HomeSlide[] = [
     // "380 บาท/เดือน" → "380 บาท / 28 วัน (4 สัปดาห์)" ตามซอง ALICH-PACKET-022 ข้อ 4 (เซ็นครบ 3 คน 2026-11-08 06:20)
     body: "Arena Pass 380 บาท / 28 วัน (4 สัปดาห์) → 75% เข้ากองรางวัล (285 บาท/คน) · แบ่ง รายวัน 40% · Weekend 35% · Season/รายเดือน 25%",
     cta: { label: "ซื้อ Pass", href: routes.pass("dota2") },
-    image: { src: "/brand/home/ave-half-480.png", width: 480, height: 679, alt: "AVE (อีฟ)" },
+    // K-AV-HOME.1b: Pass = AVEL (เอเวล · ต้องซื้อ Pass · สีทอง) ไม่ใช่ AVE (ใบรวมอลิส TO_NOVA_20261108-0648 · พี่หยัด 07:38/08:0x)
+    image: { src: "/brand/home/avel-half-480.png", width: 480, height: 679, alt: "AVEL (เอเวล)" },
+    glow: "gold",
   },
 ];
 
