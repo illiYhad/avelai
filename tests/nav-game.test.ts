@@ -24,8 +24,8 @@ describe("navFor (K-AV-UX2A)", () => {
 
   it("ล็อกอิน mlbb → ทัวร์ · ทีม · Passport · เมนูบัญชีมี /me", () => {
     const m = navFor(true, "mlbb", { username: "pao" });
-    expect(m.links.map((l) => l.label)).toEqual(["ทัวร์นาเมนต์", "ทีม", "Passport"]);
-    expect(m.links.map((l) => l.href)).toEqual(["/mlbb/tournaments", "/mlbb/teams", "/mlbb/passport/pao"]);
+    expect(m.links.map((l) => l.label)).toEqual(["ทัวร์นาเมนต์", "ทีม", "กติกา", "Passport"]); // K-AV-RULES.1: เพิ่มลิงก์กติกา
+    expect(m.links.map((l) => l.href)).toEqual(["/mlbb/tournaments", "/mlbb/teams", "/mlbb/rules", "/mlbb/passport/pao"]); // K-AV-RULES.1
     expect(m.links.some((l) => l.href === "/me")).toBe(false);
     expect(m.account.map((a) => a.href)).toContain("/me");
     expect(m.account.map((a) => a.label)).not.toContain("หลังบ้าน");
@@ -33,7 +33,7 @@ describe("navFor (K-AV-UX2A)", () => {
 
   it("ล็อกอิน dota2 · ไม่มี username → ซ่อน Passport · admin เห็นหลังบ้าน", () => {
     const m = navFor(true, "dota2", { isAdmin: true });
-    expect(m.links.map((l) => l.href)).toEqual(["/dota2/tournaments", "/dota2/teams"]);
+    expect(m.links.map((l) => l.href)).toEqual(["/dota2/tournaments", "/dota2/teams", "/dota2/rules"]); // K-AV-RULES.1
     expect(m.account.map((a) => a.label)).toContain("หลังบ้าน");
   });
 
@@ -53,7 +53,7 @@ describe("navFor (K-AV-UX2A)", () => {
   });
 
   it("username มีอักขระพิเศษ → encode", () => {
-    expect(navFor(true, "mlbb", { username: "a b/c" }).links[2].href).toBe("/mlbb/passport/a%20b%2Fc");
+    expect(navFor(true, "mlbb", { username: "a b/c" }).links[3].href).toBe("/mlbb/passport/a%20b%2Fc"); // K-AV-RULES.1: Passport เลื่อนจาก [2] เป็น [3]
   });
 });
 

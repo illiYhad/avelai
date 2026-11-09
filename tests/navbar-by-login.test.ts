@@ -46,7 +46,7 @@ describe("navFor (pure)", () => {
   it("ล็อกอินแล้ว (K-AV-UX2A) → ลิงก์ใต้ /mlbb/ · มีแชทบอท", () => {
     const m = navFor(true);
     expect(m.home).toBe("/mlbb/tournaments");
-    expect(m.links.map((l) => l.href)).toEqual(["/mlbb/tournaments", "/mlbb/teams"]);
+    expect(m.links.map((l) => l.href)).toEqual(["/mlbb/tournaments", "/mlbb/teams", "/mlbb/rules"]); // K-AV-RULES.1
     expect(m.showChatbot).toBe(true);
   });
   it("ล็อกอินแล้วก็ไม่มีลิงก์ legacy", () => {

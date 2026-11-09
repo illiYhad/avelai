@@ -1,6 +1,6 @@
 "use server";
 
-// K-AV-3: ADMIN ยืนยัน/ปฏิเสธสลิป Weekly Pass — ยืนยันแล้วสร้าง pass (RLS: passes INSERT = ADMIN เท่านั้น) · idempotent
+// K-AV-3: ADMIN ยืนยัน/ปฏิเสธสลิป Arena Pass — ยืนยันแล้วสร้าง pass (RLS: passes INSERT = ADMIN เท่านั้น) · idempotent
 import { revalidatePath } from "next/cache";
 import { logAudit } from "@/lib/audit";
 import { PASS_PRICE_THB, passEndsAt } from "@/lib/passes";
@@ -34,5 +34,5 @@ export async function reviewPassPaymentAction(paymentId: string, decision: "VERI
   }
   await logAudit({ action: `PASS_PAYMENT_${decision}`, table_name: "payments", record_id: paymentId, payload: { payer: pay.payer_user_id, game: pay.pass_game, reject_reason: reject_reason || undefined }, performed_by: g.ctx.userId });
   revalidatePath("/admin/payments");
-  return { ok: true, message: decision === "VERIFIED" ? "ยืนยันแล้ว สร้าง Weekly Pass ให้ผู้ใช้แล้ว" : "ปฏิเสธสลิปแล้ว" };
+  return { ok: true, message: decision === "VERIFIED" ? "ยืนยันแล้ว สร้าง Arena Pass ให้ผู้ใช้แล้ว" : "ปฏิเสธสลิปแล้ว" };
 }

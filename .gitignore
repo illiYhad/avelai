@@ -41,3 +41,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 _checks/
+
+# supabase CLI (local dev · K-AV-DEVDB.1)
+supabase/.branches
+supabase/.temp
