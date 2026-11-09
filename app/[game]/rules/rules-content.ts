@@ -183,9 +183,9 @@ export const RISK = {
   chartTitle: "🚫 ระดับบทลงโทษและการตัดคะแนน (Penalty Severity)", // :475
   chartNote: "มาตรการ Zero Tolerance เพื่อพิทักษ์ความศักดิ์สิทธิ์ของการแข่งขัน", // :478
   workflowTitle: "🤖 กระบวนการรันระบบอัตโนมัติ (Automated Admin Workflow)", // :490
-  workflowNote: "ทีมงานไม่ต้องคีย์คะแนนด้วยมือ แต่ใช้ Discord Bot + OpenDota API ดึงข้อมูลตรง", // :493
+  workflowNote: "ทีมงานไม่ต้องคีย์คะแนนด้วยมือ แต่ใช้บอทล็อบบี้ของ AVELAi + OpenDota API ดึงข้อมูลตรง", // :493 (แก้ตาม RULES.3b)
   steps: [
-    ["Check-in & Lobby Auto-Creation", "ระบบ Discord/FACEIT Bot ตรวจสอบเช็คอิน และส่งรหัสผ่านให้ผู้เล่นอัตโนมัติ"], // :501–502
+    ["Check-in & Lobby Auto-Creation", "ระบบบอทล็อบบี้ของ AVELAi ตรวจเช็คอิน สร้างล็อบบี้ Dota 2 และส่งรหัสผ่านให้ผู้เล่นอัตโนมัติ"], // :501–502 (แก้ตาม RULES.3b)
     ["Match Ended & Webhook Trigger", "ผู้เล่นต้องกด \"Expose Public Match Data\" -> เมื่อเกมจบ สคริปต์ยิง GET Request ไปที่ OpenDota API"], // :509–510
     ["Instant Leaderboard Computation", "ระบบคำนวณ Killpoint + Role Bonus ใน 0.5 วินาที แล้วอัปเดตตาราง Leaderboard หน้าเว็บทันที"], // :517–518
   ],
