@@ -29,6 +29,18 @@ export function formatHms(remainingMs: number): string {
   return `${pad(h)}:${pad(m)}:${pad(s)}`;
 }
 
+export const DAY_UNIT = "วัน";
+const DAY_SECONDS = 86_400;
+
+/** K-AV-TOUR.1a (อลิส 2.1): เหลือ ≥ 24 ชม. → "X วัน HH:MM:SS" · < 24 ชม. → formatHms เดิม · ปัดวินาทีขึ้นเหมือน formatHms */
+export function formatCountdown(remainingMs: number): string {
+  if (!Number.isFinite(remainingMs) || remainingMs <= 0) return formatHms(remainingMs);
+  const total = Math.ceil(remainingMs / 1000);
+  if (total < DAY_SECONDS) return formatHms(remainingMs);
+  const days = Math.floor(total / DAY_SECONDS);
+  return `${days} ${DAY_UNIT} ${formatHms((total % DAY_SECONDS) * 1000)}`;
+}
+
 /** REGISTRATION/CHECK_IN = นับถอยหลัง (≤0 = กำลังจะเริ่ม) · RUNNING = กำลังแข่ง · อื่น ๆ = ป้ายสถานะอย่างเดียว */
 export function countdownView(status: string, startAt: string | null, now: number): CountdownView {
   if (status === "RUNNING") return { kind: "live" };
@@ -37,5 +49,5 @@ export function countdownView(status: string, startAt: string | null, now: numbe
   if (Number.isNaN(start)) return { kind: "unset" };
   const left = start - now;
   if (left <= 0) return { kind: "soon" };
-  return { kind: "countdown", text: formatHms(left) };
+  return { kind: "countdown", text: formatCountdown(left) };
 }

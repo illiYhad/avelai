@@ -7,7 +7,7 @@ import Link from "next/link";
 import { bracketHrefOf, primaryCta } from "@/lib/tournament/detail/cta";
 import { buildTimeline } from "@/lib/tournament/detail/timeline";
 import { serverNowMs } from "@/lib/tournament/detail/countdown";
-import { CONFIRMED_STATUSES, REGISTERED_EXCLUDE, TEAM_LOGO_LIMIT, toTeamChips } from "@/lib/tournament/detail/teams";
+import { CONFIRMED_STATUSES, REGISTERED_EXCLUDE, STAFF_ROLES, TEAM_LOGO_LIMIT, toTeamChips } from "@/lib/tournament/detail/teams";
 import TournamentHero from "@/components/tournament/detail/TournamentHero";
 import Timeline from "@/components/tournament/detail/Timeline";
 import TeamsPanel from "@/components/tournament/detail/TeamsPanel";
@@ -40,6 +40,18 @@ export async function generateMetadata({ params }: { params: Promise<{ game: str
   }
 }
 
+type ServerDb = NonNullable<Awaited<ReturnType<typeof getServerDb>>>;
+// K-AV-TOUR.1a: ผู้จัดของทัวร์ (organizer_id) · is_tournament_staff (รวมผู้จัด) · is_admin — ไม่ล็อกอิน = false โดยไม่ยิง rpc
+async function canSeeAllRegistrations(db: ServerDb, tournamentId: string, organizerId: string | null, userId: string | null): Promise<boolean> {
+  if (!userId) return false;
+  if (organizerId && organizerId === userId) return true;
+  const [admin, staff] = await Promise.all([
+    db.rpc("is_admin"),
+    db.rpc("is_tournament_staff", { p_tournament_id: tournamentId, p_roles: [...STAFF_ROLES] }),
+  ]);
+  return (!admin.error && admin.data === true) || (!staff.error && staff.data === true);
+}
+
 export default async function TournamentDetailPage({ params }: { params: Promise<{ game: string; id: string }> }) {
   const { game, id } = await params;
   const code = gameFromSlug(game);
@@ -47,16 +59,21 @@ export default async function TournamentDetailPage({ params }: { params: Promise
   const slug = slugOf(code);
   const db = await getServerDb();
   if (!db) return <main className="px-6 py-10 text-base text-ink-muted">ยังไม่ต่อฐานข้อมูล</main>;
-  const { data: t } = await db.from("tournaments").select("id, name, game, format, team_size, best_of, status, reg_open_at, reg_close_at, check_in_minutes, start_at, max_teams, entry_type, entry_fee_thb, rules").eq("id", id).maybeSingle();
+  const { data: t } = await db.from("tournaments").select("id, name, game, format, team_size, best_of, status, reg_open_at, reg_close_at, check_in_minutes, start_at, max_teams, entry_type, entry_fee_thb, rules, organizer_id").eq("id", id).maybeSingle();
   if (!t || t.game !== code) notFound(); // K-AV-UX2B: id ของอีกเกม = 404
-  const [{ data: auth }, { count }, { count: registeredCount }, { data: teamRows }] = await Promise.all([
+  const [{ data: auth }, { count }, { count: registeredCount }, { data: teamRows }, { data: organizerRow }] = await Promise.all([
     db.auth.getUser(),
     db.from("registrations").select("id", { count: "exact", head: true }).eq("tournament_id", id).in("status", [...CONFIRMED_STATUSES]),
     // K-AV-TOUR.1 คำขอใหม่ 1/2: สมัครแล้ว = ทุกสถานะยกเว้น WITHDRAWN (RLS เดิม · คนนอกทีมเห็น 0)
     db.from("registrations").select("id", { count: "exact", head: true }).eq("tournament_id", id).neq("status", REGISTERED_EXCLUDE),
     // K-AV-TOUR.1 คำขอใหม่ 2/2: ชื่อ/ตัวย่อ/โลโก้ทีมเฉพาะแถวที่ RLS เดิมให้อ่าน · สูงสุด 8
     db.from("registrations").select("status, teams(name, tag, logo_url)").eq("tournament_id", id).neq("status", REGISTERED_EXCLUDE).order("created_at", { ascending: true }).limit(TEAM_LOGO_LIMIT),
+    // K-AV-TOUR.1a คำขอใหม่: ชื่อผู้จัดจาก public_profiles_v (อ่านอย่างเดียว · อ่านไม่ได้ = AVELAi Official)
+    t.organizer_id ? db.from("public_profiles_v").select("username").eq("id", t.organizer_id).maybeSingle() : Promise.resolve({ data: null }),
   ]);
+  // K-AV-TOUR.1a (อลิส 2.3): ตัวเลขจริงเฉพาะผู้จัด · staff/referee · admin (RLS ให้อ่านใบสมัครทั้งทัวร์) · rpc ผิดพลาด = ไม่มีสิทธิ์
+  const canSeeCounts = await canSeeAllRegistrations(db, id, t.organizer_id ?? null, auth.user?.id ?? null);
+  const organizerName = typeof organizerRow?.username === "string" && organizerRow.username.trim() ? organizerRow.username.trim() : null;
   const status = t.status as TournamentStatus;
   const loggedIn = Boolean(auth.user);
   const serverNow = serverNowMs();
@@ -64,7 +81,7 @@ export default async function TournamentDetailPage({ params }: { params: Promise
   const bracketHref = bracketHrefOf(t.format, slug, id);
   const hasBracket = status === "RUNNING" || status === "COMPLETED" || status === "SEEDING";
   const teams = toTeamChips(teamRows);
-  const teamsProps = { registered: registeredCount ?? 0, confirmed: count ?? 0, maxTeams: t.max_teams ?? null, teams, loggedIn };
+  const teamsProps = { registered: registeredCount ?? 0, confirmed: count ?? 0, maxTeams: t.max_teams ?? null, teams, canSeeCounts, status };
   const empty = (text: string) => <p className="py-6 text-center text-sm text-ink-muted">{text}</p>;
 
   const overview = (
@@ -103,7 +120,7 @@ export default async function TournamentDetailPage({ params }: { params: Promise
   ];
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
+    <main data-detail-main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pb-24 pt-8 sm:px-6 md:pb-8">
       <TournamentHero
         slug={slug}
         name={t.name}
@@ -113,7 +130,7 @@ export default async function TournamentDetailPage({ params }: { params: Promise
         teamSize={t.team_size}
         startAt={t.start_at}
         serverNow={serverNow}
-        organizer={null}
+        organizer={organizerName}
         cta={cta}
       />
       <Timeline points={buildTimeline(t, serverNow)} />

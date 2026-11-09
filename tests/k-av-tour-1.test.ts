@@ -5,9 +5,10 @@ import { createElement } from "react";
 import { renderToString } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildTimeline, checkInOpensAt, TIMELINE_UNSET, fmtBangkok, type TimelineInput } from "@/lib/tournament/detail/timeline";
-import { countdownView, formatHms } from "@/lib/tournament/detail/countdown";
+import { countdownView, formatCountdown, formatHms } from "@/lib/tournament/detail/countdown";
 import { primaryCta } from "@/lib/tournament/detail/cta";
-import { LOGIN_TO_SEE_TEAMS, teamsNote, toTeamChips } from "@/lib/tournament/detail/teams";
+import { COUNTS_HIDDEN_OPEN, countCells, toTeamChips } from "@/lib/tournament/detail/teams";
+import { ORGANIZER_FALLBACK } from "@/components/tournament/detail/TournamentHero";
 import TeamsPanel from "@/components/tournament/detail/TeamsPanel";
 
 // ---------- mock db ----------
@@ -19,12 +20,17 @@ const state = {
   confirmed: 0,
   registered: 0,
   teamRows: [] as unknown[],
+  profile: null as { username: unknown } | null,
+  rpc: {} as Record<string, unknown>,
+  rpcError: null as unknown,
+  rpcCalls: [] as [string, unknown][],
 };
 function builder(table: string) {
   const c: Call = { table, eq: [], in: [], neq: [] };
   state.calls.push(c);
   const resolve = () => {
     if (table === "tournaments") return { data: state.tournament, error: null };
+    if (table === "public_profiles_v") return { data: state.profile, error: null };
     if (c.opts?.head) return { count: c.in.length ? state.confirmed : state.registered, data: null, error: null };
     return { data: state.teamRows, error: null };
   };
@@ -41,7 +47,10 @@ function builder(table: string) {
   return b;
 }
 vi.mock("@/lib/db/server", () => ({
-  getServerDb: async () => ({ from: (t: string) => builder(t), auth: { getUser: async () => ({ data: { user: state.user } }) } }),
+  getServerDb: async () => ({
+    from: (t: string) => builder(t),
+    rpc: async (fn: string, args?: unknown) => { state.rpcCalls.push([fn, args]); return state.rpcError ? { data: null, error: state.rpcError } : { data: state.rpc[fn] ?? false, error: null }; },
+    auth: { getUser: async () => ({ data: { user: state.user } }) } }),
 }));
 vi.mock("next/navigation", () => ({ notFound: () => { throw new Error("NOT_FOUND"); } }));
 
@@ -51,10 +60,12 @@ const H = 3_600_000;
 const NOW = Date.parse("2026-11-10T12:00:00Z");
 const iso = (offsetMs: number) => new Date(NOW + offsetMs).toISOString();
 const TOUR_ID = "c1000000-0000-4000-8000-000000000001";
-const ORIGINAL_SELECT = "id, name, game, format, team_size, best_of, status, reg_open_at, reg_close_at, check_in_minutes, start_at, max_teams, entry_type, entry_fee_thb, rules";
+const ORIGINAL_SELECT = "id, name, game, format, team_size, best_of, status, reg_open_at, reg_close_at, check_in_minutes, start_at, max_teams, entry_type, entry_fee_thb, rules, organizer_id";
+const ORGANIZER_ID = "a1000000-0000-4000-8000-000000000001";
+const PLAYER_ID = "a2000000-0000-4000-8000-000000000002";
 
 function tour(status: string, extra: Record<string, unknown> = {}) {
-  return { id: TOUR_ID, name: `[TEST] ${status}`, game: "DOTA2", format: "SE", team_size: 5, best_of: 1, status, reg_open_at: iso(-48 * H), reg_close_at: iso(2 * H), check_in_minutes: 30, start_at: iso(3 * H), max_teams: 8, entry_type: "FREE", entry_fee_thb: 0, rules: null, ...extra };
+  return { id: TOUR_ID, name: `[TEST] ${status}`, game: "DOTA2", format: "SE", team_size: 5, best_of: 1, status, reg_open_at: iso(-48 * H), reg_close_at: iso(2 * H), check_in_minutes: 30, start_at: iso(3 * H), max_teams: 8, entry_type: "FREE", entry_fee_thb: 0, rules: null, organizer_id: ORGANIZER_ID, ...extra };
 }
 async function renderPage() {
   const { default: Page } = await import("@/app/[game]/tournaments/[id]/page");
@@ -69,6 +80,10 @@ beforeEach(() => {
   state.confirmed = 0;
   state.registered = 0;
   state.teamRows = [];
+  state.profile = null;
+  state.rpc = {};
+  state.rpcError = null;
+  state.rpcCalls = [];
 });
 
 describe("K-AV-TOUR.1", () => {
@@ -123,6 +138,16 @@ describe("K-AV-TOUR.1", () => {
       expect(formatHms(49 * H)).toBe("49:00:00");
       expect(formatHms(1500)).toBe("00:00:02");
     });
+    it("TOUR.1a formatCountdown: ≥ 24 ชม. = X วัน HH:MM:SS · < 24 ชม. เดิม · ≤ 0", () => {
+      expect(formatCountdown(24 * H)).toBe("1 วัน 00:00:00");
+      expect(formatCountdown(47 * H + 58 * 60_000 + 17_000)).toBe("1 วัน 23:58:17");
+      expect(formatCountdown(3 * 24 * H + 5_000)).toBe("3 วัน 00:00:05");
+      expect(formatCountdown(24 * H - 1000)).toBe("23:59:59");
+      expect(formatCountdown(3 * H + 4 * 60_000 + 5_000)).toBe("03:04:05");
+      expect(formatCountdown(0)).toBe("00:00:00");
+      expect(countdownView("REGISTRATION", iso(49 * H), NOW)).toEqual({ kind: "countdown", text: "2 วัน 01:00:00" });
+      expect(countdownView("REGISTRATION", iso(0), NOW)).toEqual({ kind: "soon" });
+    });
     it("countdownView ตามสถานะ · ≤0 = กำลังจะเริ่ม", () => {
       expect(countdownView("REGISTRATION", iso(H), NOW)).toEqual({ kind: "countdown", text: "01:00:00" });
       expect(countdownView("CHECK_IN", iso(0), NOW)).toEqual({ kind: "soon" });
@@ -168,11 +193,42 @@ describe("K-AV-TOUR.1", () => {
     });
   });
 
+  describe("TOUR.1a ชื่อผู้จัด · ที่ว่างล่าง", () => {
+    it("username จาก public_profiles_v · ว่าง/อ่านไม่ได้/ไม่มี organizer_id = AVELAi Official", async () => {
+      expect(ORGANIZER_FALLBACK).toBe("AVELAi Official");
+      state.tournament = tour("REGISTRATION");
+      state.profile = { username: "organizer_test" };
+      let html = await renderPage();
+      expect(html).toContain(">organizer_test<");
+      const prof = state.calls.find((c) => c.table === "public_profiles_v");
+      expect(prof?.select).toBe("username");
+      expect(prof?.eq).toEqual([["id", ORGANIZER_ID]]);
+      for (const p of [null, { username: "  " }, { username: null }]) {
+        state.profile = p;
+        html = await renderPage();
+        expect(html).toContain(">AVELAi Official<");
+      }
+      state.calls = [];
+      state.tournament = tour("REGISTRATION", { organizer_id: null });
+      html = await renderPage();
+      expect(html).toContain(">AVELAi Official<");
+      expect(state.calls.some((c) => c.table === "public_profiles_v")).toBe(false);
+    });
+    it("<main> เว้นล่าง ≥ 88px บนจอ < 768px (pb-24 = 96px · md:pb-8) — ไม่แตะ AVEChatbot", async () => {
+      state.tournament = tour("REGISTRATION");
+      const html = await renderPage();
+      const main = html.match(/<main[^>]*data-detail-main[^>]*>/)?.[0] ?? "";
+      expect(main).toMatch(/\bpb-24\b/);
+      expect(main).toMatch(/\bmd:pb-8\b/);
+    });
+  });
+
   // ---------- d) กล่องจำนวน ----------
   describe("d) กล่องจำนวน", () => {
     it("query สมัครแล้ว = ≠ WITHDRAWN · ยืนยัน = CONFIRMED + CHECKED_IN · ตัวเลขขึ้นตรง", async () => {
       state.tournament = tour("REGISTRATION");
-      state.user = { id: "a2000000-0000-4000-8000-000000000002" };
+      state.user = { id: PLAYER_ID };
+      state.rpc = { is_tournament_staff: true };
       state.registered = 3;
       state.confirmed = 2;
       state.teamRows = [{ status: "CONFIRMED", teams: { name: "[TEST] Team Alpha", tag: "TTA", logo_url: null } }];
@@ -187,17 +243,50 @@ describe("K-AV-TOUR.1", () => {
       expect(html).toMatch(/data-count="ยืนยันแล้ว"[^>]*>2</);
       expect(html).toMatch(/data-count="ช่อง"[^>]*>8</);
       expect(html).toContain(">TTA<");
-      expect(html).not.toContain(LOGIN_TO_SEE_TEAMS);
+      expect(html).not.toContain("เข้าสู่ระบบเพื่อดูจำนวนทีม");
     });
-    it("ไม่ล็อกอิน + 0/0 → ป้าย · ล็อกอิน 0/0 → ไม่มีป้าย · max null = –", () => {
-      expect(teamsNote(false, 0, 0)).toBe(LOGIN_TO_SEE_TEAMS);
-      expect(teamsNote(true, 0, 0)).toBeNull();
-      expect(teamsNote(false, 1, 0)).toBeNull();
-      const anon = renderToString(createElement(TeamsPanel, { registered: 0, confirmed: 0, maxTeams: null, teams: [], loggedIn: false }));
-      expect(anon).toContain(LOGIN_TO_SEE_TEAMS);
-      expect(anon).toMatch(/data-count="ช่อง"[^>]*>–</);
-      const authed = renderToString(createElement(TeamsPanel, { registered: 0, confirmed: 0, maxTeams: 8, teams: [], loggedIn: true }));
-      expect(authed).not.toContain(LOGIN_TO_SEE_TEAMS);
+    it("TOUR.1a ไม่มีสิทธิ์ (ไม่ล็อกอิน · สมาชิกทีม) → ไม่มีเลขในสมัครแล้ว/ยืนยันแล้ว · ขึ้น เปิดรับสมัคร · ช่อง = เลขจริง", async () => {
+      for (const user of [null, { id: PLAYER_ID }]) {
+        state.tournament = tour("REGISTRATION");
+        state.user = user;
+        state.registered = 1; // RLS ตัดเหลือแถวทีมตัวเอง — ห้ามโชว์
+        state.confirmed = 0;
+        state.rpcCalls = [];
+        const html = await renderPage();
+        expect(html).toMatch(new RegExp(`data-count="สมัครแล้ว"[^>]*>${COUNTS_HIDDEN_OPEN}<`));
+        expect(html).toMatch(new RegExp(`data-count="ยืนยันแล้ว"[^>]*>${COUNTS_HIDDEN_OPEN}<`));
+        expect(html).not.toMatch(/data-count="(สมัครแล้ว|ยืนยันแล้ว)"[^>]*>\d/);
+        expect(html).toMatch(/data-count="ช่อง"[^>]*>8</);
+        expect(html).not.toContain("เข้าสู่ระบบเพื่อดูจำนวนทีม");
+        // ไม่ล็อกอิน = ไม่ยิง rpc · ล็อกอิน = is_admin + is_tournament_staff(REFEREE, STAFF)
+        expect(state.rpcCalls.map((c) => c[0]).sort()).toEqual(user ? ["is_admin", "is_tournament_staff"] : []);
+        if (user) expect(state.rpcCalls.find((c) => c[0] === "is_tournament_staff")?.[1]).toEqual({ p_tournament_id: TOUR_ID, p_roles: ["REFEREE", "STAFF"] });
+      }
+    });
+    it("TOUR.1a ผู้จัด (organizer_id) · admin → ตัวเลขจริง · rpc error = ไม่มีสิทธิ์", async () => {
+      state.tournament = tour("REGISTRATION");
+      state.registered = 3;
+      state.confirmed = 2;
+      state.user = { id: ORGANIZER_ID };
+      let html = await renderPage();
+      expect(html).toMatch(/data-count="สมัครแล้ว"[^>]*>3</);
+      expect(state.rpcCalls).toEqual([]);
+      state.user = { id: PLAYER_ID };
+      state.rpc = { is_admin: true };
+      html = await renderPage();
+      expect(html).toMatch(/data-count="ยืนยันแล้ว"[^>]*>2</);
+      state.rpc = { is_admin: true, is_tournament_staff: true };
+      state.rpcError = { message: "permission denied" };
+      html = await renderPage();
+      expect(html).toMatch(new RegExp(`data-count="สมัครแล้ว"[^>]*>${COUNTS_HIDDEN_OPEN}<`));
+    });
+    it("countCells: สถานะอื่น = – · max null = – · แท็บทีมกติกาเดียวกัน", () => {
+      expect(countCells({ canSeeCounts: false, status: "RUNNING", registered: 0, confirmed: 0, maxTeams: 8 }).map((c) => c.value)).toEqual(["–", "–", "8"]);
+      expect(countCells({ canSeeCounts: false, status: "CHECK_IN", registered: 0, confirmed: 0, maxTeams: null }).map((c) => c.value)).toEqual([COUNTS_HIDDEN_OPEN, COUNTS_HIDDEN_OPEN, "–"]);
+      expect(countCells({ canSeeCounts: true, status: "RUNNING", registered: 0, confirmed: 0, maxTeams: 8 }).map((c) => c.value)).toEqual(["0", "0", "8"]);
+      const list = renderToString(createElement(TeamsPanel, { registered: 0, confirmed: 0, maxTeams: 8, teams: [], canSeeCounts: false, status: "REGISTRATION", variant: "list" }));
+      expect(list).toMatch(new RegExp(`data-count="สมัครแล้ว"[^>]*>${COUNTS_HIDDEN_OPEN}<`));
+      expect(list).not.toMatch(/data-count="(สมัครแล้ว|ยืนยันแล้ว)"[^>]*>0</);
     });
     it("toTeamChips: teams object/array/null · สูงสุด 8", () => {
       const rows = Array.from({ length: 10 }, (_, i) => ({ teams: i % 2 ? [{ name: `T${i}`, tag: `G${i}`, logo_url: null }] : { name: `T${i}`, tag: `G${i}`, logo_url: "https://x/l.png" } }));
@@ -257,7 +346,8 @@ describe("K-AV-TOUR.1", () => {
       expect(state.calls[0].select).toBe(ORIGINAL_SELECT);
       expect(state.calls[0].eq).toEqual([["id", TOUR_ID]]);
       expect(tables.filter((t) => t === "registrations")).toHaveLength(3);
-      expect(new Set(tables)).toEqual(new Set(["tournaments", "registrations"]));
+      expect(new Set(tables)).toEqual(new Set(["tournaments", "registrations", "public_profiles_v"]));
+      expect(tables.filter((t) => t === "public_profiles_v")).toHaveLength(1);
       const list = state.calls.find((c) => c.select?.includes("teams("));
       expect(list?.select).toBe("status, teams(name, tag, logo_url)");
       expect(list?.limit).toBe(8);

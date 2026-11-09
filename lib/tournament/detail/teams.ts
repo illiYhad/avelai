@@ -1,11 +1,15 @@
 // K-AV-TOUR.1: กล่องจำนวนทีม (pure)
 // สมัครแล้ว = registrations ที่ status ≠ WITHDRAWN · ยืนยันแล้ว = CONFIRMED + CHECKED_IN (ตัวนับเดิมของหน้า)
-// RLS registrations_read (140) ให้อ่านได้เฉพาะสมาชิกทีม/staff/admin → คนทั่วไปเห็น 0 · ไม่แก้ RLS ในใบนี้ (รอ TOUR.1b)
+// RLS registrations_read (140) ให้อ่านได้เฉพาะสมาชิกทีม (แถวทีมตัวเอง)/staff/admin → คนทั่วไปเห็น 0 · ไม่แก้ RLS
+// K-AV-TOUR.1a (อลิส 2.3): ตัวเลขจริงเฉพาะผู้ที่ RLS ให้อ่านใบสมัครทั้งทัวร์ (ผู้จัด · staff/referee · admin)
+//   คนอื่น: สมัครแล้ว/ยืนยันแล้ว = "เปิดรับสมัคร" (REGISTRATION/CHECK_IN) หรือ "–" · ช่อง = max_teams จริงเสมอ
 
 export const REGISTERED_EXCLUDE = "WITHDRAWN";
 export const CONFIRMED_STATUSES = ["CONFIRMED", "CHECKED_IN"] as const;
 export const TEAM_LOGO_LIMIT = 8;
-export const LOGIN_TO_SEE_TEAMS = "เข้าสู่ระบบเพื่อดูจำนวนทีม";
+export const COUNTS_HIDDEN_OPEN = "เปิดรับสมัคร";
+export const COUNTS_HIDDEN_OTHER = "–";
+export const STAFF_ROLES = ["REFEREE", "STAFF"] as const;
 
 export interface TeamChip {
   name: string;
@@ -13,9 +17,22 @@ export interface TeamChip {
   logo_url: string | null;
 }
 
-/** ป้ายใต้กล่อง: ไม่ล็อกอิน และ สมัครแล้ว = ยืนยันแล้ว = 0 เท่านั้น */
-export function teamsNote(loggedIn: boolean, registered: number, confirmed: number): string | null {
-  return !loggedIn && registered === 0 && confirmed === 0 ? LOGIN_TO_SEE_TEAMS : null;
+export interface CountCell {
+  label: "สมัครแล้ว" | "ยืนยันแล้ว" | "ช่อง";
+  value: string;
+  /** true = ตัวเลขจริง · false = ข้อความแทนตัวเลข */
+  numeric: boolean;
+}
+
+/** ค่าในกล่องจำนวน 3 ช่อง — ไม่มีสิทธิ์ดูทั้งทัวร์ = ไม่แสดงตัวเลขที่ RLS ตัดมา (กัน 0 ที่ไม่จริง) */
+export function countCells(input: { canSeeCounts: boolean; status: string; registered: number; confirmed: number; maxTeams: number | null }): CountCell[] {
+  const hidden = input.status === "REGISTRATION" || input.status === "CHECK_IN" ? COUNTS_HIDDEN_OPEN : COUNTS_HIDDEN_OTHER;
+  const v = (n: number) => (input.canSeeCounts ? { value: String(n), numeric: true } : { value: hidden, numeric: false });
+  return [
+    { label: "สมัครแล้ว", ...v(input.registered) },
+    { label: "ยืนยันแล้ว", ...v(input.confirmed) },
+    { label: "ช่อง", value: input.maxTeams ? String(input.maxTeams) : "–", numeric: Boolean(input.maxTeams) },
+  ];
 }
 
 /** แถว registrations → teams(name, tag, logo_url) ที่อ่านได้ (teams อาจเป็น object/array/null ตาม PostgREST) */

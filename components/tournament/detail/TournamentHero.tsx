@@ -8,7 +8,7 @@ import GameTag from "@/components/ui/GameTag";
 import { tournamentBadge } from "@/lib/tournament/badge";
 import Countdown from "./Countdown";
 
-export const ORGANIZER_FALLBACK = "ผู้จัด";
+export const ORGANIZER_FALLBACK = "AVELAi Official"; // K-AV-TOUR.1a (อลิส 2.4)
 
 export default function TournamentHero({
   slug, name, status, format, bestOf, teamSize, startAt, serverNow, organizer, cta,

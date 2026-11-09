@@ -1,6 +1,6 @@
 // K-AV-TOUR.1: กล่องจำนวน "สมัครแล้ว / ยืนยันแล้ว / ช่อง" + โลโก้ทีม (เฉพาะแถวที่ RLS เดิมให้อ่าน · สูงสุด 8)
 // variant summary = กล่องข้างหน้า (เป้าทัวร์สอนใช้) · list = เนื้อแท็บ "ทีม"
-import { initialsOf, teamsNote, type TeamChip } from "@/lib/tournament/detail/teams";
+import { countCells, initialsOf, type TeamChip } from "@/lib/tournament/detail/teams";
 
 function Logo({ team }: { team: TeamChip }) {
   if (team.logo_url) {
@@ -16,29 +16,27 @@ function Logo({ team }: { team: TeamChip }) {
 }
 
 export default function TeamsPanel({
-  registered, confirmed, maxTeams, teams, loggedIn, variant = "summary",
+  registered, confirmed, maxTeams, teams, canSeeCounts, status, variant = "summary",
 }: {
   registered: number;
   confirmed: number;
   maxTeams: number | null;
   teams: TeamChip[];
-  loggedIn: boolean;
+  /** K-AV-TOUR.1a: ผู้จัด · staff/referee · admin เท่านั้น */
+  canSeeCounts: boolean;
+  status: string;
   variant?: "summary" | "list";
 }) {
-  const note = teamsNote(loggedIn, registered, confirmed);
-  const cells: { label: string; value: string; tone: string }[] = [
-    { label: "สมัครแล้ว", value: String(registered), tone: "text-ink" },
-    { label: "ยืนยันแล้ว", value: String(confirmed), tone: "text-cyan" },
-    { label: "ช่อง", value: maxTeams ? String(maxTeams) : "–", tone: "text-gold" },
-  ];
+  const tones = { "สมัครแล้ว": "text-ink", "ยืนยันแล้ว": "text-cyan", "ช่อง": "text-gold" } as const;
+  const cells = countCells({ canSeeCounts, status, registered, confirmed, maxTeams });
   return (
     <section {...(variant === "summary" ? { "data-tour": "teams" } : {})} data-teams-panel={variant} className="hud-panel ci-corners relative rounded-xl p-4 sm:p-5">
       <h2 className="mb-3 font-mono text-sm tracking-[0.2em] text-ink-muted">{"// ทีม"}</h2>
       <dl className="grid grid-cols-3 gap-2 text-center">
         {cells.map((c) => (
-          <div key={c.label} className="rounded-lg border border-line bg-white/[0.02] px-2 py-2.5">
+          <div key={c.label} className="rounded-lg border border-line bg-white/[0.02] px-1 py-2.5">
             <dt className="text-xs text-ink-muted">{c.label}</dt>
-            <dd data-count={c.label} className={`font-mono text-2xl font-semibold tabular-nums ${c.tone}`}>{c.value}</dd>
+            <dd data-count={c.label} className={c.numeric ? `font-mono text-2xl font-semibold tabular-nums ${tones[c.label]}` : `whitespace-nowrap text-xs font-semibold leading-8 ${tones[c.label]}`}>{c.value}</dd>
           </div>
         ))}
       </dl>
@@ -59,7 +57,6 @@ export default function TeamsPanel({
           </ul>
         )
       ) : null}
-      {note ? <p data-teams-note className="mt-3 text-xs text-ink-muted">{note}</p> : null}
     </section>
   );
 }
