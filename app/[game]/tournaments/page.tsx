@@ -51,6 +51,7 @@ export default async function TournamentsPage({ params }: { params: Promise<{ ga
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
       <TournamentHub viewer={viewer} showLinkGame={code === "DOTA2" && viewer !== null} />
       <PageHeader eyebrow="// TOURNAMENTS" title="ทัวร์นาเมนต์" subtitle={`รายการแข่งของ ${gameLabel(code)}`} aside={<GameTag game={slug} />} />
+      <Link href={routes.rules(slug)} className="self-start text-sm text-cyan underline">กติกา Ultimate Solo</Link>
       {!db ? <p className="text-base text-ink-muted">ยังไม่ต่อฐานข้อมูล</p> : rows.length === 0 ? (
         <EmptyState message={`ยังไม่มีทัวร์ของ ${gameLabel(code)}`} />
       ) : (
