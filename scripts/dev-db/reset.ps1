@@ -34,7 +34,9 @@ $MigrationFiles = @(
   'supabase/migrations/212_platform_organizer_super_admin.sql',
   'supabase/migrations/213_game_accounts_mlbb_steam.sql',
   'supabase/migrations/214_match_rooms_rosters_drafts.sql',
-  'supabase/migrations/215_drop_legacy_draft_tables.sql'
+  'supabase/migrations/215_drop_legacy_draft_tables.sql',
+  'supabase/migrations/216_phase1_tickets_predictions_items.sql',
+  'supabase/migrations/217_free_agents_invitations_memberships.sql'
 )
 $SeedFile = 'supabase/dev/seed_dev.sql'
 
