@@ -4,7 +4,7 @@ import { gameLabel } from "@/lib/games";
 import { reviewPassPaymentAction } from "./actions";
 import { PassReview } from "./AdminPaymentsClient";
 
-// K-AV-3: ADMIN ตรวจสลิป Weekly Pass ที่รออยู่ (signed URL ≤ 10 นาที)
+// K-AV-3: ADMIN ตรวจสลิป Arena Pass ที่รออยู่ (signed URL ≤ 10 นาที)
 export const metadata = { title: "ตรวจสลิป Pass — AVELAi" };
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,7 @@ export default async function AdminPaymentsPage() {
   }));
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col gap-6 px-6 py-10">
-      <h1 className="font-display text-2xl text-gold">ตรวจสลิป Weekly Pass (ADMIN)</h1>
+      <h1 className="font-display text-2xl text-gold">ตรวจสลิป Arena Pass (ADMIN)</h1>
       {rows.length === 0 ? <p className="text-sm text-white/60">ไม่มีสลิปที่รอตรวจ</p> : rows.map((p) => (
         <section key={p.id} className="flex flex-col gap-2 rounded border border-white/15 p-4 text-sm">
           <p><b>{p.username}</b> · {gameLabel(p.pass_game)} · <span className="font-numeric">{Number(p.amount_thb).toLocaleString("th-TH")} บาท</span> · {new Date(p.created_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}</p>

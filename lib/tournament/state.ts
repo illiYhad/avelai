@@ -42,7 +42,7 @@ export const FORMAT_LABEL: Record<TournamentFormat, string> = { SWISS: "Swiss", 
 
 export const ENTRY_TYPES = ["FREE", "WEEKLY_PASS", "PAID"] as const;
 export type EntryType = (typeof ENTRY_TYPES)[number];
-export const ENTRY_LABEL: Record<EntryType, string> = { FREE: "ฟรี", WEEKLY_PASS: "ใช้ Weekly Pass", PAID: "จ่ายค่าเข้า" };
+export const ENTRY_LABEL: Record<EntryType, string> = { FREE: "ฟรี", WEEKLY_PASS: "ใช้ Arena Pass", PAID: "จ่ายค่าเข้า" };
 
 export const REGISTRATION_STATUSES = ["PENDING_PAYMENT", "CONFIRMED", "CHECKED_IN", "WITHDRAWN", "REJECTED"] as const;
 export type RegistrationStatus = (typeof REGISTRATION_STATUSES)[number];

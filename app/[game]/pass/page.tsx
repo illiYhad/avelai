@@ -9,8 +9,8 @@ import { PassSlipForm } from "./PassClient";
 import { routes } from "@/lib/routes";
 import { notFound } from "next/navigation";
 
-// K-AV-3: ซื้อ Weekly Pass — QR PromptPay ของแพลตฟอร์มจาก env PLATFORM_PROMPTPAY_ID (ไม่มี = "ยังไม่เปิดขาย Pass")
-export const metadata = { title: "Weekly Pass — AVELAi" };
+// K-AV-3: ซื้อ Arena Pass (เดิมชื่อ Weekly Pass · K-AV-PASS.1) — QR PromptPay ของแพลตฟอร์มจาก env PLATFORM_PROMPTPAY_ID (ไม่มี = "ยังไม่เปิดขาย Pass")
+export const metadata = { title: "Arena Pass — AVELAi" };
 export const dynamic = "force-dynamic";
 
 const thai = (iso: string) => new Date(iso).toLocaleString("th-TH", { timeZone: "Asia/Bangkok", dateStyle: "medium" });
@@ -33,8 +33,8 @@ export default async function PassPage({ params }: { params: Promise<{ game: str
   const pending = (pays ?? []).find((p) => p.status === "PENDING");
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col gap-6 px-6 py-10">
-      <h1 className="font-display text-2xl tracking-[0.15em] text-gold">WEEKLY PASS</h1>
-      <p className="text-sm text-white/80">{PASS_PRICE_THB} บาท · ใช้สมัครทัวร์แบบ Weekly Pass ของเกมที่เลือกได้ {PASS_DAYS} วัน · เงินรางวัลรายสัปดาห์ (จากยอด Pass ที่ยืนยันแล้ว) ≈ <span className="font-numeric">{pool.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</span> บาท</p>
+      <h1 className="font-display text-2xl tracking-[0.15em] text-gold">ARENA PASS</h1>
+      <p className="text-sm text-white/80">{PASS_PRICE_THB} บาท / {PASS_DAYS} วัน (4 สัปดาห์) · ใช้สมัครทัวร์ที่ใช้ Pass ของเกมที่เลือก · 75% ของยอด Pass เข้ากองรางวัล (รายวัน 40% · Weekend 35% · Season/รายเดือน 25%) · เงินรางวัลรายสัปดาห์ (จากยอด Pass ที่ยืนยันแล้ว) ≈ <span className="font-numeric">{pool.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</span> บาท</p>
 
       <section className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold text-white/90">Pass ของฉัน</h2>
