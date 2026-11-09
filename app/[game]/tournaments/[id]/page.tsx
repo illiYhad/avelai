@@ -1,19 +1,22 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getServerDb } from "@/lib/db/server";
 import { gameLabel, gameFromSlug, slugOf } from "@/lib/games";
 import { ENTRY_LABEL, FORMAT_LABEL, type EntryType, type TournamentFormat, type TournamentStatus } from "@/lib/tournament/state";
-import { routes } from "@/lib/routes";
-import PageHeader from "@/components/ui/PageHeader";
-import Surface from "@/components/ui/Surface";
-import StatusBadge from "@/components/ui/StatusBadge";
-import Stat from "@/components/ui/Stat";
-import GameTag from "@/components/ui/GameTag";
-import { tournamentBadge } from "@/lib/tournament/badge";
+import Link from "next/link";
+import { bracketHrefOf, primaryCta } from "@/lib/tournament/detail/cta";
+import { buildTimeline } from "@/lib/tournament/detail/timeline";
+import { serverNowMs } from "@/lib/tournament/detail/countdown";
+import { CONFIRMED_STATUSES, REGISTERED_EXCLUDE, TEAM_LOGO_LIMIT, toTeamChips } from "@/lib/tournament/detail/teams";
+import TournamentHero from "@/components/tournament/detail/TournamentHero";
+import Timeline from "@/components/tournament/detail/Timeline";
+import TeamsPanel from "@/components/tournament/detail/TeamsPanel";
+import DetailTabs from "@/components/tournament/detail/DetailTabs";
+import FirstVisitTour from "@/components/tournament/detail/FirstVisitTour";
 
 // K-AV-3: รายละเอียดทัวร์ (สาธารณะ) — ไม่แสดง promptpay_id ของผู้จัดที่นี่ (เห็นเฉพาะหน้าสมัครของหัวหน้าทีม)
 // K-AV-UX2A Phase B: ปรับชั้นแสดงผล + generateMetadata (OG) · query/ลอจิกเดิม
+// K-AV-TOUR.1: หัวทัวร์+นาฬิกา+ปุ่มเดียว · Timeline · กล่องจำนวน · แท็บ 6 · ทัวร์สอนใช้ — query tournaments เดิม · +2 คำขออ่านอย่างเดียว (สมัครแล้ว · รายชื่อทีม) · ไม่แก้ RLS
 export const dynamic = "force-dynamic";
 
 const thai = (iso: string | null) => (iso ? new Date(iso).toLocaleString("th-TH", { timeZone: "Asia/Bangkok", dateStyle: "medium", timeStyle: "short" }) : "–");
@@ -46,45 +49,83 @@ export default async function TournamentDetailPage({ params }: { params: Promise
   if (!db) return <main className="px-6 py-10 text-base text-ink-muted">ยังไม่ต่อฐานข้อมูล</main>;
   const { data: t } = await db.from("tournaments").select("id, name, game, format, team_size, best_of, status, reg_open_at, reg_close_at, check_in_minutes, start_at, max_teams, entry_type, entry_fee_thb, rules").eq("id", id).maybeSingle();
   if (!t || t.game !== code) notFound(); // K-AV-UX2B: id ของอีกเกม = 404
-  const [{ data: auth }, { count }] = await Promise.all([
+  const [{ data: auth }, { count }, { count: registeredCount }, { data: teamRows }] = await Promise.all([
     db.auth.getUser(),
-    db.from("registrations").select("id", { count: "exact", head: true }).eq("tournament_id", id).in("status", ["CONFIRMED", "CHECKED_IN"]),
+    db.from("registrations").select("id", { count: "exact", head: true }).eq("tournament_id", id).in("status", [...CONFIRMED_STATUSES]),
+    // K-AV-TOUR.1 คำขอใหม่ 1/2: สมัครแล้ว = ทุกสถานะยกเว้น WITHDRAWN (RLS เดิม · คนนอกทีมเห็น 0)
+    db.from("registrations").select("id", { count: "exact", head: true }).eq("tournament_id", id).neq("status", REGISTERED_EXCLUDE),
+    // K-AV-TOUR.1 คำขอใหม่ 2/2: ชื่อ/ตัวย่อ/โลโก้ทีมเฉพาะแถวที่ RLS เดิมให้อ่าน · สูงสุด 8
+    db.from("registrations").select("status, teams(name, tag, logo_url)").eq("tournament_id", id).neq("status", REGISTERED_EXCLUDE).order("created_at", { ascending: true }).limit(TEAM_LOGO_LIMIT),
   ]);
   const status = t.status as TournamentStatus;
-  const canRegister = status === "REGISTRATION" || status === "CHECK_IN";
-  const bracketHref = t.format === "SWISS" ? routes.tournamentSwiss(slug, id) : routes.tournamentBracket(slug, id);
-  return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 pb-28 sm:px-6 sm:pb-8">
-      <PageHeader
-        eyebrow={`// ${t.format} BO${t.best_of}`}
-        title={t.name}
-        subtitle={<span className="flex flex-wrap items-center gap-2"><GameTag game={slug} /><StatusBadge status={tournamentBadge(status)} /></span>}
-      />
-      <Surface glow="cyan" className="grid grid-cols-3 gap-4">
-        <Stat label="// ทีม" value={<>{count ?? 0}{t.max_teams ? <span className="text-base text-ink-muted">/{t.max_teams}</span> : null}</>} tone="cyan" />
-        <Stat label="// วันแข่ง" value={<span className="text-base">{thai(t.start_at)}</span>} />
-        <Stat label="// ค่าสมัคร" value={<span className="text-base">{t.entry_type === "PAID" ? `${Number(t.entry_fee_thb).toLocaleString("th-TH")} บาท` : ENTRY_LABEL[t.entry_type as EntryType] ?? t.entry_type}</span>} tone="gold" />
-      </Surface>
-      <Surface>
-        <dl className="grid grid-cols-[7rem_1fr] gap-y-2 text-base">
-          <dt className="text-ink-muted">รูปแบบ</dt><dd>{FORMAT_LABEL[t.format as TournamentFormat] ?? t.format} · Best of {t.best_of}</dd>
-          <dt className="text-ink-muted">รับสมัคร</dt><dd>{thai(t.reg_open_at)} – {thai(t.reg_close_at)}</dd>
-          <dt className="text-ink-muted">เช็กอิน</dt><dd>ก่อนเริ่ม {t.check_in_minutes} นาที</dd>
-          {t.entry_type === "PAID" ? (<><dt className="text-ink-muted">การชำระ</dt><dd>โอนตรงถึงผู้จัด</dd></>) : null}
-        </dl>
-      </Surface>
+  const loggedIn = Boolean(auth.user);
+  const serverNow = serverNowMs();
+  const cta = primaryCta({ status, format: t.format, loggedIn, slug, id });
+  const bracketHref = bracketHrefOf(t.format, slug, id);
+  const hasBracket = status === "RUNNING" || status === "COMPLETED" || status === "SEEDING";
+  const teams = toTeamChips(teamRows);
+  const teamsProps = { registered: registeredCount ?? 0, confirmed: count ?? 0, maxTeams: t.max_teams ?? null, teams, loggedIn };
+  const empty = (text: string) => <p className="py-6 text-center text-sm text-ink-muted">{text}</p>;
+
+  const overview = (
+    <div className="flex flex-col gap-5">
+      <dl className="grid grid-cols-[7rem_1fr] gap-y-2 text-base">
+        <dt className="text-ink-muted">รูปแบบ</dt><dd>{FORMAT_LABEL[t.format as TournamentFormat] ?? t.format} · Best of {t.best_of}</dd>
+        <dt className="text-ink-muted">วันแข่ง</dt><dd>{thai(t.start_at)}</dd>
+        <dt className="text-ink-muted">รับสมัคร</dt><dd>{thai(t.reg_open_at)} – {thai(t.reg_close_at)}</dd>
+        <dt className="text-ink-muted">เช็กอิน</dt><dd>ก่อนเริ่ม {t.check_in_minutes} นาที</dd>
+        <dt className="text-ink-muted">ค่าสมัคร</dt><dd className="text-gold">{t.entry_type === "PAID" ? `${Number(t.entry_fee_thb).toLocaleString("th-TH")} บาท` : ENTRY_LABEL[t.entry_type as EntryType] ?? t.entry_type}</dd>
+        {t.entry_type === "PAID" ? (<><dt className="text-ink-muted">การชำระ</dt><dd>โอนตรงถึงผู้จัด</dd></>) : null}
+      </dl>
       {t.rules ? <section><h2 className="mb-2 font-mono text-sm tracking-[0.2em] text-ink-muted">{"// กติกา"}</h2><p className="whitespace-pre-wrap text-base text-ink">{t.rules}</p></section> : null}
-      <div className="flex flex-wrap gap-3">
-        {status === "RUNNING" || status === "COMPLETED" || status === "SEEDING" ? <Link href={bracketHref} className="btn-ghost flex min-h-11 items-center rounded px-4 text-sm">{t.format === "SWISS" ? "ตาราง Swiss" : "ดูสาย"}</Link> : null}
-        <Link href={routes.tournaments(slug)} className="btn-ghost flex min-h-11 items-center rounded px-4 text-sm">กลับรายการ</Link>
-      </div>
-      {canRegister ? (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-void/95 p-3 backdrop-blur sm:static sm:border-0 sm:bg-transparent sm:p-0">
-          <Link href={routes.tournamentRegister(slug, id)} className="btn-primary flex h-12 w-full items-center justify-center rounded px-6 font-display tracking-[0.08em] sm:w-fit">
-            {auth.user ? (status === "CHECK_IN" ? "เช็กอิน / ดูใบสมัคร" : "สมัครทีม") : "เข้าสู่ระบบเพื่อสมัคร"}
-          </Link>
+    </div>
+  );
+  const linkBox = (text: string, label: string) => (
+    <div className="flex flex-col items-center gap-3 py-6 text-center">
+      <p className="text-sm text-ink-muted">{text}</p>
+      <Link href={bracketHref} className="btn-ghost flex min-h-11 items-center rounded px-4 text-sm">{label}</Link>
+    </div>
+  );
+  const freeAgents = (
+    <div data-free-agents className="flex flex-col items-center gap-2 py-8 text-center">
+      <span aria-hidden className="grid h-12 w-12 place-items-center rounded-full border border-dashed border-cyan/50 text-xl text-cyan">＋</span>
+      <p className="font-display text-base tracking-[0.06em] text-ink">ผู้เล่นเดี่ยวหาทีม</p>
+      <p className="text-sm text-ink-muted">เร็ว ๆ นี้</p>
+    </div>
+  );
+  const tabs = [
+    { key: "overview", label: "ภาพรวม", content: overview },
+    { key: "bracket", label: "สาย", content: hasBracket ? linkBox("สายการแข่งของทัวร์นี้", t.format === "SWISS" ? "ตาราง Swiss" : "ดูสาย") : empty("ยังไม่มีสาย") },
+    { key: "matches", label: "แมตช์", content: hasBracket ? linkBox("ดูแมตช์ทั้งหมดได้จากสาย", "ดูแมตช์ในสาย") : empty("ยังไม่มีแมตช์") },
+    { key: "teams", label: "ทีม", content: <TeamsPanel {...teamsProps} variant="list" /> },
+    { key: "free-agents", label: "Free agents", content: freeAgents },
+    { key: "results", label: "ผล", content: status === "COMPLETED" ? linkBox("ทัวร์จบแล้ว ดูผลในสาย", "ดูผล") : empty("ยังไม่มีผล") },
+  ];
+
+  return (
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
+      <TournamentHero
+        slug={slug}
+        name={t.name}
+        status={status}
+        format={t.format}
+        bestOf={t.best_of}
+        teamSize={t.team_size}
+        startAt={t.start_at}
+        serverNow={serverNow}
+        organizer={null}
+        cta={cta}
+      />
+      <Timeline points={buildTimeline(t, serverNow)} />
+      <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
+        <div className="min-w-0 lg:order-1">
+          <DetailTabs tabs={tabs} />
         </div>
-      ) : null}
+        <aside className="min-w-0 max-lg:-order-1 lg:order-2">
+          <TeamsPanel {...teamsProps} variant="summary" />
+        </aside>
+      </div>
+      <FirstVisitTour hasCta={Boolean(cta)} />
     </main>
   );
 }
