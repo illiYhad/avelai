@@ -53,7 +53,7 @@ DO $$ BEGIN
   END IF;
 END $$;
 
--- C10 (ข้อเสนอโนวา FROM_NOVA_20261110-1414 · รออลิสยืนยัน · K-AV-PASS.2): สลิปผูกเดือนที่ผู้ใช้เลือก
+-- C10 (ข้อเสนอโนวา FROM_NOVA_20261110-1414 · อลิสยืนยัน 2026-11-10 21:43 (TO_NOVA_20261110-2145 ข้อ A) · K-AV-PASS.2): สลิปผูกเดือนที่ผู้ใช้เลือก
 --   วันที่ 1 ซื้อได้ 2 เดือน → ต้องเก็บทางเลือกไว้ที่สลิป · NULL ได้ (สลิปเก่าก่อน 218 = ใช้เดือนของ created_at)
 ALTER TABLE public.payments ADD COLUMN IF NOT EXISTS pass_month date;
 DO $$ BEGIN
@@ -94,6 +94,67 @@ BEGIN
      OR p.created_at >= month_end + interval '1 day'
      OR NEW.amount_thb <> p.amount_thb THEN
     RAISE EXCEPTION 'PASS_WINDOW_INVALID' USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+-- SCHEMA.4c (G3 #46 · โนวา 21:56): ปิดช่องผู้ใช้ปลอม payments.created_at / เลือก pass_month นอกช่วง
+--   มติซอง 026 (ไม่เปลี่ยนกติกา): ซื้อเดือน M ได้ถึงวันที่ 1 ของ M+1 23:59:59 ICT · วันอื่นซื้อได้แค่เดือนปัจจุบัน
+--   ฟังก์ชันช่วยต้องให้ผลตรงกับ purchasableMonths() ใน lib/passes.ts · เวลาไทย = +7 ชม. คงที่ (แบบเดียวกับ C5)
+CREATE OR REPLACE FUNCTION public.pass_month_purchasable(p_month date, p_at timestamptz)
+RETURNS boolean
+LANGUAGE sql IMMUTABLE SET search_path = ''
+AS $$
+  SELECT p_month IS NOT NULL AND p_at IS NOT NULL AND (
+    p_month = date_trunc('month', (p_at AT TIME ZONE 'UTC') + interval '7 hours')::date
+    OR (extract(day FROM (p_at AT TIME ZONE 'UTC') + interval '7 hours') = 1
+        AND p_month = (date_trunc('month', (p_at AT TIME ZONE 'UTC') + interval '7 hours') - interval '1 month')::date)
+  );
+$$;
+REVOKE EXECUTE ON FUNCTION public.pass_month_purchasable(date, timestamptz) FROM PUBLIC, anon, authenticated;
+
+-- ลอก 140:415–442 ทุกบรรทัด (ไม่แก้ไฟล์ 140) + (ก) created_at = now() เมื่อผู้ใช้ insert เอง
+--   + (ข) PASS: pass_month ว่าง = เดือนปัจจุบัน (เว็บเก่าไม่พัง) · นอกช่วงซื้อ = PASS_WINDOW_INVALID
+--   service role/สคริปต์ (auth.uid() ว่าง) ยังตั้ง created_at / pass_month ได้ เหมือนแบบ PAYMENT_PAYER_MISMATCH
+--   trigger เดิมจาก 140 ผูกอยู่แล้ว ไม่สร้างใหม่
+CREATE OR REPLACE FUNCTION public.payments_guard_insert()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+  expected numeric(10,2);
+BEGIN
+  IF NEW.status <> 'PENDING' OR NEW.verified_by IS NOT NULL OR NEW.verified_at IS NOT NULL OR NEW.reject_reason IS NOT NULL THEN
+    RAISE EXCEPTION 'PAYMENT_INSERT_NOT_PENDING' USING ERRCODE = 'check_violation';
+  END IF;
+  IF auth.uid() IS NOT NULL AND NEW.payer_user_id <> auth.uid() THEN
+    RAISE EXCEPTION 'PAYMENT_PAYER_MISMATCH' USING ERRCODE = 'check_violation';
+  END IF;
+  -- 4c (ก): ผู้ใช้ปลอมเวลาสลิปไม่ได้
+  IF auth.uid() IS NOT NULL THEN
+    NEW.created_at := now();
+  END IF;
+  -- 4c (ข): เดือนของ Pass ต้องอยู่ในช่วงที่ซื้อได้ตามมติ 026
+  IF NEW.kind = 'PASS' AND auth.uid() IS NOT NULL THEN
+    IF NEW.pass_month IS NULL THEN
+      NEW.pass_month := date_trunc('month', (now() AT TIME ZONE 'UTC') + interval '7 hours')::date;
+    ELSIF NOT public.pass_month_purchasable(NEW.pass_month, now()) THEN
+      RAISE EXCEPTION 'PASS_WINDOW_INVALID' USING ERRCODE = 'check_violation';
+    END IF;
+  END IF;
+  IF NEW.kind = 'REGISTRATION' THEN
+    SELECT t.entry_fee_thb INTO expected FROM public.registrations r JOIN public.tournaments t ON t.id = r.tournament_id WHERE r.id = NEW.registration_id;
+    IF expected IS NULL THEN RAISE EXCEPTION 'PAYMENT_REGISTRATION_NOT_FOUND' USING ERRCODE = 'check_violation'; END IF;
+  ELSE
+    expected := 380;
+  END IF;
+  IF NEW.amount_thb <> expected THEN
+    RAISE EXCEPTION 'PAYMENT_AMOUNT_MISMATCH: % <> %', NEW.amount_thb, expected USING ERRCODE = 'check_violation';
+  END IF;
+  IF (storage.foldername(NEW.slip_path))[1] IS DISTINCT FROM NEW.payer_user_id::text
+     OR NOT EXISTS (SELECT 1 FROM storage.objects o WHERE o.bucket_id = 'payment-slips' AND o.name = NEW.slip_path) THEN
+    RAISE EXCEPTION 'PAYMENT_SLIP_MISSING' USING ERRCODE = 'check_violation';
   END IF;
   RETURN NEW;
 END;
@@ -276,6 +337,8 @@ COMMIT;
 -- ALTER TABLE public.users DROP CONSTRAINT IF EXISTS chk_users_genesis_pioneer_no,
 --   DROP CONSTRAINT IF EXISTS uq_users_genesis_pioneer_no,
 --   DROP COLUMN IF EXISTS invited_by_user_id, DROP COLUMN IF EXISTS genesis_pioneer_no;
+-- -- payments: คืนตัวกันเดิม = รันบล็อก CREATE OR REPLACE FUNCTION public.payments_guard_insert() จาก 140:415–442 (ก่อน DROP คอลัมน์)
+-- DROP FUNCTION IF EXISTS public.pass_month_purchasable(date, timestamptz);
 -- ALTER TABLE public.payments DROP CONSTRAINT IF EXISTS chk_payments_pass_month_first_day, DROP COLUMN IF EXISTS pass_month;
 -- -- passes: คืนตัวกัน 28 วัน = รันบล็อก CREATE OR REPLACE FUNCTION public.passes_guard_insert() จาก 140:491–512
 -- ALTER TABLE public.passes DROP CONSTRAINT IF EXISTS uq_passes_user_game_month,

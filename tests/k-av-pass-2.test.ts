@@ -263,4 +263,85 @@ describe("K-AV-PASS.2 · PGlite 001 → 218 (C10 payments.pass_month)", () => {
     const pay = await payment(D, "2026-11-05 03:00:00+00", null);
     await pass(D, pay, passMonthOf(new Date("2026-11-05T03:00:00Z")));
   });
+
+  // K-AV-SCHEMA.4c (G3 #46): ตัวกัน payments_guard_insert ใน 218 · มติ 026 บังคับที่ฐาน
+  describe("K-AV-SCHEMA.4c · payments_guard_insert + pass_month_purchasable", () => {
+    const E = id(5), F = id(6), G = id(7), H = id(8);
+    const monthShift = (m: string, k: number) => { const [y, mo] = m.split("-").map(Number); const d = new Date(Date.UTC(y, mo - 1 + k, 1)); return d.toISOString().slice(0, 10); };
+    beforeAll(async () => { await db.exec(`INSERT INTO auth.users (id) VALUES ('${E}'), ('${F}'), ('${G}'), ('${H}');`); });
+
+    /** ผู้ใช้ส่งสลิปเองจาก client (role authenticated · auth.uid() = user) · คืนแถวที่บันทึก */
+    async function userSlip(user: string, passMonth: string | null, createdAt: string) {
+      n += 1;
+      const key = `p4c-${n}`;
+      await db.exec(`INSERT INTO storage.objects (bucket_id, name, owner) VALUES ('payment-slips', '${user}/c${n}.png', '${user}');
+        SELECT set_config('request.jwt.claim.sub', '${user}', false), set_config('request.jwt.claim.role', 'authenticated', false); SET ROLE authenticated;`);
+      try {
+        await db.exec(`INSERT INTO public.payments (kind, payer_user_id, pass_game, pass_month, amount_thb, slip_path, idempotency_key, created_at)
+          VALUES ('PASS', '${user}', 'DOTA2', ${passMonth ? `'${passMonth}'` : "NULL"}, 380, '${user}/c${n}.png', '${key}', '${createdAt}')`);
+      } finally {
+        await db.exec(`RESET ROLE; SELECT set_config('request.jwt.claim.sub', '', false), set_config('request.jwt.claim.role', '', false);`);
+      }
+      const [row] = (await db.query<{ created_at: Date; pass_month: string }>(`SELECT created_at, pass_month::text AS pass_month FROM public.payments WHERE idempotency_key = '${key}'`)).rows;
+      return row;
+    }
+
+    it("ฟังก์ชันช่วย = purchasableMonths() ทุกจุด (31 ต.ค. 23:59 · 1 พ.ย. 00:00 · 1 พ.ย. 23:59:59 · 2 พ.ย. 00:00 · 1 ม.ค. ข้ามปี)", async () => {
+      for (const at of ["2026-10-31T16:59:00Z", "2026-10-31T17:00:00Z", "2026-11-01T16:59:59Z", "2026-11-01T17:00:00Z", "2026-12-31T17:00:00Z"]) {
+        const ok = purchasableMonths(new Date(at));
+        const cur = ok[ok.length - 1];
+        for (const m of [monthShift(cur, -2), monthShift(cur, -1), cur, monthShift(cur, 1)]) {
+          const [r] = (await db.query<{ v: boolean }>(`SELECT public.pass_month_purchasable('${m}'::date, '${at}'::timestamptz) AS v`)).rows;
+          expect(r.v, `${at} ${m}`).toBe(ok.includes(m));
+        }
+      }
+      const [nul] = (await db.query<{ v: boolean }>(`SELECT public.pass_month_purchasable(NULL, now()) AS v`)).rows;
+      expect(nul.v).toBe(false);
+    });
+
+    it("ฟังก์ชันช่วยเรียกตรงจาก anon/authenticated ไม่ได้ (REVOKE)", async () => {
+      for (const role of ["anon", "authenticated"]) {
+        await db.exec(`SET ROLE ${role}`);
+        try {
+          await expect(db.query(`SELECT public.pass_month_purchasable(CURRENT_DATE, now())`)).rejects.toThrow(/permission denied/);
+        } finally { await db.exec(`RESET ROLE`); }
+      }
+    });
+
+    it("ผู้ใช้ส่ง created_at ย้อนหลัง 20 วัน → แถวที่บันทึกมี created_at ≈ now()", async () => {
+      const cur = purchasableMonths(new Date()).at(-1)!;
+      const back = new Date(Date.now() - 20 * 86_400_000).toISOString();
+      const row = await userSlip(E, cur, back);
+      expect(Math.abs(new Date(row.created_at).getTime() - Date.now())).toBeLessThan(60_000);
+    });
+
+    it("ผู้ใช้ขอเดือนก่อน (วันนี้ไม่ใช่วันที่ 1) / เดือนหน้า → PASS_WINDOW_INVALID", async () => {
+      const ok = purchasableMonths(new Date());
+      const cur = ok.at(-1)!, prev = monthShift(cur, -1), next = monthShift(cur, 1);
+      const nowIso = new Date().toISOString();
+      if (ok.includes(prev)) await userSlip(F, prev, nowIso); // วันที่ 1 (ICT): เดือนก่อนยังซื้อได้ตามมติ
+      else await expect(userSlip(F, prev, nowIso)).rejects.toThrow(/PASS_WINDOW_INVALID/);
+      await expect(userSlip(G, next, nowIso)).rejects.toThrow(/PASS_WINDOW_INVALID/);
+    });
+
+    it("ผู้ใช้ไม่ส่ง pass_month → บันทึกเป็นเดือนปัจจุบัน (เวลาไทย)", async () => {
+      const row = await userSlip(H, null, new Date().toISOString());
+      expect(row.pass_month).toBe(purchasableMonths(new Date()).at(-1));
+    });
+
+    it("service role/สคริปต์ (auth.uid() ว่าง) ยังตั้ง created_at / pass_month เองได้ (เทส C10 เดิมใช้ทางนี้)", async () => {
+      const pay = await payment(A, "2026-11-01 05:00:00+00", "2026-10-01");
+      const [r] = (await db.query<{ c: Date; m: string }>(`SELECT created_at AS c, pass_month::text AS m FROM public.payments WHERE id = '${pay}'`)).rows;
+      expect(new Date(r.c).toISOString()).toBe("2026-11-01T05:00:00.000Z");
+      expect(r.m).toBe("2026-10-01");
+    });
+  });
+});
+describe("K-AV-SCHEMA.4c · ฟอร์มซื้อ Pass เริ่มที่เกมของหน้า", () => {
+  it("PassSlipForm game=DOTA2 → <select name=\"game\"> เลือก Dota 2 · รายการเกมเดิมครบ · page ส่ง game={code}", () => {
+    const out = renderToStaticMarkup(createElement(PassSlipForm, { action: async () => ({ ok: false, message: "" }), token: "t", months: [{ value: "2026-11-01", label: "พฤศจิกายน 2569" }], game: "DOTA2" }));
+    expect(out).toMatch(/<option value="DOTA2" selected="">Dota 2<\/option>/);
+    expect(out).toContain('<option value="MLBB">Mobile Legends</option>');
+    expect(read("app/[game]/pass/page.tsx")).toContain("months={months} game={code} />");
+  });
 });

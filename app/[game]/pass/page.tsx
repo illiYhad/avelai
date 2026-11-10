@@ -51,7 +51,7 @@ export default async function PassPage({ params }: { params: Promise<{ game: str
           <>
             <p className="text-sm text-white/80">โอน <b className="font-numeric">{PASS_PRICE_THB}.00 บาท</b> ผ่าน QR นี้ (ผู้รับ: Balehm Tech Studio) แล้วอัปโหลดสลิป</p>
             <div className="w-60 rounded bg-white p-2" dangerouslySetInnerHTML={{ __html: qr }} />
-            <PassSlipForm action={uploadPassSlipAction} token={crypto.randomUUID()} months={months} />
+            <PassSlipForm action={uploadPassSlipAction} token={crypto.randomUUID()} months={months} game={code} />
             <Link href={routes.rules(slug)} className="text-sm text-cyan underline">อ่านกติกาก่อนซื้อ Pass</Link>
           </>
         )}
