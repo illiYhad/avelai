@@ -82,6 +82,18 @@ function GameSwitcher({ game, locked, pathname }: { game: GameSlug; locked: bool
         <ul role="menu" className="absolute left-0 top-full z-50 mt-2 w-48 rounded border border-line bg-surface-2 py-1">
           {GAME_MENU.map((g) => (
             <li key={g.slug} role="none">
+              {g.soon ? (
+                // K-AV-NAV.1: เกมที่ยังไม่เปิด = ป้ายเร็ว ๆ นี้ · ไม่มี href · กดไม่ได้
+                <span
+                  role="menuitem"
+                  aria-disabled="true"
+                  data-game-soon={g.slug}
+                  className="flex min-h-11 cursor-not-allowed items-center justify-between border-l-2 border-transparent px-3 font-mono text-sm text-ink-muted/60"
+                >
+                  {g.label}
+                  <span className="text-xs text-ink-muted">เร็ว ๆ นี้</span>
+                </span>
+              ) : (
               <Link
                 role="menuitem"
                 href={switchGamePath(pathname, g.slug)}
@@ -91,8 +103,8 @@ function GameSwitcher({ game, locked, pathname }: { game: GameSlug; locked: bool
                 }`}
               >
                 {g.label}
-                {g.soon ? <span className="text-xs text-ink-muted">เร็ว ๆ นี้</span> : null}
               </Link>
+              )}
             </li>
           ))}
         </ul>
