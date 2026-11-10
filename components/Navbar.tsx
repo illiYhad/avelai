@@ -165,7 +165,7 @@ export default function Navbar({ signedIn, username = null, isAdmin = false, loc
 
         {signedIn ? (
           <div className="ml-auto flex items-center gap-1 md:ml-2">
-            <LangSwitch rawPath={rawPath} locale={locale} label={t.language} />
+            <LangSwitch rawPath={rawPath} locale={locale} label={t.language} className="hidden md:flex" />
             <button type="button" disabled aria-label={t.notifications} title={t.soon} className="flex h-11 w-11 items-center justify-center rounded text-ink-muted disabled:opacity-60">
               <Bell className="h-5 w-5" aria-hidden />
             </button>
@@ -218,6 +218,8 @@ export default function Navbar({ signedIn, username = null, isAdmin = false, loc
               ))}
             </ul>
             <div className="mt-auto border-t border-line">
+              {/* K-AV-I18N.0a: จอ < md ปุ่มภาษาอยู่ในลิ้นชัก (หัวเว็บ 390 ไม่ล้น) */}
+              <LangSwitch rawPath={rawPath} locale={locale} label={t.language} className="px-4 py-2 md:hidden" />
               <AccountMenu items={nav.account} logout={t.logout} big />
             </div>
           </div>
