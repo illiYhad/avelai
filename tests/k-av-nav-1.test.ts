@@ -22,9 +22,10 @@ describe("K-AV-NAV.1", () => {
     const src = readFileSync(join(ROOT, "components", "Navbar.tsx"), "utf8");
     const branch = src.slice(src.indexOf("{g.soon ? ("), src.indexOf(") : (", src.indexOf("{g.soon ? (")));
     expect(branch).toContain('aria-disabled="true"');
-    expect(branch).toContain("เร็ว ๆ นี้");
+    // K-AV-I18N.0c: ป้ายมาจากพจนานุกรม (th.nav.soon = "เร็ว ๆ นี้")
+    expect(branch).toContain("{t.soon}");
     expect(branch).not.toMatch(/<Link|href=/);
-    expect(src).toMatch(/\) : \(\s*<Link[\s\S]{0,80}href=\{switchGamePath\(pathname, g\.slug\)\}/);
+    expect(src).toMatch(/\) : \(\s*<Link[\s\S]{0,80}href=\{localePath\(locale, switchGamePath\(pathname, g\.slug\)\)\}/);
   });
 
   it("เส้นทาง /mlbb/... ยังอยู่ (ไม่ลบ) · ลิงก์ตรงยังสร้างได้", () => {
