@@ -16,9 +16,6 @@ DO $$ BEGIN
   IF to_regtype('public.character_ip_type') IS NULL THEN
     CREATE TYPE public.character_ip_type AS ENUM ('AVE', 'AVEL', 'AVELAI', 'ORIGINAL', 'COMMUNITY_ART');
   END IF;
-  IF to_regtype('public.inventory_source_type') IS NULL THEN
-    CREATE TYPE public.inventory_source_type AS ENUM ('POST_MATCH_DROP', 'MONTHLY_MYSTERY_VOTE', 'GENESIS_PIONEER', 'TOURNAMENT_MVP', 'PASS_REWARD', 'PURCHASE');
-  END IF;
   IF to_regtype('public.marketing_event_type') IS NULL THEN
     CREATE TYPE public.marketing_event_type AS ENUM ('MONTHLY_MYSTERY_VOTE', 'SEASON_LAUNCH', 'AVE_EVOLUTION', 'ROLE_PARITY_WEEK');
   END IF;
@@ -32,6 +29,9 @@ DO $$ BEGIN
     CREATE TYPE public.payment_provider_type AS ENUM ('PROMPTPAY_SLIPOK', 'STRIPE');
   END IF;
 END $$;
+-- SCHEMA.4b (อลิส 11:20 ข้อ 1): ไม่สร้าง inventory_source_type · user_inventory.source คง text เดิม
+--   ฐานที่เคยรัน 218 รุ่นก่อน (eadd19b) มี type นี้ค้าง → ลบทิ้ง (ไม่มีคอลัมน์ใดใช้)
+DROP TYPE IF EXISTS public.inventory_source_type;
 
 -- -----------------------------------------------------------------------------
 -- 2. Hook 1 · passes รอบเดือนปฏิทิน (C3 · C4)
@@ -103,10 +103,26 @@ DO $$ BEGIN
 END $$;
 
 -- -----------------------------------------------------------------------------
--- 4. Hook 2 & 5 · item_definitions (C8: rarity 7 ระดับ · is_tradeable ค่าเริ่ม false)
---    หมายเหตุ: 216 มี rarity_level 1–7 อยู่แล้ว · คอลัมน์ rarity (text) เพิ่มตามร่าง — ซ้อนกัน ถามพี่ศิลาในใบตอบ
+-- 4. Hook 2 & 5 · item_definitions (is_tradeable ค่าเริ่ม false)
+--    SCHEMA.4b (อลิส 11:20 ข้อ 2): rarity_level (216 · smallint NOT NULL CHECK 1–7) เป็นหลัก
+--    rarity = generated column จาก rarity_level · ยกเลิก CHECK 7 ระดับของ rarity (C8)
+--    216:75 มี CHECK (rarity_level BETWEEN 1 AND 7) แล้ว → ไม่เพิ่มซ้ำ
 -- -----------------------------------------------------------------------------
-ALTER TABLE public.item_definitions ADD COLUMN IF NOT EXISTS rarity text;
+-- ฐานที่เคยรัน 218 รุ่นก่อน: rarity เป็น text ธรรมดา + chk_item_definitions_rarity → ลบก่อนสร้างใหม่
+ALTER TABLE public.item_definitions DROP CONSTRAINT IF EXISTS chk_item_definitions_rarity;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM pg_attribute
+              WHERE attrelid = 'public.item_definitions'::regclass AND attname = 'rarity'
+                AND NOT attisdropped AND attgenerated <> 's') THEN
+    ALTER TABLE public.item_definitions DROP COLUMN rarity;
+  END IF;
+END $$;
+ALTER TABLE public.item_definitions ADD COLUMN IF NOT EXISTS rarity text GENERATED ALWAYS AS (
+  CASE rarity_level
+    WHEN 1 THEN 'common' WHEN 2 THEN 'uncommon' WHEN 3 THEN 'rare'
+    WHEN 4 THEN 'mythical' WHEN 5 THEN 'legendary' WHEN 6 THEN 'immortal'
+    WHEN 7 THEN 'arcana' END
+) STORED;
 ALTER TABLE public.item_definitions ADD COLUMN IF NOT EXISTS character_ip public.character_ip_type;
 ALTER TABLE public.item_definitions ADD COLUMN IF NOT EXISTS is_mystery_card boolean NOT NULL DEFAULT false;
 ALTER TABLE public.item_definitions ADD COLUMN IF NOT EXISTS revealed_at timestamptz;
@@ -116,10 +132,6 @@ ALTER TABLE public.item_definitions ADD COLUMN IF NOT EXISTS is_sellable boolean
 ALTER TABLE public.item_definitions ADD COLUMN IF NOT EXISTS name_i18n jsonb NOT NULL DEFAULT '{"th": "", "en": ""}'::jsonb;
 ALTER TABLE public.item_definitions ADD COLUMN IF NOT EXISTS description_i18n jsonb NOT NULL DEFAULT '{"th": "", "en": ""}'::jsonb;
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_item_definitions_rarity') THEN
-    ALTER TABLE public.item_definitions ADD CONSTRAINT chk_item_definitions_rarity CHECK (
-      rarity IS NULL OR rarity IN ('common', 'uncommon', 'rare', 'mythical', 'legendary', 'immortal', 'arcana'));
-  END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_community_art_not_sellable') THEN
     ALTER TABLE public.item_definitions ADD CONSTRAINT chk_community_art_not_sellable CHECK (
       character_ip IS DISTINCT FROM 'COMMUNITY_ART' OR is_sellable = false);
@@ -128,8 +140,7 @@ END $$;
 
 -- -----------------------------------------------------------------------------
 -- 5. Hook 2 · user_inventory (C8: UNIQUE (item_id, serial_number) เมื่อ serial ไม่ว่าง)
---    หมายเหตุ: 100 มีคอลัมน์ source text NOT NULL อยู่แล้ว → ร่างที่ ADD source inventory_source_type ชนชื่อ
---    ใบนี้ไม่แตะ source เดิม (ไม่เดาการแปลงชนิด) · ถามพี่ศิลาในใบตอบ
+--    source: คง text NOT NULL ของ 100 (อลิส 11:20 ข้อ 1 · ค่าที่อนุญาตให้ service บังคับ · CHECK แยกเป็น 219+)
 -- -----------------------------------------------------------------------------
 ALTER TABLE public.user_inventory ADD COLUMN IF NOT EXISTS serial_number integer;
 ALTER TABLE public.user_inventory ADD COLUMN IF NOT EXISTS acquired_pass_month date;
@@ -197,13 +208,16 @@ CREATE TABLE IF NOT EXISTS public.system_evolution_state (
     id integer PRIMARY KEY DEFAULT 1 CHECK (id = 1),
     current_ave_stage integer NOT NULL CHECK (current_ave_stage BETWEEN 1 AND 5),
     verified_player_count integer NOT NULL DEFAULT 0,
-    next_stage_threshold integer NOT NULL,
+    next_stage_threshold integer,
     updated_at timestamptz NOT NULL DEFAULT now()
 );
--- C9: แถวเริ่มต้น stage 1 · next_stage_threshold = 0 ชั่วคราว (ร่างไม่ระบุค่า · รอพี่ศิลากำหนด)
+-- SCHEMA.4b (อลิส 11:20 ข้อ 3): threshold NULL = ยังไม่กำหนด = ปิดระบบวิวัฒน์ · ห้ามใส่ 0 · ค่าจริงรอพี่ศิลา (Q-C)
+--   ฐานที่เคยรัน 218 รุ่นก่อน: คอลัมน์ NOT NULL + แถวเริ่มต้น 0 → ปลด NOT NULL แล้วเปลี่ยน 0 เป็น NULL
+ALTER TABLE public.system_evolution_state ALTER COLUMN next_stage_threshold DROP NOT NULL;
 INSERT INTO public.system_evolution_state (id, current_ave_stage, verified_player_count, next_stage_threshold)
-VALUES (1, 1, 0, 0)
+VALUES (1, 1, 0, NULL)
 ON CONFLICT (id) DO NOTHING;
+UPDATE public.system_evolution_state SET next_stage_threshold = NULL WHERE id = 1 AND next_stage_threshold = 0;
 
 -- -----------------------------------------------------------------------------
 -- 7. C6 · RLS + สิทธิ์ 5 ตารางใหม่ · ผู้ใช้อ่านอย่างเดียว · เขียนผ่าน service_role เท่านั้น
@@ -243,8 +257,7 @@ COMMIT;
 --                      public.product_prices, public.system_evolution_state;
 -- DROP INDEX IF EXISTS public.uq_user_inventory_item_serial;
 -- ALTER TABLE public.user_inventory DROP COLUMN IF EXISTS serial_number, DROP COLUMN IF EXISTS acquired_pass_month;
--- ALTER TABLE public.item_definitions DROP CONSTRAINT IF EXISTS chk_item_definitions_rarity,
---   DROP CONSTRAINT IF EXISTS chk_community_art_not_sellable,
+-- ALTER TABLE public.item_definitions DROP CONSTRAINT IF EXISTS chk_community_art_not_sellable,
 --   DROP COLUMN IF EXISTS rarity, DROP COLUMN IF EXISTS character_ip, DROP COLUMN IF EXISTS is_mystery_card,
 --   DROP COLUMN IF EXISTS revealed_at, DROP COLUMN IF EXISTS pass_month, DROP COLUMN IF EXISTS is_tradeable,
 --   DROP COLUMN IF EXISTS is_sellable, DROP COLUMN IF EXISTS name_i18n, DROP COLUMN IF EXISTS description_i18n;
@@ -255,4 +268,4 @@ COMMIT;
 -- ALTER TABLE public.passes DROP CONSTRAINT IF EXISTS uq_passes_user_game_month,
 --   DROP CONSTRAINT IF EXISTS chk_passes_pass_month_first_day, DROP COLUMN IF EXISTS pass_month;
 -- DROP TYPE IF EXISTS public.payment_provider_type, public.currency_type, public.marketing_event_status,
---   public.marketing_event_type, public.inventory_source_type, public.character_ip_type;
+--   public.marketing_event_type, public.character_ip_type;

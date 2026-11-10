@@ -2,6 +2,7 @@
 // K-AV-SCHEMA.4 — migration 218 (ซอง ALICH-PACKET-026/027 + เงื่อนไขอลิส C1–C9) บน PGlite (ในหน่วยความจำ · ไม่แตะฐานจริง)
 // สาย: 001 → 100…217 → ข้อมูลตั้งต้น (มี pass แบบ 28 วันเดิม) → 218 → 218 ซ้ำ
 // รัน: npx vitest run tests/k-av-schema-4.test.ts
+import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PGlite } from "@electric-sql/pglite";
@@ -176,8 +177,13 @@ describe("K-AV-SCHEMA.4 · 218 (PGlite สาย 001→217→218→218)", () => 
     await expect(db.exec(`INSERT INTO public.event_votes (event_id, user_id, option_id) VALUES ('${id(302)}', '${A}', '${id(311)}')`)).rejects.toThrow(/fk_event_votes_option_same_event/);
     await expect(db.exec(`INSERT INTO public.event_vote_options (event_id, option_code) VALUES ('${id(301)}', 'A')`)).rejects.toThrow(/uq_event_vote_options_code/);
     await expect(db.exec(`INSERT INTO public.marketing_events (slug, event_type, starts_at, ends_at) VALUES ('bad', 'SEASON_LAUNCH', now(), now())`)).rejects.toThrow(/chk_marketing_events_window/);
-    await db.exec(`INSERT INTO public.item_definitions (item_id, name, item_type, rarity_level, rarity) VALUES ('card-1', 'Card', 'CARD', 6, 'immortal')`);
-    await expect(db.exec(`INSERT INTO public.item_definitions (item_id, name, item_type, rarity_level, rarity) VALUES ('card-2', 'Card', 'CARD', 6, 'ancient')`)).rejects.toThrow(/chk_item_definitions_rarity/);
+    // SCHEMA.4b ข้อ 2: rarity = generated จาก rarity_level · เขียนตรงไม่ได้
+    await db.exec(`INSERT INTO public.item_definitions (item_id, name, item_type, rarity_level) VALUES ('card-1', 'Card', 'CARD', 6)`);
+    const [r6] = await q<{ r: string }>(`SELECT rarity AS r FROM public.item_definitions WHERE item_id = 'card-1'`);
+    expect(r6.r).toBe("immortal");
+    await expect(db.exec(`INSERT INTO public.item_definitions (item_id, name, item_type, rarity_level, rarity) VALUES ('card-2', 'Card', 'CARD', 6, 'immortal')`)).rejects.toThrow(/"rarity"/);
+    await expect(db.exec(`UPDATE public.item_definitions SET rarity = 'arcana' WHERE item_id = 'card-1'`)).rejects.toThrow(/"rarity"/);
+    await expect(db.exec(`INSERT INTO public.item_definitions (item_id, name, item_type, rarity_level) VALUES ('card-8', 'Card', 'CARD', 8)`)).rejects.toThrow();
     const [it1] = await q<{ t: boolean }>(`SELECT is_tradeable AS t FROM public.item_definitions WHERE item_id = 'card-1'`);
     expect(it1.t).toBe(false);
     await expect(db.exec(`INSERT INTO public.event_vote_options (event_id, option_code, final_item_id) VALUES ('${id(301)}', 'C', 'no-such-item')`)).rejects.toThrow();
@@ -196,4 +202,65 @@ describe("K-AV-SCHEMA.4 · 218 (PGlite สาย 001→217→218→218)", () => 
     const rows = await as<{ s: number }>("anon", A, `SELECT current_ave_stage AS s FROM public.system_evolution_state`);
     expect(rows).toEqual([{ s: 1 }]);
   });
+});
+
+// K-AV-SCHEMA.4b — คำตัดสินอลิส 11:20 (3 ข้อ)
+const NO_SOURCE_TYPE = `SELECT to_regtype('public.inventory_source_type') IS NULL AS ok`;
+const THRESHOLD = `SELECT next_stage_threshold AS t, (SELECT attnotnull FROM pg_attribute WHERE attrelid = 'public.system_evolution_state'::regclass AND attname = 'next_stage_threshold') AS nn FROM public.system_evolution_state`;
+const RARITY_GEN = `SELECT attgenerated AS g FROM pg_attribute WHERE attrelid = 'public.item_definitions'::regclass AND attname = 'rarity' AND NOT attisdropped`;
+
+describe("K-AV-SCHEMA.4b · 3 ข้อของอลิส", () => {
+  it("a) ไม่มี TYPE inventory_source_type · user_inventory.source ยังเป็น text", async () => {
+    expect((await q<{ ok: boolean }>(NO_SOURCE_TYPE))[0].ok).toBe(true);
+    const [c] = await q<{ t: string }>(`SELECT data_type AS t FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'user_inventory' AND column_name = 'source'`);
+    expect(c.t).toBe("text");
+  });
+
+  it("c) next_stage_threshold แถวเริ่มต้น IS NULL · คอลัมน์ NULL ได้ · ไม่มี CHECK rarity เดิม", async () => {
+    expect(await q(THRESHOLD)).toEqual([{ t: null, nn: false }]);
+    expect(await q(`SELECT 1 FROM pg_constraint WHERE conname = 'chk_item_definitions_rarity'`)).toEqual([]);
+    expect((await q<{ g: string }>(RARITY_GEN))[0].g).toBe("s");
+  });
+
+  it("d) รัน 218 ใหม่ทับฐานที่มี 218 รุ่น eadd19b แล้วผ่าน · ได้ผล 3 ข้อครบ", async () => {
+    let old: string | null = null;
+    try {
+      old = execSync(`git show eadd19b:${M218}`, { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+    } catch {
+      old = null; // CI clone ตื้น ไม่มี eadd19b → จำลองสภาพ 3 จุดที่ต่างกันของรุ่นเก่า
+    }
+    const prev = db;
+    db = new PGlite();
+    try {
+      await db.exec(BOOTSTRAP);
+      for (const f of BEFORE_218) await db.exec(readFileSync(join(root, f), "utf8"));
+      await db.exec(`INSERT INTO auth.users (id) VALUES ('${A}')`);
+      if (old) {
+        await db.exec(old);
+      } else {
+        await db.exec(readFileSync(join(root, M218), "utf8"));
+        await db.exec(`
+          CREATE TYPE public.inventory_source_type AS ENUM ('POST_MATCH_DROP', 'PURCHASE');
+          ALTER TABLE public.item_definitions DROP COLUMN rarity;
+          ALTER TABLE public.item_definitions ADD COLUMN rarity text;
+          ALTER TABLE public.item_definitions ADD CONSTRAINT chk_item_definitions_rarity CHECK (rarity IS NULL OR rarity IN ('common', 'arcana'));
+          UPDATE public.system_evolution_state SET next_stage_threshold = 0;
+          ALTER TABLE public.system_evolution_state ALTER COLUMN next_stage_threshold SET NOT NULL;`);
+      }
+      // สภาพรุ่นเก่า: มี TYPE · rarity เป็น text ธรรมดา · threshold 0 NOT NULL
+      expect((await q<{ ok: boolean }>(NO_SOURCE_TYPE))[0].ok).toBe(false);
+      expect((await q<{ g: string }>(RARITY_GEN))[0].g).toBe("");
+      await db.exec(`INSERT INTO public.item_definitions (item_id, name, item_type, rarity_level, rarity) VALUES ('old-1', 'Card', 'CARD', 2, 'common')`);
+
+      await db.exec(readFileSync(join(root, M218), "utf8"));
+      await db.exec(readFileSync(join(root, M218), "utf8")); // ซ้ำอีกรอบก็ผ่าน
+      expect((await q<{ ok: boolean }>(NO_SOURCE_TYPE))[0].ok).toBe(true);
+      expect((await q<{ g: string }>(RARITY_GEN))[0].g).toBe("s");
+      expect(await q(`SELECT rarity FROM public.item_definitions WHERE item_id = 'old-1'`)).toEqual([{ rarity: "uncommon" }]);
+      expect(await q(THRESHOLD)).toEqual([{ t: null, nn: false }]);
+    } finally {
+      await db.close();
+      db = prev;
+    }
+  }, 180_000);
 });
