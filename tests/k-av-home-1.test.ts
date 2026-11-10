@@ -47,7 +47,7 @@ describe("a) ป้ายเวลา (เวลาไทย)", () => {
 describe("b) แบนเนอร์ 2 สไลด์", () => {
   it("มี 2 สไลด์ · ปุ่มและลิงก์ถูก", () => {
     expect(HOME_SLIDES).toHaveLength(2);
-    expect(HOME_SLIDES[0].cta).toEqual({ label: "เข้าแข่ง", href: "/dota2/tournaments" });
+    expect(HOME_SLIDES[0].cta).toEqual({ label: "เข้าแข่ง", href: "/dota2/esta" }); // K-AV-HOME.2: ปลายทางเปลี่ยนเป็นหน้าลีก
     expect(HOME_SLIDES[1].cta).toEqual({ label: "ซื้อ Pass", href: "/dota2/pass" });
   });
 
