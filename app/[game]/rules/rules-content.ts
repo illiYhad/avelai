@@ -190,11 +190,11 @@ export const RISK = {
     ["Instant Leaderboard Computation", "ระบบคำนวณ Killpoint + Role Bonus ใน 0.5 วินาที แล้วอัปเดตตาราง Leaderboard หน้าเว็บทันที"], // :517–518
   ],
   streamDelay: "⚠️ Stream Delay Policy: ผู้เข้าแข่งขันที่สตรีมมิ่ง จะต้องตั้งค่า Delay รวมไม่น้อยกว่า 5 นาที หากฝ่าฝืนจะถูกหัก -10 คะแนนในครั้งแรก และปรับแพ้ฟาวล์ในครั้งถัดไป", // :525 ตรงตัว
-  noVote: "🗳️ ไม่โหวตหลังเกม (ออนไลน์อยู่): ไม่ได้ดรอป + ใบเตือน + Karma −5 + ห้ามค้นหาห้องแข่ง 15 นาที (หรือจนกลับไปโหวตย้อนหลัง) · หลุดเกม: ระบบสุ่มโหวตให้ ไม่โดนลงโทษ ยังได้ดรอป", // :527 ตรงตัว
+  noVote: "🗳️ ไม่โหวตหลังเกม (ออนไลน์อยู่): ไม่ได้ดรอป + ใบเตือน + Karma −5 + ห้ามค้นหาห้องแข่ง 15 นาที (หรือจนกลับไปโหวตย้อนหลัง) · หลุดเกม: ระบบสุ่มโหวตให้ ยังได้ดรอป · ไม่มีโทษอัตโนมัติ · ทิ้งเกม/AFK หรือหลุดใน 5 นาทีแรก → แอดมินตรวจ ถ้ายืนยันเจตนา หัก −30 Pulse", // :527 + มติซอง 028 (2026-11-10)
 };
 /** แท่งแนวนอน Penalty Severity (:756–795) */
 export const PENALTY = {
-  labels: ["Stream Ghosting 1st", "Disconnect Before 5m", "Griefing / Toxic Behavior", "Match Fixing / Cheating"], // :756–760 (errata 18:31)
+  labels: ["Stream Ghosting 1st", "Disconnect <5m / Leaver (admin-confirmed)", "Griefing / Toxic Behavior", "Match Fixing / Cheating"], // :756–760 (errata 18:31)
   data: [-10, -30, -50, -100], // :768 (errata 18:31) · มุมโค้ง :770
   series: "คะแนนหัก / สถานะบทลงโทษ", // :763
 };
