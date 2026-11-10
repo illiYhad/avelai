@@ -5,6 +5,7 @@
 
 import { DEFAULT_SLUG, GAME_SLUGS as SLUG_MAP, type GameSlug } from "@/lib/games";
 import { routes } from "@/lib/routes";
+import { defaultLocale, dict, localePath, type Locale } from "@/lib/i18n";
 
 export type { GameSlug };
 export const GAME_SLUGS = Object.keys(SLUG_MAP) as GameSlug[];
@@ -32,25 +33,29 @@ export type NavModel = {
   showChatbot: boolean;
 };
 
-export type NavOptions = { locked?: boolean; isAdmin?: boolean; username?: string | null };
+export type NavOptions = { locked?: boolean; isAdmin?: boolean; username?: string | null; locale?: Locale };
 
 export function navFor(signedIn: boolean, game: GameSlug = DEFAULT_GAME_SLUG, opts: NavOptions = {}): NavModel {
+  // K-AV-I18N.0a: ป้ายจากพจนานุกรม · ลิงก์ตามภาษา (ไทยเดิม · อังกฤษ /en/...)
+  const locale = opts.locale ?? defaultLocale;
+  const t = dict(locale).nav;
+  const L = (href: string) => localePath(locale, href);
   if (!signedIn) {
-    return { home: "/login", links: [], account: [], showGameSwitcher: false, gameLocked: false, showChatbot: false };
+    return { home: L("/login"), links: [], account: [], showGameSwitcher: false, gameLocked: false, showChatbot: false };
   }
   const links: NavItem[] = [
-    { href: routes.tournaments(game), label: "ทัวร์นาเมนต์" },
-    { href: routes.teams(game), label: "ทีม" },
-    { href: routes.rules(game), label: "กติกา" }, // K-AV-RULES.1
+    { href: L(routes.tournaments(game)), label: t.tournaments },
+    { href: L(routes.teams(game)), label: t.teams },
+    { href: L(routes.rules(game)), label: t.rules }, // K-AV-RULES.1
   ];
-  if (opts.username) links.push({ href: routes.passport(game, opts.username), label: "Passport" });
+  if (opts.username) links.push({ href: L(routes.passport(game, opts.username)), label: t.passport });
   const account: AccountItem[] = [
-    { href: "/me", label: "Me" },
-    { href: routes.teams(game), label: "ทีมของฉัน" },
+    { href: L("/me"), label: t.me },
+    { href: L(routes.teams(game)), label: t.myTeams },
   ];
-  if (opts.isAdmin) account.push({ href: "/admin/roles", label: "หลังบ้าน" });
+  if (opts.isAdmin) account.push({ href: L("/admin/roles"), label: t.admin });
   return {
-    home: routes.tournaments(game),
+    home: L(routes.tournaments(game)),
     links,
     account,
     showGameSwitcher: true,
