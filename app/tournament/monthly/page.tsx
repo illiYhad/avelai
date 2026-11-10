@@ -176,10 +176,10 @@ const IntegrityCard: React.FC<IntegrityCardProps> = ({ displayName, avatarUrl, r
         );
     }
     return (
-        <div className={`relative w-full max-w-50 h-80 rounded-xl bg-void p-3 flex flex-col justify-between border ${rarity === 'LEGENDARY' ? 'border-cyan shadow-[0_0_15px_rgba(0,212,255,0.4)]' : rarity === 'EPIC' ? 'border-gold' : 'border-gray-500'}`}>
+        <div className={`relative w-full max-w-50 h-80 rounded-xl bg-void p-3 flex flex-col justify-between border ${rarity === 'LEGENDARY' ? 'border-cyan shadow-[0_0_15px_rgba(0,212,255,0.4)]' : rarity === 'EPIC' ? 'border-gold' : 'border-ink-muted'}`}>
             <div className="relative z-10 flex items-center justify-between">
                 <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded border" style={{ borderColor: `${roleColor}88`, color: roleColor }}>{ROLE_NAMES[position]}</span>
-                <span className={`text-xs font-black px-1.5 py-0.5 rounded ${rarity === 'LEGENDARY' ? 'bg-cyan text-black' : 'bg-gray-400 text-black'}`}>{rarity}</span>
+                <span className={`text-xs font-black px-1.5 py-0.5 rounded ${rarity === 'LEGENDARY' ? 'bg-cyan text-black' : 'bg-ink-muted text-black'}`}>{rarity}</span>
             </div>
             <div className="relative z-10 w-full h-35 my-1.5 rounded-lg border border-line bg-panel flex flex-col items-center justify-center">
                 <div className="w-14 h-14 rounded-full border-2 mb-1 flex items-center justify-center text-ink overflow-hidden" style={{ borderColor: teamBorder }}>

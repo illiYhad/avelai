@@ -362,7 +362,7 @@ export default function DailyArenaPage() {
                                     type="button"
                                     onClick={handleEnterArena}
                                     disabled={isEntering}
-                                    className="w-full py-4 bg-linear-to-r from-cyan to-cyan-600 hover:from-cyan hover:to-cyan text-slate-950 font-black text-sm rounded-xl tracking-wider transition-all shadow-[0_0_20px_rgba(0,212,255,0.25)] font-mono disabled:opacity-50 cursor-pointer"
+                                    className="w-full py-4 bg-linear-to-r from-cyan to-cyan-600 hover:from-cyan hover:to-cyan text-void font-black text-sm rounded-xl tracking-wider transition-all shadow-[0_0_20px_rgba(0,212,255,0.25)] font-mono disabled:opacity-50 cursor-pointer"
                                 >
                                     {isEntering ? 'SEARCHING & BALANCING DRAFT...' : 'ENTER ARENA (1 TICKET) →'}
                                 </button>

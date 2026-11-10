@@ -278,7 +278,7 @@ export default function DailyArenaLobbyPage() {
                         ) : (
                             <button
                                 onClick={handleReady}
-                                className="w-full md:w-auto px-8 py-3.5 bg-linear-to-r from-cyan to-cyan-600 hover:from-cyan hover:to-cyan text-slate-950 font-black text-sm rounded-xl tracking-wider transition-all shadow-[0_0_15px_rgba(0,212,255,0.25)] cursor-pointer font-mono"
+                                className="w-full md:w-auto px-8 py-3.5 bg-linear-to-r from-cyan to-cyan-600 hover:from-cyan hover:to-cyan text-void font-black text-sm rounded-xl tracking-wider transition-all shadow-[0_0_15px_rgba(0,212,255,0.25)] cursor-pointer font-mono"
                             >
                                 READY TO DEPLOY →
                             </button>
