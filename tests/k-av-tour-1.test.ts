@@ -3,7 +3,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { createElement } from "react";
 import { renderToString } from "react-dom/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildTimeline, checkInOpensAt, TIMELINE_UNSET, fmtBangkok, type TimelineInput } from "@/lib/tournament/detail/timeline";
 import { countdownView, formatCountdown, formatHms } from "@/lib/tournament/detail/countdown";
 import { primaryCta } from "@/lib/tournament/detail/cta";
@@ -161,6 +161,9 @@ describe("K-AV-TOUR.1", () => {
 
   // ---------- c) render หน้า ----------
   describe("c) render หน้า 3 สถานะ", () => {
+    // K-AV-CI.1: fixture อิง NOW (start_at = NOW + 3 ชม.) แต่หน้า render อ่านนาฬิกาจริง → ล็อก Date ไว้ที่ NOW ระหว่าง render
+    beforeEach(() => { vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(NOW); });
+    afterEach(() => { vi.useRealTimers(); });
     const cases: [string, boolean, string][] = [
       ["REGISTRATION", false, "เข้าสู่ระบบเพื่อสมัคร"],
       ["REGISTRATION", true, "สมัครทีม"],
