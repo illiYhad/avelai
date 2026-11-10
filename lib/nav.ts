@@ -3,17 +3,19 @@
 // ไม่ใส่ลิงก์หน้า legacy (/dashboard /leaderboard /profile ฯลฯ) — หน้าเหล่านั้นยังอยู่ แค่เมนูไม่พาไป
 // Phase B: ลิงก์ทั้งหมดสร้างจาก routes.* (lib/routes.ts) · slug จาก lib/games.ts — แหล่งเดียว
 
-import { DEFAULT_SLUG, GAME_SLUGS as SLUG_MAP, type GameSlug } from "@/lib/games";
+import { GAME_SLUGS as SLUG_MAP, type GameSlug } from "@/lib/games";
 import { routes } from "@/lib/routes";
 
 export type { GameSlug };
 export const GAME_SLUGS = Object.keys(SLUG_MAP) as GameSlug[];
-export const DEFAULT_GAME_SLUG: GameSlug = DEFAULT_SLUG;
+// K-AV-NAV.1: Phase 1 = Dota 2 → ค่าเริ่มของเมนูเป็น dota2 (lib/games.ts DEFAULT_SLUG ไม่ได้ถูกใช้ที่อื่น · ไม่แตะ)
+export const DEFAULT_GAME_SLUG: GameSlug = "dota2";
 export const GAME_STORAGE_KEY = "avelai.game";
 
 export const GAME_MENU: { slug: GameSlug; label: string; soon: boolean }[] = [
-  { slug: "mlbb", label: "MLBB", soon: false },
-  { slug: "dota2", label: "DOTA 2", soon: true },
+  // K-AV-NAV.1: Dota 2 เปิด (ขึ้นก่อน) · MLBB เร็ว ๆ นี้ (กดไม่ได้ในเมนู · เส้นทาง /mlbb/... ยังเปิดได้ตรง)
+  { slug: "dota2", label: "DOTA 2", soon: false },
+  { slug: "mlbb", label: "MLBB", soon: true },
 ];
 
 export function isGameSlug(v: unknown): v is GameSlug {
