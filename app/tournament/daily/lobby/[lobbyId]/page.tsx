@@ -108,11 +108,11 @@ export default function DailyArenaLobbyPage() {
 
     if (!formation) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center text-slate-400 font-mono gap-4">
+            <div className="min-h-screen flex flex-col items-center justify-center text-ink-muted font-mono gap-4">
                 <p>MATCH FORMATION NOT FOUND</p>
                 <button
                     onClick={() => router.push('/tournament/daily')}
-                    className="px-4 py-2 bg-slate-900 border border-slate-800 rounded text-slate-200 hover:text-white"
+                    className="px-4 py-2 bg-panel border border-line rounded text-ink hover:text-ink"
                 >
                     ← RETURN TO ARENA
                 </button>
@@ -131,23 +131,23 @@ export default function DailyArenaLobbyPage() {
                         ? side === 'Radiant'
                             ? 'bg-cyan/10 border-cyan/50 ring-1 ring-cyan/50'
                             : 'bg-gold/10 border-gold/50 ring-1 ring-gold/50'
-                        : 'bg-slate-950 border-slate-800/80 hover:border-slate-700'
+                        : 'bg-void border-line/80 hover:border-cyan/40'
                     }`}
             >
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded bg-slate-900 border border-slate-800 flex items-center justify-center font-mono font-bold text-xs text-slate-300">
+                    <div className="w-9 h-9 rounded bg-panel border border-line flex items-center justify-center font-mono font-bold text-xs text-ink">
                         {posInfo.label}
                     </div>
                     <div>
-                        <div className="text-sm font-bold font-mono text-slate-200 flex items-center gap-2">
+                        <div className="text-sm font-bold font-mono text-ink flex items-center gap-2">
                             <span>{member.userId.slice(0, 8)}...</span>
                             {isSelf && (
-                                <span className="text-xs px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-panel text-ink">
                                     YOU
                                 </span>
                             )}
                         </div>
-                        <div className="text-xs text-slate-400 font-mono">
+                        <div className="text-xs text-ink-muted font-mono">
                             {posInfo.role} • {member.tierCode}
                         </div>
                     </div>
@@ -159,7 +159,7 @@ export default function DailyArenaLobbyPage() {
                             Fill Bonus +20
                         </span>
                     )}
-                    <span className="text-xs font-mono text-slate-500 font-medium">
+                    <span className="text-xs font-mono text-ink-muted font-medium">
                         Lv.{member.formLevel}
                     </span>
                 </div>
@@ -168,7 +168,7 @@ export default function DailyArenaLobbyPage() {
     };
 
     return (
-        <div className="min-h-screen text-white pt-20 pb-12 px-6 md:px-10 font-sans">
+        <div className="min-h-screen text-ink pt-20 pb-12 px-6 md:px-10 font-sans">
             <div className="max-w-7xl mx-auto space-y-6">
 
                 {/* 1. Header Banner with Integrated Player Pilot & Stats */}
@@ -185,14 +185,14 @@ export default function DailyArenaLobbyPage() {
                                 <span className="px-2.5 py-0.5 text-xs font-mono font-semibold rounded bg-cyan/10 text-cyan border border-cyan/30">
                                     TIER 1 DAILY CIRCUIT
                                 </span>
-                                <span className="text-xs font-mono text-slate-400">
+                                <span className="text-xs font-mono text-ink-muted">
                                     RESET AT 00:00 UTC
                                 </span>
                             </div>
-                            <h1 className="hud-title text-3xl md:text-4xl text-white mt-2">
+                            <h1 className="hud-title text-3xl md:text-4xl text-ink mt-2">
                                 DAILY ARENA
                             </h1>
-                            <p className="text-sm text-slate-400 max-w-xl mt-1 font-mono">
+                            <p className="text-sm text-ink-muted max-w-xl mt-1 font-mono">
                                 5v5 Snake Draft Matchmaking. Earn Kill Points, secure your rank, and claim daily rewards.
                             </p>
                         </div>
@@ -202,10 +202,10 @@ export default function DailyArenaLobbyPage() {
 
                             {/* Pilot Avatar Frame */}
                             <div className="relative group cursor-pointer shrink-0">
-                                <div className="w-24 h-28 rounded-2xl bg-slate-950 border-2 border-cyan/50 flex items-center justify-center font-display font-black text-2xl text-cyan shadow-[0_0_20px_rgba(0,212,255,0.25)] overflow-hidden transition-all group-hover:border-cyan group-hover:shadow-[0_0_30px_rgba(0,212,255,0.4)]">
+                                <div className="w-24 h-28 rounded-2xl bg-void border-2 border-cyan/50 flex items-center justify-center font-display font-black text-2xl text-cyan shadow-[0_0_20px_rgba(0,212,255,0.25)] overflow-hidden transition-all group-hover:border-cyan group-hover:shadow-[0_0_30px_rgba(0,212,255,0.4)]">
                                     <span className="group-hover:scale-110 transition-transform duration-300">SH</span>
                                 </div>
-                                <span className="absolute -bottom-1 -right-1 text-xs font-mono px-2 py-0.5 rounded bg-slate-900 border border-gold text-gold font-bold shadow-md">
+                                <span className="absolute -bottom-1 -right-1 text-xs font-mono px-2 py-0.5 rounded bg-panel border border-gold text-gold font-bold shadow-md">
                                     PILOT
                                 </span>
                             </div>
@@ -213,7 +213,7 @@ export default function DailyArenaLobbyPage() {
                             {/* Pilot Details & Badges & Stats */}
                             <div className="flex flex-col gap-3 w-full sm:w-auto">
                                 <div className="font-mono">
-                                    <div className="text-base font-black text-white tracking-wider flex items-center gap-2">
+                                    <div className="text-base font-black text-ink tracking-wider flex items-center gap-2">
                                         <span>EVE // OPERATOR</span>
                                         <span className="w-2 h-2 rounded-full bg-cyan animate-pulse" />
                                     </div>
@@ -235,16 +235,16 @@ export default function DailyArenaLobbyPage() {
                                 </div>
 
                                 <div className="grid grid-cols-3 gap-2.5 font-mono pt-1">
-                                    <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-center min-w-18.75">
-                                        <span className="text-xs text-slate-400 block font-semibold">TICKETS</span>
+                                    <div className="bg-void border border-line p-2.5 rounded-xl text-center min-w-18.75">
+                                        <span className="text-xs text-ink-muted block font-semibold">TICKETS</span>
                                         <span className="text-lg font-black text-cyan">{dailyTickets}</span>
                                     </div>
-                                    <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-center min-w-18.75">
-                                        <span className="text-xs text-slate-400 block font-semibold">MATCHES</span>
-                                        <span className="text-lg font-black text-slate-200">{matchesPlayedToday}/5</span>
+                                    <div className="bg-void border border-line p-2.5 rounded-xl text-center min-w-18.75">
+                                        <span className="text-xs text-ink-muted block font-semibold">MATCHES</span>
+                                        <span className="text-lg font-black text-ink">{matchesPlayedToday}/5</span>
                                     </div>
-                                    <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-center min-w-18.75">
-                                        <span className="text-xs text-slate-400 block font-semibold">BEST SCORE</span>
+                                    <div className="bg-void border border-line p-2.5 rounded-xl text-center min-w-18.75">
+                                        <span className="text-xs text-ink-muted block font-semibold">BEST SCORE</span>
                                         <span className="text-lg font-black text-gold">{bestScoreToday.toFixed(2)}</span>
                                     </div>
                                 </div>
@@ -261,10 +261,10 @@ export default function DailyArenaLobbyPage() {
                         <span className="text-xs font-mono px-2.5 py-1 rounded bg-cyan/10 border border-cyan/30 text-cyan">
                             SNAKE DRAFT FORMATION READY
                         </span>
-                        <h2 className="text-xl md:text-2xl font-black tracking-wide text-slate-100 mt-2 font-display">
+                        <h2 className="text-xl md:text-2xl font-black tracking-wide text-ink mt-2 font-display">
                             MATCH DISPATCH STATUS
                         </h2>
-                        <p className="text-xs text-slate-400 font-mono mt-1">
+                        <p className="text-xs text-ink-muted font-mono mt-1">
                             MATCH ID: {formation.matchId} • DELTA: ±{formation.formLevelDelta.toFixed(2)}
                         </p>
                     </div>
@@ -272,13 +272,13 @@ export default function DailyArenaLobbyPage() {
                     <div className="flex items-center gap-4 w-full md:w-auto">
                         {lobbyStatus === 'starting' ? (
                             <div className="px-8 py-3 bg-cyan/20 border border-cyan/40 rounded-xl text-center w-full md:w-auto">
-                                <span className="text-xs font-mono text-slate-400 block">STARTING GAME IN</span>
+                                <span className="text-xs font-mono text-ink-muted block">STARTING GAME IN</span>
                                 <span className="text-2xl font-black font-mono text-cyan">{countdown}s</span>
                             </div>
                         ) : (
                             <button
                                 onClick={handleReady}
-                                className="w-full md:w-auto px-8 py-3.5 bg-linear-to-r from-cyan to-cyan-600 hover:from-cyan-400 hover:to-cyan text-slate-950 font-black text-sm rounded-xl tracking-wider transition-all shadow-[0_0_15px_rgba(0,212,255,0.25)] cursor-pointer font-mono"
+                                className="w-full md:w-auto px-8 py-3.5 bg-linear-to-r from-cyan to-cyan-600 hover:from-cyan hover:to-cyan text-void font-black text-sm rounded-xl tracking-wider transition-all shadow-[0_0_15px_rgba(0,212,255,0.25)] cursor-pointer font-mono"
                             >
                                 READY TO DEPLOY →
                             </button>
@@ -290,16 +290,16 @@ export default function DailyArenaLobbyPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     {/* RADIANT TEAM (TEAM A) */}
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
-                        <div className="flex justify-between items-center pb-3 border-b border-slate-800">
+                    <div className="bg-panel border border-line rounded-xl p-5 space-y-4">
+                        <div className="flex justify-between items-center pb-3 border-b border-line">
                             <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded-full bg-cyan" />
                                 <h2 className="text-base font-bold font-display text-cyan tracking-wide">
                                     TEAM RADIANT
                                 </h2>
                             </div>
-                            <span className="text-xs font-mono text-slate-400">
-                                AVG LVL: <span className="text-slate-200 font-bold">{formation.averageFormLevelTeamA}</span>
+                            <span className="text-xs font-mono text-ink-muted">
+                                AVG LVL: <span className="text-ink font-bold">{formation.averageFormLevelTeamA}</span>
                             </span>
                         </div>
                         <div className="space-y-2.5">
@@ -308,16 +308,16 @@ export default function DailyArenaLobbyPage() {
                     </div>
 
                     {/* DIRE TEAM (TEAM B) */}
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
-                        <div className="flex justify-between items-center pb-3 border-b border-slate-800">
+                    <div className="bg-panel border border-line rounded-xl p-5 space-y-4">
+                        <div className="flex justify-between items-center pb-3 border-b border-line">
                             <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded-full bg-gold" />
                                 <h2 className="text-base font-bold font-display text-gold tracking-wide">
                                     TEAM DIRE
                                 </h2>
                             </div>
-                            <span className="text-xs font-mono text-slate-400">
-                                AVG LVL: <span className="text-slate-200 font-bold">{formation.averageFormLevelTeamB}</span>
+                            <span className="text-xs font-mono text-ink-muted">
+                                AVG LVL: <span className="text-ink font-bold">{formation.averageFormLevelTeamB}</span>
                             </span>
                         </div>
                         <div className="space-y-2.5">
