@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth/roles";
 import { gameLabel, gameFromSlug, slugOf } from "@/lib/games";
-import { PASS_DAYS, PASS_PRICE_THB, weeklyPrizePool } from "@/lib/passes";
+import { PASS_PERIOD_LABEL, PASS_PRICE_THB, passMonthLabel, purchasableMonths, weeklyPrizePool } from "@/lib/passes";
 import { buildPromptPayPayload } from "@/lib/payments/promptpay";
 import { promptPayQrSvg } from "@/lib/payments/qr-svg";
 import { uploadPassSlipAction } from "./actions";
@@ -31,10 +31,12 @@ export default async function PassPage({ params }: { params: Promise<{ game: str
   const { data: weekAmounts } = await db.from("payments").select("amount_thb").eq("kind", "PASS").eq("status", "VERIFIED").gte("verified_at", since);
   const pool = weeklyPrizePool((weekAmounts ?? []).map((p) => Number(p.amount_thb)));
   const pending = (pays ?? []).find((p) => p.status === "PENDING");
+  // K-AV-PASS.2: วันที่ 1 (ICT) เลือกได้ 2 เดือน · วันอื่น = เดือนนี้ · action ตรวจซ้ำฝั่งเซิร์ฟเวอร์
+  const months = purchasableMonths(new Date()).map((value) => ({ value, label: passMonthLabel(value) }));
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col gap-6 px-6 py-10">
       <h1 className="font-display text-2xl tracking-[0.15em] text-gold">ARENA PASS</h1>
-      <p className="text-sm text-white/80">{PASS_PRICE_THB} บาท / {PASS_DAYS} วัน (4 สัปดาห์) · ใช้สมัครทัวร์ที่ใช้ Pass ของเกมที่เลือก · 75% ของยอด Pass เข้ากองรางวัล (รายวัน 40% · Weekend 35% · Season/รายเดือน 25%) · เงินรางวัลรายสัปดาห์ (จากยอด Pass ที่ยืนยันแล้ว) ≈ <span className="font-numeric">{pool.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</span> บาท</p>
+      <p className="text-sm text-white/80">{PASS_PRICE_THB} บาท / เดือน · {PASS_PERIOD_LABEL} · ใช้สมัครทัวร์ที่ใช้ Pass ของเกมที่เลือก · 75% ของยอด Pass เข้ากองรางวัล (รายวัน 40% · Weekend 35% · Season/รายเดือน 25%) · เงินรางวัลรายสัปดาห์ (จากยอด Pass ที่ยืนยันแล้ว) ≈ <span className="font-numeric">{pool.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</span> บาท</p>
 
       <section className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold text-white/90">Pass ของฉัน</h2>
@@ -49,7 +51,7 @@ export default async function PassPage({ params }: { params: Promise<{ game: str
           <>
             <p className="text-sm text-white/80">โอน <b className="font-numeric">{PASS_PRICE_THB}.00 บาท</b> ผ่าน QR นี้ (ผู้รับ: Balehm Tech Studio) แล้วอัปโหลดสลิป</p>
             <div className="w-60 rounded bg-white p-2" dangerouslySetInnerHTML={{ __html: qr }} />
-            <PassSlipForm action={uploadPassSlipAction} token={crypto.randomUUID()} />
+            <PassSlipForm action={uploadPassSlipAction} token={crypto.randomUUID()} months={months} />
             <Link href={routes.rules(slug)} className="text-sm text-cyan underline">อ่านกติกาก่อนซื้อ Pass</Link>
           </>
         )}

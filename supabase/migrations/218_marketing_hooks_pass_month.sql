@@ -53,10 +53,21 @@ DO $$ BEGIN
   END IF;
 END $$;
 
+-- C10 (ข้อเสนอโนวา FROM_NOVA_20261110-1414 · รออลิสยืนยัน · K-AV-PASS.2): สลิปผูกเดือนที่ผู้ใช้เลือก
+--   วันที่ 1 ซื้อได้ 2 เดือน → ต้องเก็บทางเลือกไว้ที่สลิป · NULL ได้ (สลิปเก่าก่อน 218 = ใช้เดือนของ created_at)
+ALTER TABLE public.payments ADD COLUMN IF NOT EXISTS pass_month date;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_payments_pass_month_first_day') THEN
+    ALTER TABLE public.payments ADD CONSTRAINT chk_payments_pass_month_first_day
+      CHECK (pass_month IS NULL OR pass_month = date_trunc('month', pass_month)::date);
+  END IF;
+END $$;
+
 -- C5: ตัวกันฐานรอบเดือน · แทนกฎ 28 วันของ 140:491–512 (ไม่แก้ไฟล์ 140)
 --   เงื่อนไขสลิป (PASS_PAYMENT_INVALID) เดิมทุกข้อ
 --   PASS_WINDOW_INVALID: pass_month วันที่ 1 · starts_at = pass_month 00:00 ICT · ends_at = วันที่ 1 เดือนถัดไป 00:00 ICT (exclusive)
 --                        · สลิปสร้างไม่เกินวันที่ 1 เดือนถัดไป 23:59:59 ICT · ยอด = ยอดสลิป
+--                        · C10: สลิปที่ระบุ pass_month ต้องตรงกับ pass_month ของ pass
 --   เวลาไทย = +7 ชม. คงที่ (ไม่พึ่งฐานข้อมูลเขตเวลา)
 CREATE OR REPLACE FUNCTION public.passes_guard_insert()
 RETURNS trigger
@@ -67,13 +78,14 @@ DECLARE
   month_start timestamptz;
   month_end timestamptz;
 BEGIN
-  SELECT kind, status, payer_user_id, pass_game, verified_by, amount_thb, created_at INTO p
+  SELECT kind, status, payer_user_id, pass_game, verified_by, amount_thb, created_at, pass_month INTO p
     FROM public.payments WHERE id = NEW.payment_id;
   IF p IS NULL OR p.kind <> 'PASS' OR p.status <> 'VERIFIED' OR p.verified_by IS NULL
      OR p.payer_user_id <> NEW.user_id OR p.pass_game <> NEW.game THEN
     RAISE EXCEPTION 'PASS_PAYMENT_INVALID' USING ERRCODE = 'check_violation';
   END IF;
-  IF NEW.pass_month IS NULL OR NEW.pass_month <> date_trunc('month', NEW.pass_month)::date THEN
+  IF NEW.pass_month IS NULL OR NEW.pass_month <> date_trunc('month', NEW.pass_month)::date
+     OR (p.pass_month IS NOT NULL AND p.pass_month <> NEW.pass_month) THEN
     RAISE EXCEPTION 'PASS_WINDOW_INVALID' USING ERRCODE = 'check_violation';
   END IF;
   month_start := (NEW.pass_month::timestamp - interval '7 hours') AT TIME ZONE 'UTC';
@@ -264,6 +276,7 @@ COMMIT;
 -- ALTER TABLE public.users DROP CONSTRAINT IF EXISTS chk_users_genesis_pioneer_no,
 --   DROP CONSTRAINT IF EXISTS uq_users_genesis_pioneer_no,
 --   DROP COLUMN IF EXISTS invited_by_user_id, DROP COLUMN IF EXISTS genesis_pioneer_no;
+-- ALTER TABLE public.payments DROP CONSTRAINT IF EXISTS chk_payments_pass_month_first_day, DROP COLUMN IF EXISTS pass_month;
 -- -- passes: คืนตัวกัน 28 วัน = รันบล็อก CREATE OR REPLACE FUNCTION public.passes_guard_insert() จาก 140:491–512
 -- ALTER TABLE public.passes DROP CONSTRAINT IF EXISTS uq_passes_user_game_month,
 --   DROP CONSTRAINT IF EXISTS chk_passes_pass_month_first_day, DROP COLUMN IF EXISTS pass_month;
