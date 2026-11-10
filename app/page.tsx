@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getServerDb } from "@/lib/db/server";
 import HomeView from "@/components/home/HomeView";
 import { loadMyActivities, loadMyTeams, loadRequestTime, loadTournamentsForYou } from "@/lib/home/load";
+import { getLocale } from "@/lib/i18n/server";
 
 // K-AV-H5: หน้าแรก = ทางเข้าเดียว (server redirect · ไม่มี client flash)
 // ยังไม่ล็อกอิน (หรือยังไม่ต่อ DB) → /login
@@ -17,12 +18,13 @@ export default async function HomePage() {
   if (!data.user) redirect("/login");
   const userId = data.user.id;
 
-  const [tournaments, activities, teams, now] = await Promise.all([
+  const [tournaments, activities, teams, now, locale] = await Promise.all([
     loadTournamentsForYou(db),
     loadMyActivities(db, userId),
     loadMyTeams(db, userId),
     loadRequestTime(),
+    getLocale(), // K-AV-I18N.0b: /en = อังกฤษ (header จาก middleware)
   ]);
 
-  return <HomeView tournaments={tournaments} activities={activities} teams={teams} now={now} />;
+  return <HomeView tournaments={tournaments} activities={activities} teams={teams} now={now} locale={locale} />;
 }
