@@ -31,7 +31,8 @@ beforeEach(() => { h.user = null; h.dbOff = false; });
 
 describe("หน้าแรก /", () => {
   it("ยังไม่ล็อกอิน → /login", async () => { expect(await target()).toBe("/login"); });
-  it("ล็อกอินแล้ว → /me", async () => { h.user = { id: "u1" }; expect(await target()).toBe("/me"); });
+  // K-AV-HOME.1: ล็อกอินแล้วไม่ redirect /me อีก (แสดงหน้า Home · เทสเต็มใน tests/k-av-home-1.test.ts ข้อ d)
+  it("ล็อกอินแล้ว → ไม่ redirect", async () => { h.user = { id: "u1" }; await expect(target()).rejects.toThrow("ไม่ได้ redirect"); });
   it("ยังไม่ต่อ DB (env ไม่ครบ) → /login ไม่ล้ม", async () => { h.dbOff = true; expect(await target()).toBe("/login"); });
 });
 
