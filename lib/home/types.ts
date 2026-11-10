@@ -11,7 +11,6 @@ export type HomeTournament = {
   team_size: number;
   max_teams: number | null;
   start_at: string | null;
-  confirmed: number;
 };
 
 export type HomeActivity = { id: string; name: string; status: string; start_at: string | null; game: GameSlug };

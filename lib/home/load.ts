@@ -6,6 +6,7 @@ import type { HomeActivity, HomeTeam, HomeTournament } from "@/lib/home/types";
 // คอลัมน์อ้างจาก migration:
 //   tournaments  = supabase/migrations/140_tournaments_registration.sql:38-62 (id name game format team_size best_of status start_at max_teams)
 //   registrations = supabase/migrations/140_tournaments_registration.sql:196-208 (tournament_id team_id status)
+//   K-AV-HOME.1d: การ์ดทัวร์ไม่นับใบสมัครแล้ว (RLS registrations_read ตัดแถว → 0 ไม่จริง · ตัวเลขจริงดูที่หน้าทัวร์ #43)
 //   team_members = supabase/migrations/110_from_zodiac_team_core.sql:59-65 (team_id user_id status)
 //   teams        = supabase/migrations/110_from_zodiac_team_core.sql:29 (id name tag game) · query แบบ app/[game]/teams/page.tsx
 
@@ -13,14 +14,12 @@ const OPEN_STATUSES = ["REGISTRATION", "CHECK_IN", "SEEDING", "RUNNING"] as cons
 const LIVE_REG_STATUSES = ["PENDING_PAYMENT", "CONFIRMED", "CHECKED_IN"] as const;
 const DONE_STATUSES = new Set(["COMPLETED", "CANCELLED"]);
 
-type TRow = Omit<HomeTournament, "confirmed">;
-
 /** เวลาอ้างอิงของคำขอนี้ (อ่านครั้งเดียวต่อคำขอใน server component · ส่งเป็น props ให้ HomeView) */
 export async function loadRequestTime(): Promise<number> {
   return Date.now();
 }
 
-/** ทัวร์ Dota 2 ที่เปิดอยู่ 3 รายการ เรียง start_at + จำนวนทีมยืนยันแบบ app/[game]/tournaments/page.tsx:41 */
+/** ทัวร์ Dota 2 ที่เปิดอยู่ 3 รายการ เรียง start_at (คำขอเดียว · ไม่นับใบสมัคร) */
 export async function loadTournamentsForYou(db: SupabaseClient): Promise<HomeTournament[]> {
   try {
     const { data, error } = await db
@@ -31,17 +30,7 @@ export async function loadTournamentsForYou(db: SupabaseClient): Promise<HomeTou
       .order("start_at", { ascending: true, nullsFirst: false })
       .limit(3);
     if (error || !data) return [];
-    const rows = data as TRow[];
-    const counts = new Map<string, number>();
-    if (rows.length) {
-      const { data: regs } = await db
-        .from("registrations")
-        .select("tournament_id")
-        .in("tournament_id", rows.map((r) => r.id))
-        .in("status", ["CONFIRMED", "CHECKED_IN"]);
-      for (const r of (regs ?? []) as { tournament_id: string }[]) counts.set(r.tournament_id, (counts.get(r.tournament_id) ?? 0) + 1);
-    }
-    return rows.map((r) => ({ ...r, confirmed: counts.get(r.id) ?? 0 }));
+    return data as HomeTournament[];
   } catch {
     return [];
   }

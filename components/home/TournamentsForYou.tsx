@@ -36,7 +36,6 @@ export default function TournamentsForYou({ items, now }: { items: HomeTournamen
                       <div className="flex items-center justify-between gap-2 text-sm text-ink-muted">
                         <span>
                           {t.team_size}v{t.team_size} · {t.max_teams ?? "–"} ช่อง
-                          <span className="font-mono tabular-nums"> · ยืนยัน {t.confirmed} ทีม</span>
                         </span>
                         <StatusBadge status={tournamentBadge(t.status)} />
                       </div>

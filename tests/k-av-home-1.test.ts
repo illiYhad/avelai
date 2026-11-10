@@ -75,9 +75,9 @@ describe("b) แบนเนอร์ 2 สไลด์", () => {
 const sample: HomeData = {
   now: Date.parse("2026-11-08T03:00:00Z"),
   tournaments: [
-    { id: "t1", name: "ESTA Daily #1", status: "RUNNING", format: "SWISS", best_of: 1, team_size: 5, max_teams: 16, start_at: "2026-11-08T02:00:00Z", confirmed: 12 },
-    { id: "t2", name: "ESTA Daily #2", status: "REGISTRATION", format: "SE", best_of: 3, team_size: 5, max_teams: null, start_at: "2026-11-08T03:30:00Z", confirmed: 3 },
-    { id: "t3", name: "ESTA Weekend", status: "REGISTRATION", format: "DE", best_of: 3, team_size: 5, max_teams: 32, start_at: "2026-11-08T18:00:00Z", confirmed: 0 },
+    { id: "t1", name: "ESTA Daily #1", status: "RUNNING", format: "SWISS", best_of: 1, team_size: 5, max_teams: 16, start_at: "2026-11-08T02:00:00Z" },
+    { id: "t2", name: "ESTA Daily #2", status: "REGISTRATION", format: "SE", best_of: 3, team_size: 5, max_teams: null, start_at: "2026-11-08T03:30:00Z" },
+    { id: "t3", name: "ESTA Weekend", status: "REGISTRATION", format: "DE", best_of: 3, team_size: 5, max_teams: 32, start_at: "2026-11-08T18:00:00Z" },
   ],
   activities: [],
   teams: [],
@@ -115,6 +115,27 @@ describe("c) HomeView", () => {
     expect(html).toContain("พรุ่งนี้ 01:00");
     expect(html).toContain("5v5 · – ช่อง");
     expect(html).toMatch(/href="\/dota2\/tournaments"[^>]*>ดูเพิ่ม</);
+  });
+
+  it("K-AV-HOME.1d: การ์ดทัวร์ไม่มี 'ยืนยัน X ทีม' (RLS ตัดแถว = 0 ไม่จริง) · มีช่องจริง", () => {
+    const cards = html.split('data-section="for-you"')[1];
+    expect(cards).not.toContain("ยืนยัน");
+    expect(cards).not.toMatch(/\d+\s*ทีม/);
+    expect(cards).toContain("5v5 · 16 ช่อง");
+    expect(cards).toContain("5v5 · 32 ช่อง");
+  });
+
+  it("K-AV-HOME.1d: <main> เว้นล่าง ≥ 88px บนจอ < 768px (pb-24 = 96px) ให้ปุ่ม AVE ไม่ทับ", () => {
+    const main = html.match(/<main[^>]*data-home-main[^>]*>/)?.[0] ?? "";
+    expect(main).toMatch(/\bpb-24\b/);
+    expect(main).toMatch(/\bmd:pb-6\b/);
+  });
+
+  it("K-AV-HOME.1d: loadTournamentsForYou ไม่อ่าน registrations (คำขอเดียว)", () => {
+    const src = readFileSync(join(__dirname, "..", "lib", "home", "load.ts"), "utf8");
+    const fn = src.split("export async function loadTournamentsForYou")[1].split(/\r?\n\}\r?\n/)[0];
+    expect(fn).not.toContain('from("registrations")');
+    expect(fn.match(/\.from\(/g)).toHaveLength(1);
   });
 
   it("กล่องว่างทุกกล่องมีปุ่ม (กิจกรรม · ปาร์ตี้ · ทีม · เพื่อน)", () => {
