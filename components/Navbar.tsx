@@ -16,9 +16,10 @@ import {
   type GameSlug,
 } from '@/lib/nav';
 import { signOutAction } from '@/app/auth/actions';
+import { defaultLocale, dict, localePath, stripLocale, switchLocalePath, type Dict, type Locale } from '@/lib/i18n';
 
 // K-AV-UX2A: หัวเว็บ — ข้อมูลผู้ใช้มาจาก app/layout.tsx (อ่าน session ครั้งเดียวต่อ request)
-type Props = { signedIn: boolean; username?: string | null; isAdmin?: boolean };
+type Props = { signedIn: boolean; username?: string | null; isAdmin?: boolean; locale?: Locale };
 
 function readStoredGame(): GameSlug {
   try {
@@ -46,7 +47,7 @@ function Logo({ href }: { href: string }) {
   );
 }
 
-function GameSwitcher({ game, locked, pathname }: { game: GameSlug; locked: boolean; pathname: string }) {
+function GameSwitcher({ game, locked, pathname, locale, t }: { game: GameSlug; locked: boolean; pathname: string; locale: Locale; t: Dict['nav'] }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -61,7 +62,7 @@ function GameSwitcher({ game, locked, pathname }: { game: GameSlug; locked: bool
 
   if (locked) {
     return (
-      <span title="หน้านี้เป็นของเกมเดียว" className="flex min-h-11 items-center gap-1.5 rounded border border-line px-3 font-mono text-sm text-ink-muted">
+      <span title={t.gameLocked} className="flex min-h-11 items-center gap-1.5 rounded border border-line px-3 font-mono text-sm text-ink-muted">
         <Lock className="h-3.5 w-3.5" aria-hidden /> {gameLabel(game)}
       </span>
     );
@@ -83,7 +84,7 @@ function GameSwitcher({ game, locked, pathname }: { game: GameSlug; locked: bool
           {GAME_MENU.map((g) => (
             <li key={g.slug} role="none">
               {g.soon ? (
-                // K-AV-NAV.1: เกมที่ยังไม่เปิด = ป้ายเร็ว ๆ นี้ · ไม่มี href · กดไม่ได้
+                // K-AV-NAV.1: เกมที่ยังไม่เปิด = ป้ายเร็ว ๆ นี้ · ไม่มี href · กดไม่ได้ · K-AV-I18N.0c: ป้ายจาก dict(locale).nav.soon
                 <span
                   role="menuitem"
                   aria-disabled="true"
@@ -91,12 +92,12 @@ function GameSwitcher({ game, locked, pathname }: { game: GameSlug; locked: bool
                   className="flex min-h-11 cursor-not-allowed items-center justify-between border-l-2 border-transparent px-3 font-mono text-sm text-ink-muted/60"
                 >
                   {g.label}
-                  <span className="text-xs text-ink-muted">เร็ว ๆ นี้</span>
+                  <span className="text-xs text-ink-muted">{t.soon}</span>
                 </span>
               ) : (
               <Link
                 role="menuitem"
-                href={switchGamePath(pathname, g.slug)}
+                href={localePath(locale, switchGamePath(pathname, g.slug))}
                 onClick={() => setOpen(false)}
                 className={`flex min-h-11 items-center justify-between border-l-2 px-3 font-mono text-sm ${
                   g.slug === game ? 'border-gold text-ink' : 'border-transparent text-ink-muted hover:text-ink'
@@ -113,8 +114,11 @@ function GameSwitcher({ game, locked, pathname }: { game: GameSlug; locked: bool
   );
 }
 
-export default function Navbar({ signedIn, username = null, isAdmin = false }: Props) {
-  const pathname = usePathname() ?? '';
+export default function Navbar({ signedIn, username = null, isAdmin = false, locale = defaultLocale }: Props) {
+  // K-AV-I18N.0a: rawPath = URL จริง (/en/...) · pathname = เส้นไทย (ใช้หาเกม/ล็อก)
+  const rawPath = usePathname() ?? '';
+  const pathname = stripLocale(rawPath);
+  const t = dict(locale).nav;
   // เกมที่จำไว้ (localStorage) · ฝั่ง server = ค่าเริ่ม ไม่ให้ hydration ไม่ตรง
   const stored = useSyncExternalStore(subscribeStorage, readStoredGame, () => DEFAULT_GAME_SLUG);
   const [drawer, setDrawer] = useState(false);
@@ -130,7 +134,7 @@ export default function Navbar({ signedIn, username = null, isAdmin = false }: P
   const fromPath = gameFromPath(pathname);
   const game = fromPath ?? stored;
   const locked = isGameLocked(pathname);
-  const nav = navFor(signedIn, game, { locked, isAdmin, username });
+  const nav = navFor(signedIn, game, { locked, isAdmin, username, locale });
 
   useEffect(() => {
     if (!fromPath) return;
@@ -144,7 +148,7 @@ export default function Navbar({ signedIn, username = null, isAdmin = false }: P
     return () => document.removeEventListener('keydown', onKey);
   }, [drawer, account]);
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
+  const isActive = (href: string) => rawPath === href || rawPath.startsWith(href + '/');
   const initial = (username ?? '?').slice(0, 1).toUpperCase();
 
   return (
@@ -154,7 +158,7 @@ export default function Navbar({ signedIn, username = null, isAdmin = false }: P
       <div aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-gold/40 via-transparent to-transparent" />
       <nav className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 md:h-16">
         <Logo href={nav.home} />
-        {nav.showGameSwitcher ? <GameSwitcher game={game} locked={nav.gameLocked} pathname={pathname} /> : null}
+        {nav.showGameSwitcher ? <GameSwitcher game={game} locked={nav.gameLocked} pathname={pathname} locale={locale} t={t} /> : null}
 
         <div className="ml-auto hidden items-center gap-1 md:flex">
           {nav.links.map((l) => (
@@ -173,7 +177,8 @@ export default function Navbar({ signedIn, username = null, isAdmin = false }: P
 
         {signedIn ? (
           <div className="ml-auto flex items-center gap-1 md:ml-2">
-            <button type="button" disabled aria-label="การแจ้งเตือน" title="เร็ว ๆ นี้" className="flex h-11 w-11 items-center justify-center rounded text-ink-muted disabled:opacity-60">
+            <LangSwitch rawPath={rawPath} locale={locale} label={t.language} className="hidden md:flex" />
+            <button type="button" disabled aria-label={t.notifications} title={t.soon} className="flex h-11 w-11 items-center justify-center rounded text-ink-muted disabled:opacity-60">
               <Bell className="h-5 w-5" aria-hidden />
             </button>
             <div className="relative hidden md:block">
@@ -185,13 +190,13 @@ export default function Navbar({ signedIn, username = null, isAdmin = false }: P
                 className="flex min-h-11 items-center gap-2 rounded px-2 text-sm text-ink"
               >
                 <span className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-surface-3 font-display text-sm text-gold">{initial}</span>
-                <span className="max-w-32 truncate">{username ?? 'บัญชี'}</span>
+                <span className="max-w-32 truncate">{username ?? t.account}</span>
               </button>
-              {account ? <AccountMenu items={nav.account} className="absolute right-0 top-full mt-2 w-52" /> : null}
+              {account ? <AccountMenu items={nav.account} logout={t.logout} className="absolute right-0 top-full mt-2 w-52" /> : null}
             </div>
             <button
               type="button"
-              aria-label="เมนู"
+              aria-label={t.menu}
               aria-expanded={drawer}
               onClick={() => setDrawer((o) => !o)}
               className="flex h-11 w-11 items-center justify-center rounded text-ink md:hidden"
@@ -200,9 +205,12 @@ export default function Navbar({ signedIn, username = null, isAdmin = false }: P
             </button>
           </div>
         ) : (
-          <Link href="/login" className="btn-primary ml-auto flex min-h-11 items-center rounded px-4 text-sm">
-            เข้าสู่ระบบ
-          </Link>
+          <>
+            <LangSwitch rawPath={rawPath} locale={locale} label={t.language} className="ml-auto" />
+            <Link href={nav.home} className="btn-primary ml-2 flex min-h-11 items-center rounded px-4 text-sm">
+              {t.login}
+            </Link>
+          </>
         )}
       </nav>
 
@@ -222,7 +230,9 @@ export default function Navbar({ signedIn, username = null, isAdmin = false }: P
               ))}
             </ul>
             <div className="mt-auto border-t border-line">
-              <AccountMenu items={nav.account} big />
+              {/* K-AV-I18N.0a: จอ < md ปุ่มภาษาอยู่ในลิ้นชัก (หัวเว็บ 390 ไม่ล้น) */}
+              <LangSwitch rawPath={rawPath} locale={locale} label={t.language} className="px-4 py-2 md:hidden" />
+              <AccountMenu items={nav.account} logout={t.logout} big />
             </div>
           </div>
         </div>
@@ -231,7 +241,7 @@ export default function Navbar({ signedIn, username = null, isAdmin = false }: P
   );
 }
 
-function AccountMenu({ items, className = '', big = false }: { items: { href: string; label: string }[]; className?: string; big?: boolean }) {
+function AccountMenu({ items, logout, className = '', big = false }: { items: { href: string; label: string }[]; logout: string; className?: string; big?: boolean }) {
   const row = big ? 'h-13 px-5 text-[17px]' : 'min-h-11 px-3 text-sm';
   return (
     <ul role="menu" className={`z-50 rounded border border-line bg-surface-2 py-1 ${big ? 'rounded-none border-0 bg-transparent' : ''} ${className}`}>
@@ -245,10 +255,33 @@ function AccountMenu({ items, className = '', big = false }: { items: { href: st
       <li role="none">
         <form action={signOutAction}>
           <button type="submit" role="menuitem" className={`flex w-full items-center text-left text-red-300 ${row}`}>
-            ออกจากระบบ
+            {logout}
           </button>
         </form>
       </li>
     </ul>
+  );
+}
+
+/** K-AV-I18N.0a: ปุ่ม TH | EN — อยู่หน้าเดิมของอีกภาษา (เส้นไทย ↔ /en + เส้นเดิม) · middleware จำค่าใน cookie avelai.locale */
+function LangSwitch({ rawPath, locale, label, className = '' }: { rawPath: string; locale: Locale; label: string; className?: string }) {
+  const item = (to: Locale, text: string) => (
+    <Link
+      href={switchLocalePath(rawPath, to)}
+      lang={to}
+      hrefLang={to}
+      aria-current={locale === to ? 'true' : undefined}
+      data-lang={to}
+      className={`flex min-h-11 min-w-11 items-center justify-center px-1.5 font-mono text-xs ${locale === to ? 'text-gold' : 'text-ink-muted hover:text-ink'}`}
+    >
+      {text}
+    </Link>
+  );
+  return (
+    <nav aria-label={label} data-lang-switch className={`flex items-center ${className}`}>
+      {item('th', 'TH')}
+      <span aria-hidden className="text-ink-muted/50">|</span>
+      {item('en', 'EN')}
+    </nav>
   );
 }

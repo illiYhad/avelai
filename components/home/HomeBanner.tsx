@@ -3,27 +3,33 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { HOME_SLIDES, SLIDE_INTERVAL_MS } from "@/lib/home/slides";
+import { homeSlides, SLIDE_INTERVAL_MS } from "@/lib/home/slides";
+import { defaultLocale, dict, type Locale } from "@/lib/i18n";
+import { fill } from "@/lib/home/time-label";
 
 // K-AV-HOME.1: แบนเนอร์หมุน (โครงจากภาพต้นแบบ 01/02 · หน้าตาโลก AVELAi)
 // SSR = สไลด์ 1 (ไม่กระพริบตอนโหลด) · หมุนเองทุก 6 วินาที · หยุดเมื่อเมาส์ชี้/โฟกัส · prefers-reduced-motion = ไม่หมุนเอง
 // รูปพื้นโปร่งใส: ห้ามยืด/บีบ (object-contain + สัดส่วนไฟล์จริง) · ไม่มีอะไรวางทับตัวละคร/โลโก้บนตัว
-export default function HomeBanner() {
+// K-AV-I18N.0b: สไลด์ + aria จากพจนานุกรมตาม locale
+export default function HomeBanner({ locale = defaultLocale }: { locale?: Locale }) {
+  const HOME_SLIDES = homeSlides(locale);
+  const t = dict(locale).home.banner;
+  const count = HOME_SLIDES.length;
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
 
   useEffect(() => {
-    if (paused || HOME_SLIDES.length < 2) return;
+    if (paused || count < 2) return;
     if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    const t = window.setInterval(() => setActive((i) => (i + 1) % HOME_SLIDES.length), SLIDE_INTERVAL_MS);
-    return () => window.clearInterval(t);
-  }, [paused]);
+    const timer = window.setInterval(() => setActive((i) => (i + 1) % count), SLIDE_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [paused, count]);
 
   return (
     <section
       data-section="banner"
       aria-roledescription="carousel"
-      aria-label="แบนเนอร์ AVELAi"
+      aria-label={t.label}
       className="hud-panel hud-panel-gold relative h-[320px] overflow-hidden rounded-xl lg:h-[420px]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
@@ -37,7 +43,7 @@ export default function HomeBanner() {
             key={s.id}
             data-slide={s.id}
             aria-roledescription="slide"
-            aria-label={`${i + 1} จาก ${HOME_SLIDES.length}`}
+            aria-label={fill(t.slideOf, { n: i + 1, total: HOME_SLIDES.length })}
             aria-hidden={!on}
             inert={!on}
             className={`absolute inset-0 transition-opacity duration-500 motion-reduce:transition-none ${on ? "opacity-100" : "pointer-events-none opacity-0"}`}
@@ -74,7 +80,7 @@ export default function HomeBanner() {
           <button
             key={s.id}
             type="button"
-            aria-label={`ไปสไลด์ ${i + 1}: ${s.title}`}
+            aria-label={fill(t.goTo, { n: i + 1, title: s.title })}
             aria-current={i === active}
             onClick={() => setActive(i)}
             className="flex h-6 items-center px-1"

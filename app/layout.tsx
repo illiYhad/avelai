@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar'
 import AVEChatbot from '@/components/AVEChatbot'
 import { getServerDb } from '@/lib/db/server'
 import { navFor } from '@/lib/nav'
+import { getLocale } from '@/lib/i18n/server'
 
 // K-AV-UX1: ฟอนต์แบรนด์ (ชื่อตัวแปรตรงกับ @theme ใน globals.css)
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' })
@@ -59,7 +60,7 @@ export default async function RootLayout({
   return (
     <html lang="th" className={`${inter.variable} ${orbitron.variable} ${jetbrains.variable} ${thai.variable}`}>
       <body>
-        <Navbar signedIn={viewer.signedIn} username={viewer.username} isAdmin={viewer.isAdmin} />
+        <Navbar signedIn={viewer.signedIn} username={viewer.username} isAdmin={viewer.isAdmin} locale={await getLocale()} />
         {children}
         {showChatbot && <AVEChatbot />}
       </body>
