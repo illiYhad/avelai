@@ -83,6 +83,18 @@ function GameSwitcher({ game, locked, pathname, locale, t }: { game: GameSlug; l
         <ul role="menu" className="absolute left-0 top-full z-50 mt-2 w-48 rounded border border-line bg-surface-2 py-1">
           {GAME_MENU.map((g) => (
             <li key={g.slug} role="none">
+              {g.soon ? (
+                // K-AV-NAV.1: เกมที่ยังไม่เปิด = ป้ายเร็ว ๆ นี้ · ไม่มี href · กดไม่ได้ · K-AV-I18N.0c: ป้ายจาก dict(locale).nav.soon
+                <span
+                  role="menuitem"
+                  aria-disabled="true"
+                  data-game-soon={g.slug}
+                  className="flex min-h-11 cursor-not-allowed items-center justify-between border-l-2 border-transparent px-3 font-mono text-sm text-ink-muted/60"
+                >
+                  {g.label}
+                  <span className="text-xs text-ink-muted">{t.soon}</span>
+                </span>
+              ) : (
               <Link
                 role="menuitem"
                 href={localePath(locale, switchGamePath(pathname, g.slug))}
@@ -92,8 +104,8 @@ function GameSwitcher({ game, locked, pathname, locale, t }: { game: GameSlug; l
                 }`}
               >
                 {g.label}
-                {g.soon ? <span className="text-xs text-ink-muted">{t.soon}</span> : null}
               </Link>
+              )}
             </li>
           ))}
         </ul>

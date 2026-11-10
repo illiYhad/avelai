@@ -43,10 +43,10 @@ describe("navFor (pure)", () => {
     expect(m.showGameSwitcher).toBe(false);
     expect(m.showChatbot).toBe(false);
   });
-  it("ล็อกอินแล้ว (K-AV-UX2A) → ลิงก์ใต้ /mlbb/ · มีแชทบอท", () => {
+  it("ล็อกอินแล้ว (K-AV-UX2A) → ลิงก์ใต้ /dota2/ (K-AV-NAV.1 ค่าเริ่ม dota2) · มีแชทบอท", () => {
     const m = navFor(true);
-    expect(m.home).toBe("/mlbb/tournaments");
-    expect(m.links.map((l) => l.href)).toEqual(["/mlbb/tournaments", "/mlbb/teams", "/mlbb/rules"]); // K-AV-RULES.1
+    expect(m.home).toBe("/dota2/tournaments");
+    expect(m.links.map((l) => l.href)).toEqual(["/dota2/tournaments", "/dota2/teams", "/dota2/rules"]); // K-AV-RULES.1
     expect(m.showChatbot).toBe(true);
   });
   it("ล็อกอินแล้วก็ไม่มีลิงก์ legacy", () => {
@@ -62,12 +62,12 @@ describe("Navbar (render)", () => {
     expect(html).toContain("เข้าสู่ระบบ");
     for (const p of LEGACY) expect(html).not.toContain(`href="${p}"`);
   });
-  it("ล็อกอินแล้วอยู่ /me: ลิงก์ใต้เกมที่จำไว้ (ค่าเริ่ม mlbb) · ไม่มีลิงก์ legacy", () => {
+  it("ล็อกอินแล้วอยู่ /me: ลิงก์ใต้เกมที่จำไว้ (ค่าเริ่ม dota2 · K-AV-NAV.1) · ไม่มีลิงก์ legacy", () => {
     h.pathname = "/me";
     const html = renderToStaticMarkup(createElement(Navbar, { signedIn: true, username: "kolt" }));
-    expect(html).toContain('href="/mlbb/tournaments"');
-    expect(html).toContain('href="/mlbb/teams"');
-    expect(html).toContain('href="/mlbb/passport/kolt"');
+    expect(html).toContain('href="/dota2/tournaments"');
+    expect(html).toContain('href="/dota2/teams"');
+    expect(html).toContain('href="/dota2/passport/kolt"');
     for (const p of LEGACY) expect(html).not.toContain(`href="${p}"`);
   });
 });
