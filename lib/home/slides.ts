@@ -27,8 +27,8 @@ export function homeSlides(locale: Locale = defaultLocale): readonly HomeSlide[]
       title: "AVELAi : ULTIMATE SOLO",
       // ต้นแบบ :122 (หัวเรื่องรองของ Hero) ตรงตัว
       body: t.soloBody,
-      // ใบ HOME.2 จะเปลี่ยนเป็นหน้าลีก
-      cta: { label: t.soloCta, href: localePath(locale, routes.tournaments("dota2")) },
+      // K-AV-HOME.2: ปุ่มเข้าแข่ง → หน้าลีก ESTA (เดิม /dota2/tournaments)
+      cta: { label: t.soloCta, href: localePath(locale, routes.esta("dota2")) },
       image: { src: "/brand/home/avelai-full-640.png", width: 640, height: 905, alt: "AVELAi" },
     },
     {

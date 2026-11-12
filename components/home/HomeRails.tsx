@@ -15,6 +15,7 @@ const circle = `${circleBase} text-xs tracking-wider`;
 export function LeftRail({ locale = defaultLocale }: { locale?: Locale }) {
   const t = dict(locale).home.rails;
   const d2 = localePath(locale, routes.tournaments("dota2"));
+  const esta = localePath(locale, routes.esta("dota2"));
   return (
     <nav data-section="rail-left" aria-label={t.gamesAndLeagues} className="hidden w-[72px] shrink-0 xl:block">
       <ul className="sticky top-24 flex flex-col items-center gap-3">
@@ -30,8 +31,8 @@ export function LeftRail({ locale = defaultLocale }: { locale?: Locale }) {
         </li>
         <li aria-hidden className="h-px w-8 bg-line" />
         <li>
-          {/* ลีกแรก ESTA (SYSTEM_CORE หมวด 4) · ใบ HOME.2 จะเปลี่ยนเป็นหน้าลีก */}
-          <Link href={d2} title="ESTA" aria-label="ESTA" className={`${circle} border-cyan/50 bg-panel text-cyan hover:shadow-glow-cyan`}>
+          {/* ลีกแรก ESTA (SYSTEM_CORE หมวด 4) · K-AV-HOME.2: ไปหน้าลีก */}
+          <Link href={esta} title="ESTA" aria-label="ESTA" className={`${circle} border-cyan/50 bg-panel text-cyan hover:shadow-glow-cyan`}>
             ESTA
           </Link>
         </li>

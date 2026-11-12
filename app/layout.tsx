@@ -62,7 +62,7 @@ export default async function RootLayout({
       <body>
         <Navbar signedIn={viewer.signedIn} username={viewer.username} isAdmin={viewer.isAdmin} locale={await getLocale()} />
         {children}
-        {showChatbot && <AVEChatbot />}
+        {showChatbot && <AVEChatbot username={viewer.username} locale={await getLocale()} />}
       </body>
     </html>
   )
