@@ -29,7 +29,7 @@ describe("K-AV-RULES.2", () => {
     expect(ROLE_DONUT.data).toEqual([20, 20, 20, 20, 20]);
     expect(SCORE_STACK.series.map((s) => s.data)).toEqual([[25, 25, 25, -10], [18.5, 7.2, 7.2, 4.5], [0, 0, 8.5, 0]]);
     expect(PENALTY.data).toEqual([-10, -30, -50, -100]);
-    expect(PENALTY.labels).toEqual(["Stream Ghosting 1st", "Disconnect Before 5m", "Griefing / Toxic Behavior", "Match Fixing / Cheating"]);
+    expect(PENALTY.labels).toEqual(["Stream Ghosting 1st", "Disconnect <5m / Leaver (admin-confirmed)", "Griefing / Toxic Behavior", "Match Fixing / Cheating"]);
   });
 
   it("c) Simulator: ค่าเริ่มต้น 41.20 · 3.825 · Level 15 · breakdown · แพ้ 1.25 · 1.328 · Level 3 · ตำแหน่งไม่กระทบคะแนน", () => {
@@ -52,7 +52,7 @@ describe("K-AV-RULES.2", () => {
 
   it("d) ข้อความ Stream Delay :525 · ไม่โหวต :527 · ทักทาย AVE :555–556 ตรงตัว", () => {
     expect(RISK.streamDelay).toBe("⚠️ Stream Delay Policy: ผู้เข้าแข่งขันที่สตรีมมิ่ง จะต้องตั้งค่า Delay รวมไม่น้อยกว่า 5 นาที หากฝ่าฝืนจะถูกหัก -10 คะแนนในครั้งแรก และปรับแพ้ฟาวล์ในครั้งถัดไป");
-    expect(RISK.noVote).toBe("🗳️ ไม่โหวตหลังเกม (ออนไลน์อยู่): ไม่ได้ดรอป + ใบเตือน + Karma −5 + ห้ามค้นหาห้องแข่ง 15 นาที (หรือจนกลับไปโหวตย้อนหลัง) · หลุดเกม: ระบบสุ่มโหวตให้ ไม่โดนลงโทษ ยังได้ดรอป");
+    expect(RISK.noVote).toBe("🗳️ ไม่โหวตหลังเกม (ออนไลน์อยู่): ไม่ได้ดรอป + ใบเตือน + Karma −5 + ห้ามค้นหาห้องแข่ง 15 นาที (หรือจนกลับไปโหวตย้อนหลัง) · หลุดเกม: ระบบสุ่มโหวตให้ ยังได้ดรอป · ไม่มีโทษอัตโนมัติ · ทิ้งเกม/AFK หรือหลุดใน 5 นาทีแรก → แอดมินตรวจ ถ้ายืนยันเจตนา หัก −30 Pulse");
     expect(AVE.greet1).toBe("สวัสดีค่ะ! 🎯 ฉันคือ AVE (อีฟ) AI ประจำทัวร์นาเมนต์ AVELAi — PRECISION IS FREEDOM —");
     expect(AVE.greet2).toBe("มีข้อสงสัยเกี่ยวกับการคิดคะแนน Killpoint, วิธีการจับคู่ Snake Draft, หรือกฎ Tie-breaker ถามฉันมาได้เลยค่ะ!");
     // กล่องแชทบนหน้าแสดงข้อความเดียวกัน (ตัดแท็ก strong/em ออกแล้วเทียบ)
@@ -74,5 +74,18 @@ describe("K-AV-RULES.2", () => {
       expect(s.startsWith("/brand/rules/")).toBe(true);
       expect(existsSync(join(__dirname, "..", "public", s)), s).toBe(true);
     }
+  });
+
+  // K-AV-UX.RULES.1 (มติซอง 028 · 2026-11-10): หลุด = ไม่มีโทษอัตโนมัติ · ทิ้งเกม/AFK/หลุดใน 5 นาทีแรก → แอดมินยืนยันก่อนหัก −30 Pulse
+  it("f) ข้อความหลุดเกมตรงมติ 028 · ไม่มีคำว่าไม่โดนลงโทษ/ไม่ถูกหักคะแนน · ตัวเลขโทษไม่เปลี่ยน", () => {
+    const prompt = readFileSync(join(__dirname, "..", "lib", "ave", "system-prompt.ts"), "utf8");
+    for (const text of [RISK.noVote, src("rules-content.ts"), prompt]) {
+      expect(text).not.toContain("ไม่โดนลงโทษ");
+      expect(text).not.toContain("ไม่ถูกหักคะแนน");
+    }
+    expect(RISK.noVote).toContain("ไม่มีโทษอัตโนมัติ");
+    expect(prompt).toContain("- หลุดการเชื่อมต่อ: ระบบสุ่มโหวตให้ ยังได้ของรางวัลการันตี · ไม่มีโทษอัตโนมัติ · ทิ้งเกม/AFK หรือหลุดใน 5 นาทีแรก แอดมินตรวจก่อน ถ้ายืนยันว่าตั้งใจ หัก −30 Pulse");
+    expect(PENALTY.labels[1]).toBe("Disconnect <5m / Leaver (admin-confirmed)");
+    expect(PENALTY.data).toEqual([-10, -30, -50, -100]);
   });
 });
