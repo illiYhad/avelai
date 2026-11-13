@@ -15,6 +15,7 @@ vi.mock("@/lib/db/server", () => ({
 }));
 
 import HomePage from "@/app/page";
+import PublicHome from "@/components/home/PublicHome";
 
 async function target(): Promise<string> {
   try {
@@ -30,10 +31,11 @@ async function target(): Promise<string> {
 beforeEach(() => { h.user = null; h.dbOff = false; });
 
 describe("หน้าแรก /", () => {
-  it("ยังไม่ล็อกอิน → /login", async () => { expect(await target()).toBe("/login"); });
+  // K-AV-HOME.0: ไม่ล็อกอิน / ไม่ต่อ DB = หน้าแรกแบบจำกัด (PublicHome) แทน redirect /login
+  it("ยังไม่ล็อกอิน → หน้าแรกจำกัด (ไม่ redirect)", async () => { expect(((await HomePage()) as { type: unknown }).type).toBe(PublicHome); });
   // K-AV-HOME.1: ล็อกอินแล้วไม่ redirect /me อีก (แสดงหน้า Home · เทสเต็มใน tests/k-av-home-1.test.ts ข้อ d)
   it("ล็อกอินแล้ว → ไม่ redirect", async () => { h.user = { id: "u1" }; await expect(target()).rejects.toThrow("ไม่ได้ redirect"); });
-  it("ยังไม่ต่อ DB (env ไม่ครบ) → /login ไม่ล้ม", async () => { h.dbOff = true; expect(await target()).toBe("/login"); });
+  it("ยังไม่ต่อ DB (env ไม่ครบ) → หน้าแรกจำกัด ไม่ล้ม", async () => { h.dbOff = true; expect(((await HomePage()) as { type: unknown }).type).toBe(PublicHome); });
 });
 
 function sourceFiles(dir: string): string[] {
