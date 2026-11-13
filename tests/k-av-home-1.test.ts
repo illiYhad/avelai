@@ -58,7 +58,7 @@ describe("b) แบนเนอร์ 2 สไลด์", () => {
     expect(HOME_SLIDES[0].body).toBe("สุ่มทีมทุกรอบ ถ่วงน้ำหนักคะแนนสมบูรณ์แบบ");
     expect(HOME_SLIDES[1].title).toBe("ARENA PASS");
     expect(HOME_SLIDES[1].body).toBe(
-      "Arena Pass 380 บาท / 28 วัน (4 สัปดาห์) → 75% เข้ากองรางวัล (285 บาท/คน) · แบ่ง รายวัน 40% · Weekend 35% · Season/รายเดือน 25%",
+      "Arena Pass 380 บาท ต่อเดือนปฏิทิน · ใช้ได้ 1–สิ้นเดือน → 75% เข้ากองรางวัล (285 บาท/คน) · แบ่ง รายวัน 40% · Weekend 35% · Season/รายเดือน 25%",
     );
     expect(HOME_SLIDES[1].body).not.toContain("บาท/เดือน");
   });

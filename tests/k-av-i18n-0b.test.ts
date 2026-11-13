@@ -39,11 +39,11 @@ describe("K-AV-I18N.0b", () => {
     }
   });
 
-  it("b) th = ข้อความเดิม (ไม่ส่ง locale กับส่ง th ได้ HTML เดียวกัน) · Pass ยังเป็น 28 วัน", () => {
+  it("b) th = ข้อความเดิม (ไม่ส่ง locale กับส่ง th ได้ HTML เดียวกัน) · Pass เดือนปฏิทิน (K-AV-HOME.PASS-SLIDE)", () => {
     expect(render("th")).toBe(render());
     expect(homeSlides("th")).toEqual(HOME_SLIDES);
-    expect(HOME_SLIDES[1].body).toContain("380 บาท / 28 วัน (4 สัปดาห์)");
-    expect(homeSlides("en")[1].body).toContain("380 THB / 28 days (4 weeks)");
+    expect(HOME_SLIDES[1].body).toContain("380 บาท ต่อเดือนปฏิทิน · ใช้ได้ 1–สิ้นเดือน");
+    expect(homeSlides("en")[1].body).toContain("380 THB per calendar month · valid from the 1st to month-end");
     const html = render("th");
     for (const s of ["เลือกเกม", "ทัวร์นาเมนต์สำหรับคุณ", "กิจกรรมของฉัน", "ยังไม่มีกิจกรรม", "ปาร์ตี้", "ทีมของฉัน", "เพื่อน", "ตอนนี้", "20 พ.ย. 20:30", "5v5 · 16 ช่อง", "5v5 · – ช่อง", "ดูเพิ่ม"]) expect(html).toContain(s);
   });

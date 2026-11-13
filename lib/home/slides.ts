@@ -36,7 +36,7 @@ export function homeSlides(locale: Locale = defaultLocale): readonly HomeSlide[]
       eyebrow: null,
       title: "ARENA PASS",
       // ต้นแบบ :457 กล่องกองรางวัล · ตัดถึง "Season/รายเดือน 25%" (ส่วนตั๋วทายผลไม่เกี่ยวกับ Pass)
-      // "380 บาท/เดือน" → "380 บาท / 28 วัน (4 สัปดาห์)" ตามซอง ALICH-PACKET-022 ข้อ 4 (เซ็นครบ 3 คน 2026-11-08 06:20)
+      // K-AV-HOME.PASS-SLIDE: ตามมติซอง 026 (เดือนปฏิทิน)
       body: t.passBody,
       cta: { label: t.passCta, href: localePath(locale, routes.pass("dota2")) },
       // K-AV-HOME.1b: Pass = AVEL (เอเวล · ต้องซื้อ Pass · สีทอง) ไม่ใช่ AVE (ใบรวมอลิส TO_NOVA_20261108-0648 · พี่หยัด 07:38/08:0x)
