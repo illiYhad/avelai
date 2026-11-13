@@ -18,6 +18,19 @@ export const th = {
     gameLocked: "หน้านี้เป็นของเกมเดียว",
     language: "ภาษา",
   },
+  // K-AV-I18N.0d: ป้ายสถานะ (components/ui/StatusBadge) · th = ข้อความเดิมตรงตัว · คีย์ = BadgeStatus
+  status: {
+    OPEN: "เปิดรับสมัคร",
+    SCHEDULED: "กำหนดการแล้ว",
+    LIVE: "กำลังแข่ง",
+    COMPLETED: "จบแล้ว",
+    PENDING_PAYMENT: "รอตรวจสลิป",
+    READY_CHECK: "รอยืนยันพร้อม",
+    AWAITING_RESULT: "รอผลแข่ง",
+    DISPUTED: "มีข้อโต้แย้ง",
+    LOCKED: "ล็อกแล้ว",
+    CANCELLED: "ยกเลิกแล้ว",
+  },
   // K-AV-I18N.0b: หน้า Home (ล็อกอินแล้ว) · ข้อความเดิมจาก components/home + lib/home ตรงตัว
   home: {
     banner: {

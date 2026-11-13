@@ -19,6 +19,19 @@ export const en: Dict = {
     gameLocked: "This page belongs to one game",
     language: "Language",
   },
+  // K-AV-I18N.0d: status badges (components/ui/StatusBadge)
+  status: {
+    OPEN: "Open for registration",
+    SCHEDULED: "Scheduled",
+    LIVE: "Live",
+    COMPLETED: "Finished",
+    PENDING_PAYMENT: "Awaiting slip check",
+    READY_CHECK: "Awaiting ready check",
+    AWAITING_RESULT: "Awaiting result",
+    DISPUTED: "Disputed",
+    LOCKED: "Locked",
+    CANCELLED: "Cancelled",
+  },
   // K-AV-I18N.0b: Home page (signed in) · literal translation of th.ts
   home: {
     banner: {
