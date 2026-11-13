@@ -82,6 +82,12 @@ describe("API auth gate (ไม่มี session)", () => {
         const handler = mod[method] as (r: Request, c: typeof ctx) => Promise<Response>;
         const res = await handler(req, ctx);
 
+        // K-AV-HOME.0: เส้นสาธารณะตั้งใจ (คนไม่ล็อกอินดูผลแมตช์) — ต้องไม่แตะ DB/Groq · id ในเทสนี้ไม่ใช่ตัวเลข → 400 ก่อนยิง OpenDota
+        if (rel === "/app/api/public/dota2/match/[matchId]") {
+          expect(res.status, `${method} ${rel}`).toBe(400);
+          expect(touches.serviceCreated + touches.serviceUsed + touches.userDbUsed + touches.groq, `${method} ${rel} แตะ DB/Groq`).toBe(0);
+          continue;
+        }
         if (rel === "/app/api/health") {
           expect(res.status, `${method} ${rel}`).toBe(200);
           continue;
