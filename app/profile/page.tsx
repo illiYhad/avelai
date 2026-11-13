@@ -140,7 +140,7 @@ export default function ProfilePage() {
                   <Zap className="w-3 h-3 text-yellow-400" /> Founder
                 </div>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/30 border border-emerald-800/40 text-emerald-400 text-xs font-bold">
-                  <Shield className="w-3 h-3" /> Karma Guardian
+                  <Shield className="w-3 h-3" /> Honor Pulse Guardian
                 </div>
               </div>
             </div>
@@ -167,7 +167,7 @@ export default function ProfilePage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { icon: <Flame className="w-5 h-5 fill-red-500 text-red-500" />, label: 'ELO Rating', value: profile?.elo_rating?.toLocaleString() ?? '1,000', color: 'text-red-400 border-red-800/40 bg-red-950/20' },
-            { icon: <Shield className="w-5 h-5 text-emerald-400" />, label: 'Karma Score', value: `${profile?.karma_score ?? profile?.karmaScore ?? 100}`, color: 'text-emerald-400 border-emerald-800/40 bg-emerald-950/20' },
+            { icon: <Shield className="w-5 h-5 text-emerald-400" />, label: 'Honor Pulse Score', value: `${profile?.karma_score ?? profile?.karmaScore ?? 100}`, color: 'text-emerald-400 border-emerald-800/40 bg-emerald-950/20' },
             { icon: <Trophy className="w-5 h-5 text-amber-400" />, label: 'Win Rate', value: `${profile?.win_rate ?? profile?.winRate ?? '0.00'}%`, color: 'text-amber-400 border-amber-800/40 bg-amber-950/20' },
             { icon: <Target className="w-5 h-5 text-cyan-400" />, label: 'Total Matches', value: '0 Games', color: 'text-cyan-400 border-cyan-800/40 bg-cyan-950/20' },
           ].map((m, i) => (

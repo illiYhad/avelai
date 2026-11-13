@@ -32,13 +32,13 @@ export function ResolveForm({ disputeId, teamA, teamB, bestOf, review, resolve }
             <input type="number" min={0} max={7} value={scoreA} onChange={(e) => setScoreA(Number(e.target.value))} className={`w-16 ${input}`} /><span className="text-white/50">–</span>
             <input type="number" min={0} max={7} value={scoreB} onChange={(e) => setScoreB(Number(e.target.value))} className={`w-16 ${input}`} /><span className="text-xs text-white/50">(Bo{bestOf})</span>
           </>
-        ) : <label className="flex items-center gap-1 text-xs text-white/70"><input type="checkbox" checked={falseDispute} onChange={(e) => setFalse(e.target.checked)} /> ข้อพิพาทเท็จ (Karma −10 ให้ T7)</label>}
+        ) : <label className="flex items-center gap-1 text-xs text-white/70"><input type="checkbox" checked={falseDispute} onChange={(e) => setFalse(e.target.checked)} /> ข้อพิพาทเท็จ (Honor Pulse −10 ให้ T7)</label>}
       </div>
       <input value={resolution} onChange={(e) => setResolution(e.target.value)} placeholder="คำชี้ขาด (บังคับ ≥5 ตัวอักษร)" className={input} />
       <button type="button" disabled={pending || resolution.trim().length < 5} onClick={() => start(async () => setState(await resolve(disputeId, { idempotencyKey: key, kind, winnerTeamId: winner, scoreA, scoreB, resolution, falseDispute })))} className="w-fit rounded btn-primary px-3 py-1.5 text-sm disabled:opacity-40">ชี้ขาด</button>
       <Msg state={state} />
       {state?.warning ? <p className="text-sm text-amber-300">{state.warning}</p> : null}
-      {state?.karmaDelta !== undefined ? <p className="text-xs text-white/60">Karma delta (ส่งต่อ T7): {state.karmaDelta}</p> : null}
+      {state?.karmaDelta !== undefined ? <p className="text-xs text-white/60">Honor Pulse delta (ส่งต่อ T7): {state.karmaDelta}</p> : null}
     </div>
   );
 }
@@ -59,7 +59,7 @@ export function PenaltyForm({ tournamentId, disputeId, candidates, issue }: {
     <div className="flex flex-col gap-2 text-sm">
       <div className="flex flex-wrap items-center gap-2">
         <select value={subject} onChange={(e) => setSubject(e.target.value)} className={input}>{candidates.map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}</select>
-        <select value={type} onChange={(e) => setType(e.target.value)} className={input}><option value="WARNING">WARNING</option><option value="SUSPENSION">SUSPENSION</option><option value="KARMA">KARMA</option><option value="BAN">BAN (ADMIN)</option></select>
+        <select value={type} onChange={(e) => setType(e.target.value)} className={input}><option value="WARNING">WARNING</option><option value="SUSPENSION">SUSPENSION</option><option value="KARMA">HONOR PULSE</option><option value="BAN">BAN (ADMIN)</option></select>
         {type === "SUSPENSION" ? <input type="datetime-local" value={until} onChange={(e) => setUntil(e.target.value)} className={input} /> : null}
         {type === "KARMA" ? <input type="number" max={-1} value={value} onChange={(e) => setValue(Number(e.target.value))} className={`w-20 ${input}`} /> : null}
       </div>

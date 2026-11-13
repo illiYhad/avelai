@@ -48,10 +48,10 @@ export function karmaScore(events: KarmaEvent[]): number {
 /** ผู้ใช้คนเดียวลงทะเบียนได้ไหม (ตามคะแนน/บล็อก) · null = ผ่าน */
 export function karmaGateReason(state: { score: number; blockedUntil: Date | string | null }, entryType: string, now: Date): string | null {
   if (state.blockedUntil && new Date(state.blockedUntil).getTime() > now.getTime()) {
-    return `Karma ${state.score} < ${KARMA_BLOCK_BELOW} — ห้ามลงทะเบียนจนถึง ${new Date(state.blockedUntil).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}`;
+    return `Honor Pulse ${state.score} < ${KARMA_BLOCK_BELOW} — ห้ามลงทะเบียนจนถึง ${new Date(state.blockedUntil).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}`;
   }
   if (state.score < KARMA_PAID_MIN && entryType !== "FREE") {
-    return `Karma ${state.score} < ${KARMA_PAID_MIN} — ลงได้เฉพาะทัวร์ฟรี (FREE)`;
+    return `Honor Pulse ${state.score} < ${KARMA_PAID_MIN} — ลงได้เฉพาะทัวร์ฟรี (FREE)`;
   }
   return null;
 }

@@ -180,7 +180,7 @@ export const IntegrityCard: React.FC<IntegrityCardProps> = ({
         </div>
 
         <div className="flex items-center justify-between text-xs text-gray-400">
-          <span>KARMA INDEX</span>
+          <span>HONOR PULSE INDEX</span>
           <span className="text-[#00D4FF] font-bold">{karmaScore} PTS</span>
         </div>
       </div>

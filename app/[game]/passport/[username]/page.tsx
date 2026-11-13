@@ -68,7 +68,7 @@ export default async function PassportPage({ params }: { params: Promise<{ game:
         title={rows[0].username}
         subtitle={
           <span>
-            Karma <span className={`font-mono tabular-nums ${karma < 50 ? "text-red-300" : karma < 70 ? "text-amber-300" : "text-ink"}`}>{karma}</span> / 100
+            Honor Pulse <span className={`font-mono tabular-nums ${karma < 50 ? "text-red-300" : karma < 70 ? "text-amber-300" : "text-ink"}`}>{karma}</span> / 100
             {karma < 70 ? <span className="text-sm text-amber-300"> · ลงได้เฉพาะทัวร์ฟรี{karma < 50 ? " · อาจถูกบล็อก 7 วัน" : ""}</span> : null}
             {userId === user.id ? <> · <Link href="/me" className="text-sm text-cyan underline">โปรไฟล์</Link></> : null}
           </span>
@@ -80,7 +80,7 @@ export default async function PassportPage({ params }: { params: Promise<{ game:
         {rows.map((r) => (
           <Surface key={r.game} as="article" glow="gold" className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <Stat label="// ELO" value={r.rating} tone="gold" />
-            <Stat label="// KARMA" value={karma} tone="cyan" />
+            <Stat label="// HONOR PULSE" value={karma} tone="cyan" />
             <Stat label="// WIN RATE" value={`${winRate(r.wins, r.matches)}%`} />
             <Stat label="// ทัวร์ที่ลง" value={r.tournaments_entered} />
             <p className="col-span-2 text-sm text-ink-muted sm:col-span-4">

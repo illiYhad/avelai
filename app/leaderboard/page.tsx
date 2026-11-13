@@ -167,7 +167,7 @@ export default function LeaderboardPage() {
                                 <th className="py-4 px-6 text-center w-[120px]">Elo</th>
                                 <th className="py-4 px-6 text-center w-[120px]">Win Rate</th>
                                 <th className="py-4 px-6 text-center w-[180px]">Recent Form</th>
-                                <th className="py-4 px-6 text-center w-[100px]">Karma</th>
+                                <th className="py-4 px-6 text-center w-[100px]">Honor Pulse</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-900/50">

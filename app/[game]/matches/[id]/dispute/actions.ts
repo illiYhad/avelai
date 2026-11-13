@@ -144,7 +144,7 @@ export async function resolveDisputeAction(disputeId: string, input: { idempoten
   }
   // K-AV-7: ข้อพิพาทเท็จ → karma_events −10 ให้ผู้เปิด (idempotent · พัง = audit ไม่โยน)
   if (karmaDelta !== undefined && !(await recordKarmaEvents([{ userId: d.opened_by_user, delta: karmaDelta, reason: "FALSE_DISPUTE", source: "dispute", refId: d.id, tournamentId: d.tournament_id }], g.ctx.userId))) {
-    warning = [warning, "บันทึก Karma ไม่สำเร็จ (ADMIN รันซ้ำได้)"].filter(Boolean).join(" · ");
+    warning = [warning, "บันทึก Honor Pulse ไม่สำเร็จ (ADMIN รันซ้ำได้)"].filter(Boolean).join(" · ");
   }
   revalidateAllGames((g) => routes.organizerDisputes(g, d.tournament_id)); revalidateAllGames((g) => routes.match(g, d.match_id));
   return { ok: true, message: r.kind === "UPHOLD" ? "ชี้ขาดและตั้งผลแมตช์แล้ว" : "ปฏิเสธข้อพิพาท — แมตช์กลับไปรอผล", warning, karmaDelta };
@@ -204,7 +204,7 @@ export async function issuePenaltyAction(input: { tournamentId: string; disputeI
     }
     const kReason = input.type === "WARNING" ? "WARNING" : input.type === "SUSPENSION" ? "SUSPENSION" : "KARMA_PENALTY";
     const okK = await recordKarmaEvents(targets.map((u) => ({ userId: u, delta: karmaDelta, reason: kReason, source: "penalty", refId: data.id, tournamentId: input.tournamentId })), g.ctx.userId);
-    if (!okK) warning = "บันทึก Karma ไม่สำเร็จ (ADMIN รันซ้ำได้)";
+    if (!okK) warning = "บันทึก Honor Pulse ไม่สำเร็จ (ADMIN รันซ้ำได้)";
   }
   revalidateAllGames((g) => routes.organizerDisputes(g, input.tournamentId));
   return { ok: true, message: `ออกโทษ ${input.type} แล้ว`, karmaDelta, warning };

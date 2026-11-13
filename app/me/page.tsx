@@ -113,7 +113,7 @@ export default async function MePage({ searchParams }: { searchParams: Promise<{
           <p className="text-sm text-white/60">
             role: {roles.length > 0 ? roles.join(" · ") : "ยังไม่มี"}
           </p>
-          {profile?.username ? <p className="text-xs">Passport ของฉัน (ELO · Karma · สถิติ): <Link href={routes.passport("dota2", profile.username)} className="text-cyan underline">Dota 2</Link></p> : null}
+          {profile?.username ? <p className="text-xs">Passport ของฉัน (ELO · Honor Pulse · สถิติ): <Link href={routes.passport("dota2", profile.username)} className="text-cyan underline">Dota 2</Link></p> : null}
         </div>
       </section>
 
