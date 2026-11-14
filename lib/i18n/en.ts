@@ -197,4 +197,11 @@ export const en: Dict = {
       spaceA2t: "Join a league",
     },
   },
+  // K-AV-COMPLETE.1: 404/500 pages
+  errors: {
+    notFound: "Page not found",
+    backHome: "Back to home",
+    serverError: "Something went wrong",
+    tryAgain: "Try again",
+  },
 };

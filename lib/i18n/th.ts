@@ -211,6 +211,13 @@ export const th = {
       spaceA2t: "เข้าร่วมลีก",
     },
   },
+  // K-AV-COMPLETE.1: หน้า 404/500
+  errors: {
+    notFound: "ไม่พบหน้านี้",
+    backHome: "กลับหน้าแรก",
+    serverError: "เกิดข้อผิดพลาด ลองใหม่อีกครั้ง",
+    tryAgain: "ลองใหม่",
+  },
 };
 
 type Widen<T> = { [K in keyof T]: T[K] extends string ? string : Widen<T[K]> };
