@@ -204,4 +204,8 @@ export const en: Dict = {
     serverError: "Something went wrong",
     tryAgain: "Try again",
   },
+  // K-AV-R2.1: ป้ายการ์ดชั้นทัวร์ที่ยังไม่เปิด
+  hub: {
+    comingSoon: "Coming soon",
+  },
 };

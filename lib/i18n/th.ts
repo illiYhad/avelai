@@ -218,6 +218,10 @@ export const th = {
     serverError: "เกิดข้อผิดพลาด ลองใหม่อีกครั้ง",
     tryAgain: "ลองใหม่",
   },
+  // K-AV-R2.1: ป้ายการ์ดชั้นทัวร์ที่ยังไม่เปิด
+  hub: {
+    comingSoon: "เร็ว ๆ นี้",
+  },
 };
 
 type Widen<T> = { [K in keyof T]: T[K] extends string ? string : Widen<T[K]> };

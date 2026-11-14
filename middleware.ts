@@ -12,6 +12,10 @@ const LEGACY_REDIRECT: Record<string, string> = {
   "/leaderboard": "/dota2/tournaments",
   "/matches": "/dota2/tournaments",
   "/match-history": "/me/dota",
+  // K-AV-R2.1: 3 ชั้นทัวร์เดิมไม่มีข้อมูลจริง (เงินรางวัล/ผู้เล่นปลอม) → หน้ารวมทัวร์ · /tournament/*/register ไม่แตะ
+  "/tournament/daily": "/dota2/tournaments",
+  "/tournament/weekly": "/dota2/tournaments",
+  "/tournament/monthly": "/dota2/tournaments",
 };
 const LEGACY_404 = ["/status", "/waiting-room", "/draft", "/match", "/match-result", "/profile"];
 const LEGACY_SKIP = ["/api", "/obs", "/admin", "/auth", "/link", "/login"];
