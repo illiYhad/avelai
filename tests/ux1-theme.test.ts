@@ -39,8 +39,9 @@ describe("K-AV-UX1 theme", () => {
     expect(css).toMatch(/color-scheme:\s*dark/);
   });
 
-  it("sets lang=th on <html>", () => {
-    expect(read("app/layout.tsx")).toMatch(/<html lang="th"/);
+  // K-AV-R2.5: lang ตามภาษาของเส้นทาง (th ค่าเริ่มต้น · /en = en) แทนค่าตายตัว
+  it("sets lang on <html> from the request locale", () => {
+    expect(read("app/layout.tsx")).toMatch(/<html lang=\{locale\}/);
   });
 
   it("has no text smaller than 12px", () => {

@@ -15,9 +15,13 @@ const jetbrains = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrai
 // K-AV-UX3B: ฟอนต์ไทยตาม CI หน้า Snake Draft (IBM Plex Sans Thai)
 const thai = IBM_Plex_Sans_Thai({ subsets: ['thai', 'latin'], weight: ['400', '500', '600', '700'], variable: '--font-thai', display: 'swap' })
 
+// K-AV-R2.5: metadataBase จาก SITE_URL (ไม่มี = localhost:3120) · title template · description จากข้อความหน้าแรกที่มีอยู่
+const SITE_URL = (process.env.SITE_URL?.trim() || 'http://localhost:3120').replace(/\/+$/, '')
+
 export const metadata: Metadata = {
-  title: 'AVELAi – Precision is Freedom',
-  description: 'Esports Arena League powered by AI',
+  metadataBase: new URL(SITE_URL),
+  title: { default: 'AVELAi – Precision is Freedom', template: '%s · AVELAi' },
+  description: 'สุ่มทีมทุกรอบ ถ่วงน้ำหนักคะแนนสมบูรณ์แบบ',
   // K-AV-UX2A: OG กลางสำหรับลิงก์ที่แชร์ใน Discord/LINE (หน้าไหนมี generateMetadata ของตัวเองจะทับ)
   openGraph: {
     siteName: 'AVELAi',
@@ -58,8 +62,9 @@ export default async function RootLayout({
 }) {
   const viewer = await readViewer();
   const { showChatbot } = navFor(viewer.signedIn);
+  const locale = await getLocale(); // K-AV-R2.5: <html lang> ตามภาษา (error.tsx อ่านค่านี้)
   return (
-    <html lang="th" className={`${inter.variable} ${orbitron.variable} ${jetbrains.variable} ${thai.variable}`}>
+    <html lang={locale} className={`${inter.variable} ${orbitron.variable} ${jetbrains.variable} ${thai.variable}`}>
       <body>
         <Navbar signedIn={viewer.signedIn} username={viewer.username} isAdmin={viewer.isAdmin} locale={await getLocale()} />
         {children}
