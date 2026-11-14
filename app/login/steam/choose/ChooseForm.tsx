@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { dict, type Locale } from "@/lib/i18n";
 import { newPlayerAction, sendCodeAction, verifyCodeAction, type ChooseState } from "./actions";
 
 // K-AV-STEAMLOGIN.2: หน้าเลือกหลังล็อกอิน Steam ครั้งแรก — มี 2 ปุ่มเท่านั้น
@@ -10,7 +11,8 @@ const RESEND_SEC = 60;
 const INPUT = "min-h-11 rounded-md border border-line bg-white/[0.03] px-3 py-2 text-base text-ink outline-none focus:border-gold";
 const LABEL = "font-mono text-sm tracking-[0.15em] text-ink-muted";
 
-export default function ChooseForm() {
+export default function ChooseForm({ locale = "th" }: { locale?: Locale }) {
+  const t = dict(locale).login; // K-AV-R2.7
   const [mode, setMode] = useState<"pick" | "existing">("pick");
   const [newState, newAction, newPending] = useActionState(newPlayerAction, initial);
   const [wait, setWait] = useState(0);
@@ -33,17 +35,17 @@ export default function ChooseForm() {
       <div className="flex w-full flex-col gap-4">
         <form action={newAction} className="flex flex-col gap-2">
           <button type="submit" disabled={newPending} className="btn-ghost flex min-h-12 w-full items-center justify-center rounded-md px-4 py-2 text-base disabled:opacity-50">
-            {newPending ? "กำลังสร้างบัญชี…" : "ฉันเป็นผู้เล่นใหม่"}
+            {newPending ? t.chooseCreating : t.chooseNewPlayer}
           </button>
-          <p className="text-sm text-ink-muted">สร้างบัญชี AVELAi ใหม่ และผูกกับ Steam นี้</p>
+          <p className="text-sm text-ink-muted">{t.chooseNewPlayerHint}</p>
           {newState.message ? <p role="alert" className="text-sm text-white/70">{newState.message}</p> : null}
         </form>
 
         <div className="flex flex-col gap-2">
           <button type="button" onClick={() => setMode("existing")} className="btn-ghost flex min-h-12 w-full items-center justify-center rounded-md px-4 py-2 text-base">
-            ฉันมีบัญชี AVELAi อยู่แล้ว
+            {t.chooseHaveAccount}
           </button>
-          <p className="text-sm text-ink-muted">ยืนยันด้วยรหัสจากอีเมล แล้วผูก Steam นี้เข้าบัญชีเดิม</p>
+          <p className="text-sm text-ink-muted">{t.chooseHaveAccountHint}</p>
         </div>
       </div>
     );
@@ -55,10 +57,10 @@ export default function ChooseForm() {
   return (
     <div className="flex w-full flex-col gap-4">
       <form action={sendAction} className="flex w-full flex-col gap-3">
-        <label htmlFor="choose-email" className={LABEL}>{"// อีเมลของบัญชีเดิม"}</label>
+        <label htmlFor="choose-email" className={LABEL}>{t.chooseEmailLabel}</label>
         <input id="choose-email" name="email" type="email" required autoComplete="email" defaultValue={email} placeholder="you@example.com" className={INPUT} />
         <button type="submit" disabled={sendPending || wait > 0} className="btn-ghost flex min-h-12 w-full items-center justify-center rounded-md px-4 py-2 text-base disabled:opacity-50">
-          {sendPending ? "กำลังส่ง…" : wait > 0 ? `ส่งรหัสอีกครั้งได้ใน ${wait} วินาที` : codeStep ? "ส่งรหัสอีกครั้ง" : "ส่งรหัสไปที่อีเมล"}
+          {sendPending ? t.sending : wait > 0 ? t.chooseResendIn.replace("{s}", String(wait)) : codeStep ? t.chooseResend : t.chooseSendCode}
         </button>
         {sendState.message ? (
           <p role="status" className={sendState.ok ? "rounded border border-cyan/40 px-4 py-3 text-sm text-cyan" : "text-sm text-white/70"}>{sendState.message}</p>
@@ -68,17 +70,17 @@ export default function ChooseForm() {
       {codeStep ? (
         <form action={verifyAction} className="flex w-full flex-col gap-3">
           <input type="hidden" name="email" value={email} />
-          <label htmlFor="choose-code" className={LABEL}>{"// รหัส 6 หลักจากอีเมล"}</label>
+          <label htmlFor="choose-code" className={LABEL}>{t.chooseCodeLabel}</label>
           <input id="choose-code" name="code" type="text" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} required autoComplete="one-time-code" className={`${INPUT} font-mono tracking-[0.4em]`} />
           <button type="submit" disabled={verifyPending} className="btn-ghost flex min-h-12 w-full items-center justify-center rounded-md px-4 py-2 text-base disabled:opacity-50">
-            {verifyPending ? "กำลังตรวจ…" : "ยืนยันและผูก Steam"}
+            {verifyPending ? t.chooseVerifying : t.chooseVerify}
           </button>
           {verifyState.message ? <p role="alert" className="text-sm text-white/70">{verifyState.message}</p> : null}
         </form>
       ) : null}
 
       <button type="button" onClick={() => setMode("pick")} className="min-h-11 self-start text-sm text-ink-muted underline">
-        ย้อนกลับ
+        {t.chooseBack}
       </button>
     </div>
   );
