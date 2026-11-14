@@ -218,6 +218,15 @@ export const th = {
     serverError: "เกิดข้อผิดพลาด ลองใหม่อีกครั้ง",
     tryAgain: "ลองใหม่",
   },
+  // K-AV-R2.4: Footer + หน้า /privacy /terms (โครง · เนื้อหารออลิส)
+  legal: {
+    privacy: "ความเป็นส่วนตัว",
+    terms: "ข้อตกลงการใช้",
+    help: "ศูนย์ช่วยเหลือ",
+    pending: "อยู่ระหว่างจัดทำ · จะประกาศก่อนเปิดใช้งานจริง",
+    privacyTitle: "นโยบายความเป็นส่วนตัว",
+    termsTitle: "ข้อตกลงการใช้บริการ",
+  },
 };
 
 type Widen<T> = { [K in keyof T]: T[K] extends string ? string : Widen<T[K]> };

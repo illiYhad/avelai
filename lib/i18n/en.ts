@@ -204,4 +204,13 @@ export const en: Dict = {
     serverError: "Something went wrong",
     tryAgain: "Try again",
   },
+  // K-AV-R2.4: footer + /privacy /terms (skeleton · text pending)
+  legal: {
+    privacy: "Privacy",
+    terms: "Terms of use",
+    help: "Help center",
+    pending: "Being prepared · will be published before launch",
+    privacyTitle: "Privacy Policy",
+    termsTitle: "Terms of Service",
+  },
 };
