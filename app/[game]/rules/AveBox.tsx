@@ -77,8 +77,9 @@ export default function AveBox({ aveReady = true, soonLabel = "AVE กำลั�
         <div>
           <h4 className="text-lg font-bold tracking-wide text-white">{AVE.name}</h4>
           <p className="flex items-center gap-1 font-mono text-xs text-[var(--ref-cyan)]">
-            <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-[var(--ref-cyan)]" />
-            {AVE.status}
+            {/* K-AV-R2.2: ไม่มีคีย์ AVE → STATUS: COMING SOON + จุดไม่กะพริบ */}
+            <span className={`inline-block h-2 w-2 ${aveReady ? "animate-pulse " : ""}rounded-full bg-[var(--ref-cyan)]`} />
+            {aveReady ? AVE.status : AVE.statusSoon}
           </p>
         </div>
       </div>
