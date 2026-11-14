@@ -12,6 +12,9 @@ import { REF_VARS } from "./ref-theme";
 import { snakeOrder } from "./snake";
 import LiveSimulator from "./LiveSimulator";
 import AveBox from "./AveBox";
+import { isAveConfigured } from "@/lib/ave/config";
+import { dict } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 import { FormatRadar, PenaltyBars, RoleDonut, ScoreStack } from "./RefCharts";
 import {
   AVE, HEADER, HERO, HERO_CARDS, MATCHMAKING, RISK, SCORING, SECTIONS, STAGES, STRUCTURE, scoreCards,
@@ -275,7 +278,7 @@ export default async function RulesPage({ params }: { params: Promise<{ game: st
         {/* 6. #ai-oracle (:533–577) */}
         <section id="ai-oracle" className="space-y-6">
           <SectionHead color="var(--ref-gold)" title={AVE.title} subtitle={AVE.subtitle} />
-          <AveBox />
+          <AveBox aveReady={isAveConfigured()} soonLabel={dict(await getLocale()).help.menu.aveSoon} />
         </section>
       </div>
     </main>

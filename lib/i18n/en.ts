@@ -157,6 +157,7 @@ export const en: Dict = {
       email: "Email",
       helpCenter: "Help Center",
       back: "Back to menu",
+      aveSoon: "AVE is coming soon",
     },
     center: {
       metaTitle: "Help Center — AVELAi",
