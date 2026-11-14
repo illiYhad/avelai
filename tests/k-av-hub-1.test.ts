@@ -30,11 +30,13 @@ const importsOf = (src: string) =>
   [...src.matchAll(/^import[\s\S]*?from\s+['"]([^'"]+)['"]/gm)].map((m) => m[1]);
 
 describe("K-AV-HUB.1 Hub links", () => {
-  it("Hub มีลิงก์ไป /tournament/daily · weekly · monthly ครบ", () => {
+  // K-AV-R2.1 (อลิส 19:59 ข้อ 1 (ข)): 3 ชั้นปิดแล้ว → การ์ดไม่มีลิงก์ แสดงป้าย "เร็ว ๆ นี้" แทน
+  it("Hub ไม่มีลิงก์ไป /tournament/daily · weekly · monthly (K-AV-R2.1)", () => {
     const out = renderToStaticMarkup(createElement(TournamentHub, { viewer: null, showLinkGame: false }));
     for (const href of ["/tournament/daily", "/tournament/weekly", "/tournament/monthly"]) {
-      expect(out).toContain(`href="${href}"`);
+      expect(out).not.toContain(`href="${href}"`);
     }
+    expect(out).toContain("เร็ว ๆ นี้");
   });
 });
 

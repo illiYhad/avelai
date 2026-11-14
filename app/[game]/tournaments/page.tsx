@@ -11,6 +11,8 @@ import EmptyState from "@/components/ui/EmptyState";
 import GameTag from "@/components/ui/GameTag";
 import { tournamentBadge } from "@/lib/tournament/badge";
 import TournamentHub, { type HubViewer } from "@/components/tournament/TournamentHub";
+import { dict } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
 // K-AV-3: รายการทัวร์ (สาธารณะ · RLS ให้เห็นเฉพาะที่ไม่ใช่ร่าง · ไม่แสดงข้อมูลส่วนตัว/PromptPay)
 // K-AV-UX2A Phase B: ปรับชั้นแสดงผลเท่านั้น (ข้อมูลเพิ่มจากเดิม: best_of · max_teams · จำนวนทีมที่ยืนยัน — อ่านอย่างเดียว)
@@ -49,7 +51,7 @@ export default async function TournamentsPage({ params }: { params: Promise<{ ga
   // K-AV-HUB1: Hub เต็มรูปแบบด้านบน · รายการทัวร์จริงของเกม (โค้ดเดิม) ต่อท้าย
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
-      <TournamentHub viewer={viewer} showLinkGame={code === "DOTA2" && viewer !== null} />
+      <TournamentHub viewer={viewer} showLinkGame={code === "DOTA2" && viewer !== null} soonLabel={dict(await getLocale()).hub.comingSoon} />
       <PageHeader eyebrow="// TOURNAMENTS" title="ทัวร์นาเมนต์" subtitle={`รายการแข่งของ ${gameLabel(code)}`} aside={<GameTag game={slug} />} />
       <Link href={routes.rules(slug)} className="self-start text-sm text-cyan underline">กติกา Ultimate Solo</Link>
       {!db ? <p className="text-base text-ink-muted">ยังไม่ต่อฐานข้อมูล</p> : rows.length === 0 ? (

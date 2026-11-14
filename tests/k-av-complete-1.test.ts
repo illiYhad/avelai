@@ -38,7 +38,7 @@ describe("K-AV-COMPLETE.1a · paths that must NOT be caught", () => {
   for (const p of [
     "/", "/dota2/pass", "/dota2/tournaments", "/me", "/me/dota", "/login", "/login/callback",
     "/api/ave/chat", "/obs/overlay", "/admin/passport", "/auth/callback", "/link/steam",
-    "/tournament/daily", "/tournament/weekly", "/tournament/monthly", "/tournament/abc/register",
+    "/tournament/abc/register", // K-AV-R2.1: daily/weekly/monthly ย้ายไปเป็น redirect (เทสใน k-av-r2-1)
     "/matches/abc", "/dashboard/x", "/subscribe/x",
   ]) {
     it(`${p} → null`, () => expect(legacyRoute(p)).toBeNull());

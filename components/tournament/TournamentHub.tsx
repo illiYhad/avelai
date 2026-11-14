@@ -30,13 +30,14 @@ function Row({ k, v }: { k: string; v: string }) {
 
 type Tier = { tag: string; title: string; sub: string; key: keyof typeof HUB_SAMPLE.tiers; pct: number; href: string | null };
 const TIERS: Tier[] = [
-  { tag: "TIER 1", title: "Daily Arena", sub: "Form Score 1-20 & KP Scoring", key: "daily", pct: 0, href: "/tournament/daily" },
-  { tag: "TIER 2", title: "Weekly Tournament", sub: "Swiss System Pairings", key: "weekly", pct: 1, href: "/tournament/weekly" },
-  { tag: "TIER 3", title: "Monthly Championship", sub: "Top Rankers Cutoff", key: "monthly", pct: 2, href: "/tournament/monthly" },
+  { tag: "TIER 1", title: "Daily Arena", sub: "Form Score 1-20 & KP Scoring", key: "daily", pct: 0, href: null },
+  { tag: "TIER 2", title: "Weekly Tournament", sub: "Swiss System Pairings", key: "weekly", pct: 1, href: null },
+  { tag: "TIER 3", title: "Monthly Championship", sub: "Top Rankers Cutoff", key: "monthly", pct: 2, href: null },
   { tag: "TIER 4", title: "Tournament of the Year", sub: "Season Finale Leaderboard", key: "season", pct: 3, href: null },
 ];
 
-export default function TournamentHub({ viewer, showLinkGame }: { viewer: HubViewer; showLinkGame: boolean }) {
+// K-AV-R2.1: 3 ชั้นแรกปิด (href null) · ป้าย "เร็ว ๆ นี้"/"Coming soon" ผ่าน dict (soonLabel จากหน้า)
+export default function TournamentHub({ viewer, showLinkGame, soonLabel = "เร็ว ๆ นี้" }: { viewer: HubViewer; showLinkGame: boolean; soonLabel?: string }) {
   const s = HUB_SAMPLE;
   const m = s.mercenary;
   return (
@@ -148,14 +149,14 @@ export default function TournamentHub({ viewer, showLinkGame }: { viewer: HubVie
                 <div className="mt-2 space-y-1.5 rounded-xl border border-line bg-void/60 p-3">
                   <Row k="Prize Pool" v={`${baht(pool.poolThb)} (${pool.percent}%)`} />
                   <Row k="ผู้เข้าร่วม" v={d.participants === null ? "—" : `${d.participants.toLocaleString("th-TH")} คน`} />
-                  <Row k={t.href ? "เริ่มใน" : "สถานะ"} v={t.href ? (d.startsIn ?? "—") : "เร็ว ๆ นี้"} />
+                  <Row k={t.href ? "เริ่มใน" : "สถานะ"} v={t.href ? (d.startsIn ?? "—") : soonLabel} />
                 </div>
               </div>
               <div className="mt-5">
                 {t.href ? (
                   <Link href={t.href} className="btn-primary w-full rounded-lg px-4 font-mono text-sm">ENTER {t.title.split(" ")[0].toUpperCase()}</Link>
                 ) : (
-                  <span className="flex min-h-11 w-full items-center justify-center rounded-lg border border-line text-sm text-ink-muted">เร็ว ๆ นี้</span>
+                  <span className="flex min-h-11 w-full items-center justify-center rounded-lg border border-line text-sm text-ink-muted">{soonLabel}</span>
                 )}
               </div>
             </div>
