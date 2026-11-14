@@ -14,7 +14,8 @@ interface Message {
   content: string;
 }
 
-export default function AVEChatbot({ username = null, locale = defaultLocale }: { username?: string | null; locale?: Locale }) {
+// K-AV-AVE.soon: aveReady=false (server ยังไม่ตั้งคีย์ AVE) → ป้าย "เร็ว ๆ นี้" แทนช่องพิมพ์ · ไม่เรียก /api/ave/chat
+export default function AVEChatbot({ username = null, locale = defaultLocale, aveReady = true }: { username?: string | null; locale?: Locale; aveReady?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<'menu' | 'chat' | 'contact'>('menu');
   const tm = dict(locale).help.menu;
@@ -35,7 +36,7 @@ export default function AVEChatbot({ username = null, locale = defaultLocale }: 
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim() || loading) return;
+    if (!aveReady || !input.trim() || loading) return;
 
     const userMessage = input.trim();
     setInput('');
@@ -196,6 +197,9 @@ export default function AVEChatbot({ username = null, locale = defaultLocale }: 
 
           {/* Input Area */}
           <div className="p-2.5 border-t border-slate-800/80 bg-slate-950">
+            {!aveReady ? (
+              <p data-ave-soon className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-center text-xs text-[#00D4FF]">{tm.aveSoon}</p>
+            ) : (
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -218,6 +222,7 @@ export default function AVEChatbot({ username = null, locale = defaultLocale }: 
                 <Send className="w-3.5 h-3.5" />
               </button>
             </form>
+            )}
           </div>
         </div>
       )}
