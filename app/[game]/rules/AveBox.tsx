@@ -37,7 +37,8 @@ function AveLineView({ line }: { line: AveLine }) {
   );
 }
 
-export default function AveBox() {
+// K-AV-AVE.soon: aveReady=false → ป้าย soonLabel แทนช่องพิมพ์/ปุ่มส่ง · ไม่ fetch
+export default function AveBox({ aveReady = true, soonLabel = "AVE กำลังจะมาเร็ว ๆ นี้" }: { aveReady?: boolean; soonLabel?: string }) {
   const [lines, setLines] = useState<AveLine[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -49,7 +50,7 @@ export default function AveBox() {
   }, [lines, busy]);
 
   async function send() {
-    if (busy) return;
+    if (busy || !aveReady) return;
     const checked = checkDraft(draft);
     if (!checked.ok) {
       if (checked.error) setLines((l) => [...l, { role: "system", kind: "error", content: checked.error as string }]);
@@ -97,6 +98,11 @@ export default function AveBox() {
           </div>
         )}
       </div>
+      {!aveReady ? (
+        <div className="border-t border-[var(--ref-s800)] bg-[var(--ref-dark)] p-4">
+          <p data-testid="ave-soon" className="rounded-lg border border-[var(--ref-s700)] bg-[var(--ref-s800)] px-4 py-2.5 text-center text-sm font-bold text-[var(--ref-cyan)]">{soonLabel}</p>
+        </div>
+      ) : (
       <form
         className="border-t border-[var(--ref-s800)] bg-[var(--ref-dark)] p-4"
         onSubmit={(e) => {
@@ -116,6 +122,7 @@ export default function AveBox() {
           <button type="submit" disabled={busy} className="flex shrink-0 items-center gap-2 rounded-lg bg-[var(--ref-gold)] px-4 py-2.5 text-sm font-bold text-[var(--ref-dark)] disabled:cursor-not-allowed disabled:opacity-60 sm:px-6">{AVE.send}</button>
         </div>
       </form>
+      )}
     </div>
   );
 }

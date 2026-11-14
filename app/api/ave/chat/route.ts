@@ -3,6 +3,7 @@ import Groq from 'groq-sdk';
 import { getServerDb } from '@/lib/db/server';
 import { parseChatInput } from '@/lib/ave/chat-input';
 import { AVE_SYSTEM_PROMPT } from '@/lib/ave/system-prompt';
+import { aveModel, isAveConfigured } from '@/lib/ave/config';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,9 +16,9 @@ export async function POST(req: Request) {
   const { data: { user } } = await db.auth.getUser();
   if (!user) return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อนใช้งาน' }, { status: 401 });
 
-  // K-AV-AVE.1: ไม่มี key = ยังไม่พร้อม · ไม่สร้าง Groq
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) return NextResponse.json({ error: 'AVE ยังไม่พร้อมใช้งาน' }, { status: 503 });
+  // K-AV-AVE.1: ไม่มี key = ยังไม่พร้อม · ไม่สร้าง Groq · K-AV-AVE.soon: เช็คผ่าน isAveConfigured()
+  if (!isAveConfigured()) return NextResponse.json({ error: 'AVE ยังไม่พร้อมใช้งาน' }, { status: 503 });
+  const apiKey = (process.env.GROQ_API_KEY ?? '').trim();
 
   let body: unknown;
   try {
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
   try {
     const groq = new Groq({ apiKey });
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: aveModel(), // K-AV-AVE.soon: AVE_MODEL (env) · default llama-3.3-70b-versatile
       messages: [{ role: 'system', content: AVE_SYSTEM_PROMPT }, ...input.messages],
       temperature: 0.3,
       max_tokens: 600,

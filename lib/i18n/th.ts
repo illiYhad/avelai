@@ -161,6 +161,7 @@ export const th = {
       email: "อีเมล",
       helpCenter: "ศูนย์ช่วยเหลือ",
       back: "กลับเมนู",
+      aveSoon: "AVE กำลังจะมาเร็ว ๆ นี้",
     },
     center: {
       metaTitle: "ศูนย์ช่วยเหลือ — AVELAi",

@@ -3,6 +3,7 @@ import { IBM_Plex_Sans_Thai, Inter, JetBrains_Mono, Orbitron } from 'next/font/g
 import './globals.css'
 import Navbar from '@/components/Navbar'
 import AVEChatbot from '@/components/AVEChatbot'
+import { isAveConfigured } from '@/lib/ave/config'
 import { getServerDb } from '@/lib/db/server'
 import { navFor } from '@/lib/nav'
 import { getLocale } from '@/lib/i18n/server'
@@ -62,7 +63,7 @@ export default async function RootLayout({
       <body>
         <Navbar signedIn={viewer.signedIn} username={viewer.username} isAdmin={viewer.isAdmin} locale={await getLocale()} />
         {children}
-        {showChatbot && <AVEChatbot username={viewer.username} locale={await getLocale()} />}
+        {showChatbot && <AVEChatbot username={viewer.username} locale={await getLocale()} aveReady={isAveConfigured()} />}
       </body>
     </html>
   )
