@@ -152,7 +152,8 @@ export default function Navbar({ signedIn, username = null, isAdmin = false, loc
   const initial = (username ?? '?').slice(0, 1).toUpperCase();
 
   return (
-    // K-AV-UX4: แถบบน HUD — เส้นแสงทอง/ฟ้าใต้แถบแทนเส้นเทาเรียบ
+    <>
+    {/* K-AV-UX4: แถบบน HUD — เส้นแสงทอง/ฟ้าใต้แถบแทนเส้นเทาเรียบ */}
     <header className="sticky top-0 z-50 bg-void/85 shadow-hud backdrop-blur-md">
       <div aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-transparent via-cyan/50 to-transparent" />
       <div aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-gold/40 via-transparent to-transparent" />
@@ -213,7 +214,9 @@ export default function Navbar({ signedIn, username = null, isAdmin = false, loc
           </>
         )}
       </nav>
+    </header>
 
+      {/* K-AV-NAV.2: ลิ้นชักอยู่นอก <header> — backdrop-filter ของ header ทำให้ fixed ยึดกับ header (สูง 56) ลิ้นชักจึงสูง 0 โปร่ง ตัวหนังสือล้นทับเนื้อหา */}
       {drawer && signedIn ? (
         <div className="fixed inset-x-0 bottom-0 top-14 z-40 md:hidden" onClick={() => setDrawer(false)}>
           <div className="flex h-full flex-col bg-void" onClick={(e) => e.stopPropagation()}>
@@ -237,7 +240,7 @@ export default function Navbar({ signedIn, username = null, isAdmin = false, loc
           </div>
         </div>
       ) : null}
-    </header>
+    </>
   );
 }
 

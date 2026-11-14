@@ -19,6 +19,19 @@ export const en: Dict = {
     gameLocked: "This page belongs to one game",
     language: "Language",
   },
+  // K-AV-I18N.0d: status badges (components/ui/StatusBadge)
+  status: {
+    OPEN: "Open for registration",
+    SCHEDULED: "Scheduled",
+    LIVE: "Live",
+    COMPLETED: "Finished",
+    PENDING_PAYMENT: "Awaiting slip check",
+    READY_CHECK: "Awaiting ready check",
+    AWAITING_RESULT: "Awaiting result",
+    DISPUTED: "Disputed",
+    LOCKED: "Locked",
+    CANCELLED: "Cancelled",
+  },
   // K-AV-HOME.0: signed-out home (limited) + Match ID box
   publicHome: {
     title: "Look up a Dota 2 match",
@@ -59,8 +72,8 @@ export const en: Dict = {
       goTo: "Go to slide {n}: {title}",
       soloBody: "Teams shuffled every round, perfectly weighted by score",
       soloCta: "Join",
-      // keep "28 days" meaning until PASS.2
-      passBody: "Arena Pass 380 THB / 28 days (4 weeks) → 75% goes to the prize pool (285 THB/player) · split Daily 40% · Weekend 35% · Season/Monthly 25%",
+      // K-AV-HOME.PASS-SLIDE: ตามมติซอง 026 (เดือนปฏิทิน)
+      passBody: "Arena Pass 380 THB per calendar month · valid from the 1st to month-end → 75% goes to the prize pool (285 THB/player) · split Daily 40% · Weekend 35% · Season/Monthly 25%",
       passCta: "Buy Pass",
       avelAlt: "AVEL",
     },

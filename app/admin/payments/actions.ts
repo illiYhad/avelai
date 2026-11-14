@@ -1,9 +1,10 @@
 "use server";
 
 // K-AV-3: ADMIN ยืนยัน/ปฏิเสธสลิป Arena Pass — ยืนยันแล้วสร้าง pass (RLS: passes INSERT = ADMIN เท่านั้น) · idempotent
+// K-AV-PASS.2: pass รอบเดือน — pass_month = payments.pass_month (ว่าง = เดือนของ created_at ตามเวลาไทย) · ช่วงจาก passMonthWindow
 import { revalidatePath } from "next/cache";
 import { logAudit } from "@/lib/audit";
-import { PASS_PRICE_THB, passEndsAt } from "@/lib/passes";
+import { PASS_PRICE_THB, passMonthLabel, passMonthOf, passMonthWindow } from "@/lib/passes";
 import { dbMessage, platformRoles, requireActiveUser } from "@/lib/tournament/access";
 
 export type AdminPayState = { ok: boolean; message: string };
@@ -16,11 +17,18 @@ export async function reviewPassPaymentAction(paymentId: string, decision: "VERI
   if (decision !== "VERIFIED" && decision !== "REJECTED") return fail("คำสั่งไม่ถูกต้อง");
   const reject_reason = reason.trim().slice(0, 300);
   if (decision === "REJECTED" && !reject_reason) return fail("ต้องระบุเหตุผลเมื่อปฏิเสธสลิป");
-  const { data: pay } = await g.ctx.db.from("payments").select("id, kind, status, payer_user_id, pass_game, amount_thb").eq("id", paymentId).maybeSingle();
+  const { data: pay } = await g.ctx.db.from("payments").select("id, kind, status, payer_user_id, pass_game, amount_thb, pass_month, created_at").eq("id", paymentId).maybeSingle();
   if (!pay || pay.kind !== "PASS") return fail("ไม่พบรายการชำระ Pass");
   if (pay.payer_user_id === g.ctx.userId) return fail("ยืนยันสลิปของตัวเองไม่ได้");
   if (pay.status === decision) return { ok: true, message: "รายการนี้ถูกตัดสินไปแล้ว (ผลเดิม)" };
   if (pay.status !== "PENDING") return fail("รายการนี้ถูกตัดสินไปแล้ว เปลี่ยนไม่ได้");
+  const passMonth: string = pay.pass_month ?? passMonthOf(new Date(pay.created_at));
+  const monthText = passMonthLabel(passMonth);
+  if (decision === "VERIFIED") {
+    // 1 คน 1 ใบ ต่อเกม ต่อเดือน (UNIQUE ใน 218) → แจ้งก่อนเปลี่ยนสถานะสลิป
+    const { data: existing } = await g.ctx.db.from("passes").select("id, payment_id").eq("user_id", pay.payer_user_id).eq("game", pay.pass_game).eq("pass_month", passMonth).maybeSingle();
+    if (existing && existing.payment_id !== paymentId) return fail(`ผู้ใช้มี Arena Pass เดือน ${monthText} ของเกมนี้อยู่แล้ว — ยืนยันสลิปนี้ไม่ได้ (ให้ปฏิเสธพร้อมเหตุผล หรือคืนเงิน)`);
+  }
   const { data: upd, error } = await g.ctx.db
     .from("payments")
     .update({ status: decision, verified_by: g.ctx.userId, verified_at: new Date().toISOString(), reject_reason: decision === "REJECTED" ? reject_reason : null })
@@ -28,11 +36,15 @@ export async function reviewPassPaymentAction(paymentId: string, decision: "VERI
   if (error) return fail(dbMessage(error, "บันทึกไม่สำเร็จ"));
   if (!upd?.length) return { ok: true, message: "รายการนี้ถูกตัดสินไปแล้ว (ผลเดิม)" };
   if (decision === "VERIFIED") {
-    const starts = new Date();
-    const { error: pErr } = await g.ctx.db.from("passes").insert({ user_id: pay.payer_user_id, game: pay.pass_game, starts_at: starts.toISOString(), ends_at: passEndsAt(starts).toISOString(), amount_thb: Number(pay.amount_thb) || PASS_PRICE_THB, payment_id: paymentId });
-    if (pErr && pErr.code !== "23505") return fail(dbMessage(pErr, "ยืนยันแล้วแต่สร้าง Pass ไม่สำเร็จ — แจ้งอลิส"));
+    const { startsAt, endsAt } = passMonthWindow(passMonth);
+    const { error: pErr } = await g.ctx.db.from("passes").insert({ user_id: pay.payer_user_id, game: pay.pass_game, pass_month: passMonth, starts_at: startsAt.toISOString(), ends_at: endsAt.toISOString(), amount_thb: Number(pay.amount_thb) || PASS_PRICE_THB, payment_id: paymentId });
+    if (pErr?.code === "23505") {
+      // ซ้ำจาก payment_id เดิม = กดซ้ำ (ผลเดิม) · ซ้ำจากเดือนเดียวกันของสลิปอื่น = แจ้งชัด
+      const { data: mine } = await g.ctx.db.from("passes").select("id").eq("payment_id", paymentId).maybeSingle();
+      if (!mine) return fail(`ยืนยันสลิปแล้ว แต่ผู้ใช้มี Arena Pass เดือน ${monthText} ของเกมนี้อยู่แล้ว — ไม่สร้างซ้ำ (แจ้งอลิสเรื่องคืนเงิน)`);
+    } else if (pErr) return fail(dbMessage(pErr, "ยืนยันแล้วแต่สร้าง Pass ไม่สำเร็จ — แจ้งอลิส"));
   }
-  await logAudit({ action: `PASS_PAYMENT_${decision}`, table_name: "payments", record_id: paymentId, payload: { payer: pay.payer_user_id, game: pay.pass_game, reject_reason: reject_reason || undefined }, performed_by: g.ctx.userId });
+  await logAudit({ action: `PASS_PAYMENT_${decision}`, table_name: "payments", record_id: paymentId, payload: { payer: pay.payer_user_id, game: pay.pass_game, pass_month: passMonth, reject_reason: reject_reason || undefined }, performed_by: g.ctx.userId });
   revalidatePath("/admin/payments");
-  return { ok: true, message: decision === "VERIFIED" ? "ยืนยันแล้ว สร้าง Arena Pass ให้ผู้ใช้แล้ว" : "ปฏิเสธสลิปแล้ว" };
+  return { ok: true, message: decision === "VERIFIED" ? `ยืนยันแล้ว สร้าง Arena Pass เดือน ${monthText} ให้ผู้ใช้แล้ว` : "ปฏิเสธสลิปแล้ว" };
 }

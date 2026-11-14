@@ -9,7 +9,7 @@ import { fill } from "@/lib/home/time-label";
 
 // K-AV-HOME.1: "ทัวร์นาเมนต์สำหรับคุณ" (โครงจากภาพต้นแบบ 04) · ข้อมูลจริงจากตาราง tournaments (อ่านอย่างเดียว)
 // ไม่มีรูปทัวร์ในตาราง → แถบบนเป็นพื้นไล่สีกรมท่า + รูปแบบตัวใหญ่
-// K-AV-I18N.0b: ข้อความจาก dict(locale).home.forYou · ชื่อทัวร์มาจากฐาน ไม่แปล · ป้ายสถานะ (components/ui/StatusBadge) นอกขอบเขต 0b
+// K-AV-I18N.0b: ข้อความจาก dict(locale).home.forYou · ชื่อทัวร์มาจากฐาน ไม่แปล · ป้ายสถานะส่ง locale (K-AV-I18N.0d)
 export default function TournamentsForYou({ items, now, locale = defaultLocale }: { items: HomeTournament[]; now: number; locale?: Locale }) {
   const t = dict(locale).home.forYou;
   const all = localePath(locale, routes.tournaments("dota2"));
@@ -42,7 +42,7 @@ export default function TournamentsForYou({ items, now, locale = defaultLocale }
                         <span>
                           {x.team_size}v{x.team_size} · {fill(t.slots, { n: x.max_teams ?? "–" })}
                         </span>
-                        <StatusBadge status={tournamentBadge(x.status)} />
+                        <StatusBadge status={tournamentBadge(x.status)} locale={locale} />
                       </div>
                     </div>
                   </div>

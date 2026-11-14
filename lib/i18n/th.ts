@@ -18,6 +18,19 @@ export const th = {
     gameLocked: "หน้านี้เป็นของเกมเดียว",
     language: "ภาษา",
   },
+  // K-AV-I18N.0d: ป้ายสถานะ (components/ui/StatusBadge) · th = ข้อความเดิมตรงตัว · คีย์ = BadgeStatus
+  status: {
+    OPEN: "เปิดรับสมัคร",
+    SCHEDULED: "กำหนดการแล้ว",
+    LIVE: "กำลังแข่ง",
+    COMPLETED: "จบแล้ว",
+    PENDING_PAYMENT: "รอตรวจสลิป",
+    READY_CHECK: "รอยืนยันพร้อม",
+    AWAITING_RESULT: "รอผลแข่ง",
+    DISPUTED: "มีข้อโต้แย้ง",
+    LOCKED: "ล็อกแล้ว",
+    CANCELLED: "ยกเลิกแล้ว",
+  },
   // K-AV-HOME.0: หน้าแรกคนไม่ล็อกอิน (จำกัด) + ช่อง Match ID · ข้อมูลจาก OpenDota อ่านอย่างเดียว
   publicHome: {
     title: "ดูผลแมตช์ Dota 2",
@@ -58,8 +71,8 @@ export const th = {
       goTo: "ไปสไลด์ {n}: {title}",
       soloBody: "สุ่มทีมทุกรอบ ถ่วงน้ำหนักคะแนนสมบูรณ์แบบ",
       soloCta: "เข้าแข่ง",
-      // ห้ามเปลี่ยนความหมาย "28 วัน" จนกว่า PASS.2 (ซอง ALICH-PACKET-022 ข้อ 4)
-      passBody: "Arena Pass 380 บาท / 28 วัน (4 สัปดาห์) → 75% เข้ากองรางวัล (285 บาท/คน) · แบ่ง รายวัน 40% · Weekend 35% · Season/รายเดือน 25%",
+      // K-AV-HOME.PASS-SLIDE: ตามมติซอง 026 (เดือนปฏิทิน)
+      passBody: "Arena Pass 380 บาท ต่อเดือนปฏิทิน · ใช้ได้ 1–สิ้นเดือน → 75% เข้ากองรางวัล (285 บาท/คน) · แบ่ง รายวัน 40% · Weekend 35% · Season/รายเดือน 25%",
       passCta: "ซื้อ Pass",
       avelAlt: "AVEL (เอเวล)",
     },
