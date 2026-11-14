@@ -18,8 +18,14 @@ export const KARMA_DELTAS = {
   WARNING: -5,
   SUSPENSION: -20,
 } as const;
-export type KarmaReason = keyof typeof KARMA_DELTAS | "KARMA_PENALTY" | "ADMIN_ADJUST";
-export type KarmaSource = "dispute" | "penalty" | "no_show" | "system";
+// K-AV-INTEG.1: ค่าตาม migration 219 (ซอง 028/029) · แยกจาก KARMA_DELTAS (เดิม) · ยังไม่มีโค้ดเขียน 2 ค่านี้
+// LEAVER_CONFIRMED = ใบ ADMIN.TIER2 · TEAM_ENDURED = รอเงื่อนไขชัด
+export const INTEGRITY_KARMA_DELTAS = {
+  LEAVER_CONFIRMED: -30,
+  TEAM_ENDURED: 10,
+} as const;
+export type KarmaReason = keyof typeof KARMA_DELTAS | keyof typeof INTEGRITY_KARMA_DELTAS | "KARMA_PENALTY" | "ADMIN_ADJUST";
+export type KarmaSource = "dispute" | "penalty" | "no_show" | "system" | "integrity";
 
 export type KarmaEvent = { delta: number; createdAt: string | Date; revoked?: boolean }; // revoked = โทษต้นทางถูก ADMIN ยกเลิก → ไม่นับ (SQL: penalties.revoked_at)
 export type KarmaState = { score: number; blockedUntil: Date | null };
