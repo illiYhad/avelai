@@ -47,7 +47,7 @@ describe("a) ป้ายเวลา (เวลาไทย)", () => {
 describe("b) แบนเนอร์ 2 สไลด์", () => {
   it("มี 2 สไลด์ · ปุ่มและลิงก์ถูก", () => {
     expect(HOME_SLIDES).toHaveLength(2);
-    expect(HOME_SLIDES[0].cta).toEqual({ label: "เข้าแข่ง", href: "/dota2/tournaments" });
+    expect(HOME_SLIDES[0].cta).toEqual({ label: "เข้าแข่ง", href: "/dota2/esta" }); // K-AV-HOME.2: ปลายทางเปลี่ยนเป็นหน้าลีก
     expect(HOME_SLIDES[1].cta).toEqual({ label: "ซื้อ Pass", href: "/dota2/pass" });
   });
 
@@ -189,8 +189,9 @@ async function target(): Promise<string | null> {
 
 describe("d) หน้า / ", () => {
   beforeEach(() => { h.user = null; h.dbOff = false; });
-  it("db null → /login", async () => { h.dbOff = true; expect(await target()).toBe("/login"); });
-  it("ไม่ล็อกอิน → /login", async () => { expect(await target()).toBe("/login"); });
+  // K-AV-HOME.0: เดิม redirect /login → ตอนนี้ได้หน้าแรกแบบจำกัด (ไม่มีราว/ทัวร์/ทีม)
+  it("db null → หน้าแรกจำกัด", async () => { h.dbOff = true; expect(await target()).toBeNull(); expect(((await HomePage()) as { type: { name?: string } }).type.name).toBe("PublicHome"); });
+  it("ไม่ล็อกอิน → หน้าแรกจำกัด", async () => { expect(await target()).toBeNull(); expect(((await HomePage()) as { type: { name?: string } }).type.name).toBe("PublicHome"); });
   it("ล็อกอิน → ไม่ redirect · อ่านพลาดทุกก้อน (mock ไม่มี .from) = หน้าว่างไม่ล้ม", async () => {
     h.user = { id: "u1" };
     expect(await target()).toBeNull();

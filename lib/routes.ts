@@ -11,6 +11,7 @@ export const routes = {
   tournamentReceipt: (g: GameSlug, id: string, paymentId: string) => `/${g}/tournaments/${id}/receipt/${paymentId}`,
   teams: (g: GameSlug) => `/${g}/teams`,
   rules: (g: GameSlug) => `/${g}/rules`, // K-AV-RULES.1: หน้ากติกา (อ่านได้ไม่ต้องล็อกอิน)
+  esta: (g: GameSlug) => `/${g}/esta`, // K-AV-HOME.2: หน้าลีก ESTA (สาธารณะ)
   teamCreate: (g: GameSlug) => `/${g}/teams/create`,
   team: (g: GameSlug, teamId: string) => `/${g}/teams/${teamId}`,
   teamSchedule: (g: GameSlug, teamId: string) => `/${g}/teams/${teamId}/schedule`,
@@ -38,3 +39,6 @@ export async function revalidateAllGames(path: (g: GameSlug) => string): Promise
     try { revalidatePath(path(g)); } catch { /* นอก request scope · ไม่ใช่ความผิดของ caller */ }
   }
 }
+
+// K-AV-HOME.2: ศูนย์ช่วยเหลือ (สาธารณะ · ไม่ผูกเกม จึงไม่อยู่ใน routes ที่ทุกตัวขึ้นต้น /{game}/)
+export const HELP_PATH = "/help";

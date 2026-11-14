@@ -18,6 +18,38 @@ export const th = {
     gameLocked: "หน้านี้เป็นของเกมเดียว",
     language: "ภาษา",
   },
+  // K-AV-HOME.0: หน้าแรกคนไม่ล็อกอิน (จำกัด) + ช่อง Match ID · ข้อมูลจาก OpenDota อ่านอย่างเดียว
+  publicHome: {
+    title: "ดูผลแมตช์ Dota 2",
+    intro: "ใส่ Match ID ของแมตช์สาธารณะ ดูผลสรุปและ Match Score ได้โดยไม่ต้องล็อกอิน",
+    label: "Match ID",
+    placeholder: "ตัวเลข 8–12 หลัก",
+    submit: "ดูผล",
+    loading: "กำลังโหลด…",
+    empty: "ยังไม่ได้ใส่ Match ID",
+    errInvalid: "Match ID ต้องเป็นตัวเลข 8–12 หลัก",
+    errNotFound: "ไม่พบแมตช์นี้ หรือแมตช์ไม่เปิดเป็นสาธารณะ",
+    errUpstream: "ดึงข้อมูลจาก OpenDota ไม่สำเร็จ ลองใหม่ภายหลัง",
+    errRate: "เรียกบ่อยเกินไป ลองใหม่ในอีกสักครู่",
+    matchLabel: "แมตช์ {id}",
+    radiant: "Radiant",
+    dire: "Dire",
+    win: "ชนะ",
+    duration: "เวลาแข่ง",
+    player: "ผู้เล่น",
+    hero: "ฮีโร่",
+    kda: "K/D/A",
+    score: "Match Score",
+    picksBans: "Pick / Ban",
+    pick: "Pick",
+    ban: "Ban",
+    noPicksBans: "แมตช์นี้ไม่มีข้อมูล Pick / Ban",
+    scoreNote: "Match Score ตามสูตร RANK_01 (0–5) · \"–\" = ข้อมูลจาก OpenDota ไม่พอคำนวณ",
+    source: "ข้อมูลจาก OpenDota",
+    ctaTitle: "อยากเห็นทั้งหมด?",
+    ctaBody: "สมัครหรือเข้าสู่ระบบเพื่อดูทัวร์นาเมนต์ ทีม และสถิติเต็ม",
+    cta: "สมัคร / เข้าสู่ระบบเพื่อดูเต็ม",
+  },
   // K-AV-I18N.0b: หน้า Home (ล็อกอินแล้ว) · ข้อความเดิมจาก components/home + lib/home ตรงตัว
   home: {
     banner: {
@@ -66,6 +98,103 @@ export const th = {
       inMinutes: "อีก {n} นาที",
       today: "วันนี้ {time}",
       tomorrow: "พรุ่งนี้ {time}",
+    },
+  },
+  // K-AV-HOME.2: หน้าลีก ESTA · กล่องแนะนำครั้งแรก · เมนูช่วยเหลือ · ศูนย์ช่วยเหลือ
+  // ที่มาเนื้อหา: D:\Balehm_Studio\02_Products\AVELAi\01_Spec\AVELAi_SYSTEM_CORE.md หมวด 4 (บรรทัด 75–110) · ห้ามแต่งตัวเลข/กติกาเพิ่ม
+  esta: {
+    metaTitle: "ลีก ESTA — AVELAi",
+    eyebrow: "// LEAGUE",
+    title: "ESTA",
+    // SYSTEM_CORE:90 "ESTA (แบรนด์อีสปอร์ต…) = ลีกแรกที่ AVELAi จัดเองรายสัปดาห์"
+    subtitle: "แบรนด์อีสปอร์ต · ลีกแรกที่ AVELAi จัดเองรายสัปดาห์",
+    join: "เข้าร่วมลีก",
+    joinSoon: "เร็ว ๆ นี้",
+    tournaments: "ทัวร์นาเมนต์ของลีก",
+    noTournaments: "ยังไม่มีทัวร์ของ {game}",
+    seeAll: "ดูทัวร์ทั้งหมด",
+    noDb: "ยังไม่ต่อฐานข้อมูล",
+    tbd: "ยังไม่กำหนดวัน",
+    teams: "{n}/{max} ทีม",
+    standings: "ตารางอันดับ",
+    // SYSTEM_CORE:100 แบ่งกอง รายวัน 40% · Weekend 35% · :101 แชมป์รายวันเข้า Weekend อัตโนมัติ
+    daily: "รายวัน",
+    dailyNote: "กองรางวัลรายวัน 40% ของกอง Pass · แชมป์รายวันเข้า Weekend อัตโนมัติ",
+    weekend: "Weekend",
+    weekendNote: "กองรางวัล Weekend 35% ของกอง Pass",
+    noStandings: "ยังไม่มีอันดับ",
+    findTournament: "หาทัวร์",
+    rules: "กติกา Ultimate Solo",
+    intro: {
+      title: "ยินดีต้อนรับสู่ลีก ESTA",
+      // ภาพต้นแบบ 03_space_modal.png · เนื้อหาจาก SYSTEM_CORE หมวด 4 เท่านั้น
+      body: "สวัสดีค่ะ AVE (อีฟ) เองนะคะ ที่นี่คือ ESTA ลีกแรกที่ AVELAi จัดเองทุกสัปดาห์ ในหน้านี้มี:",
+      points: "ทัวร์นาเมนต์ของลีก|ตารางอันดับ รายวัน และ Weekend|กติกา Ultimate Solo",
+      cta: "เข้าใจแล้ว",
+      close: "ปิด",
+    },
+  },
+  help: {
+    menu: {
+      label: "เมนูช่วยเหลือ",
+      open: "เปิดเมนูช่วยเหลือ",
+      close: "ปิดเมนูช่วยเหลือ",
+      greetUser: "สวัสดี {name} มีอะไรให้ช่วยไหม",
+      greetGuest: "สวัสดี มีอะไรให้ช่วยไหม",
+      chat: "คุยกับ AVE",
+      chatHint: "ถามเรื่องคะแนน กติกา ทัวร์ หรืออ่านในศูนย์ช่วยเหลือ",
+      rules: "คู่มือ / กติกา",
+      contact: "ช่องทางติดต่อ",
+      email: "อีเมล",
+      helpCenter: "ศูนย์ช่วยเหลือ",
+      back: "กลับเมนู",
+    },
+    center: {
+      metaTitle: "ศูนย์ช่วยเหลือ — AVELAi",
+      eyebrow: "// HELP CENTER",
+      title: "ศูนย์ช่วยเหลือ",
+      subtitle: "คู่มือการใช้งาน AVELAi",
+      soon: "เร็ว ๆ นี้",
+      contactTitle: "ติดต่อทีมงาน",
+      email: "อีเมล",
+      start: "เริ่มต้นใช้งาน",
+      startDesc: "รู้จัก AVELAi ก่อนเริ่มแข่ง",
+      // SYSTEM_CORE:77 Phase 1 = Dota 2 เกมเดียว · MLBB = แผนถัดไป
+      startA1t: "เกมที่เปิด",
+      startA1: "ตอนนี้เปิด Dota 2 เกมเดียว · MLBB เป็นแผนถัดไป ยังไม่กำหนดวัน",
+      // SYSTEM_CORE:82 Passport
+      startA2t: "Passport คืออะไร",
+      startA2: "บัญชีผู้เล่นที่ติดตัวข้ามงาน: บันทึกผลงาน 5 เกม · ประวัติข้ามงาน · Karma จากโหวตเพื่อนร่วมทีม · Win Rate คำนวณสดเสมอ",
+      // SYSTEM_CORE:85 AVE = แชทบอท ปุ่มฟ้ามุมขวาล่าง
+      startA3t: "AVE (อีฟ) ผู้ช่วย",
+      startA3: "แชทบอทปุ่มฟ้ามุมขวาล่าง ตอบเรื่องคะแนน กฎกติกา ทัวร์ Pass/ตั๋ว โหวต/ดรอป",
+      play: "การเล่น / ตั๋ว / Pass",
+      playDesc: "แข่ง ทายผล และ Arena Pass",
+      // SYSTEM_CORE:83 + มติซอง ALICH-PACKET-026 (Pass ผูกเดือนปฏิทิน)
+      playA1t: "Arena Pass",
+      playA1: "380 บาท ต่อเดือนปฏิทิน · เป็นค่าเข้าแข่งของเดือนนั้น ไม่ใช่ค่าสมาชิก · 75% เข้ากองรางวัล · 25% ค่าระบบ",
+      // หน้ากติกา /dota2/rules
+      playA2t: "กติกา Ultimate Solo",
+      playA2: "สุ่มทีม โหวตหลังเกม ดรอป และโทษ อ่านครบในหน้ากติกา",
+      playA2link: "เปิดหน้ากติกา",
+      // ตั๋วยังไม่มีมติระบบ (ใบ HOME.2 ข้อ 5) → เร็ว ๆ นี้
+      playA3t: "ตั๋วทายผล",
+      organizer: "สำหรับผู้จัด",
+      organizerDesc: "จัดทัวร์บน AVELAi",
+      // SYSTEM_CORE:81 ชุดผู้จัด
+      orgA1t: "ชุดผู้จัด",
+      orgA1: "ตารางสาย Swiss/Bracket · กรอกผลพร้อมหลักฐาน · จอถ่ายทอด OBS · สล็อตสปอนเซอร์ · ลงทะเบียน + PromptPay",
+      // SYSTEM_CORE:83 ผู้จัดไม่จ่ายค่าระบบ
+      orgA2t: "ค่าใช้จ่าย",
+      orgA2: "ผู้จัดไม่จ่ายค่าระบบ (จ่ายเฉพาะถ้าจ้าง Studio รันหน้างาน)",
+      space: "Space / ลีก",
+      spaceDesc: "ลีกและพื้นที่ของผู้จัด",
+      // SYSTEM_CORE:90 ESTA
+      spaceA1t: "ลีก ESTA",
+      spaceA1: "ลีกแรกที่ AVELAi จัดเองรายสัปดาห์ · มีรายวัน และ Weekend",
+      spaceA1link: "ไปหน้าลีก ESTA",
+      // อลิส: ปุ่ม Join ยัง disabled
+      spaceA2t: "เข้าร่วมลีก",
     },
   },
 };
