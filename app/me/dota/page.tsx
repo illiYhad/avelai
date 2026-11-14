@@ -4,18 +4,20 @@ import { requireUser } from "@/lib/auth/roles";
 import { getMyDotaAccount } from "@/lib/dota/my-account";
 import { getPlayerCard } from "@/lib/dota/opendota";
 import { dash, duration, heroLookup, thaiDateTime } from "@/lib/dota/display";
+import { dict } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
 // K-AV-D2: การ์ดผู้เล่น Dota 2 ของตัวเอง — สถิติดิบจาก OpenDota เท่านั้น (ไม่มีคะแนน AVELAi)
 // ด่านล็อกอิน 2 ชั้น: middleware (protected-paths /me/dota) + requireUser ที่นี่ · ดึงเฉพาะ ID ที่ผู้ใช้ผูกเอง
 export const metadata = { title: "Dota 2 — AVELAi" };
 export const dynamic = "force-dynamic";
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ children, back }: { children: React.ReactNode; back: string }) {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-6 py-10">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl tracking-[0.15em] text-gold">DOTA 2</h1>
-        <Link href="/me" className="text-sm text-white/70 underline">กลับโปรไฟล์</Link>
+        <Link href="/me" className="text-sm text-white/70 underline">{back}</Link>
       </div>
       {children}
     </main>
@@ -29,33 +31,34 @@ const Note = ({ children }: { children: React.ReactNode }) => (
 export default async function MyDotaPage() {
   const { db, user } = await requireUser("/me/dota");
   const account = await getMyDotaAccount(db, user.id);
-  if (account === "unavailable") return <Shell><Note>ระบบบัญชีเกมยังเปิดใช้ไม่ได้</Note></Shell>;
+  const t = dict(await getLocale()).me; // K-AV-R2.7
+  if (account === "unavailable") return <Shell back={t.dotaBack}><Note>{t.dotaUnavailable}</Note></Shell>;
   // K-AV-LINK.1: แถวเก่าที่กรอกมือยังไม่ยืนยัน → ไม่ดึงสถิติจากเลขนั้น · ให้ผูก Steam (link_steam_verified เขียนทับแถวเดิมได้)
   if (account === "unverified") {
     return (
-      <Shell>
+      <Shell back={t.dotaBack}>
         <Note>
-          บัญชี Dota 2 ยังไม่ยืนยัน —{" "}
+          {t.dotaUnverified}{" "}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-          <a href="/link/steam/start" className="text-cyan underline">ผูกบัญชี Steam</a>
+          <a href="/link/steam/start" className="text-cyan underline">{t.dotaLinkSteam}</a>
         </Note>
       </Shell>
     );
   }
   if (!account) {
     return (
-      <Shell>
-        <Note>ยังไม่ได้ผูกบัญชี Dota 2 — <Link href="/me" className="underline">ไปผูกที่หน้าโปรไฟล์</Link></Note>
+      <Shell back={t.dotaBack}>
+        <Note>{t.dotaNotLinked} <Link href="/me" className="underline">{t.dotaGoLink}</Link></Note>
       </Shell>
     );
   }
 
   const [r, hero] = await Promise.all([getPlayerCard(account.externalId), heroLookup()]);
-  if (!r.ok) return <Shell><Note>{r.message}</Note></Shell>;
+  if (!r.ok) return <Shell back={t.dotaBack}><Note>{r.message}</Note></Shell>;
   const p = r.data;
 
   return (
-    <Shell>
+    <Shell back={t.dotaBack}>
       <section className="flex items-center gap-4">
         {p.avatar ? (
           <img src={p.avatar} alt="" width={64} height={64} className="h-16 w-16 rounded border border-white/20 object-cover" />
@@ -66,16 +69,16 @@ export default async function MyDotaPage() {
           <p className="truncate text-lg text-white">{p.name ?? "Anonymous"}</p>
           <p className="text-sm text-white/60">
             Dota ID <span className="font-numeric">{p.accountId}</span> ·{" "}
-            <span className="text-cyan">ยืนยันแล้ว</span>
+            <span className="text-cyan">{t.dotaVerified}</span>
           </p>
         </div>
       </section>
 
       <section className="grid grid-cols-3 gap-3 text-center">
         {[
-          ["ชนะ", dash(p.win)],
-          ["แพ้", dash(p.lose)],
-          ["วินเรท", p.winRate === null ? "–" : `${p.winRate}%`],
+          [t.dotaWin, dash(p.win)],
+          [t.dotaLose, dash(p.lose)],
+          [t.dotaWinRate, p.winRate === null ? "–" : `${p.winRate}%`],
         ].map(([k, v]) => (
           <div key={k} className="rounded border border-white/15 px-3 py-3">
             <p className="text-xs text-white/60">{k}</p>
@@ -85,14 +88,14 @@ export default async function MyDotaPage() {
       </section>
 
       <section>
-        <h2 className="mb-2 text-sm font-semibold text-white/90">ฮีโร่ที่เล่นมากสุด</h2>
+        <h2 className="mb-2 text-sm font-semibold text-white/90">{t.dotaTopHeroes}</h2>
         {p.heroes.length === 0 ? (
-          <Note>ยังไม่มีข้อมูลฮีโร่</Note>
+          <Note>{t.dotaNoHeroes}</Note>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left text-white/60">
-                <tr><th className="py-1">ฮีโร่</th><th>แมตช์</th><th>วินเรท</th><th title="คิดจาก 20 แมตช์ล่าสุด">KDA*</th></tr>
+                <tr><th className="py-1">{t.dotaHero}</th><th>{t.dotaMatches}</th><th>{t.dotaWinRate}</th><th title={t.dotaKdaTitle}>KDA*</th></tr>
               </thead>
               <tbody>
                 {p.heroes.map((h) => {
@@ -111,20 +114,20 @@ export default async function MyDotaPage() {
                 })}
               </tbody>
             </table>
-            <p className="mt-1 text-xs text-white/50">* KDA = (K + A) ÷ D คิดจาก 20 แมตช์ล่าสุดที่เล่นฮีโร่นั้น (OpenDota ไม่ให้ KDA รวมต่อฮีโร่)</p>
+            <p className="mt-1 text-xs text-white/50">{t.dotaKdaNote}</p>
           </div>
         )}
       </section>
 
       <section>
-        <h2 className="mb-2 text-sm font-semibold text-white/90">แมตช์ล่าสุด</h2>
+        <h2 className="mb-2 text-sm font-semibold text-white/90">{t.dotaRecent}</h2>
         {p.recent.length === 0 ? (
-          <Note>ยังไม่มีแมตช์ล่าสุด</Note>
+          <Note>{t.dotaNoRecent}</Note>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left text-white/60">
-                <tr><th className="py-1">ฮีโร่</th><th>ผล</th><th>K/D/A</th><th>KDA</th><th>เวลา</th><th>เมื่อ</th></tr>
+                <tr><th className="py-1">{t.dotaHero}</th><th>{t.dotaResult}</th><th>K/D/A</th><th>KDA</th><th>{t.dotaDuration}</th><th>{t.dotaWhen}</th></tr>
               </thead>
               <tbody>
                 {p.recent.map((m) => (
@@ -132,7 +135,7 @@ export default async function MyDotaPage() {
                     <td className="py-1.5">
                       <Link href={`/dota2/stats/matches/${m.matchId}`} className="underline">{hero(m.heroId).label}</Link>
                     </td>
-                    <td className={m.won === null ? "" : m.won ? "text-cyan" : "text-red-400"}>{m.won === null ? "–" : m.won ? "ชนะ" : "แพ้"}</td>
+                    <td className={m.won === null ? "" : m.won ? "text-cyan" : "text-red-400"}>{m.won === null ? "–" : m.won ? t.dotaWin : t.dotaLose}</td>
                     <td className="font-numeric">{dash(m.kills)}/{dash(m.deaths)}/{dash(m.assists)}</td>
                     <td className="font-numeric">{dash(m.kda)}</td>
                     <td className="font-numeric">{duration(m.duration)}</td>
@@ -145,7 +148,7 @@ export default async function MyDotaPage() {
         )}
       </section>
 
-      <p className="text-xs text-white/50">ข้อมูลจาก OpenDota · แสดงสถิติดิบเท่านั้น (ยังไม่มีคะแนน AVELAi)</p>
+      <p className="text-xs text-white/50">{t.dotaSource}</p>
     </Shell>
   );
 }
