@@ -218,6 +218,26 @@ export const th = {
     serverError: "เกิดข้อผิดพลาด ลองใหม่อีกครั้ง",
     tryAgain: "ลองใหม่",
   },
+  // K-AV-INTEG.1b: ช่อง Dota Match ID ในห้องแมตช์
+  dotaMatchId: {
+    title: "Dota Match ID",
+    hint: "เลข Match ID จาก Dota 2 (6–12 หลัก) ของแต่ละเกม · ใช้ตรวจคนทิ้งเกมหลังแมตช์จบ",
+    game: "เกมที่",
+    save: "บันทึก",
+    saving: "กำลังบันทึก…",
+    saved: "บันทึก Dota Match ID แล้ว",
+    unchanged: "ค่าเดิมอยู่แล้ว",
+    lockedHint: "มีค่าแล้ว — แก้ได้เฉพาะผู้ตัดสิน/ผู้จัด",
+    errNotDota: "ช่องนี้ใช้กับแมตช์ Dota 2 เท่านั้น",
+    errForbidden: "เฉพาะหัวหน้าทีมในแมตช์นี้หรือผู้ตัดสิน/ผู้จัด",
+    errFormat: "Match ID ต้องเป็นตัวเลข 6–12 หลัก",
+    errGame: "เลขเกมไม่ถูกต้อง",
+    errAlreadySet: "เกมนี้มี Match ID แล้ว — ให้ผู้ตัดสินแก้",
+    errDuplicate: "Match ID นี้ถูกใช้กับเกมอื่นแล้ว",
+    errNotFound: "ไม่พบแมตช์",
+    errUnavailable: "ระบบยังบันทึกไม่ได้ (ไม่มีการตั้งค่าฐานข้อมูล)",
+    errSave: "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง",
+  },
 };
 
 type Widen<T> = { [K in keyof T]: T[K] extends string ? string : Widen<T[K]> };

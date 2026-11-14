@@ -3,10 +3,12 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth/roles";
 import { MATCH_LABEL, type MatchStatus } from "@/lib/match/state";
 import { MATCH_COLS, resolveWalkoverIfExpired, type MatchRow } from "@/lib/match/resolve";
-import { leaderTeams } from "@/lib/tournament/access";
+import { leaderTeams, tournamentStaffLevel } from "@/lib/tournament/access";
+import { dict } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 import { teamLabel, type TeamName } from "@/lib/tournament/engine/view";
-import { declareFinishedAction, readyCheckAction, submitReportAction } from "./actions";
-import { Countdown, ReadyButton, ReportForm } from "./MatchRoomClient";
+import { declareFinishedAction, readyCheckAction, setDotaMatchIdAction, submitReportAction } from "./actions";
+import { Countdown, DotaMatchIdForm, ReadyButton, ReportForm } from "./MatchRoomClient";
 import { routes } from "@/lib/routes";
 import { gameFromSlug, slugOf } from "@/lib/games";
 
@@ -30,7 +32,7 @@ export default async function MatchRoomPage({ params }: { params: Promise<{ game
     if (again) m = again as Full;
   }
   const [{ data: t }, { data: teams }, mine, { data: reports }] = await Promise.all([
-    db.from("tournaments").select("id, name, game, best_of, ready_check_minutes, auto_confirm, auto_confirm_minutes").eq("id", m.tournament_id).maybeSingle(),
+    db.from("tournaments").select("id, name, game, organizer_id, best_of, ready_check_minutes, auto_confirm, auto_confirm_minutes").eq("id", m.tournament_id).maybeSingle(),
     db.from("teams").select("id, name, tag").in("id", [m.team_a_id, m.team_b_id].filter((x): x is string => !!x)),
     leaderTeams(db, user.id),
     db.from("match_reports").select("reported_by_team, winner_team_id, score_a, score_b, created_at").eq("match_id", id),
@@ -42,6 +44,15 @@ export default async function MatchRoomPage({ params }: { params: Promise<{ game
   const status = m.status as MatchStatus;
   const label = (id: string | null) => teamLabel(names, id);
   const myReport = (reports ?? []).find((r) => r.reported_by_team === myTeam?.id);
+  // K-AV-INTEG.1b: ช่อง Dota Match ID — แมตช์ Dota 2 · หัวหน้าทีม 2 ฝั่ง + สตาฟทัวร์/ADMIN
+  const isStaff = t.game === "DOTA2" ? (await tournamentStaffLevel(db, user.id, t)) !== "NONE" : false;
+  const showDotaId = t.game === "DOTA2" && (side !== null || isStaff);
+  const dotaIds: Record<number, string> = {};
+  if (showDotaId) {
+    const { data: rooms } = await db.from("match_rooms").select("game_number, external_match_id, status").eq("match_id", id).not("external_match_id", "is", null);
+    for (const r of rooms ?? []) if (r.status !== "CANCELLED" && r.status !== "FAILED" && !dotaIds[r.game_number]) dotaIds[r.game_number] = r.external_match_id as string;
+  }
+  const tDota = dict(await getLocale()).dotaMatchId;
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col gap-6 px-6 py-10">
@@ -76,6 +87,8 @@ export default async function MatchRoomPage({ params }: { params: Promise<{ game
           {(status === "LIVE" || status === "PAUSED" || status === "AWAITING_RESULT") ? <Link href={routes.matchDispute(slug, id)} className="text-xs text-amber-300 underline">เปิดข้อพิพาท (เมื่อผลไม่ถูกต้อง/มีปัญหาระหว่างแข่ง)</Link> : null}
         </section>
       ) : <p className="text-sm text-white/60">คุณไม่ใช่หัวหน้าทีมในแมตช์นี้ — ดูได้อย่างเดียว</p>}
+
+      {showDotaId ? <DotaMatchIdForm action={setDotaMatchIdAction.bind(null, id)} bestOf={m.best_of} existing={dotaIds} canOverwrite={isStaff} t={tDota} /> : null}
 
       <section className="text-xs text-white/60">
         <p>เช็กอิน A: {m.check_in_a_at ? "✓" : "–"} · B: {m.check_in_b_at ? "✓" : "–"} · รายงานผลแล้ว {(reports ?? []).length}/2 ฝั่ง{t?.auto_confirm ? ` · ยืนยันอัตโนมัติหลัง ${t.auto_confirm_minutes} นาที` : ""}</p>

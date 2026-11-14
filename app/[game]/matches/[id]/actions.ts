@@ -4,6 +4,10 @@
 // ทุก action: ล็อกอิน → ไม่ถูกระงับ → สิทธิ์จาก DB · เขียนด้วย client ผู้ใช้ (RLS + trigger คุมซ้ำ) · audit ทุกการเขียน
 import { revalidatePath } from "next/cache";
 import { logAudit } from "@/lib/audit";
+import { getAdminDb } from "@/lib/db/admin";
+import { decideDotaMatchId, type DotaIdError } from "@/lib/integrity/dotaMatchId";
+import { dict } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 import { validateSlip } from "@/lib/payments/slip";
 import { advanceBracketAfterMatch } from "@/lib/match/bracket-advance";
 import { evaluateReports, validateScore, type Report } from "@/lib/match/report";
@@ -217,4 +221,58 @@ export async function refereeStatusAction(matchId: string, to: string, reason: s
   await logAudit({ action: "MATCH_STATUS", table_name: "tournament_matches", record_id: matchId, payload: { to, reason: r }, performed_by: g.ctx.userId });
   revalidateAllGames((g) => routes.match(g, matchId));
   return { ok: true, message: `เปลี่ยนสถานะเป็น ${to} แล้ว` };
+}
+
+/**
+ * K-AV-INTEG.1b: กรอก Dota Match ID ของเกมที่ N → match_rooms.external_match_id
+ * สิทธิ์ตรวจด้วย client ผู้ใช้ (helper เดิม) · RLS ของ match_rooms (214) ให้เขียนได้เฉพาะสตาฟ → เขียนผ่าน getAdminDb() หลังตรวจสิทธิ์แล้ว
+ * หัวหน้าทีม = กรอกครั้งแรก · สตาฟ/ผู้จัด/ADMIN = เขียนทับได้ · audit MATCH_ROOM_DOTA_ID_SET ทุกครั้งที่เขียน
+ */
+export async function setDotaMatchIdAction(matchId: string, _prev: MatchActionState, formData: FormData): Promise<MatchActionState> {
+  const tr = dict(await getLocale()).dotaMatchId;
+  const ERR: Record<DotaIdError, string> = { NOT_DOTA: tr.errNotDota, FORBIDDEN: tr.errForbidden, BAD_FORMAT: tr.errFormat, BAD_GAME: tr.errGame, ALREADY_SET: tr.errAlreadySet, DUPLICATE: tr.errDuplicate };
+  const g = await requireActiveUser();
+  if (!g.ok) return fail(g.message);
+  const row = await load(g.ctx, matchId);
+  if (!row) return fail(tr.errNotFound);
+  const { m, t } = row;
+  const { data: tg } = await g.ctx.db.from("tournaments").select("game").eq("id", t.id).maybeSingle();
+  const [staff, side] = await Promise.all([tournamentStaffLevel(g.ctx.db, g.ctx.userId, t), mySide(g.ctx, m)]);
+  const dotaMatchId = String(formData.get("dota_match_id") ?? "").trim();
+  const gameNumber = Number(formData.get("game_number"));
+  const base = { game: (tg?.game as string | undefined) ?? "", isStaff: staff !== "NONE", isLeader: side !== null, bestOf: m.best_of, gameNumber, dotaMatchId };
+  // ตรวจสิทธิ์/รูปแบบก่อนแตะ service role
+  const pre = decideDotaMatchId({ ...base, existing: null, usedElsewhere: false });
+  if (!pre.ok) return fail(ERR[pre.error]);
+  const admin = getAdminDb();
+  if (!admin) return fail(tr.errUnavailable);
+
+  const { data: rooms, error: rErr } = await admin.from("match_rooms").select("id, external_match_id, status, created_at").eq("match_id", m.id).eq("game_number", gameNumber).order("created_at", { ascending: true });
+  if (rErr) return fail(tr.errSave);
+  const live = (rooms ?? []).filter((r) => r.status !== "CANCELLED" && r.status !== "FAILED");
+  const room = live[0] ?? null;
+  const existing = (room?.external_match_id as string | null | undefined) ?? null;
+  const { data: dup } = await admin.from("match_rooms").select("id").eq("external_match_id", dotaMatchId).limit(5);
+  const usedElsewhere = (dup ?? []).some((r) => r.id !== room?.id);
+  const d = decideDotaMatchId({ ...base, existing, usedElsewhere });
+  if (!d.ok) return fail(ERR[d.error]);
+  if (d.noop) return { ok: true, message: tr.unchanged };
+
+  const now = new Date().toISOString();
+  let roomId: string | null = room ? (room.id as string) : null;
+  if (room) {
+    // หัวหน้าทีมเขียนได้เฉพาะตอนยังว่าง (กันแข่งกันกดทับ) · สตาฟเขียนทับได้
+    let q = admin.from("match_rooms").update({ external_match_id: dotaMatchId, updated_at: now }).eq("id", room.id);
+    if (!d.overwrite) q = q.is("external_match_id", null);
+    const { data: upd, error } = await q.select("id");
+    if (error) return fail(tr.errSave);
+    if (!upd?.length) return fail(tr.errAlreadySet);
+  } else {
+    const { data: ins, error } = await admin.from("match_rooms").insert({ match_id: m.id, game_number: gameNumber, provider: "MANUAL", external_match_id: dotaMatchId, created_by: g.ctx.userId, idempotency_key: `dota-match-id:${m.id}:${gameNumber}` }).select("id").maybeSingle();
+    if (error) return fail(error.code === "23505" ? tr.errAlreadySet : tr.errSave);
+    roomId = (ins?.id as string | undefined) ?? null;
+  }
+  await logAudit({ action: "MATCH_ROOM_DOTA_ID_SET", table_name: "match_rooms", record_id: roomId, payload: { match_id: m.id, game_number: gameNumber, dota_match_id: dotaMatchId, previous: existing, by: staff !== "NONE" ? `STAFF:${staff}` : `LEADER:${side}` }, performed_by: g.ctx.userId });
+  revalidateAllGames((gs) => routes.match(gs, matchId));
+  return { ok: true, message: tr.saved };
 }
