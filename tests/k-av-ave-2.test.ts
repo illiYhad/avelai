@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { AVE_SYSTEM_PROMPT } from "@/lib/ave/system-prompt";
 
-// K-AV-AVE.2: AVE (อีฟ) เป็นผู้หญิง → "ค่ะ"/"ฉัน" · Pass 28 วัน (ซอง 022) · คนแพ้ MVP Duel (ซอง 020 B5) · ไม่ใช้ env · ไม่ยิง Groq
+// K-AV-AVE.2: AVE (อีฟ) เป็นผู้หญิง → "ค่ะ"/"ฉัน" · Pass รอบเดือน (ซอง 026 · K-AV-PASS.2 แทน 28 วันของซอง 022) · คนแพ้ MVP Duel (ซอง 020 B5) · ไม่ใช้ env · ไม่ยิง Groq
 
 const chatbot = readFileSync(join(__dirname, "..", "components", "AVEChatbot.tsx"), "utf8");
 
@@ -14,9 +14,9 @@ describe("K-AV-AVE.2", () => {
     expect(AVE_SYSTEM_PROMPT).toContain('ลงท้ายด้วย "ค่ะ"');
   });
 
-  it("b) prompt มี 380 บาท / 28 วัน · ไม่มี บาท/เดือน", () => {
-    expect(AVE_SYSTEM_PROMPT).toContain("380 บาท / 28 วัน");
-    expect(AVE_SYSTEM_PROMPT).not.toContain("บาท/เดือน");
+  it("b) prompt มี 380 บาท / เดือน (ใช้ได้วันที่ 1–สิ้นเดือน) · ไม่มี 28 วัน (K-AV-PASS.2)", () => {
+    expect(AVE_SYSTEM_PROMPT).toContain("Arena Pass 380 บาท / เดือน (ใช้ได้วันที่ 1–สิ้นเดือน เวลาไทย · ซื้อของเดือนนั้นได้ถึงวันที่ 1 เดือนถัดไป)");
+    expect(AVE_SYSTEM_PROMPT).not.toContain("28 วัน");
   });
 
   it("c) prompt มีบรรทัด คนแพ้ MVP Duel Roulette ได้รางวัลปกติ (ต่อจากบรรทัด Voted MVP)", () => {

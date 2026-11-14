@@ -48,7 +48,7 @@ vi.mock("@/lib/db/server", () => ({
 
 import { TOURNAMENT_STATUSES, TRANSITIONS, canTransition, nextStatuses } from "@/lib/tournament/state";
 import { buildPromptPayPayload, crc16ccitt, parsePromptPayId, verifyPromptPayPayload } from "@/lib/payments/promptpay";
-import { PASS_PRICE_THB, hasActivePass, passEndsAt, weeklyPrizePool } from "@/lib/passes";
+import { PASS_PRICE_THB, hasActivePass, passMonthWindow, weeklyPrizePool } from "@/lib/passes";
 import { MAX_SLIP_BYTES, detectImageMime, validateSlip } from "@/lib/payments/slip";
 import { getRegistrationGate } from "@/lib/tournament/gate";
 import { parseTournamentForm, reviewRegistrationPaymentAction, setTournamentStatusAction } from "@/app/[game]/organizer/tournaments/actions";
@@ -130,7 +130,7 @@ describe("Weekly Pass (pure)", () => {
     expect(hasActivePass([p("MLBB", "2026-11-01T00:00:00Z")], "MLBB", now)).toBe(false);
     expect(hasActivePass([], "MLBB", now)).toBe(false);
   });
-  it("passEndsAt = +28 วัน", () => { expect(passEndsAt(new Date("2026-10-26T00:00:00Z")).toISOString()).toBe("2026-11-23T00:00:00.000Z"); });
+  it("passMonthWindow = วันที่ 1 00:00 ICT ถึงวันที่ 1 เดือนถัดไป (K-AV-PASS.2 แทน +28 วัน)", () => { expect(passMonthWindow("2026-11-01")).toEqual({ startsAt: new Date("2026-10-31T17:00:00Z"), endsAt: new Date("2026-11-30T17:00:00Z") }); });
   it("prize pool 75% ปัดลงเป็นสตางค์ ไม่เกินผลรวม", () => {
     expect(weeklyPrizePool([])).toBe(0);
     expect(weeklyPrizePool([PASS_PRICE_THB])).toBe(285);
@@ -354,7 +354,7 @@ describe("reviewPassPaymentAction (ADMIN)", () => {
     h.user = { id: me };
     h.resolve = (c) => {
       if (c.table === "user_roles") return { data: roles.map((r) => ({ role: r, revoked_at: null })), error: null };
-      if (c.table === "payments" && c.op === "select") return { data: { id: PAY, kind: "PASS", status: payStatus, payer_user_id: "buyer", pass_game: "DOTA2", amount_thb: 380 }, error: null };
+      if (c.table === "payments" && c.op === "select") return { data: { id: PAY, kind: "PASS", status: payStatus, payer_user_id: "buyer", pass_game: "DOTA2", amount_thb: 380, pass_month: "2026-11-01", created_at: "2026-11-05T03:00:00Z" }, error: null };
       if (c.table === "payments" && c.op === "update") return { data: [{ id: PAY }], error: null };
       if (c.table === "passes" && c.op === "insert") return { data: null, error: null };
       return { data: null, error: null };
@@ -364,12 +364,12 @@ describe("reviewPassPaymentAction (ADMIN)", () => {
     setup("PENDING", ["ORGANIZER"]);
     expect(await reviewPassPaymentAction(PAY, "VERIFIED", "")).toMatchObject({ ok: false, message: "เฉพาะ ADMIN เท่านั้น" });
   });
-  it("ADMIN ยืนยัน → สร้าง pass 28 วัน ให้ผู้ซื้อ ผูก payment_id", async () => {
+  it("ADMIN ยืนยัน → สร้าง pass รอบเดือนของสลิป ให้ผู้ซื้อ ผูก payment_id (K-AV-PASS.2 แทน 28 วัน)", async () => {
     setup("PENDING", ["ADMIN"]);
     expect(await reviewPassPaymentAction(PAY, "VERIFIED", "")).toMatchObject({ ok: true });
     const ins = h.calls.find((c) => c.table === "passes" && c.op === "insert")?.row as Record<string, unknown>;
     expect(ins).toMatchObject({ user_id: "buyer", game: "DOTA2", amount_thb: 380, payment_id: PAY });
-    expect(new Date(ins.ends_at as string).getTime() - new Date(ins.starts_at as string).getTime()).toBe(28 * 86400000);
+    expect(ins).toMatchObject({ pass_month: "2026-11-01", starts_at: "2026-10-31T17:00:00.000Z", ends_at: "2026-11-30T17:00:00.000Z" });
   });
   it("ยืนยันซ้ำ → ผลเดิม ไม่สร้าง pass ซ้ำ · ADMIN ยืนยันของตัวเองไม่ได้", async () => {
     setup("VERIFIED", ["ADMIN"]);
