@@ -38,7 +38,9 @@ $MigrationFiles = @(
   'supabase/migrations/216_phase1_tickets_predictions_items.sql',
   'supabase/migrations/217_free_agents_invitations_memberships.sql',
   'supabase/migrations/218_marketing_hooks_pass_month.sql',
-  'supabase/migrations/219_integrity_leaver_tiers_genesis.sql'
+  'supabase/migrations/219_integrity_leaver_tiers_genesis.sql',
+  'supabase/migrations/220_gacha.sql',
+  'supabase/migrations/221_profile_frames.sql'
 )
 $SeedFile = 'supabase/dev/seed_dev.sql'
 
@@ -107,6 +109,7 @@ function Invoke-SqlFile([string]$file) {
 $i = 0
 foreach ($f in $MigrationFiles) { $i++; Write-Host -NoNewline ("[{0,2}/{1}] " -f $i, $MigrationFiles.Count); Invoke-SqlFile $f }
 Write-Host -NoNewline "[seed] "; Invoke-SqlFile $SeedFile
+Write-Host -NoNewline "[seed] "; Invoke-SqlFile 'scripts/dev-db/seed_gacha_dev.sql'  # K-AV-R3B.1: กาชา (ในเครื่องเท่านั้น)
 
 Write-Host "== done · tournaments in local DB:"
 & docker exec $Container psql -U postgres -d postgres -c "SELECT name, status, start_at FROM public.tournaments ORDER BY start_at"

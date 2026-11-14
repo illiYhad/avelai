@@ -1,6 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { requireUser, activeRoles, isSuspended } from "@/lib/auth/roles";
+import FramePicker from "./FramePicker";
+import { FEATURES } from "@/lib/featureFlags";
+import { getLocale } from "@/lib/i18n/server";
 import { signOutAction } from "@/app/auth/actions";
 import ProfileForm from "./ProfileForm";
 import GameAccountsCard, { type DotaAccount, type MlbbAccount } from "./GameAccountsCard";
@@ -121,6 +124,18 @@ export default async function MePage({ searchParams }: { searchParams: Promise<{
         username={profile?.username ?? ""}
         avatarUrl={profile?.avatar_url ?? ""}
       />
+      {/* K-AV-R3C.1: กรอบโปรไฟล์ · ปิดจนกว่า FEATURES.frames (ฐานจริงต้องมี 221 ก่อน) */}
+      {FEATURES.frames ? await (async () => {
+        const [{ data: inv }, { data: me }] = await Promise.all([
+          db.from("user_inventory").select("item_id, item_definitions!inner(name, item_type)").eq("user_id", user.id).eq("item_definitions.item_type", "FRAME"),
+          db.from("users").select("equipped_frame_id").eq("id", user.id).maybeSingle(),
+        ]);
+        const seen = new Set<string>();
+        const owned = ((inv ?? []) as { item_id: string; item_definitions: { name: string } | { name: string }[] }[])
+          .filter((r) => (seen.has(r.item_id) ? false : (seen.add(r.item_id), true)))
+          .map((r) => ({ itemId: r.item_id, name: Array.isArray(r.item_definitions) ? r.item_definitions[0]?.name ?? r.item_id : r.item_definitions.name }));
+        return <FramePicker owned={owned} equipped={(me as { equipped_frame_id?: string | null } | null)?.equipped_frame_id ?? null} locale={await getLocale()} />;
+      })() : null}
     </main>
   );
 }
