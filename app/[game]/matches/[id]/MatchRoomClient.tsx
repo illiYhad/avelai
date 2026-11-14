@@ -46,3 +46,38 @@ export function ReportForm({ action, teamA, teamB, bestOf }: { action: (p: Match
     </form>
   );
 }
+
+/** K-AV-INTEG.1b: ช่องกรอก Dota Match ID ต่อเกม (1..bestOf) · ข้อความมาจาก dict ฝั่ง server */
+export function DotaMatchIdForm({ action, bestOf, existing, canOverwrite, t }: {
+  action: (p: MatchActionState, f: FormData) => Promise<MatchActionState>;
+  bestOf: number;
+  existing: Record<number, string>;
+  canOverwrite: boolean;
+  t: { title: string; hint: string; game: string; save: string; saving: string; lockedHint: string };
+}) {
+  const [state, formAction, pending] = useActionState(action, initial);
+  const input = "w-36 rounded border border-white/20 bg-[#12121A] px-3 py-2 font-numeric text-sm text-white";
+  const games = Array.from({ length: Math.min(7, Math.max(1, bestOf)) }, (_, i) => i + 1);
+  return (
+    <section className="flex flex-col gap-2 rounded border border-white/15 p-4">
+      <p className="text-sm font-semibold text-white/90">{t.title}</p>
+      <p className="text-xs text-white/60">{t.hint}</p>
+      {games.map((n) => {
+        const cur = existing[n] ?? "";
+        const locked = !!cur && !canOverwrite;
+        return (
+          <form key={n} action={formAction} className="flex flex-wrap items-center gap-2">
+            <input type="hidden" name="game_number" value={n} />
+            <label className="flex items-center gap-2 text-xs text-white/70">{t.game} {n}
+              <input name="dota_match_id" defaultValue={cur} inputMode="numeric" pattern="[1-9][0-9]{5,11}" maxLength={12} required disabled={locked} className={input} />
+            </label>
+            {locked ? <span className="text-xs text-white/50">{t.lockedHint}</span> : (
+              <button type="submit" disabled={pending} className="rounded btn-primary px-3 py-2 text-xs disabled:opacity-50">{pending ? t.saving : t.save}</button>
+            )}
+          </form>
+        );
+      })}
+      <Msg state={state} />
+    </section>
+  );
+}
