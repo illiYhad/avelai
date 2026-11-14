@@ -7,6 +7,9 @@ export const FEATURES = {
   payments: false,
   dotaApi: false,
   legacyApi: false,
+  // K-AV-R3B.1 / R3C.1: ตู้กาชา + กรอบโปรไฟล์ — ปิดจนกว่าหน้าเว็บ + ซองพี่ศิลา (220/221) ผ่าน
+  gacha: false,
+  frames: false,
 } as const;
 
 /** ข้อความตอบกลับมาตรฐานเมื่อฟีเจอร์ถูกปิด */
