@@ -197,6 +197,16 @@ export const en: Dict = {
       spaceA2t: "Join a league",
     },
   },
+  // K-AV-R3C.1: profile frames (/me · behind FEATURES.frames)
+  frames: {
+    title: "Profile frame",
+    empty: "No frames in your inventory yet",
+    equip: "Equip",
+    unequip: "Remove frame",
+    equipped: "Equipped",
+    saving: "Saving…",
+    failed: "Could not save. Please try again",
+  },
   // K-AV-COMPLETE.1: 404/500 pages
   errors: {
     notFound: "Page not found",

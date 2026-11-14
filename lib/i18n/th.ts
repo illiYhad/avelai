@@ -211,6 +211,16 @@ export const th = {
       spaceA2t: "เข้าร่วมลีก",
     },
   },
+  // K-AV-R3C.1: กรอบโปรไฟล์ (/me · หลัง FEATURES.frames)
+  frames: {
+    title: "กรอบโปรไฟล์",
+    empty: "ยังไม่มีกรอบในคลัง",
+    equip: "ใส่กรอบ",
+    unequip: "ถอดกรอบ",
+    equipped: "ใส่อยู่",
+    saving: "กำลังบันทึก…",
+    failed: "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง",
+  },
   // K-AV-COMPLETE.1: หน้า 404/500
   errors: {
     notFound: "ไม่พบหน้านี้",

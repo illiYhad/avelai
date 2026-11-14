@@ -39,7 +39,8 @@ $MigrationFiles = @(
   'supabase/migrations/217_free_agents_invitations_memberships.sql',
   'supabase/migrations/218_marketing_hooks_pass_month.sql',
   'supabase/migrations/219_integrity_leaver_tiers_genesis.sql',
-  'supabase/migrations/220_gacha.sql'
+  'supabase/migrations/220_gacha.sql',
+  'supabase/migrations/221_profile_frames.sql'
 )
 $SeedFile = 'supabase/dev/seed_dev.sql'
 
