@@ -1,3 +1,4 @@
+import { dict, type Locale } from "@/lib/i18n";
 // K-AV-STEAMLOGIN.3: แถบชวนผูก Steam บนหน้า /me — แสดงเมื่อยังไม่มีแถว DOTA2 ที่ยืนยันด้วย Steam ใน game_accounts · ผูกแล้วแถบหาย
 
 export const STEAM_BANNER_TEXT = "ผูก Steam เพื่อล็อกอินเร็วขึ้นและยืนยันบัญชี Dota 2";
@@ -8,14 +9,15 @@ export function shouldShowSteamBanner(dota: { verified: boolean; viaSteam: boole
   return !(dota?.verified && dota.viaSteam);
 }
 
-export default function SteamLinkBanner({ dota, unavailable }: { dota: { verified: boolean; viaSteam: boolean } | null; unavailable: boolean }) {
+export default function SteamLinkBanner({ dota, unavailable, locale = "th" }: { dota: { verified: boolean; viaSteam: boolean } | null; unavailable: boolean; locale?: Locale }) {
+  const t = dict(locale).me; // K-AV-R2.6
   if (!shouldShowSteamBanner(dota, unavailable)) return null;
   return (
     <aside data-steam-banner className="flex flex-wrap items-center justify-between gap-3 rounded border border-cyan/40 bg-cyan/10 px-4 py-3">
-      <p className="text-sm text-white/90">{STEAM_BANNER_TEXT}</p>
+      <p className="text-sm text-white/90">{locale === "th" ? STEAM_BANNER_TEXT : t.steamBanner}</p>
       {/* ต้องเป็น <a>: /link/steam/start เป็น route handler ที่ redirect ไป Steam (Link จะ prefetch/soft-navigate ไปนอกเว็บ) */}
       {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-      <a href="/link/steam/start" className="btn-primary rounded px-4 py-2 text-sm">ผูก Steam</a>
+      <a href="/link/steam/start" className="btn-primary rounded px-4 py-2 text-sm">{t.linkSteam}</a>
     </aside>
   );
 }

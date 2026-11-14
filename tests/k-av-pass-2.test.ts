@@ -159,7 +159,9 @@ describe("K-AV-PASS.2 · render ฟอร์มสภาพวันที่ 1 
 describe("K-AV-PASS.2 · หน้า/ข้อความ (อ่านซอร์ส)", () => {
   it("หน้าซื้อ: 380 บาท / เดือน · ใช้ purchasableMonths · ฟอร์มมีตัวเลือกตามมติตรงตัว", () => {
     const page = read("app/[game]/pass/page.tsx");
-    expect(page).toContain("{PASS_PRICE_THB} บาท / เดือน · {PASS_PERIOD_LABEL}");
+    // K-AV-R2.6: ข้อความย้ายเข้า dict (lib/i18n/th.ts pass.priceLine) · เงื่อนไขราคา/สัดส่วนเดิมตรวจที่ dict
+    expect(page).toContain('.replace("{period}", locale === "th" ? PASS_PERIOD_LABEL : t.periodLabel)');
+    expect(read("lib/i18n/th.ts")).toContain("{price} บาท / เดือน · {period}");
     expect(page).toContain("purchasableMonths(new Date())");
     const client = read("app/[game]/pass/PassClient.tsx");
     expect(client).toContain('"Pass เดือนก่อนหน้า (การ์ด Immortal + ดูข้อมูลย้อนหลัง · ไม่ได้ตั๋วรายวัน)"');
@@ -342,6 +344,6 @@ describe("K-AV-SCHEMA.4c · ฟอร์มซื้อ Pass เริ่มท�
     const out = renderToStaticMarkup(createElement(PassSlipForm, { action: async () => ({ ok: false, message: "" }), token: "t", months: [{ value: "2026-11-01", label: "พฤศจิกายน 2569" }], game: "DOTA2" }));
     expect(out).toMatch(/<option value="DOTA2" selected="">Dota 2<\/option>/);
     expect(out).toContain('<option value="MLBB">Mobile Legends</option>');
-    expect(read("app/[game]/pass/page.tsx")).toContain("months={months} game={code} />");
+    expect(read("app/[game]/pass/page.tsx")).toContain("months={months} game={code} locale={locale} />"); // K-AV-R2.6: + locale
   });
 });

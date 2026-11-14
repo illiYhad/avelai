@@ -1,4 +1,5 @@
 "use client";
+import { dict, type Locale } from "@/lib/i18n";
 
 import { useActionState } from "react";
 import { updateProfile, type ProfileState } from "./actions";
@@ -8,16 +9,19 @@ const initialState: ProfileState = { ok: false, message: "" };
 export default function ProfileForm({
   username,
   avatarUrl,
+  locale = "th",
 }: {
   username: string;
   avatarUrl: string;
+  locale?: Locale;
 }) {
+  const t = dict(locale).me; // K-AV-R2.6
   const [state, formAction, pending] = useActionState(updateProfile, initialState);
 
   return (
     <form action={formAction} className="flex w-full max-w-sm flex-col gap-3">
       <label htmlFor="username" className="text-sm text-white/80">
-        username (3–20 ตัว · a-z 0-9 _)
+        {t.usernameLabel}
       </label>
       <input
         id="username"
@@ -27,7 +31,7 @@ export default function ProfileForm({
         className="rounded border border-white/20 bg-transparent px-3 py-2 text-white outline-none focus:border-gold"
       />
       <label htmlFor="avatar_url" className="text-sm text-white/80">
-        avatar URL (https หรือเว้นว่าง)
+        {t.avatarLabel}
       </label>
       <input
         id="avatar_url"
@@ -41,7 +45,7 @@ export default function ProfileForm({
         disabled={pending}
         className="rounded btn-primary px-4 py-2 disabled:opacity-50"
       >
-        {pending ? "กำลังบันทึก…" : "บันทึก"}
+        {pending ? t.saving : t.save}
       </button>
       {state.message ? (
         <p className={`text-sm ${state.ok ? "text-cyan" : "text-red-400"}`}>

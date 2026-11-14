@@ -105,7 +105,7 @@ describe("แถบชวนผูก Steam ที่ /me", () => {
 
   it("หน้า /me ใส่แถบจากข้อมูล game_accounts (dotaAccount) ไม่ใช่คอลัมน์เก่า", () => {
     const src = readFileSync(join(process.cwd(), "app/me/page.tsx"), "utf8");
-    expect(src).toContain("<SteamLinkBanner dota={dotaAccount} unavailable={accError} />");
+    expect(src).toContain("<SteamLinkBanner dota={dotaAccount} unavailable={accError} locale={await getLocale()} />"); // K-AV-R2.6: + locale
   });
 });
 

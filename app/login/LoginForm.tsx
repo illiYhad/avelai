@@ -1,11 +1,13 @@
 "use client";
+import { dict, type Locale } from "@/lib/i18n";
 
 import { useActionState } from "react";
 import { sendMagicLink, signInWithGoogle, type LoginState } from "./actions";
 
 const initialState: LoginState = { ok: false, message: "" };
 
-export default function LoginForm({ next }: { next: string }) {
+export default function LoginForm({ next, locale = "th" }: { next: string; locale?: Locale }) {
+  const t = dict(locale).login; // K-AV-R2.6
   const [state, formAction, pending] = useActionState(sendMagicLink, initialState);
   const [gState, gAction, gPending] = useActionState(signInWithGoogle, initialState);
 
@@ -28,7 +30,7 @@ export default function LoginForm({ next }: { next: string }) {
           className="btn-ghost flex min-h-12 w-full items-center justify-center gap-3 rounded-md px-4 py-2 text-base disabled:opacity-50"
         >
           <GoogleIcon />
-          {gPending ? "กำลังพาไป Google…" : "เข้าสู่ระบบด้วย Google"}
+          {gPending ? t.googlePending : t.google}
         </button>
         {gState.message ? (
           <p role="alert" className="text-sm text-white/70">
@@ -43,19 +45,19 @@ export default function LoginForm({ next }: { next: string }) {
         className="btn-ghost flex min-h-12 w-full items-center justify-center gap-3 rounded-md px-4 py-2 text-base"
       >
         <SteamIcon />
-        เข้าสู่ระบบด้วย Steam
+        {t.steam}
       </a>
 
       <div className="flex items-center gap-3" aria-hidden>
         <span className="h-px flex-1 bg-line" />
-        <span className="font-mono text-sm text-ink-muted">หรือ</span>
+        <span className="font-mono text-sm text-ink-muted">{t.or}</span>
         <span className="h-px flex-1 bg-line" />
       </div>
 
       <form action={formAction} className="flex w-full flex-col gap-3">
         <input type="hidden" name="next" value={next} />
         <label htmlFor="email" className="font-mono text-sm tracking-[0.15em] text-ink-muted">
-          {"// อีเมล"}
+          {t.email}
         </label>
         <input
           id="email"
@@ -71,7 +73,7 @@ export default function LoginForm({ next }: { next: string }) {
           disabled={pending}
           className="btn-primary mt-2 min-h-12 rounded-md px-4 py-2 font-display tracking-[0.1em] disabled:opacity-50"
         >
-          {pending ? "กำลังส่ง…" : "ส่งลิงก์เข้าสู่ระบบ"}
+          {pending ? t.sending : t.sendLink}
         </button>
         {state.message ? (
           <p className="text-sm text-white/70">{state.message}</p>

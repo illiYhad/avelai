@@ -9,8 +9,14 @@ import { routes } from "@/lib/routes";
 import { isSteamLoginEmail } from "@/lib/game-accounts/steam";
 import Logo3D from "@/components/ui/Logo3D";
 import HudScan from "@/components/ui/HudScan";
+import { dict } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
+import { isAveConfigured } from "@/lib/ave/config";
 
-export const metadata = { title: "โปรไฟล์ — AVELAi" };
+// K-AV-R2.6: title ตามภาษา
+export async function generateMetadata() {
+  return { title: `${dict(await getLocale()).me.title} — AVELAi` };
+}
 // หน้า session ต้องไม่ถูก prerender เป็น static (ตอน build ไม่มี env จะหลุดเป็น static ได้)
 export const dynamic = "force-dynamic";
 
@@ -62,27 +68,27 @@ export default async function MePage({ searchParams }: { searchParams: Promise<{
         <Logo3D size="text-4xl" />
         <span className="hud-chip mt-4">
           <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan" />
-          AVE ONLINE // ARENA READY
+          {isAveConfigured() ? dict(await getLocale()).login.aveOnline : dict(await getLocale()).login.aveSoon}
         </span>
       </section>
 
       <div className="flex items-center justify-between border-b border-line pb-4">
-        <h1 className="hud-title text-2xl text-gold">โปรไฟล์</h1>
+        <h1 className="hud-title text-2xl text-gold">{dict(await getLocale()).me.title}</h1>
         <form action={signOutAction}>
           <button className="btn-ghost rounded px-4 text-sm">
-            ออกจากระบบ
+            {dict(await getLocale()).me.signOut}
           </button>
         </form>
       </div>
 
       {suspended && profile?.suspended_until ? (
         <p className="rounded border border-red-500/50 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-          บัญชีถูกระงับถึง {thaiTime(profile.suspended_until)}
+          {dict(await getLocale()).me.suspendedUntil} {thaiTime(profile.suspended_until)}
         </p>
       ) : null}
 
       {/* K-AV-STEAMLOGIN.3: แถบชวนผูก Steam · หายเองเมื่อมีแถว DOTA2 ที่ยืนยันด้วย Steam */}
-      <SteamLinkBanner dota={dotaAccount} unavailable={accError} />
+      <SteamLinkBanner dota={dotaAccount} unavailable={accError} locale={await getLocale()} />
 
       {/* K-AV-LINK.1: การ์ดบัญชีเกมเป็นการ์ดแรก · Dota 2 ผูกผ่าน Steam อย่างเดียว (ฟอร์มกรอกเลข Dota เอาออกแล้ว) */}
       <GameAccountsCard
@@ -92,6 +98,7 @@ export default async function MePage({ searchParams }: { searchParams: Promise<{
         linkError={sp.link_error ?? null}
         unavailable={accError}
         steamLogin={isSteamLoginEmail(user.email)}
+        locale={await getLocale()}
       />
 
       <section className="flex items-center gap-4">
@@ -111,15 +118,16 @@ export default async function MePage({ searchParams }: { searchParams: Promise<{
         <div>
           <p className="font-numeric text-lg text-white">{profile?.username ?? "—"}</p>
           <p className="text-sm text-white/60">
-            role: {roles.length > 0 ? roles.join(" · ") : "ยังไม่มี"}
+            role: {roles.length > 0 ? roles.join(" · ") : dict(await getLocale()).me.noRole}
           </p>
-          {profile?.username ? <p className="text-xs">Passport ของฉัน (ELO · Honor Pulse · สถิติ): <Link href={routes.passport("dota2", profile.username)} className="text-cyan underline">Dota 2</Link></p> : null}
+          {profile?.username ? <p className="text-xs">{dict(await getLocale()).me.passportLine} <Link href={routes.passport("dota2", profile.username)} className="text-cyan underline">Dota 2</Link></p> : null}
         </div>
       </section>
 
       <ProfileForm
         username={profile?.username ?? ""}
         avatarUrl={profile?.avatar_url ?? ""}
+        locale={await getLocale()}
       />
     </main>
   );

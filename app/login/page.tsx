@@ -5,7 +5,14 @@ import LoginForm from "./LoginForm";
 import Logo3D from "@/components/ui/Logo3D";
 import HudScan from "@/components/ui/HudScan";
 
-export const metadata = { title: "เข้าสู่ระบบ — AVELAi" };
+import { dict } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
+import { isAveConfigured } from "@/lib/ave/config";
+
+// K-AV-R2.6: title ตามภาษา
+export async function generateMetadata() {
+  return { title: `${dict(await getLocale()).login.title} — AVELAi` };
+}
 
 export default async function LoginPage({
   searchParams,
@@ -35,19 +42,19 @@ export default async function LoginPage({
         </div>
         <div className="mb-6 flex items-center justify-center gap-2">
           <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan" />
-          <span className="font-mono text-sm tracking-[0.15em] text-cyan/70">AVE ONLINE // ARENA READY</span>
+          <span className="font-mono text-sm tracking-[0.15em] text-cyan/70">{isAveConfigured() ? dict(await getLocale()).login.aveOnline : dict(await getLocale()).login.aveSoon}</span>
         </div>
         <div aria-hidden className="mb-6 h-px bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
-        <h2 className="mb-4 text-center text-lg font-semibold text-ink">เข้าสู่ระบบ</h2>
+        <h2 className="mb-4 text-center text-lg font-semibold text-ink">{dict(await getLocale()).login.title}</h2>
         {steamError ? (
           <p role="alert" className="mb-4 rounded border border-gold/40 px-4 py-3 text-sm text-white/80">
             {steamError}
           </p>
         ) : null}
         {configured ? (
-          <LoginForm next={target} />
+          <LoginForm next={target} locale={await getLocale()} />
         ) : (
-          <p className="text-center text-sm text-white/60">ระบบล็อกอินยังไม่เปิด</p>
+          <p className="text-center text-sm text-white/60">{dict(await getLocale()).login.closed}</p>
         )}
       </div>
     </main>
