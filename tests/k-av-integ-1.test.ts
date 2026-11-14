@@ -44,6 +44,7 @@ function mockDb(opts: { rooms?: Row[]; accounts?: Row[]; existing?: Row[] } = {}
 }
 
 const MATCH = "11111111-1111-4111-8111-111111111111";
+const ROSTER = ["u1", "u2", "u3", "u4", "u5", "u6"];
 const odMatch = (players: { account_id: number; leaver_status: number }[]) => ({ ok: true as const, data: { match_id: 8214277203, players } });
 
 describe("K-AV-INTEG.1 · leaversOf", () => {
@@ -61,7 +62,7 @@ describe("K-AV-INTEG.1 · recordLeavers", () => {
   it("tier comes only from rpc integrity_tier_for (219 table) · minute unknown → NULL", async () => {
     const { db, inserted, rpcCalls } = mockDb({ rooms, accounts });
     const players = [1, 2, 3, 4, 5, 6].map((ls) => ({ account_id: 100 + ls, leaver_status: ls }));
-    const out = await recordLeavers(MATCH, { db, fetchMatch: async () => odMatch(players) });
+    const out = await recordLeavers(MATCH, { db, rosterUserIds: ROSTER, fetchMatch: async () => odMatch(players) });
     expect(out).toMatchObject({ status: "RECORDED", inserted: 6 });
     expect(rpcCalls.every((c) => c.fn === "integrity_tier_for" && c.p_minute === null)).toBe(true);
     const byLs = Object.fromEntries(inserted.map((r) => [r.leaver_status as number, r.tier]));
@@ -71,7 +72,7 @@ describe("K-AV-INTEG.1 · recordLeavers", () => {
 
   it("calling twice does not create duplicate rows", async () => {
     const { db, inserted } = mockDb({ rooms, accounts });
-    const deps = { db, fetchMatch: async () => odMatch([{ account_id: 103, leaver_status: 3 }]) };
+    const deps = { db, rosterUserIds: ROSTER, fetchMatch: async () => odMatch([{ account_id: 103, leaver_status: 3 }]) };
     await recordLeavers(MATCH, deps);
     const second = await recordLeavers(MATCH, deps);
     expect(inserted).toHaveLength(1);
@@ -80,28 +81,48 @@ describe("K-AV-INTEG.1 · recordLeavers", () => {
 
   it("OpenDota error → SKIPPED, no throw, no insert", async () => {
     const { db, inserted } = mockDb({ rooms, accounts });
-    const out = await recordLeavers(MATCH, { db, fetchMatch: async () => ({ ok: false as const, status: 502 as const, message: "down" }) });
+    const out = await recordLeavers(MATCH, { db, rosterUserIds: ROSTER, fetchMatch: async () => ({ ok: false as const, status: 502 as const, message: "down" }) });
     expect(out).toEqual({ status: "SKIPPED", reason: "OPENDOTA_502" });
     expect(inserted).toHaveLength(0);
   });
 
   it("fetch throwing → SKIPPED (never throws)", async () => {
     const { db } = mockDb({ rooms, accounts });
-    await expect(recordLeavers(MATCH, { db, fetchMatch: async () => { throw new Error("boom"); } })).resolves.toMatchObject({ status: "SKIPPED" });
+    await expect(recordLeavers(MATCH, { db, rosterUserIds: ROSTER, fetchMatch: async () => { throw new Error("boom"); } })).resolves.toMatchObject({ status: "SKIPPED" });
   });
 
   it("no Dota match id → SKIPPED and OpenDota is not called", async () => {
     const { db } = mockDb({ rooms: [], accounts });
     const fetchMatch = vi.fn();
-    expect(await recordLeavers(MATCH, { db, fetchMatch })).toEqual({ status: "SKIPPED", reason: "NO_DOTA_MATCH_ID" });
+    expect(await recordLeavers(MATCH, { db, fetchMatch, rosterUserIds: ROSTER })).toEqual({ status: "SKIPPED", reason: "NO_DOTA_MATCH_ID" });
     expect(fetchMatch).not.toHaveBeenCalled();
   });
 
   it("leaver without a verified game account is not guessed", async () => {
     const { db, inserted } = mockDb({ rooms, accounts: [] });
-    const out = await recordLeavers(MATCH, { db, fetchMatch: async () => odMatch([{ account_id: 999, leaver_status: 3 }]) });
+    const out = await recordLeavers(MATCH, { db, rosterUserIds: ROSTER, fetchMatch: async () => odMatch([{ account_id: 999, leaver_status: 3 }]) });
     expect(out).toMatchObject({ status: "RECORDED", inserted: 0 });
     expect(inserted).toHaveLength(0);
+  });
+});
+
+describe("K-AV-INTEG.1 · roster binding (security review)", () => {
+  const accounts = [{ user_id: "u3", external_id: "103" }, { user_id: "outsider", external_id: "777" }];
+  it("verified account outside the match roster is never recorded", async () => {
+    const { db, inserted } = mockDb({ rooms: [{ external_match_id: "8214277203", status: "FINISHED" }], accounts });
+    const out = await recordLeavers(MATCH, { db, rosterUserIds: ["u3"], fetchMatch: async () => odMatch([{ account_id: 777, leaver_status: 3 }, { account_id: 103, leaver_status: 3 }]) });
+    expect(out).toMatchObject({ status: "RECORDED", inserted: 1 });
+    expect(inserted.map((r) => r.user_id)).toEqual(["u3"]);
+  });
+  it("empty roster → SKIPPED NO_ROSTER", async () => {
+    const { db } = mockDb({ rooms: [{ external_match_id: "8214277203" }], accounts });
+    expect(await recordLeavers(MATCH, { db, rosterUserIds: [], fetchMatch: async () => odMatch([]) })).toEqual({ status: "SKIPPED", reason: "NO_ROSTER" });
+  });
+  it("CANCELLED / FAILED rooms are ignored", async () => {
+    const { db } = mockDb({ rooms: [{ external_match_id: "8214277203", status: "CANCELLED" }, { external_match_id: "8214277204", status: "FAILED" }], accounts });
+    const fetchMatch = vi.fn();
+    expect(await recordLeavers(MATCH, { db, rosterUserIds: ["u3"], fetchMatch })).toEqual({ status: "SKIPPED", reason: "NO_DOTA_MATCH_ID" });
+    expect(fetchMatch).not.toHaveBeenCalled();
   });
 });
 
@@ -114,6 +135,7 @@ describe("K-AV-INTEG.1 · wiring", () => {
     const s = readFileSync(join(__dirname, "..", "lib/passport/applyMatchResult.ts"), "utf8");
     expect(s.indexOf("recordLeavers(m.id")).toBeGreaterThan(s.indexOf('rpc("passport_apply"'));
     expect(s).toMatch(/INTEGRITY_FETCH_SKIPPED/);
+    expect(s).toMatch(/rosterUserIds: \[\.\.\.rosterA, \.\.\.rosterB\]/);
   });
   it("leaver.ts does not compute tiers itself or create a service-role client", () => {
     const s = readFileSync(join(__dirname, "..", "lib/integrity/leaver.ts"), "utf8");

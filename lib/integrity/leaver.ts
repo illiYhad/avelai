@@ -11,7 +11,8 @@ type Res<T> = { data: T | null; error: { message: string } | null };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type IntegrityDb = { from: (t: string) => any; rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<Res<unknown>> };
 
-export type LeaverDeps = { db: IntegrityDb; fetchMatch: (dotaMatchId: string) => Promise<DotaResult<unknown>> };
+// rosterUserIds = ผู้เล่นในโรสเตอร์ของแมตช์ทัวร์นี้ (ทั้ง 2 ฝั่ง) · บันทึกได้เฉพาะคนในชุดนี้ (กัน external_match_id ผิด/ปลอมไปลงโทษคนนอกแมตช์)
+export type LeaverDeps = { db: IntegrityDb; fetchMatch: (dotaMatchId: string) => Promise<DotaResult<unknown>>; rosterUserIds: string[] };
 export type LeaverOutcome =
   | { status: "RECORDED"; inserted: number; skippedExisting: number; dotaMatchIds: string[] }
   | { status: "SKIPPED"; reason: string };
@@ -33,9 +34,11 @@ export function leaversOf(raw: unknown): { accountId: string; leaverStatus: numb
 export async function recordLeavers(matchId: string, deps: LeaverDeps): Promise<LeaverOutcome> {
   try {
     const { db } = deps;
-    const { data: rooms, error: rErr } = (await db.from("match_rooms").select("external_match_id").eq("match_id", matchId).not("external_match_id", "is", null)) as Res<{ external_match_id: string | null }[]>;
+    const { data: rooms, error: rErr } = (await db.from("match_rooms").select("external_match_id, status").eq("match_id", matchId).not("external_match_id", "is", null)) as Res<{ external_match_id: string | null; status?: string | null }[]>;
     if (rErr) return { status: "SKIPPED", reason: `match_rooms: ${rErr.message}` };
-    const ids = [...new Set((rooms ?? []).map((r) => (r.external_match_id ?? "").trim()).filter((v) => DOTA_ID.test(v)))];
+    const ids = [...new Set((rooms ?? []).filter((r) => r.status !== "CANCELLED" && r.status !== "FAILED").map((r) => (r.external_match_id ?? "").trim()).filter((v) => DOTA_ID.test(v)))];
+    const roster = new Set(deps.rosterUserIds);
+    if (roster.size === 0) return { status: "SKIPPED", reason: "NO_ROSTER" };
     if (ids.length === 0) return { status: "SKIPPED", reason: "NO_DOTA_MATCH_ID" };
 
     const leavers: { accountId: string; leaverStatus: number }[] = [];
@@ -46,9 +49,9 @@ export async function recordLeavers(matchId: string, deps: LeaverDeps): Promise<
     }
     if (leavers.length === 0) return { status: "RECORDED", inserted: 0, skippedExisting: 0, dotaMatchIds: ids };
 
-    const { data: accs, error: aErr } = (await db.from("game_accounts").select("user_id, external_id").eq("game", "DOTA2").eq("status", "VERIFIED").in("external_id", leavers.map((l) => l.accountId))) as Res<{ user_id: string; external_id: string }[]>;
+    const { data: accs, error: aErr } = (await db.from("game_accounts").select("user_id, external_id").eq("game", "DOTA2").eq("status", "VERIFIED").in("external_id", leavers.map((l) => l.accountId)).in("user_id", [...roster])) as Res<{ user_id: string; external_id: string }[]>;
     if (aErr) return { status: "SKIPPED", reason: `game_accounts: ${aErr.message}` };
-    const userOf = new Map((accs ?? []).map((a) => [a.external_id, a.user_id]));
+    const userOf = new Map((accs ?? []).filter((a) => roster.has(a.user_id)).map((a) => [a.external_id, a.user_id])); // กรองซ้ำในโค้ดอีกชั้น
 
     const { data: existing, error: eErr } = (await db.from("integrity_events").select("user_id").eq("match_id", matchId).eq("event_type", "LEAVER")) as Res<{ user_id: string }[]>;
     if (eErr) return { status: "SKIPPED", reason: `integrity_events: ${eErr.message}` };

@@ -64,7 +64,7 @@ export async function applyMatchResult(matchId: string, actorId: string | null):
   if (status === "APPLIED") await logAudit({ action: "PASSPORT_APPLIED", table_name: "tournament_matches", record_id: m.id, payload: { game, walkover: isWalkover, elo_rows: elo.length, karma_rows: karma.length }, performed_by: actorId });
   // K-AV-INTEG.1: หลังเขียน ELO สำเร็จ · เฉพาะ Dota 2 ที่ไม่ใช่ walkover · พัง/ไม่มี match id = ข้าม + audit · ไม่กระทบผลแมตช์
   if (status === "APPLIED" && game === "DOTA2" && !isWalkover) {
-    const integ = await recordLeavers(m.id, { db: admin, fetchMatch: (id) => fetchMatchRaw(id, 600) });
+    const integ = await recordLeavers(m.id, { db: admin, fetchMatch: (id) => fetchMatchRaw(id, 600), rosterUserIds: [...rosterA, ...rosterB] });
     if (integ.status === "SKIPPED") await logAudit({ action: "INTEGRITY_FETCH_SKIPPED", table_name: "tournament_matches", record_id: m.id, payload: { reason: integ.reason }, performed_by: actorId });
   }
   return { ok: true, status, detail: isWalkover ? `no-show −10 × ${karma.length}` : `ELO ${elo.length} คน · +2 × ${karma.length}` };
