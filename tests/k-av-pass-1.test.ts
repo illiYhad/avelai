@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ENTRY_LABEL, ENTRY_TYPES } from "@/lib/tournament/state";
-import { PASS_PRICE_THB, PASS_DAYS } from "@/lib/passes";
+import { PASS_PRICE_THB, PASS_PERIOD_LABEL } from "@/lib/passes";
 
 // K-AV-PASS.1: ชื่อที่ผู้ใช้เห็น "Weekly Pass" → "Arena Pass" · ค่าในฐาน/enum/ราคา/อายุ ไม่เปลี่ยน
 
@@ -34,9 +34,9 @@ describe("K-AV-PASS.1", () => {
     expect(Object.keys(ENTRY_LABEL)).toEqual(["FREE", "WEEKLY_PASS", "PAID"]);
   });
 
-  it("b) ราคา/อายุไม่เปลี่ยน: 380 บาท · 28 วัน", () => {
+  it("b) ราคาไม่เปลี่ยน 380 บาท · รอบเป็นเดือนปฏิทิน (K-AV-PASS.2 แทน 28 วัน)", () => {
     expect(PASS_PRICE_THB).toBe(380);
-    expect(PASS_DAYS).toBe(28);
+    expect(PASS_PERIOD_LABEL).toBe("ใช้ได้ 1–สิ้นเดือน (เวลาไทย)");
   });
 
   it('c) 7 ไฟล์ไม่มี "Weekly Pass" ในข้อความที่แสดง (ยกเว้นคอมเมนต์) · และมี "Arena Pass"', () => {
@@ -47,10 +47,10 @@ describe("K-AV-PASS.1", () => {
     }
   });
 
-  it('d) หน้า pass ไม่มี "/เดือน" · มี 28 วัน (4 สัปดาห์) และสัดส่วนกองรางวัล', () => {
+  it("d) หน้า pass: 380 บาท / เดือน + รอบ 1–สิ้นเดือน (K-AV-PASS.2) · ไม่มี 28 วัน · มีสัดส่วนกองรางวัล", () => {
     const page = readFileSync(join(root, "app/[game]/pass/page.tsx"), "utf8");
-    expect(page).not.toContain("/เดือน");
-    expect(page).toContain("{PASS_PRICE_THB} บาท / {PASS_DAYS} วัน (4 สัปดาห์)");
+    expect(page).not.toMatch(/28 ?วัน|4 สัปดาห์|PASS_DAYS/);
+    expect(page).toContain("{PASS_PRICE_THB} บาท / เดือน · {PASS_PERIOD_LABEL}");
     expect(page).toContain("75% ของยอด Pass เข้ากองรางวัล (รายวัน 40% · Weekend 35% · Season/รายเดือน 25%)");
     expect(page).toContain('title: "Arena Pass — AVELAi"');
     expect(page).toContain(">ARENA PASS</h1>");

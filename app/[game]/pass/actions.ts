@@ -1,10 +1,11 @@
 "use server";
 
 // K-AV-3: ซื้อ Weekly Pass — ผู้ใช้โอน PromptPay ของแพลตฟอร์ม (env PLATFORM_PROMPTPAY_ID) แล้วอัปสลิป · ADMIN ยืนยันที่ /admin/payments
+// K-AV-PASS.2: สลิปผูกเดือน (payments.pass_month) · เซิร์ฟเวอร์ตรวจซ้ำว่าอยู่ใน purchasableMonths(now)
 import { revalidatePath } from "next/cache";
 import { logAudit } from "@/lib/audit";
 import { isGameCode } from "@/lib/games";
-import { PASS_PRICE_THB } from "@/lib/passes";
+import { PASS_PRICE_THB, purchasableMonths } from "@/lib/passes";
 import { parsePromptPayId } from "@/lib/payments/promptpay";
 import { validateSlip } from "@/lib/payments/slip";
 import { dbMessage, requireActiveUser } from "@/lib/tournament/access";
@@ -19,7 +20,10 @@ export async function uploadPassSlipAction(_prev: PassState, formData: FormData)
   if (!g.ok) return fail(g.message);
   const game = String(formData.get("game") ?? "").trim();
   const token = String(formData.get("idempotency") ?? "").trim();
+  const passMonth = String(formData.get("pass_month") ?? "").trim();
   if (!isGameCode(game)) return fail("เกมไม่รองรับ");
+  if (!passMonth) return fail("กรุณาเลือกเดือนของ Pass");
+  if (!purchasableMonths(new Date()).includes(passMonth)) return fail("ซื้อ Pass เดือนนี้ไม่ได้แล้ว กรุณาโหลดหน้าใหม่แล้วเลือกเดือนอีกครั้ง");
   if (!/^[0-9a-f-]{36}$/i.test(token)) return fail("คำขอไม่ถูกต้อง");
   const file = formData.get("slip");
   if (!(file instanceof File)) return fail("กรุณาเลือกไฟล์สลิป");
@@ -36,9 +40,9 @@ export async function uploadPassSlipAction(_prev: PassState, formData: FormData)
   const path = `${g.ctx.userId}/${crypto.randomUUID()}.${check.ext}`;
   const { error: upErr } = await g.ctx.db.storage.from("payment-slips").upload(path, bytes, { contentType: check.mime, upsert: false });
   if (upErr) return fail("อัปโหลดสลิปไม่สำเร็จ กรุณาลองใหม่");
-  const { data: pay, error } = await g.ctx.db.from("payments").insert({ kind: "PASS", payer_user_id: g.ctx.userId, pass_game: game, amount_thb: PASS_PRICE_THB, slip_path: path, status: "PENDING", idempotency_key: key }).select("id").single();
+  const { data: pay, error } = await g.ctx.db.from("payments").insert({ kind: "PASS", payer_user_id: g.ctx.userId, pass_game: game, pass_month: passMonth, amount_thb: PASS_PRICE_THB, slip_path: path, status: "PENDING", idempotency_key: key }).select("id").single();
   if (error) return fail(error.code === "23505" ? "ส่งสลิปแล้ว (รายการเดิม)" : dbMessage(error, "บันทึกสลิปไม่สำเร็จ"));
-  await logAudit({ action: "PASS_SLIP_UPLOAD", table_name: "payments", record_id: pay.id, payload: { game, amount_thb: PASS_PRICE_THB }, performed_by: g.ctx.userId });
+  await logAudit({ action: "PASS_SLIP_UPLOAD", table_name: "payments", record_id: pay.id, payload: { game, pass_month: passMonth, amount_thb: PASS_PRICE_THB }, performed_by: g.ctx.userId });
   revalidateAllGames((g) => routes.pass(g));
   return { ok: true, message: "ส่งสลิปแล้ว รอแอดมินยืนยัน" };
 }
