@@ -206,6 +206,7 @@ export const en: Dict = {
   },
   // K-AV-INTEG.1b: ช่อง Dota Match ID ในห้องแมตช์
   dotaMatchId: {
+    errStatus: "Team leaders can enter it only after the match has started",
     title: "Dota Match ID",
     hint: "Dota 2 Match ID (6–12 digits) for each game · used to detect leavers after the match",
     game: "Game",

@@ -220,6 +220,7 @@ export const th = {
   },
   // K-AV-INTEG.1b: ช่อง Dota Match ID ในห้องแมตช์
   dotaMatchId: {
+    errStatus: "หัวหน้าทีมกรอกได้หลังแมตช์เริ่มแล้วเท่านั้น",
     title: "Dota Match ID",
     hint: "เลข Match ID จาก Dota 2 (6–12 หลัก) ของแต่ละเกม · ใช้ตรวจคนทิ้งเกมหลังแมตช์จบ",
     game: "เกมที่",

@@ -75,15 +75,17 @@ const as = (who: { me: string; leaderOf?: string[]; staff?: string }) => { h.me 
 beforeEach(() => { h.rooms = []; h.audits = []; h.seq = 0; h.game = "DOTA2"; });
 
 describe("K-AV-INTEG.1b · decideDotaMatchId (pure)", () => {
-  const base = { game: "DOTA2", isStaff: false, isLeader: true, bestOf: 3, gameNumber: 1, dotaMatchId: "7712345678", existing: null, usedElsewhere: false };
+  const base = { game: "DOTA2", isStaff: false, isLeader: true, bestOf: 3, matchStatus: "COMPLETED", gameNumber: 1, dotaMatchId: "7712345678", existing: null, usedElsewhere: false };
   it("leader first write ok · format 6–12 digits", () => {
     expect(decideDotaMatchId(base)).toEqual({ ok: true, overwrite: false, noop: false });
-    for (const bad of ["12345", "1234567890123", "77a1234567", ""]) expect(decideDotaMatchId({ ...base, dotaMatchId: bad })).toEqual({ ok: false, error: "BAD_FORMAT" });
+    for (const bad of ["12345", "1234567890123", "77a1234567", "", "0123456"]) expect(decideDotaMatchId({ ...base, dotaMatchId: bad })).toEqual({ ok: false, error: "BAD_FORMAT" });
   });
   it("not DOTA2 / not leader nor staff / game out of range", () => {
     expect(decideDotaMatchId({ ...base, game: "MLBB" })).toEqual({ ok: false, error: "NOT_DOTA" });
     expect(decideDotaMatchId({ ...base, isLeader: false })).toEqual({ ok: false, error: "FORBIDDEN" });
     expect(decideDotaMatchId({ ...base, gameNumber: 4 })).toEqual({ ok: false, error: "BAD_GAME" });
+    expect(decideDotaMatchId({ ...base, matchStatus: "SCHEDULED" })).toEqual({ ok: false, error: "BAD_STATUS" });
+    expect(decideDotaMatchId({ ...base, isStaff: true, isLeader: false, matchStatus: "SCHEDULED" }).ok).toBe(true);
   });
   it("existing: leader rejected · staff overwrites · same value = noop · used elsewhere = duplicate", () => {
     expect(decideDotaMatchId({ ...base, existing: "1111111" })).toEqual({ ok: false, error: "ALREADY_SET" });

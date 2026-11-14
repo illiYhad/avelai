@@ -69,7 +69,7 @@ export function DotaMatchIdForm({ action, bestOf, existing, canOverwrite, t }: {
           <form key={n} action={formAction} className="flex flex-wrap items-center gap-2">
             <input type="hidden" name="game_number" value={n} />
             <label className="flex items-center gap-2 text-xs text-white/70">{t.game} {n}
-              <input name="dota_match_id" defaultValue={cur} inputMode="numeric" pattern="[0-9]{6,12}" maxLength={12} required disabled={locked} className={input} />
+              <input name="dota_match_id" defaultValue={cur} inputMode="numeric" pattern="[1-9][0-9]{5,11}" maxLength={12} required disabled={locked} className={input} />
             </label>
             {locked ? <span className="text-xs text-white/50">{t.lockedHint}</span> : (
               <button type="submit" disabled={pending} className="rounded btn-primary px-3 py-2 text-xs disabled:opacity-50">{pending ? t.saving : t.save}</button>

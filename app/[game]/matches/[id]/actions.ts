@@ -230,7 +230,7 @@ export async function refereeStatusAction(matchId: string, to: string, reason: s
  */
 export async function setDotaMatchIdAction(matchId: string, _prev: MatchActionState, formData: FormData): Promise<MatchActionState> {
   const tr = dict(await getLocale()).dotaMatchId;
-  const ERR: Record<DotaIdError, string> = { NOT_DOTA: tr.errNotDota, FORBIDDEN: tr.errForbidden, BAD_FORMAT: tr.errFormat, BAD_GAME: tr.errGame, ALREADY_SET: tr.errAlreadySet, DUPLICATE: tr.errDuplicate };
+  const ERR: Record<DotaIdError, string> = { NOT_DOTA: tr.errNotDota, FORBIDDEN: tr.errForbidden, BAD_STATUS: tr.errStatus, BAD_FORMAT: tr.errFormat, BAD_GAME: tr.errGame, ALREADY_SET: tr.errAlreadySet, DUPLICATE: tr.errDuplicate };
   const g = await requireActiveUser();
   if (!g.ok) return fail(g.message);
   const row = await load(g.ctx, matchId);
@@ -240,7 +240,7 @@ export async function setDotaMatchIdAction(matchId: string, _prev: MatchActionSt
   const [staff, side] = await Promise.all([tournamentStaffLevel(g.ctx.db, g.ctx.userId, t), mySide(g.ctx, m)]);
   const dotaMatchId = String(formData.get("dota_match_id") ?? "").trim();
   const gameNumber = Number(formData.get("game_number"));
-  const base = { game: (tg?.game as string | undefined) ?? "", isStaff: staff !== "NONE", isLeader: side !== null, bestOf: m.best_of, gameNumber, dotaMatchId };
+  const base = { game: (tg?.game as string | undefined) ?? "", isStaff: staff !== "NONE", isLeader: side !== null, bestOf: m.best_of, matchStatus: m.status, gameNumber, dotaMatchId };
   // ตรวจสิทธิ์/รูปแบบก่อนแตะ service role
   const pre = decideDotaMatchId({ ...base, existing: null, usedElsewhere: false });
   if (!pre.ok) return fail(ERR[pre.error]);
