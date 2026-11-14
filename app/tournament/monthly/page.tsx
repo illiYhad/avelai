@@ -192,7 +192,7 @@ const IntegrityCard: React.FC<IntegrityCardProps> = ({ displayName, avatarUrl, r
                     <span className="text-xs text-emerald-400">{winRate}%</span>
                 </div>
                 <div className="flex justify-between text-xs text-ink-muted">
-                    <span>KARMA</span>
+                    <span>HONOR PULSE</span>
                     <span className="text-cyan">{karmaScore}</span>
                 </div>
             </div>

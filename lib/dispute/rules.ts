@@ -42,6 +42,6 @@ export function validatePenalty(p: { type: string; until?: string | null; value?
     if (!p.until || Number.isNaN(new Date(p.until).getTime())) return "ต้องระบุวันสิ้นสุดการระงับ";
     if (new Date(p.until).getTime() <= now.getTime()) return "วันสิ้นสุดต้องอยู่ในอนาคต";
   }
-  if (p.type === "KARMA" && (p.value === undefined || p.value === null || !Number.isInteger(p.value) || p.value >= 0)) return "โทษ Karma ต้องเป็นค่าติดลบ";
+  if (p.type === "KARMA" && (p.value === undefined || p.value === null || !Number.isInteger(p.value) || p.value >= 0)) return "โทษ Honor Pulse ต้องเป็นค่าติดลบ";
   return null;
 }

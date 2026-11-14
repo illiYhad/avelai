@@ -94,7 +94,7 @@ export default async function ManageTournamentPage({ params }: { params: Promise
           const myPays = pays.filter((p) => p.registration_id === r.id);
           return (
             <div key={r.id} className="rounded border border-white/15 p-3 text-sm">
-              <p><b>{team?.name} [{team?.tag}]</b> · <span className="text-cyan">{REG_LABEL[r.status as RegistrationStatus] ?? r.status}</span>{r.paid_via ? ` · ${r.paid_via}` : ""}{r.seed ? ` · seed ${r.seed}` : ""}{minKarma.has(r.id) ? <> · Karma ต่ำสุด <span className={`font-numeric ${(minKarma.get(r.id) ?? 100) < 70 ? "text-amber-300" : "text-white/80"}`}>{minKarma.get(r.id)}</span></> : null}</p>
+              <p><b>{team?.name} [{team?.tag}]</b> · <span className="text-cyan">{REG_LABEL[r.status as RegistrationStatus] ?? r.status}</span>{r.paid_via ? ` · ${r.paid_via}` : ""}{r.seed ? ` · seed ${r.seed}` : ""}{minKarma.has(r.id) ? <> · Honor Pulse ต่ำสุด <span className={`font-numeric ${(minKarma.get(r.id) ?? 100) < 70 ? "text-amber-300" : "text-white/80"}`}>{minKarma.get(r.id)}</span></> : null}</p>
               {myPays.map((p) => (
                 <div key={p.id} className="mt-2 flex flex-col gap-2 border-t border-white/10 pt-2">
                   <p className="text-xs text-white/70">สลิป <span className="font-numeric">{Number(p.amount_thb).toLocaleString("th-TH")} บาท</span> · {p.status}{p.reject_reason ? ` · ${p.reject_reason}` : ""} · {new Date(p.created_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}</p>

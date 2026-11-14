@@ -171,7 +171,7 @@ export const en: Dict = {
       startA1t: "Open games",
       startA1: "Dota 2 is the only open game for now · MLBB is planned next, no date yet",
       startA2t: "What is Passport",
-      startA2: "Your player account across events: 5-game performance record · cross-event history · Karma from teammate votes · Win Rate always calculated live",
+      startA2: "Your player account across events: 5-game performance record · cross-event history · Honor Pulse from teammate votes · Win Rate always calculated live",
       startA3t: "AVE assistant",
       startA3: "The chat bot behind the blue button (bottom right): points, rules, tournaments, Pass/tickets, votes/drops",
       play: "Playing / Tickets / Pass",

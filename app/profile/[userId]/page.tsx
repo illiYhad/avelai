@@ -216,7 +216,7 @@ export default function ProfilePage() {
                         {/* Karma */}
                         {profile.karma_score !== undefined ? (
                         <div className="flex flex-col gap-0.5">
-                            <span className="font-mono text-xs text-zinc-500 tracking-[0.2em]">KARMA SCORE</span>
+                            <span className="font-mono text-xs text-zinc-500 tracking-[0.2em]">HONOR PULSE SCORE</span>
                             <div className="flex items-baseline gap-1">
                                 <span className="font-black text-xl text-emerald-400 leading-none" style={{ fontFamily: 'Orbitron, sans-serif' }}>
                                     {profile.karma_score}
